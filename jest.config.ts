@@ -17,6 +17,13 @@ const config: Config = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testMatch: ["<rootDir>/src/**/*.test.ts?(x)"],
   moduleDirectories: ["node_modules", "<rootDir>/"],
+  // `next/jest` resolves the `@/*` alias inside the SWC transform, so static
+  // imports work without this. But `jest.mock("@/…")` is resolved by Jest's own
+  // resolver *before* transform, which knows nothing about tsconfig paths —
+  // so the alias has to be declared here too.
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
+  },
   collectCoverageFrom: [
     "src/**/*.{ts,tsx}",
     "!src/**/*.test.{ts,tsx}",

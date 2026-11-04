@@ -47,6 +47,16 @@ memberi tahu tiga orang lain **sebelum** commit, bukan sesudah (§9).
 
 **7. Tidak ada dependensi baru setelah hari ke-3** (§9).
 
+**8. `/darurat` tidak pernah dijaga login.** Mode darurat harus terbuka tanpa
+akun, sekarang dan setelah perubahan akses apa pun. Kalau middleware ditambahkan
+nanti, pengecualian `/darurat` masuk di commit yang sama.
+
+**9. Auth di proyek ini adalah demo, bukan auth sungguhan.** `demo-accounts.ts`
+membandingkan password dengan tabel literal; tidak ada hash, tidak ada database,
+tidak ada penyimpanan server. Jangan menyalin pola ini ke aplikasi yang menyimpan
+pengguna nyata. Menambah penyimpanan berarti melanggar §8b plan dan janji privasi
+proposal.
+
 ## Stack — jangan diganti tanpa kesepakatan
 
 | Lapisan | Pilihan | Versi terpasang |
@@ -102,6 +112,17 @@ ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
 
 Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
 dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
+
+## Rute dan shell
+
+| Grup | Shell | Token | Isi |
+|---|---|---|---|
+| `(marketing)` | `MarketingNav` + footer | `--appnext-*`, terang | `/` landing |
+| `(app)` | `SiteNav` + footer | `--lumina-*`, gelap | companion, belajar, simulasi, darurat |
+| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*`, gelap | auth |
+
+Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
+ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
 
 ## Dua sistem desain, jangan dicampur
 

@@ -3,6 +3,7 @@
 import { LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserMenu } from "@/components/auth/user-menu";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,7 +19,11 @@ const DESTINATIONS = [
   { href: "/simulasi", label: "Simulasi" },
 ] as const;
 
-export function SiteNav() {
+export function SiteNav({
+  session,
+}: {
+  session?: { nama: string; email: string } | null;
+}) {
   const pathname = usePathname();
 
   return (
@@ -70,6 +75,18 @@ export function SiteNav() {
           <LifeBuoy aria-hidden className="size-4" />
           Darurat
         </Link>
+
+        {session ? (
+          <UserMenu nama={session.nama} email={session.email} />
+        ) : (
+          <Link
+            href="/masuk"
+            data-pressable
+            className="shrink-0 rounded-md px-3 py-1.5 text-dim text-sm hover:bg-panel-2 hover:text-txt"
+          >
+            Masuk
+          </Link>
+        )}
       </div>
     </header>
   );

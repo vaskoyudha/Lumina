@@ -417,6 +417,16 @@ submission.
 
 Tulis di dinding. Kalau ada yang mulai membangun, hentikan.
 
+> **Pengecualian tercatat (5 November):** butir (a) sengaja dilanggar untuk akun
+> demo. Login dibangun sebagai fasad — tabel akun literal, cookie bertanda
+> tangan, tanpa database dan tanpa penyimpanan server. Karena tidak ada yang
+> disimpan, janji privasi §11.7 tetap utuh, tetapi kalimat "tanpa akun" harus
+> dihapus dari presentasi. Rincian keputusan:
+> `.opencode/plan/2026-11-04-lumina-landing-auth.md`.
+>
+> Butir (b) **tidak** dikecualikan: tidak ada database, progres tetap di
+> `localStorage`.
+
 a. Akun, login, reset password
 b. Database apa pun — progres di localStorage
 c. Crypto Agent (Fase 2)
