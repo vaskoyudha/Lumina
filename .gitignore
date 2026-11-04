@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# stream plans — draf lokal, tidak di-commit
+docs/plans/stream-B.md
