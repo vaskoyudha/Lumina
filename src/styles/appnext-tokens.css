@@ -1,0 +1,205 @@
+/*
+ * AppNext design tokens — extracted from https://appnext.framer.website/
+ * Measured 2026-11-04. Full provenance: docs/design-system/appnext.md
+ *
+ * SCOPED. Everything lives under `.appnext` and cannot leak into Lumina's
+ * dark palette. Lumina is dark by requirement (risk meter readable from the
+ * back of a room); AppNext is light-first. Merging the two namespaces would
+ * break both, so this file stays opt-in per subtree.
+ *
+ * Usage:  <div className="appnext"> ... </div>
+ */
+
+@layer components {
+  .appnext {
+    /* palette */
+    --appnext-ink: #000000;
+    --appnext-ink-2: #121212;
+    --appnext-muted: #606060;
+    --appnext-surface: #f4f4f4;
+    --appnext-line: #eeeeee;
+    --appnext-white: #ffffff;
+    --appnext-accent: #1bab49;
+    --appnext-tint: #ebf9ff;
+    --appnext-blue: #40c6ff;
+    --appnext-blue-deep: #044680;
+
+    /* alpha steps used by the source */
+    --appnext-scrim-05: rgb(18 18 18 / 0.05);
+    --appnext-scrim-10: rgb(18 18 18 / 0.1);
+    --appnext-scrim-14: rgb(18 18 18 / 0.14);
+    --appnext-scrim-20: rgb(18 18 18 / 0.2);
+    --appnext-scrim-30: rgb(18 18 18 / 0.3);
+    --appnext-scrim-40: rgb(18 18 18 / 0.4);
+    --appnext-veil-05: rgb(255 255 255 / 0.05);
+    --appnext-veil-20: rgb(255 255 255 / 0.2);
+    --appnext-veil-40: rgb(255 255 255 / 0.4);
+    --appnext-veil-80: rgb(255 255 255 / 0.8);
+
+    /* shape */
+    --appnext-r-pill: 100px;
+    --appnext-r-card: 24px;
+    --appnext-r-md: 16px;
+    --appnext-r-sm: 12px;
+    --appnext-r-xs: 8px;
+    --appnext-r-2xs: 6px;
+    --appnext-r-3xs: 4px;
+    --appnext-r-4xs: 2px;
+    --appnext-r-phone: 42px 42px 40px 40px;
+
+    /* layout */
+    --appnext-container: 1200px;
+    --appnext-page: 1280px;
+
+    /* elevation */
+    --appnext-shadow-ambient: 0.06px 0.72px 0.73px -1.25px rgb(18 18 18 / 0.14),
+      0.23px 2.75px 2.76px -2.5px rgb(18 18 18 / 0.13), 1px 12px 12.04px -3.75px
+        rgb(18 18 18 / 0.05);
+    --appnext-shadow-soft: 0 0.6px 1.57px -1.5px rgb(0 0 0 / 0.17), 0 2.29px
+        5.95px -3px rgb(0 0 0 / 0.14), 0 10px 26px -4.5px rgb(0 0 0 / 0.02);
+    --appnext-shadow-ring: 0 0 0 1px #000 inset;
+
+    /* type */
+    --appnext-font: "Stack Sans Headline", "Inter", system-ui, sans-serif;
+
+    color: var(--appnext-muted);
+    background: var(--appnext-white);
+    font-family: var(--appnext-font);
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 300;
+    letter-spacing: 0.16px;
+  }
+
+  /* Headings track negative; body tracks positive. Weight inverts with size:
+     big type is light, small type is regular-to-medium. */
+  .appnext :where(h1) {
+    font-size: 42px;
+    line-height: 1.1;
+    font-weight: 500;
+    letter-spacing: -0.42px;
+    color: var(--appnext-ink);
+  }
+
+  .appnext :where(h2) {
+    font-size: 34px;
+    line-height: 1.2;
+    font-weight: 500;
+    letter-spacing: normal;
+    color: var(--appnext-ink);
+  }
+
+  .appnext :where(h3) {
+    font-size: 28px;
+    line-height: 1.3;
+    font-weight: 400;
+    color: var(--appnext-ink);
+  }
+
+  .appnext :where(p, li) {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 300;
+    letter-spacing: 0.16px;
+  }
+
+  .appnext-display {
+    font-size: 120px;
+    line-height: 1.1;
+    font-weight: 400;
+    letter-spacing: -3.6px;
+    color: var(--appnext-ink);
+  }
+
+  .appnext-hero {
+    font-size: 72px;
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: -0.8px;
+    color: var(--appnext-ink);
+  }
+
+  .appnext-lead {
+    font-size: 20px;
+    line-height: 1.4;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    color: var(--appnext-muted);
+  }
+
+  .appnext-caption {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: 0.14px;
+    color: var(--appnext-muted);
+  }
+
+  .appnext-container {
+    width: 100%;
+    max-width: var(--appnext-container);
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+
+  .appnext-card {
+    background: var(--appnext-white);
+    border-radius: var(--appnext-r-card);
+    box-shadow: var(--appnext-shadow-ambient);
+  }
+
+  /* Pills are for actions, not for status tags. */
+  .appnext-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    padding-inline: 24px;
+    border-radius: var(--appnext-r-pill);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition:
+      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 160ms ease-out,
+      opacity 160ms ease-out;
+  }
+
+  .appnext-button:active {
+    transform: scale(0.97);
+  }
+
+  .appnext-button--primary {
+    background: var(--appnext-ink-2);
+    color: var(--appnext-white);
+  }
+
+  .appnext-button--secondary {
+    background: var(--appnext-white);
+    color: var(--appnext-ink-2);
+    box-shadow: var(--appnext-shadow-ambient);
+  }
+
+  @media (max-width: 767px) {
+    .appnext-display {
+      font-size: 49px;
+      line-height: 1.1;
+      letter-spacing: -1.2px;
+    }
+
+    .appnext-hero {
+      font-size: 42px;
+      line-height: 1.1;
+      letter-spacing: -0.4px;
+    }
+
+    .appnext :where(h1) {
+      font-size: 34px;
+      line-height: 1.2;
+    }
+
+    .appnext :where(h2) {
+      font-size: 28px;
+    }
+  }
+}

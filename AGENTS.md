@@ -88,8 +88,9 @@ Claude Code, Codex, Hermes, dan harness lain. `.opencode/skills/<nama>` adalah
 symlink ke sana, bukan salinan.
 
 ```
-.agents/skills/lumina-ui/SKILL.md    aturan visual + token + batas demo
-.agents/skills/shadcn-ui/SKILL.md    konfigurasi shadcn proyek ini
+.agents/skills/lumina-ui/SKILL.md      aturan visual + token + batas demo
+.agents/skills/shadcn-ui/SKILL.md      konfigurasi shadcn proyek ini
+.agents/skills/appnext-design/SKILL.md sistem desain AppNext (light-first)
 ```
 
 Aturannya: **sunting `.agents/skills/`**, jangan `.opencode/skills/` — yang kedua
@@ -101,6 +102,19 @@ ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
 
 Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
 dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
+
+## Dua sistem desain, jangan dicampur
+
+| | Lumina (default) | AppNext |
+|---|---|---|
+| Ground | gelap `#0b0f14` | terang `#ffffff` |
+| Namespace | `--lumina-*` | `--appnext-*`, di bawah `.appnext` |
+| Dipakai di | semua permukaan produk | halaman marketing/template |
+| Alasan | meter merah harus terbaca dari belakang ruangan | mengikuti template SaaS |
+
+Permukaan produk (companion, belajar, simulasi, darurat) memakai token gelap.
+AppNext hanya masuk lewat subtree ber-`className="appnext"`, tidak pernah ke
+`body` atau `@theme`. Detail: `docs/design-system/appnext.md`.
 
 ## Layout
 
