@@ -23,7 +23,7 @@ export default function LandingPage() {
 
   return (
     <>
-      <Hero />
+      <Hero score={demo.score} risk={RISK_LABEL[demo.risk]} />
       <LiveExample score={demo.score} risk={RISK_LABEL[demo.risk]} />
       <HowItWorks />
       <Capabilities />

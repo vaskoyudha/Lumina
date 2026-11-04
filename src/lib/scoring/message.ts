@@ -28,7 +28,7 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 0.95,
     label:
       "Mengirim file APK — aplikasi di luar Play Store bisa mencuri SMS dan OTP",
-    pattern: /\.apk\b|\bfile\s+apk\b|\baplikasi\s+undangan\b/i,
+    pattern: /[\w-]+\.apk\b|\bfile\s+apk\b|\baplikasi\s+undangan\b/i,
   },
   {
     id: "urgency",
@@ -56,7 +56,7 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 0.65,
     label: "Mengumumkan hadiah/undian yang tidak pernah diikuti",
     pattern:
-      /\b(?:selamat|anda\s+menang|anda\s+beruntung|pemenang|hadiah\s+utama|undian)\b/i,
+      /\b(?:selamat\s+(?:anda\s+)?(?:menang|beruntung)|anda\s+(?:menang|beruntung|terpilih)|pemenang\s+(?:undian|utama)|hadiah\s+utama|undian\s+berhadiah)\b/i,
   },
   {
     id: "admin-fee",

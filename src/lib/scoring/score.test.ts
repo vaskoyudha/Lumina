@@ -85,6 +85,24 @@ describe("scoreText contract invariants", () => {
     expect(result.relatedModule).toBe(10);
   });
 
+  it("does not treat a greeting as a prize announcement", () => {
+    // Regression: bare "Selamat" in "Selamat siang" scored 65/mencurigakan.
+    const result = scoreText({
+      text: "Selamat siang Bu, ini undangan pernikahan anak kami.",
+    });
+    expect(result.signals.some((s) => s.label.includes("hadiah"))).toBe(false);
+    expect(result.risk).not.toBe("mencurigakan");
+  });
+
+  it("quotes the APK filename rather than the bare extension", () => {
+    const result = scoreText({
+      text: "Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim.",
+    });
+    const apk = result.signals.find((s) => s.label.includes("APK"));
+    expect(apk?.evidence).toMatch(/\.apk$/);
+    expect(apk?.evidence.length).toBeGreaterThan(4);
+  });
+
   it("scores the top-up case high without inventing an OTP claim", () => {
     const result = scoreText({
       text: "tugas like 10 video komisi Rp15.000. untuk lanjut, kakak perlu top up saldo Rp500.000 dulu",

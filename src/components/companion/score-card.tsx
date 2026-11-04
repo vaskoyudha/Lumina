@@ -73,7 +73,8 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
         {result.hardOverride ? (
           <p className="flex items-center gap-1.5 text-danger text-xs">
             <TriangleAlert aria-hidden className="size-3.5" />
-            Permintaan OTP/PIN otomatis berisiko tinggi, apa pun skornya.
+            Indikator keras — permintaan OTP/PIN atau file APK — otomatis
+            berisiko tinggi, apa pun skornya.
           </p>
         ) : null}
       </CardHeader>

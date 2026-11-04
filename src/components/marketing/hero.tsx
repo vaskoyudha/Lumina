@@ -8,7 +8,7 @@ import Link from "next/link";
  * The emergency button sits in the hero because for this audience it is not an
  * edge case; someone reading this may be mid-scam right now.
  */
-export function Hero() {
+export function Hero({ score, risk }: { score: number; risk: string }) {
   return (
     <section className="appnext-container grid gap-10 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
       <div>
@@ -46,7 +46,7 @@ export function Hero() {
         </p>
       </div>
 
-      <HeroPanel />
+      <HeroPanel score={score} risk={risk} />
     </section>
   );
 }
@@ -56,7 +56,7 @@ export function Hero() {
  * marketing page must never depend on runtime state, and the real figures are
  * reproduced from the APK demo case.
  */
-function HeroPanel() {
+function HeroPanel({ score, risk }: { score: number; risk: string }) {
   const signals = [
     {
       agent: "Message Agent",
@@ -67,7 +67,7 @@ function HeroPanel() {
     {
       agent: "Message Agent",
       label: "Mengaku dari kurir atau instansi resmi",
-      evidence: "undangan pernikahan",
+      evidence: "kurir",
     },
     {
       agent: "Link Agent",
@@ -87,18 +87,21 @@ function HeroPanel() {
 
       <div className="mt-4 flex items-baseline gap-3">
         <p className="text-[44px] font-medium leading-none tracking-[-1.4px] text-[#000]">
-          94
+          {score}
           <span className="ml-1 text-[16px] font-light text-[#606060]">
             /100
           </span>
         </p>
         <span className="rounded-full border border-[#FF5D5D]/40 bg-[#FF5D5D]/10 px-2.5 py-1 text-[11px] font-medium text-[#B42626]">
-          Risiko tinggi
+          {risk}
         </span>
       </div>
 
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#F4F4F4]">
-        <div className="h-full w-[94%] rounded-full bg-[#FF5D5D]" />
+        <div
+          className="h-full rounded-full bg-[#FF5D5D]"
+          style={{ width: `${score}%` }}
+        />
       </div>
 
       <ul className="mt-4 flex flex-col gap-2">
