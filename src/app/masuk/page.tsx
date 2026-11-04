@@ -1,8 +1,8 @@
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { AuthPanel } from "@/components/auth/auth-panel";
+import { BackButton } from "@/components/shell/back-button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
@@ -42,14 +42,7 @@ export default function MasukPage({
 }) {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-10 sm:py-14">
-      <Link
-        href="/"
-        data-pressable
-        className="inline-flex w-fit items-center gap-1 text-dim text-sm hover:text-txt"
-      >
-        <ArrowLeft aria-hidden className="size-3.5" />
-        Kembali
-      </Link>
+      <BackButton href="/" />
 
       <header>
         <h1 className="font-semibold text-2xl tracking-tight">Masuk</h1>

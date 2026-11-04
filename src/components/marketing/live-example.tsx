@@ -106,10 +106,13 @@ export function LiveExample({ score, risk }: { score: number; risk: string }) {
               <Link
                 href="/belajar/10"
                 data-pressable
-                className="inline-flex items-center gap-1 rounded-full bg-[#1BAB49]/10 px-3 py-1.5 text-[12px] font-medium text-[#0F7A34]"
+                className="group inline-flex items-center gap-1 rounded-full bg-[#1BAB49]/10 px-3 py-1.5 text-[12px] font-medium text-[#0F7A34] hover:bg-[#1BAB49]/20"
               >
                 Pelajari pola ini
-                <ArrowRight aria-hidden className="size-3" />
+                <ArrowRight
+                  aria-hidden
+                  className="arrow-nudge arrow-nudge--right size-3"
+                />
               </Link>
               <Link
                 href="/simulasi"

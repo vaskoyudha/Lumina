@@ -123,10 +123,13 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
             <Link
               href={`/belajar/${modus.no}`}
               data-pressable
-              className="inline-flex items-center gap-1 rounded-md border border-safe/40 bg-safe/10 px-3 py-1.5 font-medium text-safe text-sm hover:bg-safe/20"
+              className="group inline-flex items-center gap-1 rounded-md border border-safe/40 bg-safe/10 px-3 py-1.5 font-medium text-safe text-sm hover:bg-safe/20"
             >
               Pelajari pola ini
-              <ArrowRight aria-hidden className="size-3.5" />
+              <ArrowRight
+                aria-hidden
+                className="arrow-nudge arrow-nudge--right size-3.5"
+              />
             </Link>
             {modus.scenarioId ? (
               <Link

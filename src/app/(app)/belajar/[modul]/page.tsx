@@ -1,7 +1,7 @@
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackButton } from "@/components/shell/back-button";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import { formattedLaporan, MODUS, MODUS_BY_NO } from "@/lib/modus";
@@ -37,14 +37,7 @@ export default async function ModulPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <Link
-        href="/belajar"
-        data-pressable
-        className="inline-flex items-center gap-1 text-dim text-sm hover:text-txt"
-      >
-        <ArrowLeft aria-hidden className="size-3.5" />
-        Semua modul
-      </Link>
+      <BackButton href="/belajar" label="Semua modul" />
 
       <header className="mt-4 max-w-prose">
         <div className="flex flex-wrap items-center gap-2">

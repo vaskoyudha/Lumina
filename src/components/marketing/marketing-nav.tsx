@@ -45,10 +45,13 @@ export function MarketingNav() {
           <Link
             href="/companion"
             data-pressable
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#121212] px-4 py-2 text-[13px] font-medium text-white"
+            className="group inline-flex items-center gap-1.5 rounded-full bg-[#121212] px-4 py-2 text-[13px] font-medium text-white hover:bg-[#000]"
           >
             Periksa pesan
-            <ArrowRight aria-hidden className="size-3.5" />
+            <ArrowRight
+              aria-hidden
+              className="arrow-nudge arrow-nudge--right size-3.5"
+            />
           </Link>
         </nav>
       </div>

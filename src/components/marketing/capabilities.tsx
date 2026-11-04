@@ -40,10 +40,13 @@ export function Capabilities() {
             <Link
               href="/companion"
               data-pressable
-              className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#0F7A34]"
+              className="group mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#0F7A34] hover:text-[#0B5F27]"
             >
               Mulai dari pesan
-              <ArrowRight aria-hidden className="size-3.5" />
+              <ArrowRight
+                aria-hidden
+                className="arrow-nudge arrow-nudge--right size-3.5"
+              />
             </Link>
           </article>
 
@@ -59,10 +62,13 @@ export function Capabilities() {
             <Link
               href="/belajar"
               data-pressable
-              className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#606060]"
+              className="group mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#606060] hover:text-[#121212]"
             >
               Buka modul
-              <ArrowRight aria-hidden className="size-3.5" />
+              <ArrowRight
+                aria-hidden
+                className="arrow-nudge arrow-nudge--right size-3.5"
+              />
             </Link>
           </article>
 
@@ -78,10 +84,13 @@ export function Capabilities() {
             <Link
               href="/simulasi"
               data-pressable
-              className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#606060]"
+              className="group mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#606060] hover:text-[#121212]"
             >
               Coba simulasi
-              <ArrowRight aria-hidden className="size-3.5" />
+              <ArrowRight
+                aria-hidden
+                className="arrow-nudge arrow-nudge--right size-3.5"
+              />
             </Link>
           </article>
 
@@ -98,10 +107,13 @@ export function Capabilities() {
             <Link
               href="/darurat"
               data-pressable
-              className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#B42626]"
+              className="group mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#B42626] hover:text-[#8E1A1A]"
             >
               Buka mode darurat
-              <ArrowRight aria-hidden className="size-3.5" />
+              <ArrowRight
+                aria-hidden
+                className="arrow-nudge arrow-nudge--right size-3.5"
+              />
             </Link>
           </article>
         </div>

@@ -173,21 +173,36 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Every pressable element gives press feedback (plan: meter must feel physical). */
+  /*
+    Motion timing is deliberately asymmetric. Arriving at a control wants a
+    fast answer; leaving wants a softer return, or the button snaps under the
+    eye. Press is near-instant because it is the "the click landed" signal.
+  */
+  :root {
+    --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --t-approach: 180ms;
+    --t-press: 80ms;
+    --t-leave: 280ms;
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled),
   a[data-pressable] {
     transition:
-      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
-      background-color 160ms ease-out,
-      border-color 160ms ease-out,
-      opacity 160ms ease-out;
+      transform var(--t-leave) var(--ease-spring),
+      background-color var(--t-leave) ease-out,
+      border-color var(--t-leave) ease-out,
+      color var(--t-leave) ease-out,
+      box-shadow var(--t-leave) ease-out,
+      opacity var(--t-leave) ease-out;
   }
 
   button:not(:disabled):active,
   [role="button"]:not(:disabled):active,
   a[data-pressable]:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
+    transition-duration: var(--t-press);
   }
 
   :focus-visible {
@@ -208,6 +223,42 @@
     button:not(:disabled):active {
       transform: none;
     }
+  }
+}
+
+/*
+  Touch devices apply :hover on first tap and keep it until the next tap, which
+  leaves buttons looking "stuck on". Anything decorative that responds to hover
+  belongs behind this query; press feedback stays universal.
+*/
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover,
+  [role="button"]:not(:disabled):hover,
+  a[data-pressable]:hover {
+    transition-duration: var(--t-approach);
+  }
+}
+
+/*
+  Arrow nudge: the glyph moves, the hit area does not. Moving the button itself
+  toward the cursor makes it slide out from under the pointer and flicker.
+*/
+.arrow-nudge {
+  transition: transform var(--t-leave) var(--ease-spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .arrow-nudge,
+  .group:focus-visible .arrow-nudge {
+    transition-duration: var(--t-approach);
+  }
+
+  .group:hover .arrow-nudge--right {
+    transform: translateX(3px);
+  }
+
+  .group:hover .arrow-nudge--left {
+    transform: translateX(-3px);
   }
 }
 

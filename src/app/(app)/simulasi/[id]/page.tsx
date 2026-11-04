@@ -1,7 +1,6 @@
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackButton } from "@/components/shell/back-button";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import { MODUS } from "@/lib/modus";
 
@@ -34,14 +33,7 @@ export default async function RunnerPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <Link
-        href="/simulasi"
-        data-pressable
-        className="inline-flex items-center gap-1 text-dim text-sm hover:text-txt"
-      >
-        <ArrowLeft aria-hidden className="size-3.5" />
-        Semua simulasi
-      </Link>
+      <BackButton href="/simulasi" label="Semua simulasi" />
 
       <header className="mt-4 max-w-prose">
         <h1 className="font-semibold text-2xl tracking-tight">

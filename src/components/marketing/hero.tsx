@@ -26,10 +26,13 @@ export function Hero({ score, risk }: { score: number; risk: string }) {
           <Link
             href="/companion"
             data-pressable
-            className="appnext-button appnext-button--primary gap-2"
+            className="appnext-button appnext-button--primary group gap-2"
           >
             Periksa pesan sekarang
-            <ArrowRight aria-hidden className="size-4" />
+            <ArrowRight
+              aria-hidden
+              className="arrow-nudge arrow-nudge--right size-4"
+            />
           </Link>
           <Link
             href="/darurat"
