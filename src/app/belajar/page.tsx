@@ -1,6 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BelajarProgress } from "@/components/belajar/belajar-progress";
+import { ModuleDoneMark } from "@/components/belajar/module-done-mark";
 import { Badge } from "@/components/ui/badge";
 import { formattedLaporan, MODUS } from "@/lib/modus";
 
@@ -33,8 +35,10 @@ export default function BelajarPage() {
         </h1>
         <p className="mt-2 text-dim text-sm">
           Urutan mengikuti jumlah laporan IASC. Satu modul lengkap mengalahkan
-          dua belas halaman kosong — saat ini {complete} dari 12 modul selesai.
+          dua belas halaman kosong — saat ini {complete} dari 12 modul selesai
+          ditulis.
         </p>
+        <BelajarProgress />
       </header>
 
       <ul className="mt-8 flex flex-col divide-y divide-line border-line border-y">
@@ -67,6 +71,7 @@ export default function BelajarPage() {
                       : `${formattedLaporan(m)} laporan`}
                   </span>
                   <span className="text-dim/70">{m.kerugian}</span>
+                  <ModuleDoneMark no={m.no} />
                   <Badge
                     variant={ready ? "secondary" : "outline"}
                     className={ready ? "text-safe" : "text-dim"}
