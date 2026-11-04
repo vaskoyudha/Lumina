@@ -1,0 +1,152 @@
+"use client";
+
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
+import { ScoreCard } from "@/components/companion/score-card";
+import { SignalPanel } from "@/components/companion/signal-panel";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
+import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import { scoreText } from "@/lib/scoring/score";
+
+/**
+ * Stream A · Day-1 thin slice (§7 Hari 1): paste text -> deterministic
+ * ScoreResult on screen. The conversation layer, the LLM, and the live
+ * agent-by-agent panel land on day 2 on top of exactly this call.
+ */
+
+const EXAMPLES = [
+  {
+    id: "apk-undangan",
+    label: "APK undangan pernikahan",
+    text: "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim, isinya lengkap dengan lokasi acara.",
+  },
+  {
+    id: "tugas-like",
+    label: "Tugas like & top-up",
+    text: "Halo kak, tugas hari ini tinggal like 10 video, komisi Rp15.000 sudah masuk. Untuk lanjut ke tugas berikutnya, kakak perlu top up saldo Rp500.000 dulu ya biar bisa ikut penarikan.",
+  },
+  {
+    id: "akun-diblokir",
+    label: "WhatsApp akun diblokir",
+    text: "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa agar akun tidak ditutup permanen.",
+  },
+] as const;
+
+const AGENT_SEQUENCE: AgentId[] = ["message", "link", "conversation"];
+
+export function CompanionEntry() {
+  const [text, setText] = React.useState("");
+  const [result, setResult] = React.useState<ScoreResult | null>(null);
+
+  const run = React.useCallback((input: string) => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    setResult(scoreText({ text: trimmed }));
+  }, []);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="min-w-0">
+        <h1 className="font-semibold text-2xl tracking-tight">
+          Ceritakan pesan yang kamu terima
+        </h1>
+        <p className="mt-2 max-w-prose text-dim text-sm">
+          Tempel isi pesan, tautan, atau deskripsi telepon yang kamu terima.
+          Semuanya diperiksa di perangkat ini dan tidak dikirim ke mana pun.
+        </p>
+
+        <form
+          className="mt-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(text);
+          }}
+        >
+          <Field>
+            <FieldLabel htmlFor="pesan">Isi pesan</FieldLabel>
+            <Textarea
+              id="pesan"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              rows={7}
+              placeholder='Contoh: "Selamat siang Bu, ini undangan pernikahan..."'
+              className="bg-panel-2"
+            />
+            <FieldDescription>
+              Tidak ada akun dan tidak ada unggahan ke server.
+            </FieldDescription>
+          </Field>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button
+              type="submit"
+              disabled={text.trim().length === 0}
+              className="h-10 bg-safe px-4 text-bg hover:bg-safe/90"
+            >
+              Periksa pesan
+              <ArrowRight data-icon="inline-end" aria-hidden />
+            </Button>
+            {text.length > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setText("");
+                  setResult(null);
+                }}
+                className="text-dim"
+              >
+                Bersihkan
+              </Button>
+            ) : null}
+          </div>
+        </form>
+
+        <div className="mt-6">
+          <h2 className="font-medium text-dim text-xs uppercase tracking-wide">
+            Coba contoh
+          </h2>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {EXAMPLES.map((example) => (
+              <li key={example.id}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-line text-dim hover:text-txt"
+                  onClick={() => {
+                    setText(example.text);
+                    run(example.text);
+                  }}
+                >
+                  {example.label}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {result ? (
+          <div className="mt-8">
+            <ScoreCard result={result} />
+          </div>
+        ) : null}
+      </div>
+
+      <SignalPanel result={result} sequence={AGENT_SEQUENCE} />
+
+      <p className="text-dim text-xs lg:col-span-2">
+        Butuh bantuan sekarang?{" "}
+        <Link
+          href="/darurat"
+          className="text-danger underline-offset-4 hover:underline"
+        >
+          Buka mode darurat
+        </Link>{" "}
+        — checklist berurutan dan laporan siap cetak.
+      </p>
+    </div>
+  );
+}

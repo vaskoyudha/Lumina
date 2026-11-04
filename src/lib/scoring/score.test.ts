@@ -1,0 +1,110 @@
+import { riskFor } from "@/lib/contracts/score";
+import { MODUS, MODUS_BY_ID, MODUS_BY_NO, ModusListSchema } from "@/lib/modus";
+import { OFFICIAL, OfficialDomainsSchema } from "@/lib/scoring/link";
+import { scoreText } from "@/lib/scoring/score";
+
+describe("modus.json (§11.2 — single source of truth for A and B)", () => {
+  it("has exactly 12 entries numbered 1..12", () => {
+    expect(ModusListSchema.safeParse(MODUS).success).toBe(true);
+    expect(MODUS).toHaveLength(12);
+    expect([...MODUS_BY_NO.keys()].sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 12 }, (_, i) => i + 1),
+    );
+  });
+
+  it("has one unique id per module", () => {
+    expect(MODUS_BY_ID.size).toBe(12);
+  });
+
+  it("wires only module 10 to the one playable scenario", () => {
+    const playable = MODUS.filter((m) => m.scenarioId !== null);
+    expect(playable).toHaveLength(1);
+    expect(playable[0]?.no).toBe(10);
+    expect(playable[0]?.scenarioId).toBe("L1-kurir-apk");
+  });
+
+  it("marks modules with no written lesson as 'segera'", () => {
+    expect(MODUS.filter((m) => m.modulStatus === "lengkap")).toHaveLength(1);
+  });
+});
+
+describe("official domain list (§5-A: ~40 domains, offline-safe)", () => {
+  it("parses and is large enough to be useful", () => {
+    expect(OfficialDomainsSchema.safeParse(OFFICIAL).success).toBe(true);
+    expect(OFFICIAL.length).toBeGreaterThanOrEqual(40);
+  });
+});
+
+describe("riskFor (§4 bands)", () => {
+  it("maps each boundary exactly", () => {
+    expect(riskFor(0)).toBe("bersih");
+    expect(riskFor(14)).toBe("bersih");
+    expect(riskFor(15)).toBe("rendah");
+    expect(riskFor(39)).toBe("rendah");
+    expect(riskFor(40)).toBe("mencurigakan");
+    expect(riskFor(69)).toBe("mencurigakan");
+    expect(riskFor(70)).toBe("tinggi");
+    expect(riskFor(100)).toBe("tinggi");
+  });
+});
+
+describe("scoreText contract invariants", () => {
+  it("never returns an empty signals array", () => {
+    const result = scoreText({ text: "besok kita makan siang bareng ya" });
+    expect(result.signals.length).toBeGreaterThanOrEqual(1);
+    expect(result.risk).toBe("bersih");
+  });
+
+  it("sorts signals by descending weight", () => {
+    const result = scoreText({
+      text: "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa",
+    });
+    const weights = result.signals.map((s) => s.weight);
+    expect(weights).toEqual([...weights].sort((a, b) => b - a));
+  });
+
+  it("forces risk 'tinggi' when OTP is requested, whatever the score", () => {
+    const result = scoreText({ text: "kirim kode otp kamu" });
+    expect(result.hardOverride).toBe(true);
+    expect(result.risk).toBe("tinggi");
+    expect(result.score).toBeGreaterThanOrEqual(70);
+  });
+
+  it("quotes the user's own words as evidence", () => {
+    const result = scoreText({ text: "kirim kode otp kamu sekarang" });
+    const otpSignal = result.signals.find((s) => s.label.includes("OTP"));
+    expect(otpSignal?.evidence.toLowerCase()).toContain("otp");
+  });
+
+  it("classifies the demo APK case and links to module 10", () => {
+    const result = scoreText({
+      text: "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim.",
+    });
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("apk-whatsapp");
+    expect(result.relatedModule).toBe(10);
+  });
+
+  it("scores the top-up case high without inventing an OTP claim", () => {
+    const result = scoreText({
+      text: "tugas like 10 video komisi Rp15.000. untuk lanjut, kakak perlu top up saldo Rp500.000 dulu",
+    });
+
+    // §11.6 claims 88/100 for this example; the engine currently measures 85.
+    // The claim, not the honesty, is what gets adjusted (§11.8).
+    expect(result.score).toBeGreaterThanOrEqual(70);
+    expect(result.score).toBeLessThanOrEqual(100);
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("lowongan-tugas-berbayar");
+
+    // No OTP was requested, so no OTP signal may be reported.
+    expect(result.hardOverride).toBe(false);
+    expect(result.signals.some((s) => s.label.includes("OTP"))).toBe(false);
+  });
+
+  it("stays inside the 2-second budget with no network (§11.8)", () => {
+    const started = performance.now();
+    scoreText({ text: "x".repeat(4000) });
+    expect(performance.now() - started).toBeLessThan(2000);
+  });
+});

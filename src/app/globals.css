@@ -1,0 +1,216 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  LUMINA DESIGN TOKENS — single source of truth.
+
+  Dark is not a taste decision: the red meter must read from the back of the
+  room during the demo (plan §4). No component may hardcode a colour.
+
+  CONTRACT NOTE (§9 "announce before changing the contract"):
+  the plan names one token `--accent` (#37d6a0, safe). shadcn/ui already owns
+  `--accent` as its neutral hover surface, so reusing that name would turn
+  every component hover state green. The palette is therefore exposed under
+  `--lumina-*`, with Tailwind utilities (`bg-safe`, `text-danger`, ...). The
+  values are identical to the plan; only the namespacing differs.
+*/
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+
+  /* Lumina palette -> Tailwind utilities */
+  --color-bg: var(--lumina-bg);
+  --color-panel: var(--lumina-panel);
+  --color-panel-2: var(--lumina-panel-2);
+  --color-line: var(--lumina-line);
+  --color-txt: var(--lumina-txt);
+  --color-dim: var(--lumina-dim);
+  --color-safe: var(--lumina-safe);
+  --color-danger: var(--lumina-danger);
+  --color-warn: var(--lumina-warn);
+
+  /* shadcn/ui surface mappings */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* --- Lumina palette (plan §4) --- */
+  --lumina-bg: #0b0f14;
+  --lumina-panel: #121821;
+  --lumina-panel-2: #182130;
+  --lumina-line: #243043;
+  --lumina-txt: #e6edf6;
+  --lumina-dim: #8b9bb0;
+  --lumina-safe: #37d6a0;
+  --lumina-danger: #ff5d5d;
+  --lumina-warn: #ffb340;
+
+  /* --- shadcn/ui surfaces, derived from the palette above --- */
+  --background: var(--lumina-bg);
+  --foreground: var(--lumina-txt);
+  --card: var(--lumina-panel);
+  --card-foreground: var(--lumina-txt);
+  --popover: var(--lumina-panel-2);
+  --popover-foreground: var(--lumina-txt);
+  --primary: var(--lumina-txt);
+  --primary-foreground: var(--lumina-bg);
+  --secondary: var(--lumina-panel-2);
+  --secondary-foreground: var(--lumina-txt);
+  --muted: var(--lumina-panel-2);
+  --muted-foreground: var(--lumina-dim);
+  --accent: var(--lumina-panel-2);
+  --accent-foreground: var(--lumina-txt);
+  --destructive: var(--lumina-danger);
+  --border: var(--lumina-line);
+  --input: var(--lumina-line);
+  --ring: var(--lumina-safe);
+
+  --chart-1: var(--lumina-safe);
+  --chart-2: var(--lumina-warn);
+  --chart-3: var(--lumina-danger);
+  --chart-4: var(--lumina-dim);
+  --chart-5: var(--lumina-line);
+
+  --radius: 0.625rem;
+
+  --sidebar: var(--lumina-panel);
+  --sidebar-foreground: var(--lumina-txt);
+  --sidebar-primary: var(--lumina-safe);
+  --sidebar-primary-foreground: var(--lumina-bg);
+  --sidebar-accent: var(--lumina-panel-2);
+  --sidebar-accent-foreground: var(--lumina-txt);
+  --sidebar-border: var(--lumina-line);
+  --sidebar-ring: var(--lumina-safe);
+}
+
+.dark {
+  --background: var(--lumina-bg);
+  --foreground: var(--lumina-txt);
+  --card: var(--lumina-panel);
+  --card-foreground: var(--lumina-txt);
+  --popover: var(--lumina-panel-2);
+  --popover-foreground: var(--lumina-txt);
+  --primary: var(--lumina-txt);
+  --primary-foreground: var(--lumina-bg);
+  --secondary: var(--lumina-panel-2);
+  --secondary-foreground: var(--lumina-txt);
+  --muted: var(--lumina-panel-2);
+  --muted-foreground: var(--lumina-dim);
+  --accent: var(--lumina-panel-2);
+  --accent-foreground: var(--lumina-txt);
+  --destructive: var(--lumina-danger);
+  --border: var(--lumina-line);
+  --input: var(--lumina-line);
+  --ring: var(--lumina-safe);
+  --sidebar: var(--lumina-panel);
+  --sidebar-foreground: var(--lumina-txt);
+  --sidebar-primary: var(--lumina-safe);
+  --sidebar-primary-foreground: var(--lumina-bg);
+  --sidebar-accent: var(--lumina-panel-2);
+  --sidebar-accent-foreground: var(--lumina-txt);
+  --sidebar-border: var(--lumina-line);
+  --sidebar-ring: var(--lumina-safe);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* 16px floor on phones: the emergency page is used one-handed, at night. */
+    font-size: 1rem;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Every pressable element gives press feedback (plan: meter must feel physical). */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a[data-pressable] {
+    transition:
+      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 160ms ease-out,
+      border-color 160ms ease-out,
+      opacity 160ms ease-out;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not(:disabled):active,
+  a[data-pressable]:active {
+    transform: scale(0.97);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--lumina-safe);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    button:not(:disabled):active {
+      transform: none;
+    }
+  }
+}
+
+/* Tabular figures for scores, timers and meters: digits must not jitter. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

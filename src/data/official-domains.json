@@ -1,0 +1,65 @@
+[
+  { "domain": "bca.co.id", "brand": "BCA", "kind": "bank" },
+  { "domain": "klikbca.com", "brand": "BCA", "kind": "bank" },
+  { "domain": "bri.co.id", "brand": "BRI", "kind": "bank" },
+  { "domain": "ib.bri.co.id", "brand": "BRI", "kind": "bank" },
+  { "domain": "bankmandiri.co.id", "brand": "Mandiri", "kind": "bank" },
+  { "domain": "bni.co.id", "brand": "BNI", "kind": "bank" },
+  { "domain": "btn.co.id", "brand": "BTN", "kind": "bank" },
+  { "domain": "cimbniaga.co.id", "brand": "CIMB Niaga", "kind": "bank" },
+  { "domain": "permatabank.co.id", "brand": "Permata", "kind": "bank" },
+  { "domain": "danamon.co.id", "brand": "Danamon", "kind": "bank" },
+  { "domain": "bsi.co.id", "brand": "BSI", "kind": "bank" },
+  { "domain": "bankmega.co.id", "brand": "Mega", "kind": "bank" },
+  { "domain": "bca-syariah.co.id", "brand": "BCA Syariah", "kind": "bank" },
+  { "domain": "seabank.co.id", "brand": "SeaBank", "kind": "bank" },
+  { "domain": "jenius.com", "brand": "Jenius", "kind": "bank" },
+  { "domain": "blubybcadigital.id", "brand": "blu", "kind": "bank" },
+
+  { "domain": "gopay.co.id", "brand": "GoPay", "kind": "ewallet" },
+  { "domain": "ovo.id", "brand": "OVO", "kind": "ewallet" },
+  { "domain": "dana.id", "brand": "DANA", "kind": "ewallet" },
+  { "domain": "shopeepay.co.id", "brand": "ShopeePay", "kind": "ewallet" },
+  { "domain": "linkaja.id", "brand": "LinkAja", "kind": "ewallet" },
+  { "domain": "i.saku.co.id", "brand": "i.saku", "kind": "ewallet" },
+
+  { "domain": "shopee.co.id", "brand": "Shopee", "kind": "marketplace" },
+  { "domain": "tokopedia.com", "brand": "Tokopedia", "kind": "marketplace" },
+  { "domain": "lazada.co.id", "brand": "Lazada", "kind": "marketplace" },
+  { "domain": "bukalapak.com", "brand": "Bukalapak", "kind": "marketplace" },
+  { "domain": "blibli.com", "brand": "Blibli", "kind": "marketplace" },
+  { "domain": "tiktok.com", "brand": "TikTok Shop", "kind": "marketplace" },
+
+  { "domain": "ojk.go.id", "brand": "OJK", "kind": "instansi" },
+  {
+    "domain": "kominfo.go.id",
+    "brand": "Kementerian Komunikasi dan Digital",
+    "kind": "instansi"
+  },
+  {
+    "domain": "komdigi.go.id",
+    "brand": "Kementerian Komunikasi dan Digital",
+    "kind": "instansi"
+  },
+  { "domain": "bssn.go.id", "brand": "BSSN", "kind": "instansi" },
+  { "domain": "polri.go.id", "brand": "Polri", "kind": "instansi" },
+  { "domain": "kemenkeu.go.id", "brand": "Kemenkeu", "kind": "instansi" },
+  { "domain": "pajak.go.id", "brand": "DJP", "kind": "instansi" },
+  { "domain": "kemdikbud.go.id", "brand": "Kemendikbud", "kind": "instansi" },
+  { "domain": "cekrekening.id", "brand": "CekRekening.id", "kind": "instansi" },
+  { "domain": "iasc.ojk.go.id", "brand": "IASC", "kind": "instansi" },
+
+  { "domain": "jne.co.id", "brand": "JNE", "kind": "logistik" },
+  { "domain": "jnt.co.id", "brand": "J&T Express", "kind": "logistik" },
+  { "domain": "sicepat.com", "brand": "SiCepat", "kind": "logistik" },
+  {
+    "domain": "posindonesia.co.id",
+    "brand": "Pos Indonesia",
+    "kind": "logistik"
+  },
+  { "domain": "anteraja.id", "brand": "AnterAja", "kind": "logistik" },
+
+  { "domain": "telkomsel.com", "brand": "Telkomsel", "kind": "telecom" },
+  { "domain": "indosat.com", "brand": "Indosat", "kind": "telecom" },
+  { "domain": "xl.co.id", "brand": "XL", "kind": "telecom" }
+]
