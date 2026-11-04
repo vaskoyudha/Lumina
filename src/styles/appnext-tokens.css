@@ -52,11 +52,14 @@
     --appnext-page: 1280px;
 
     /* elevation */
-    --appnext-shadow-ambient: 0.06px 0.72px 0.73px -1.25px rgb(18 18 18 / 0.14),
+    --appnext-shadow-ambient:
+      0.06px 0.72px 0.73px -1.25px rgb(18 18 18 / 0.14),
       0.23px 2.75px 2.76px -2.5px rgb(18 18 18 / 0.13), 1px 12px 12.04px -3.75px
-        rgb(18 18 18 / 0.05);
-    --appnext-shadow-soft: 0 0.6px 1.57px -1.5px rgb(0 0 0 / 0.17), 0 2.29px
-        5.95px -3px rgb(0 0 0 / 0.14), 0 10px 26px -4.5px rgb(0 0 0 / 0.02);
+      rgb(18 18 18 / 0.05);
+    --appnext-shadow-soft:
+      0 0.6px 1.57px -1.5px rgb(0 0 0 / 0.17),
+      0 2.29px 5.95px -3px rgb(0 0 0 / 0.14),
+      0 10px 26px -4.5px rgb(0 0 0 / 0.02);
     --appnext-shadow-ring: 0 0 0 1px #000 inset;
 
     /* type */
