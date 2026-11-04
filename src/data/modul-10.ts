@@ -48,7 +48,10 @@ export const MODUL_10: ModuleContent = {
   ],
   contohJudul: "Contoh pesan (dianonimkan) — bagian merah yang berbahaya",
   contohPesan: [
-    { text: "Selamat siang Bapak/Ibu, kami dari ekspedisi. ", berbahaya: false },
+    {
+      text: "Selamat siang Bapak/Ibu, kami dari ekspedisi. ",
+      berbahaya: false,
+    },
     {
       text: "Paket Anda tertahan, silakan cek resi di aplikasi ini: ",
       berbahaya: true,
@@ -92,7 +95,8 @@ export const MODUL_10: ModuleContent = {
         { id: "a", label: "Instal, supaya paket cepat sampai" },
         {
           id: "b",
-          label: "Cek resi lewat aplikasi resmi ekspedisi atau marketplace, abaikan file itu",
+          label:
+            "Cek resi lewat aplikasi resmi ekspedisi atau marketplace, abaikan file itu",
         },
         { id: "c", label: "Balas chat dan minta kurir datang langsung" },
       ],
@@ -109,7 +113,8 @@ export const MODUL_10: ModuleContent = {
         { id: "b", label: "Teruskan ke grup keluarga supaya semua tahu" },
         {
           id: "c",
-          label: "Telepon kakakmu lewat nomor biasa dan tanya dulu sebelum menyentuh file itu",
+          label:
+            "Telepon kakakmu lewat nomor biasa dan tanya dulu sebelum menyentuh file itu",
         },
       ],
       correctId: "c",

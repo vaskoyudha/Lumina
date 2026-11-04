@@ -18,7 +18,8 @@ jest.mock("next/link", () => {
 const QUESTIONS: QuizQuestion[] = [
   {
     id: "q1",
-    prompt: "Nomor asing kirim Undangan-Pernikahan.apk. Apa yang kamu lakukan sekarang?",
+    prompt:
+      "Nomor asing kirim Undangan-Pernikahan.apk. Apa yang kamu lakukan sekarang?",
     options: [
       { id: "a", label: "Buka, mungkin dari kerabat" },
       { id: "b", label: "Instal dan buka undangan" },
@@ -33,7 +34,10 @@ const QUESTIONS: QuizQuestion[] = [
     prompt: "Sudah terlanjur instal APK itu. Apa yang kamu lakukan sekarang?",
     options: [
       { id: "a", label: "Diamkan, mungkin tidak terjadi apa-apa" },
-      { id: "b", label: "Matikan data, hapus aplikasi, cek mutasi, hubungi bank" },
+      {
+        id: "b",
+        label: "Matikan data, hapus aplikasi, cek mutasi, hubungi bank",
+      },
       { id: "c", label: "Terus pakai HP seperti biasa" },
     ],
     correctId: "b",
@@ -71,13 +75,17 @@ describe("Quiz", () => {
 
     await user.click(screen.getByRole("button", { name: /instal dan buka/i }));
 
-    expect(screen.getByText(/di luar play store bisa mencuri/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/di luar play store bisa mencuri/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/soal 1 dari 3/i)).toBeInTheDocument();
     // Answer is locked: clicking another option changes nothing.
     await user.click(
       screen.getByRole("button", { name: /hapus, jangan instal/i }),
     );
-    expect(screen.getByText(/di luar play store bisa mencuri/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/di luar play store bisa mencuri/i),
+    ).toBeInTheDocument();
   });
 
   it("advances after a correct answer and reports the score in the summary", async () => {

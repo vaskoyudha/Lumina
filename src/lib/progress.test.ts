@@ -4,8 +4,8 @@ import {
   EMPTY_PROGRESS,
   loadProgress,
   ProgressSchema,
-  saveProgress,
   STORAGE_KEY,
+  saveProgress,
 } from "@/lib/progress";
 
 describe("progress", () => {
@@ -29,7 +29,13 @@ describe("progress", () => {
   it("returns the empty state when the stored shape is invalid", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: 1, completedModules: ["sepuluh"], badges: [], missedPatterns: [], updatedAt: "x" }),
+      JSON.stringify({
+        version: 1,
+        completedModules: ["sepuluh"],
+        badges: [],
+        missedPatterns: [],
+        updatedAt: "x",
+      }),
     );
     expect(loadProgress()).toEqual(EMPTY_PROGRESS);
   });
@@ -58,7 +64,11 @@ describe("progress", () => {
 
   it("rejects module numbers outside 1..12 in the schema", () => {
     const base = { version: 1, badges: [], missedPatterns: [], updatedAt: "x" };
-    expect(ProgressSchema.safeParse({ ...base, completedModules: [0] }).success).toBe(false);
-    expect(ProgressSchema.safeParse({ ...base, completedModules: [13] }).success).toBe(false);
+    expect(
+      ProgressSchema.safeParse({ ...base, completedModules: [0] }).success,
+    ).toBe(false);
+    expect(
+      ProgressSchema.safeParse({ ...base, completedModules: [13] }).success,
+    ).toBe(false);
   });
 });

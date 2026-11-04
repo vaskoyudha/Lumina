@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompleteButton } from "@/components/belajar/complete-button";
+import { Quiz } from "@/components/belajar/quiz";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,8 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CompleteButton } from "@/components/belajar/complete-button";
-import { Quiz } from "@/components/belajar/quiz";
 import type { ModuleContent } from "@/data/modul-10";
 
 /**
@@ -94,7 +94,10 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           <ul className="flex flex-col gap-2.5">
             {modul.checklist.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm">
-                <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-danger" />
+                <span
+                  aria-hidden
+                  className="mt-1.5 size-1.5 shrink-0 rounded-full bg-danger"
+                />
                 <span>{item}</span>
               </li>
             ))}
@@ -118,7 +121,9 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
       <Card>
         <CardHeader>
           <CardTitle>Kalau ini sudah terlanjur terjadi</CardTitle>
-          <CardDescription>Urutan ini penting — jangan dibalik.</CardDescription>
+          <CardDescription>
+            Urutan ini penting — jangan dibalik.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ol className="flex flex-col gap-3">

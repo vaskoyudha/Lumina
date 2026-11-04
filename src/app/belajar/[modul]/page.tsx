@@ -2,9 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ModulBody } from "@/components/belajar/modul-body";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
-import { ModulBody } from "@/components/belajar/modul-body";
 import { MODUL_10 } from "@/data/modul-10";
 import { formattedLaporan, MODUS, MODUS_BY_NO } from "@/lib/modus";
 

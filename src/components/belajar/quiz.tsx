@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "cn";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "cn";
 
 export interface QuizOption {
   id: string;
@@ -106,10 +106,13 @@ export function Quiz({ questions, onDone }: QuizProps) {
 
   return (
     <div key={`${retries}-${index}`} className="flex min-w-0 flex-col gap-3">
-      <p className="tabular text-dim text-xs" role="status">
+      <output className="tabular text-dim text-xs">
         Soal {index + 1} dari {total}
-      </p>
-      <Progress value={((index + 1) / total) * 100} aria-label="Kemajuan kuis" />
+      </output>
+      <Progress
+        value={((index + 1) / total) * 100}
+        aria-label="Kemajuan kuis"
+      />
       <h3 className="font-medium text-base text-txt">{question.prompt}</h3>
       <div className="flex flex-col gap-2">
         {question.options.map((option) => {
@@ -127,7 +130,9 @@ export function Quiz({ questions, onDone }: QuizProps) {
               className={cn(
                 "h-auto min-h-11 justify-start whitespace-normal px-3 py-2.5 text-left",
                 locked && isCorrect && "border-safe/50 bg-safe/10 text-safe",
-                locked && isPicked && !isCorrect &&
+                locked &&
+                  isPicked &&
+                  !isCorrect &&
                   "border-danger/50 bg-danger/10 text-danger",
               )}
             >
