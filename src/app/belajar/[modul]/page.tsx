@@ -4,12 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
+import { ModulBody } from "@/components/belajar/modul-body";
+import { MODUL_10 } from "@/data/modul-10";
 import { formattedLaporan, MODUS, MODUS_BY_NO } from "@/lib/modus";
 
 /**
- * Stream B's module detail route. The shell is here so Gate 0 passes and the
- * companion's "Pelajari pola ini" link resolves; the lesson body is B's to
- * write. It says so plainly instead of rendering fake lesson text.
+ * Stream B's module detail route. Module 10 is fully written (anatomy,
+ * example, checklist, quiz, reporting steps); the other eleven say "segera"
+ * honestly instead of rendering fake lesson text (§5, §9d).
  */
 
 export const metadata: Metadata = { title: "Modul" };
@@ -79,22 +81,22 @@ export default async function ModulPage({
         </div>
       </dl>
 
-      <div className="mt-8 rounded-lg border border-line bg-panel p-6">
-        <Empty>
-          <EmptyTitle>
-            {ready
-              ? "Isi modul sedang ditulis (Stream B)"
-              : "Modul ini belum ditulis"}
-          </EmptyTitle>
-          <EmptyDescription>
-            {ready
-              ? "Struktur yang disepakati: anatomi langkah 1–5, contoh pesan Indonesia, checklist 5 tanda bahaya, kuis 3–5 soal dengan penjelasan, lalu langkah lapor."
-              : 'Statusnya "segera", bukan stub kosong. Kami lebih memilih mengaku daripada menampilkan modul setengah jadi.'}
-          </EmptyDescription>
-        </Empty>
-      </div>
+      {entry.no === 10 ? (
+        <ModulBody modul={MODUL_10} />
+      ) : (
+        <div className="mt-8 rounded-lg border border-line bg-panel p-6">
+          <Empty>
+            <EmptyTitle>Modul ini belum ditulis</EmptyTitle>
+            <EmptyDescription>
+              Statusnya "segera", bukan stub kosong. Kami lebih memilih mengaku
+              daripada menampilkan modul setengah jadi.
+            </EmptyDescription>
+          </Empty>
+        </div>
+      )}
 
-      {entry.scenarioId ? (
+      {/* Non-10 modules keep the placeholder scenario link behaviour below. */}
+      {entry.no !== 10 && entry.scenarioId ? (
         <Link
           href={`/simulasi/${entry.scenarioId}`}
           data-pressable
