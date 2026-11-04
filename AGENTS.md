@@ -81,6 +81,27 @@ npm run lint:fix     # biome, menulis
 `npm run verify` harus lulus sebelum commit. Kalau gagal, perbaiki — jangan
 melewati gate.
 
+## Skills
+
+Skill tinggal di **`.agents/skills/`** — lokasi netral yang dibaca OpenCode,
+Claude Code, Codex, Hermes, dan harness lain. `.opencode/skills/<nama>` adalah
+symlink ke sana, bukan salinan.
+
+```
+.agents/skills/lumina-ui/SKILL.md    aturan visual + token + batas demo
+.agents/skills/shadcn-ui/SKILL.md    konfigurasi shadcn proyek ini
+```
+
+Aturannya: **sunting `.agents/skills/`**, jangan `.opencode/skills/` — yang kedua
+mengikuti yang pertama. Kalau menambah skill baru, buat di `.agents/skills/` lalu
+
+```bash
+ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
+```
+
+Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
+dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
+
 ## Layout
 
 ```
