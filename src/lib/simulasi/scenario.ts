@@ -130,7 +130,28 @@ export const L1_KURIR_APK: Scenario = {
       type: "message",
       speaker: "Catatan perangkat",
       text: "APK meminta membaca SMS dan mengaktifkan layanan aksesibilitas. Kamu belum memasukkan OTP atau kata sandi.",
-      next: "report",
+      next: "otp-decision",
+    },
+    {
+      id: "otp-decision",
+      type: "choice",
+      prompt:
+        "Pengirim meminta kode OTP untuk mengonfirmasi paket. Apa yang kamu lakukan?",
+      choices: [
+        {
+          label: "Kirim kode OTP agar paket diproses",
+          verdict: "salah",
+          rationale:
+            "OTP memberi akses ke akun atau transaksi. Kurir tidak memerlukannya; jangan bagikan kode itu kepada siapa pun.",
+          panic: 55,
+          next: "report",
+        },
+        {
+          label: "Jangan bagikan OTP; hubungi kurir lewat kanal resmi",
+          verdict: "benar",
+          next: "report",
+        },
+      ],
     },
     {
       id: "report",

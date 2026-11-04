@@ -26,9 +26,10 @@ export default function SimulasiPage() {
           Berlatih di bawah tekanan
         </h1>
         <p className="mt-2 text-dim text-sm">
-          Satu skenario yang bisa dimainkan sekarang. Meter panik naik saat kamu
-          berpikir, dan jawaban salah langsung dijelaskan tanpa memblokir
-          cerita.
+          Satu skenario yang bisa dimainkan sekarang: dua meter (panik naik
+          setelah pilihan berisiko; intrusi naik saat menunggu di keputusan),
+          tiga alat interaktif, tanpa hitung mundur. Jawaban salah dijelaskan
+          dan cerita berlanjut.
         </p>
       </header>
 
@@ -49,7 +50,7 @@ export default function SimulasiPage() {
                     Level {m.level} · {m.nama}
                   </span>
                   <span className="mt-0.5 block text-dim text-xs">
-                    7 menit · tiga tool deck · dua jalur gagal
+                    Dua meter · tiga alat interaktif · tanpa hitung mundur
                   </span>
                 </span>
                 <Badge variant="secondary" className="text-safe">

@@ -63,6 +63,7 @@ export function Runner() {
   const [panic, setPanic] = useState(SCENARIO.hud.panic.start);
   const [intrusion, setIntrusion] = useState(SCENARIO.hud.intrusion.start);
   const [rationale, setRationale] = useState<string | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
   const [isolated, setIsolated] = useState(false);
   const [permissionsRevoked, setPermissionsRevoked] = useState(false);
   const [reportArtifacts, setReportArtifacts] = useState<ReportArtifact[]>([]);
@@ -70,7 +71,7 @@ export function Runner() {
   const activeNode = SCENARIO.nodes.find((node) => node.id === activeId);
 
   useEffect(() => {
-    if (activeNode?.type !== "choice" || isolated) return;
+    if (activeNode?.type !== "choice" || isolated || failure) return;
     const interval = window.setInterval(() => {
       setIntrusion((current) =>
         Math.min(
@@ -80,7 +81,13 @@ export function Runner() {
       );
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [activeNode, isolated]);
+  }, [activeNode, failure, isolated]);
+
+  useEffect(() => {
+    if (intrusion >= SCENARIO.hud.intrusion.max) {
+      setFailure(SCENARIO.hud.intrusion.fail_message);
+    }
+  }, [intrusion]);
 
   function advance(next: string) {
     setActiveId(next);
@@ -93,10 +100,16 @@ export function Runner() {
     const choice = node.choices[choiceIndex];
     if (!choice) return;
     if (choice.verdict === "salah") {
-      setPanic((current) =>
-        Math.min(SCENARIO.hud.panic.max, current + (choice.panic ?? 15)),
+      const nextPanic = Math.min(
+        SCENARIO.hud.panic.max,
+        panic + (choice.panic ?? 15),
       );
+      setPanic(nextPanic);
       setRationale(choice.rationale ?? null);
+      if (nextPanic >= SCENARIO.hud.panic.fail_at) {
+        setFailure(SCENARIO.hud.panic.fail_message);
+        return;
+      }
     } else {
       setRationale(null);
     }
@@ -109,6 +122,7 @@ export function Runner() {
     setPanic(SCENARIO.hud.panic.start);
     setIntrusion(SCENARIO.hud.intrusion.start);
     setRationale(null);
+    setFailure(null);
     setIsolated(false);
     setPermissionsRevoked(false);
     setReportArtifacts([]);
@@ -134,6 +148,28 @@ export function Runner() {
         <AlertTitle>Skenario tidak tersedia</AlertTitle>
       </Alert>
     );
+
+  if (failure) {
+    return (
+      <Card>
+        <CardHeader>
+          <Badge variant="destructive" className="w-fit">
+            Simulasi berhenti
+          </Badge>
+          <CardTitle className="text-2xl">Interaksi dihentikan</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Alert variant="destructive">
+            <AlertTitle>Ambil langkah aman</AlertTitle>
+            <AlertDescription>{failure}</AlertDescription>
+          </Alert>
+          <Button data-pressable className="w-fit" onClick={reset}>
+            Ulangi simulasi
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (activeNode.type === "ending") {
     return (
