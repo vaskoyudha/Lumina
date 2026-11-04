@@ -43,10 +43,20 @@ a. **D · EvidenceBundle → PDF.** Saya kirim bentuk `EvidenceBundle` (boleh
 b. **B · `modul` numbering tetap.** Saya mengirim `relatedModule` sebagai
    nomor 1..12 dari `modus.json`. Kalau B memakai slug, beri tahu sebelum
    commit — kontraknya berubah.
-c. **Semua · keputusan privasi LLM.** Titik paling rawan (§11.7): konten
-   pengguna tidak boleh dikirim ke AI pihak ketiga. Default saya: **kirim hanya
-   sinyal** (label + bobot + id modus), bukan teks mentah. Kalau ada yang mau
-   mengubah, bawa ke grup sebelum hari ke-2.
+c. **Tidak ada dari stream lain.** Semua kebutuhan A sudah tersedia.
+
+### Keputusan terbuka milik A (bukan blocker tim)
+
+**Privasi LLM** (§11.7): apakah teks pengguna ikut dikirim ke model. Ini milik
+Stream A, diputuskan sebelum lapisan percakapan ditulis. Tiga pilihan:
+
+| Opsi | Yang dikirim | Konsekuensi |
+|---|---|---|
+| a. sinyal saja | label + bobot + id modus | janji proposal utuh; balasan lebih datar |
+| b. teks pesan | pesan mentah + pemberitahuan | demo lebih hidup; klaim privasi harus diucapkan ulang |
+| c. tanpa LLM | tidak ada | janji utuh; balasan template |
+
+Belum diputuskan.
 
 ## 4. Selesai berarti
 

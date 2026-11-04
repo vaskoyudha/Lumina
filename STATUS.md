@@ -35,15 +35,15 @@ i. 19 test Jest yang merender komponen React sungguhan.
 | `validate.ts` untuk skenario | C | edge rusak = layar kosong saat demo |
 | `pdf.ts` + `ReportPreview` | D | `@react-pdf/renderer` sudah terpasang |
 
-## Dua hal yang perlu diputuskan sebelum kode berikutnya
+## Yang memblokir stream lain
 
 a. **Sumber FIRST90.** Rencana menunjuk `/root/FIRST90/app/` dan
    `design/scenario.level1.json`. Keduanya tidak ada di mesin ini. Stream C
    harus memulihkannya, atau Level 1 dibangun dari skema kontrak di
-   `docs/plan.md` §3.
-b. **Privasi LLM.** Default yang diusulkan di `docs/plans/stream-A.md`: kirim
-   hanya sinyal (label, bobot, id modus), bukan teks pengguna. Ini janji yang
-   mengikat (§11.7), jadi harus disepakati sebelum lapisan percakapan ditulis.
+   `docs/plan.md` §4.
+
+Privasi LLM bukan blocker lintas stream: itu keputusan Stream A, dicatat sebagai
+item terbuka di `docs/plans/stream-A.md`.
 
 ## Catatan kejujuran
 
