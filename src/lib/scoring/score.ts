@@ -1,11 +1,17 @@
+import {
+  type AgentStage,
+  type AgentTrace,
+  STAGE_LABEL,
+  type StageId,
+} from "@/lib/contracts/agent-run";
 import { riskFor, type ScoreResult, type Signal } from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
-import { linkSignals } from "@/lib/scoring/link";
+import { conversationSignals } from "@/lib/scoring/conversation";
+import { extractLinks, linkSignals } from "@/lib/scoring/link";
 import {
   detectMessage,
   HARD_RULES,
   messageSignals,
-  type RuleHit,
 } from "@/lib/scoring/message";
 
 /**
@@ -13,6 +19,10 @@ import {
  *
  * The LLM is the voice, not the judge (plan §3). Nothing in `companion/`
  * may compute or adjust `score`, `risk`, or `signals`.
+ *
+ * Structure: one ordered detector list drives both public functions, so the
+ * verdict and the trace cannot drift. `scoreWithTrace` measures; `finalize`
+ * scores. A detector never returns a number that reaches the user directly.
  */
 
 /** Probabilistic OR: independent findings accumulate, never exceed 100. */
@@ -33,102 +43,6 @@ function dedupe(signals: Signal[]): Signal[] {
     if (!existing || s.weight > existing.weight) byLabel.set(s.label, s);
   }
   return [...byLabel.values()];
-}
-
-/**
- * Combination pass (note 01 §a, the highest-value idea in that survey).
- *
- * `accumulate` is a probabilistic OR, which treats every finding as
- * independent. Two *correlated* findings — "act within 2 hours" and "transfer
- * the fee" — therefore drift toward a band threshold without anything on the
- * panel explaining why they belong together. The references surveyed in note
- * 01 make "several vectors agree" its own explicit finding; this is that pass,
- * and it is the Conversation Agent's first real mechanism.
- *
- * Precision comes from the gate, not from the weight: a vector only counts
- * when the rule that reported it already fired at 0.5 or above, and the
- * money vector is only ever set by rules that name an actual demand (a fee, a
- * top-up loop, an off-marketplace transfer, a QRIS sticker). A legitimate
- * "tagihan jatuh tempo, bayar via VA" carries no rule hit at all, so it can
- * never reach a combo.
- */
-type Vector = "clock" | "money" | "secret" | "prize";
-
-const VECTOR_BY_RULE: Readonly<Record<string, Vector>> = {
-  urgency: "clock",
-  "block-threat": "clock",
-  "admin-fee": "money",
-  "topup-loop": "money",
-  "off-marketplace": "money",
-  quishing: "money",
-  "otp-request": "secret",
-  apk: "secret",
-  secrecy: "secret",
-  prize: "prize",
-};
-
-/** Below this resolved weight a rule is context, not a live vector. */
-const VECTOR_FLOOR = 0.5;
-
-interface Combo {
-  /** First vector supplies the quote; the second is what the demand is. */
-  vectors: readonly [Vector, Vector];
-  weight: number;
-  label: string;
-}
-
-/** Most specific first: the first combo whose vectors are both live wins. */
-const COMBOS: readonly Combo[] = [
-  {
-    vectors: ["prize", "money"],
-    weight: 0.35,
-    label:
-      "Menjanjikan hadiah tetapi meminta pembayaran lebih dulu — hadiah asli tidak pernah memungut biaya",
-  },
-  {
-    vectors: ["clock", "money"],
-    weight: 0.3,
-    label:
-      "Mendesak sekaligus meminta uang — batas waktu dipakai supaya korban transfer sebelum sempat memeriksa",
-  },
-  {
-    vectors: ["clock", "secret"],
-    weight: 0.3,
-    label:
-      "Mendesak sekaligus meminta kode atau berkas rahasia — dua-duanya sekaligus bukan prosedur siapa pun",
-  },
-  {
-    vectors: ["secret", "money"],
-    weight: 0.3,
-    label:
-      "Menyuruh merahasiakan transaksi uang — bank dan marketplace tidak pernah meminta itu",
-  },
-];
-
-function combinationSignal(hits: readonly RuleHit[]): Signal | null {
-  const live = new Map<Vector, string>();
-  for (const hit of hits) {
-    if (hit.weight < VECTOR_FLOOR) continue;
-    const vector = VECTOR_BY_RULE[hit.rule.id];
-    if (vector && !live.has(vector)) live.set(vector, hit.evidence);
-  }
-
-  for (const combo of COMBOS) {
-    const [setup, demand] = combo.vectors;
-    const evidence = live.get(setup);
-    const other = live.get(demand);
-    if (evidence !== undefined && other !== undefined) {
-      return {
-        label: combo.label,
-        weight: combo.weight,
-        // The setup quote is the one the reader can see; the label explains
-        // what it is paired with.
-        evidence,
-        agent: "conversation",
-      };
-    }
-  }
-  return null;
 }
 
 const MODUS_KEYWORDS: ReadonlyArray<{ modus: string; pattern: RegExp }> = [
@@ -265,29 +179,74 @@ const ADVICE: Record<string, string[]> = {
   ],
 };
 
+/** A previous user turn, used only by the Conversation Agent. */
+export interface ScoredTurn {
+  text: string;
+}
+
 export interface ScoreInput {
   text: string;
   /** Optional pre-parsed signals (e.g. from an Identity Agent); merged in. */
   extraSignals?: Signal[];
+  /** Prior user texts in this conversation, oldest first. */
+  turns?: readonly ScoredTurn[];
 }
 
-export function scoreText({
-  text,
-  extraSignals = [],
-}: ScoreInput): ScoreResult {
+interface DetectorContext {
+  text: string;
+  turns: readonly ScoredTurn[];
+}
+
+interface DetectorResult {
+  signals: Signal[];
+  /** Set only when the detector had nothing to inspect. Never a soft excuse. */
+  note?: string;
+}
+
+type DetectorId = Exclude<StageId, "evidence" | "scoring" | "voice">;
+
+/** The pipeline, in evaluation order. Both public functions drive this list. */
+const DETECTORS: readonly {
+  id: DetectorId;
+  run: (ctx: DetectorContext) => DetectorResult;
+}[] = [
+  {
+    id: "message",
+    run: ({ text }) => ({ signals: messageSignals(text) }),
+  },
+  {
+    id: "link",
+    run: ({ text }) => {
+      const links = extractLinks(text);
+      return {
+        signals: linkSignals(text),
+        note: links.length === 0 ? "Tidak ada tautan pada pesan ini." : undefined,
+      };
+    },
+  },
+  {
+    id: "conversation",
+    run: ({ text }) => conversationSignals(text),
+  },
+];
+
+/**
+ * The only scorer.
+ *
+ * `detectorSignals` is what the pipeline collected; `extraSignals` is what a
+ * caller supplied. Everything below this line is the verdict.
+ */
+function finalize(
+  text: string,
+  detectorSignals: readonly Signal[],
+  extraSignals: readonly Signal[],
+): ScoreResult {
   const trimmed = text.trim();
 
   const hits = detectMessage(trimmed);
   const hardHit = hits.some((h) => HARD_RULES.has(h.rule.id));
-  const combo = combinationSignal(hits);
 
-  const merged = dedupe([
-    ...messageSignals(trimmed),
-    ...linkSignals(trimmed),
-    ...extraSignals,
-    ...(combo ? [combo] : []),
-  ]);
-
+  const merged = dedupe([...detectorSignals, ...extraSignals]);
   const sorted = [...merged].sort((a, b) => b.weight - a.weight);
 
   // Honest empty state: one signal that says nothing was found.
@@ -320,6 +279,80 @@ export function scoreText({
     relatedModule,
     hardOverride: hardHit,
   };
+}
+
+export interface TracedScore {
+  result: ScoreResult;
+  trace: AgentTrace;
+}
+
+/**
+ * Run the pipeline and record what it did.
+ *
+ * This function measures; it never scores. `finalize` remains the only place
+ * `score`, `risk`, and `signals` are produced.
+ */
+export function scoreWithTrace(input: ScoreInput): TracedScore {
+  const text = input.text.trim();
+  const ctx: DetectorContext = { text, turns: input.turns ?? [] };
+
+  const stages: AgentStage[] = [];
+  const collected: Signal[] = [];
+  const startedAt = performance.now();
+
+  for (const detector of DETECTORS) {
+    const started = performance.now();
+    const { signals, note } = detector.run(ctx);
+    collected.push(...signals);
+    stages.push({
+      id: detector.id,
+      ...STAGE_LABEL[detector.id],
+      status: "selesai",
+      findings: signals.length,
+      ms: performance.now() - started,
+      note,
+    });
+  }
+
+  const scoringStarted = performance.now();
+  const result = finalize(text, collected, input.extraSignals ?? []);
+  stages.push({
+    id: "scoring",
+    ...STAGE_LABEL.scoring,
+    status: "selesai",
+    findings: 0,
+    ms: performance.now() - scoringStarted,
+  });
+
+  /*
+   * Re-count against the surviving, de-duplicated result, so the numbers a
+   * user reads add up to the signals they can see. Two details matter:
+   *
+   * a. The orchestrator owns no findings — it combines the detectors'. Counting
+   *    by `agent` alone would hand it the weight-0 "nothing recognised"
+   *    placeholder and report a finding where there is none.
+   * b. A stage that produced nothing *and* explained why is `dilewati`, not
+   *    `selesai`: a clean tick over work that never happened is the exact
+   *    dishonesty `AGENTS.md` §a forbids.
+   */
+  for (const stage of stages) {
+    stage.findings = result.signals.filter(
+      (signal) =>
+        signal.weight > 0 && (signal.agent ?? "scoring") === stage.id,
+    ).length;
+    stage.status =
+      stage.findings > 0 ? "temuan" : stage.note ? "dilewati" : "selesai";
+  }
+
+  return {
+    result,
+    trace: { stages, totalMs: performance.now() - startedAt },
+  };
+}
+
+/** The verdict alone. Delegates, so the two can never disagree. */
+export function scoreText(input: ScoreInput): ScoreResult {
+  return scoreWithTrace(input).result;
 }
 
 /** Convenience for Stream B: does this module exist for a given score? */
