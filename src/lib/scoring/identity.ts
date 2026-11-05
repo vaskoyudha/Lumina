@@ -70,30 +70,30 @@ export function identitySignals(text: string): IdentityResult {
   const brands = claimedBrands(text);
 
   if (brands.length > 0 && mobile.length > 0) {
-    const brand = brands[0];
+    const brand = brands[0] ?? "";
     signals.push({
       label: `Mengaku dari ${brand} tapi nomornya ponsel biasa, bukan kanal resmi`,
       weight: 0.55,
-      evidence: mobile[0],
+      evidence: mobile[0] ?? "",
       agent: "identity",
     });
   }
 
   if (brands.length > 0 && foreign.length > 0) {
-    const brand = brands[0];
+    const brand = brands[0] ?? "";
     signals.push({
       label: `Nomor asing mengaku dari ${brand} — institusi Indonesia tidak menelepon dari nomor luar`,
       weight: 0.6,
-      evidence: foreign[0],
+      evidence: foreign[0] ?? "",
       agent: "identity",
     });
   }
 
   if (brands.length > 0 && shortcode) {
     signals.push({
-      label: `Nomor singkat mengaku dari ${brands[0]} — cocokkan dengan nomor resmi di belakang kartu`,
+      label: `Nomor singkat mengaku dari ${brands[0] ?? ""} — cocokkan dengan nomor resmi di belakang kartu`,
       weight: 0.5,
-      evidence: shortcode[0],
+      evidence: shortcode[0] ?? "",
       agent: "identity",
     });
   }

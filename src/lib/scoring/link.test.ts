@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { classifyLink } from "./link";
+import { classifyLink, linkSignals } from "./link";
 
 /**
  * Regression evidence for the false-positive / missed-catch analysis of
@@ -57,5 +57,39 @@ describe("link classification — measured defect regressions", () => {
     // because "bca" sits inside innocent words like "herbal". Appended
     // fakes are covered (above), infixed ones are not.
     expect(classifyLink("hellobcash.my.id")?.kind).not.toBe("typosquat");
+  });
+});
+
+describe("Link Agent — structural additions", () => {
+  it("flags a punycode host", () => {
+    // \u0441 is CYRILLIC SMALL LETTER ES, not Latin "c". The WHATWG URL parser
+    // converts it to xn--ba-omc.xyz, which is exactly the disguise in the wild.
+    const [signal] = linkSignals("Buka https://b\u0441a.xyz/masuk");
+    expect(signal?.label).toMatch(/punycode|aksara/i);
+  });
+
+  it("flags an already-encoded punycode host", () => {
+    const [signal] = linkSignals("Buka https://xn--ba-omc.xyz/masuk");
+    expect(signal?.label).toMatch(/punycode|aksara/i);
+  });
+
+  it("flags a credential path on a non-official host", () => {
+    const [signal] = linkSignals(
+      "Login di https://aman-sekali.xyz/verifikasi?token=1",
+    );
+    expect(signal?.label).toMatch(/login|verifikasi|kredensial/i);
+  });
+
+  it("flags a brand smuggled into a subdomain", () => {
+    const [signal] = linkSignals("Cek https://bca.klik-verifikasi.xyz");
+    expect(signal?.label).toMatch(/BCA/);
+  });
+
+  it("still resolves official domains before any of the above", () => {
+    expect(linkSignals("Buka https://ib.bri.co.id/login")).toEqual([]);
+  });
+
+  it("does not fire a credential path on an ordinary official page", () => {
+    expect(linkSignals("https://www.tokopedia.com/login")).toEqual([]);
   });
 });
