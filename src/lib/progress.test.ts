@@ -3,7 +3,9 @@ import {
   completeModule,
   EMPTY_PROGRESS,
   loadProgress,
+  PROGRESS_EVENT,
   ProgressSchema,
+  recordMissed,
   STORAGE_KEY,
   saveProgress,
 } from "@/lib/progress";
@@ -62,13 +64,31 @@ describe("progress", () => {
     expect(p.badges).toEqual([]);
   });
 
-  it("rejects module numbers outside 1..12 in the schema", () => {
+  it("records missed patterns without duplicates, preserving order", () => {
+    const first = recordMissed(loadProgress(), ["apk-q1", "apk-q3"]);
+    const second = recordMissed(first, ["apk-q3", "apk-q2"]);
+    expect(second.missedPatterns).toEqual(["apk-q1", "apk-q3", "apk-q2"]);
+  });
+
+  it("announces each write so sibling islands can re-read", () => {
+    const listener = jest.fn();
+    window.addEventListener(PROGRESS_EVENT, listener);
+    saveProgress(loadProgress());
+    window.removeEventListener(PROGRESS_EVENT, listener);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts course numbers beyond the original twelve, rejects 0 and 100", () => {
     const base = { version: 1, badges: [], missedPatterns: [], updatedAt: "x" };
     expect(
       ProgressSchema.safeParse({ ...base, completedModules: [0] }).success,
     ).toBe(false);
+    // Admin may add courses past 12; progress must survive those numbers.
     expect(
-      ProgressSchema.safeParse({ ...base, completedModules: [13] }).success,
+      ProgressSchema.safeParse({ ...base, completedModules: [13, 27] }).success,
+    ).toBe(true);
+    expect(
+      ProgressSchema.safeParse({ ...base, completedModules: [100] }).success,
     ).toBe(false);
   });
 });

@@ -1,28 +1,21 @@
-import type { QuizQuestion } from "@/components/belajar/quiz";
+import type {
+  ContohSegment,
+  ModuleContent,
+  QuizQuestion,
+} from "@/data/modul-schema";
 
 /**
  * Modul 10 — File APK via WhatsApp. The one fully written module (§5-B step 2,
  * §11.2 build order). Content is anonymised Indonesian; no real names or
  * numbers. Written against the anatomy/checklist/quiz/report shape in plan §5.
+ *
+ * The shape now lives in `modul-schema.ts` so the admin editor can validate a
+ * draft with the same rules; this file is the published instance of it.
  */
-export interface MessageSegment {
-  text: string;
-  /** Segment the learner should learn to distrust — rendered in danger colour. */
-  berbahaya: boolean;
-}
 
-export interface ModuleContent {
-  no: number;
-  anatomi: { judul: string; teks: string }[];
-  contohPesan: MessageSegment[];
-  contohJudul: string;
-  checklist: string[];
-  kuis: QuizQuestion[];
-  lapor: string[];
-  scenarioId: string | null;
-}
+export type { ContohSegment, ModuleContent, QuizQuestion };
 
-export const MODUL_10: ModuleContent = {
+export const MODUL_10 = {
   no: 10,
   anatomi: [
     {
@@ -47,7 +40,9 @@ export const MODUL_10: ModuleContent = {
     },
   ],
   contohJudul: "Contoh pesan (dianonimkan) — bagian merah yang berbahaya",
-  contohPesan: [
+  contohJenis: "pesan",
+  contohSumber: "Nomor tak dikenal · WhatsApp · baru saja",
+  contohIsi: [
     {
       text: "Selamat siang Bapak/Ibu, kami dari ekspedisi. ",
       berbahaya: false,
@@ -146,4 +141,4 @@ export const MODUL_10: ModuleContent = {
     "Laporkan nomor pelaku ke IASC (iasc.ojk.go.id) dan blokir nomornya di WhatsApp.",
   ],
   scenarioId: "L1-kurir-apk",
-};
+} satisfies ModuleContent;

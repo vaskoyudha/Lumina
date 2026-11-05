@@ -54,14 +54,17 @@ describe("ModulBody — modul 10", () => {
     const user = userEvent.setup();
     render(<ModulBody modul={MODUL_10} />);
 
-    // Q1–Q4, all correct (advance is automatic on a correct pick).
+    // Q1–Q4, all correct. A correct pick locks the question; advance is explicit.
     await user.click(
       screen.getByRole("button", { name: /hapus tanpa instal/i }),
     );
+    await user.click(screen.getByRole("button", { name: /soal berikutnya/i }));
     await user.click(
       screen.getByRole("button", { name: /cek resi lewat aplikasi resmi/i }),
     );
+    await user.click(screen.getByRole("button", { name: /soal berikutnya/i }));
     await user.click(screen.getByRole("button", { name: /telepon kakakmu/i }));
+    await user.click(screen.getByRole("button", { name: /soal berikutnya/i }));
     await user.click(
       screen.getByRole("button", { name: /matikan data\/wi-fi/i }),
     );
@@ -76,5 +79,115 @@ describe("ModulBody — modul 10", () => {
     const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
     expect(stored.completedModules).toContain(10);
     expect(stored.badges).toContain("penjaga-apk");
+  });
+
+  it("records the patterns missed in the quiz instead of discarding them", async () => {
+    const user = userEvent.setup();
+    render(<ModulBody modul={MODUL_10} />);
+
+    // Q1 wrong, Q2–Q4 right: 3/4 still passes the 60% bar.
+    await user.click(
+      screen.getByRole("button", { name: /instal dan buka undangannya/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /soal berikutnya/i }));
+    await user.click(
+      screen.getByRole("button", { name: /cek resi lewat aplikasi resmi/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /soal berikutnya/i }));
+    await user.click(screen.getByRole("button", { name: /telepon kakakmu/i }));
+    await user.click(screen.getByRole("button", { name: /soal berikutnya/i }));
+    await user.click(
+      screen.getByRole("button", { name: /matikan data\/wi-fi/i }),
+    );
+
+    expect(screen.getByText(/3 benar dari 4 soal/i)).toBeInTheDocument();
+    expect(screen.getByText(/tinjau yang kamu lewatkan/i)).toBeInTheDocument();
+
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
+    expect(stored.missedPatterns).toContain("apk-q1");
+  });
+});
+
+describe("ModulBody — bingkai contoh", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("reads the source line from the course data instead of a hardcoded chat line", () => {
+    render(<ModulBody modul={MODUL_10} />);
+
+    expect(
+      screen.getByText("Nomor tak dikenal · WhatsApp · baru saja"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("+62")).toBeInTheDocument();
+  });
+
+  it("frames a link example as a link, not as a message", () => {
+    render(
+      <ModulBody
+        modul={{
+          ...MODUL_10,
+          contohJenis: "tautan",
+          contohSumber: "Tautan dari link",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Tautan dari link")).toBeInTheDocument();
+    expect(screen.getByText(/jangan ketuk tautannya/i)).toBeInTheDocument();
+    // Chat chrome belongs to the message shape only.
+    expect(screen.queryByText("+62")).not.toBeInTheDocument();
+    expect(screen.queryByText(/jangan dibalas/i)).not.toBeInTheDocument();
+    // The sidebar entry follows the declared shape.
+    expect(
+      screen.getByRole("link", { name: /contoh tautan asli/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /contoh pesan asli/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("frames a fake-site example as a browser window showing its address", () => {
+    render(
+      <ModulBody
+        modul={{
+          ...MODUL_10,
+          contohJenis: "situs",
+          contohSumber: "https://pengiriman-palsu.example",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText("https://pengiriman-palsu.example"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /contoh situs asli/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("+62")).not.toBeInTheDocument();
+    expect(screen.queryByText(/jangan dibalas/i)).not.toBeInTheDocument();
+  });
+
+  it("frames a call example with advice shaped to a phone call", () => {
+    render(
+      <ModulBody
+        modul={{
+          ...MODUL_10,
+          contohJenis: "panggilan",
+          contohSumber: "Telepon masuk · nomor tak dikenal",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText("Telepon masuk · nomor tak dikenal"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/tutup, lalu telepon nomor resmi/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /contoh panggilan asli/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/jangan dibalas/i)).not.toBeInTheDocument();
   });
 });

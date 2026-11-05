@@ -4,16 +4,17 @@ import { OFFICIAL, OfficialDomainsSchema } from "@/lib/scoring/link";
 import { scoreText } from "@/lib/scoring/score";
 
 describe("modus.json (§11.2 — single source of truth for A and B)", () => {
-  it("has exactly 12 entries numbered 1..12", () => {
+  it("keeps the original 12 entries and allows admin additions", () => {
     expect(ModusListSchema.safeParse(MODUS).success).toBe(true);
-    expect(MODUS).toHaveLength(12);
-    expect([...MODUS_BY_NO.keys()].sort((a, b) => a - b)).toEqual(
+    expect(MODUS.length).toBeGreaterThanOrEqual(12);
+    // 13+ may be added by the admin editor; the original 1..12 must survive.
+    expect([...MODUS_BY_NO.keys()].sort((a, b) => a - b).slice(0, 12)).toEqual(
       Array.from({ length: 12 }, (_, i) => i + 1),
     );
   });
 
   it("has one unique id per module", () => {
-    expect(MODUS_BY_ID.size).toBe(12);
+    expect(MODUS_BY_ID.size).toBe(MODUS.length);
   });
 
   it("wires only module 10 to the one playable scenario", () => {
@@ -23,8 +24,8 @@ describe("modus.json (§11.2 — single source of truth for A and B)", () => {
     expect(playable[0]?.scenarioId).toBe("L1-kurir-apk");
   });
 
-  it("marks modules with no written lesson as 'segera'", () => {
-    expect(MODUS.filter((m) => m.modulStatus === "lengkap")).toHaveLength(1);
+  it("keeps at least one unwritten module marked 'segera'", () => {
+    expect(MODUS.some((m) => m.modulStatus === "segera")).toBe(true);
   });
 });
 

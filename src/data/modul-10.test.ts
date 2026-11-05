@@ -22,9 +22,9 @@ describe("modul 10 — File APK via WhatsApp", () => {
   });
 
   it("marks the dangerous segments of the example message", () => {
-    const joined = MODUL_10.contohPesan.map((s) => s.text).join("");
+    const joined = MODUL_10.contohIsi.map((s) => s.text).join("");
     expect(joined).toMatch(/\.apk/i);
-    const flagged = MODUL_10.contohPesan.filter((s) => s.berbahaya);
+    const flagged = MODUL_10.contohIsi.filter((s) => s.berbahaya);
     expect(flagged.length).toBeGreaterThan(0);
     expect(flagged.map((s) => s.text).join(" ")).toMatch(/apk|instal/i);
     // No real phone numbers or names in the anonymised example.

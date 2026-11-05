@@ -8,7 +8,7 @@ export function ModuleDoneMark({ no }: { no: number }) {
   const completed = useCompletedModules();
   if (!completed.has(no)) return null;
   return (
-    <span className="inline-flex items-center gap-1 text-safe">
+    <span className="inline-flex items-center gap-1 font-medium text-[color:var(--appnext-accent-deep)]">
       <CheckCircle2 aria-hidden className="size-3.5" />
       Selesai
     </span>
