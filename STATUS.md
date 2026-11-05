@@ -20,7 +20,7 @@ e. Engine skor deterministik: Message Agent, Link Agent, Scoring Orchestrator.
 f. Panel bukti per agent, dengan penandaan `belum aktif` yang jujur.
 g. Tiga contoh §11.6 sebagai tombol di companion.
 h. Mode darurat: tiga kasus, checklist bernomor, kanal resmi, cetak.
-i. 81 test Jest, termasuk yang merender komponen React sungguhan.
+i. 84 test Jest, termasuk yang merender komponen React sungguhan.
 j. Korpus bench 40 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
    di balik setiap klaim akurasi; angkanya diukur, bukan dikutip.
 k. `src/lib/evidence/`: producer `EvidenceBundle` pertama (artefak → timeline →
