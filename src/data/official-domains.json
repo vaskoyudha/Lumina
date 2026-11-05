@@ -49,6 +49,32 @@
   { "domain": "cekrekening.id", "brand": "CekRekening.id", "kind": "instansi" },
   { "domain": "iasc.ojk.go.id", "brand": "IASC", "kind": "instansi" },
 
+  {
+    "domain": "ui.ac.id",
+    "brand": "Universitas Indonesia",
+    "kind": "universitas"
+  },
+  {
+    "domain": "ugm.ac.id",
+    "brand": "Universitas Gadjah Mada",
+    "kind": "universitas"
+  },
+  {
+    "domain": "unnes.ac.id",
+    "brand": "Universitas Negeri Semarang",
+    "kind": "universitas"
+  },
+  {
+    "domain": "unesa.ac.id",
+    "brand": "Universitas Negeri Surabaya",
+    "kind": "universitas"
+  },
+  {
+    "domain": "uny.ac.id",
+    "brand": "Universitas Negeri Yogyakarta",
+    "kind": "universitas"
+  },
+
   { "domain": "jne.co.id", "brand": "JNE", "kind": "logistik" },
   { "domain": "jnt.co.id", "brand": "J&T Express", "kind": "logistik" },
   { "domain": "sicepat.com", "brand": "SiCepat", "kind": "logistik" },

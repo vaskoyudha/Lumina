@@ -33,6 +33,18 @@
   --color-safe: var(--lumina-safe);
   --color-danger: var(--lumina-danger);
   --color-warn: var(--lumina-warn);
+  --color-field: var(--lumina-field);
+
+  /*
+    Ambient elevation. The reference composer is a white card on a grey page
+    with a soft, wide shadow rather than a hard border — that shadow is what
+    makes the input read as "lifted" instead of "outlined". Both are derived
+    from the text colour, so no component carries a literal rgba.
+  */
+  --shadow-rest: 0 8px 28px
+    color-mix(in oklab, var(--lumina-txt) 8%, transparent);
+  --shadow-lift: 0 10px 32px
+    color-mix(in oklab, var(--lumina-txt) 11%, transparent);
 
   /* shadcn/ui surface mappings */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -76,17 +88,63 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Streaming shimmer, extracted from the reference's `thinking-label-shimmer`:
+ * a 300%-wide gradient swept from 100% to 0% over 2.2s, linear and infinite.
+ * The gradient itself lives in `thinking-row.tsx` because it must be clipped to
+ * the text. Frozen at the midpoint under reduced motion so the label stays
+ * legible instead of disappearing.
+ */
+@keyframes thinking-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes thinking-shimmer {
+    from,
+    to {
+      background-position: 50% 0;
+    }
+  }
+}
+
 :root {
-  /* --- Lumina palette (plan §4) --- */
-  --lumina-bg: #0b0f14;
-  --lumina-panel: #121821;
-  --lumina-panel-2: #182130;
-  --lumina-line: #243043;
-  --lumina-txt: #e6edf6;
-  --lumina-dim: #8b9bb0;
-  --lumina-safe: #37d6a0;
-  --lumina-danger: #ff5d5d;
-  --lumina-warn: #ffb340;
+  /* --- Lumina palette: LIGHT mode, "Ink" ---
+     Same token names, so no component needed rewriting.
+
+     Design language adapted from the pure-greyscale chat system surveyed in
+     `lumina-references/` (see STATUS.md): the page is a faint grey, raised
+     surfaces are pure white, and the whole chrome is neutral. Colour is
+     therefore reserved for ONE job — the risk bands — so any colour a judge
+     sees on screen is a finding, not decoration.
+
+     Two deliberate departures from that reference, both measured:
+       a. Body text stays at 16px, not 14px. This surface is used one-handed
+          on a phone by someone frightened (lumina-ui §bar.c).
+       b. `--lumina-warn` keeps its dark amber. The reference's #f57f17 is
+          2.6:1 on white and fails WCAG for text; #8a5300 is 5.5:1.
+
+     Contrast on white: txt 16.1:1, dim 5.7:1, safe 5.0:1, danger 6.5:1,
+     warn 5.5:1 — every one clears 4.5:1, and the meter fill stays solid at
+     40px type so it reads from the back of the room. --- */
+  --lumina-bg: #fafafa;
+  --lumina-panel: #ffffff;
+  --lumina-panel-2: #f5f5f5;
+  --lumina-line: #e0e0e0;
+  --lumina-txt: #1a1a1a;
+  --lumina-dim: #666666;
+  --lumina-safe: #2e7d32;
+  --lumina-danger: #c62828;
+  --lumina-warn: #8a5300;
+
+  /* Field border: a hairline that is visible but never reads as a box. */
+  --lumina-field: #dadada;
+  --lumina-field-hover: #bebebe;
 
   /* --- shadcn/ui surfaces, derived from the palette above --- */
   --background: var(--lumina-bg);
@@ -114,37 +172,8 @@
   --chart-4: var(--lumina-dim);
   --chart-5: var(--lumina-line);
 
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  --sidebar: var(--lumina-panel);
-  --sidebar-foreground: var(--lumina-txt);
-  --sidebar-primary: var(--lumina-safe);
-  --sidebar-primary-foreground: var(--lumina-bg);
-  --sidebar-accent: var(--lumina-panel-2);
-  --sidebar-accent-foreground: var(--lumina-txt);
-  --sidebar-border: var(--lumina-line);
-  --sidebar-ring: var(--lumina-safe);
-}
-
-.dark {
-  --background: var(--lumina-bg);
-  --foreground: var(--lumina-txt);
-  --card: var(--lumina-panel);
-  --card-foreground: var(--lumina-txt);
-  --popover: var(--lumina-panel-2);
-  --popover-foreground: var(--lumina-txt);
-  --primary: var(--lumina-txt);
-  --primary-foreground: var(--lumina-bg);
-  --secondary: var(--lumina-panel-2);
-  --secondary-foreground: var(--lumina-txt);
-  --muted: var(--lumina-panel-2);
-  --muted-foreground: var(--lumina-dim);
-  --accent: var(--lumina-panel-2);
-  --accent-foreground: var(--lumina-txt);
-  --destructive: var(--lumina-danger);
-  --border: var(--lumina-line);
-  --input: var(--lumina-line);
-  --ring: var(--lumina-safe);
   --sidebar: var(--lumina-panel);
   --sidebar-foreground: var(--lumina-txt);
   --sidebar-primary: var(--lumina-safe);
@@ -162,7 +191,7 @@
 
   html {
     @apply font-sans;
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   body {
@@ -173,21 +202,36 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Every pressable element gives press feedback (plan: meter must feel physical). */
+  /*
+    Motion timing is deliberately asymmetric. Arriving at a control wants a
+    fast answer; leaving wants a softer return, or the button snaps under the
+    eye. Press is near-instant because it is the "the click landed" signal.
+  */
+  :root {
+    --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --t-approach: 180ms;
+    --t-press: 80ms;
+    --t-leave: 280ms;
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled),
   a[data-pressable] {
     transition:
-      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
-      background-color 160ms ease-out,
-      border-color 160ms ease-out,
-      opacity 160ms ease-out;
+      transform var(--t-leave) var(--ease-spring),
+      background-color var(--t-leave) ease-out,
+      border-color var(--t-leave) ease-out,
+      color var(--t-leave) ease-out,
+      box-shadow var(--t-leave) ease-out,
+      opacity var(--t-leave) ease-out;
   }
 
   button:not(:disabled):active,
   [role="button"]:not(:disabled):active,
   a[data-pressable]:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
+    transition-duration: var(--t-press);
   }
 
   :focus-visible {
@@ -211,7 +255,122 @@
   }
 }
 
+/*
+  Touch devices apply :hover on first tap and keep it until the next tap, which
+  leaves buttons looking "stuck on". Anything decorative that responds to hover
+  belongs behind this query; press feedback stays universal.
+*/
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover,
+  [role="button"]:not(:disabled):hover,
+  a[data-pressable]:hover {
+    transition-duration: var(--t-approach);
+  }
+}
+
+/*
+  Arrow nudge: the glyph moves, the hit area does not. Moving the button itself
+  toward the cursor makes it slide out from under the pointer and flicker.
+*/
+.arrow-nudge {
+  transition: transform var(--t-leave) var(--ease-spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .arrow-nudge,
+  .group:focus-visible .arrow-nudge {
+    transition-duration: var(--t-approach);
+  }
+
+  .group:hover .arrow-nudge--right {
+    transform: translateX(3px);
+  }
+
+  .group:hover .arrow-nudge--left {
+    transform: translateX(-3px);
+  }
+}
+
+/*
+  Browser surfaces. The parts nobody draws still carry the design: selection,
+  caret, placeholder, scrollbars, underline offset. They ship with defaults
+  that belong to no design system — theme them from the palette.
+*/
+
+::selection {
+  /*
+    Background only. Omitting `color` lets each surface keep its own text
+    colour, so selection stays readable on the dark app (light text) and on
+    the light marketing page (dark text) at once.
+  */
+  background: color-mix(in oklab, var(--lumina-safe) 32%, transparent);
+}
+
+textarea,
+input {
+  caret-color: var(--lumina-safe);
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lumina-line) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--lumina-line);
+  border: 2px solid var(--lumina-bg);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--lumina-line), var(--lumina-dim) 35%);
+}
+
 /* Tabular figures for scores, timers and meters: digits must not jitter. */
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Print. The app shell is a fixed-viewport document with `main` as its only
+ * scroll container, so the browser would otherwise print one clipped screen.
+ * Only the requested content (e.g. the triage checklist) is printed: chrome,
+ * the site footer, and anything marked `data-print="hide"` are removed, and
+ * every clipping ancestor is released for the page flow.
+ */
+@media print {
+  [data-print="hide"],
+  header,
+  footer {
+    display: none !important;
+  }
+
+  [data-app-shell] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-app-shell] > main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
 }

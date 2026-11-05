@@ -1,11 +1,30 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { Suspense } from "react";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { SiteNav } from "@/components/shell/site-nav";
-import { cn } from "@/lib/utils";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+/**
+ * Inter, matching the reference chat UI's `$font-ui` stack
+ * (`'Inter', system-ui, -apple-system, sans-serif`). Loaded through
+ * `next/font` so it is self-hosted and needs no network at runtime — the same
+ * file the browser would get from the system stack, just guaranteed.
+ */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+/**
+ * Root shell only carries the document and the design-token ground.
+ *
+ * `body.appnext` installs the measured AppNext light palette once; the
+ * `--lumina-*` names are remapped inside that subtree, so every product
+ * surface and the marketing pages share one light ground.
+ *
+ * The chrome still lives in the route groups: `(app)` for the four product
+ * surfaces, `(chat)` for the full-height companion, `(marketing)` for the
+ * landing page, and `admin/` for its own separate shell.
+ */
 
 export const metadata: Metadata = {
   title: {
@@ -22,22 +41,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={cn("dark font-sans", geist.variable)}>
-      <body className="min-h-dvh bg-bg text-txt">
-        <div className="flex min-h-dvh flex-col">
-          <Suspense
-            fallback={<div className="h-14 border-line border-b bg-panel" />}
-          >
-            <SiteNav />
-          </Suspense>
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-line px-4 py-6 text-dim text-sm sm:px-6">
-            <p className="mx-auto max-w-6xl">
-              Lumina tidak menyimpan percakapan. Tidak ada akun, tidak ada
-              unggahan ke server. Tutup tab, riwayatnya hilang.
-            </p>
-          </footer>
-        </div>
+    <html lang="id" className={`font-sans ${inter.variable}`}>
+      <body className="appnext min-h-dvh bg-bg text-txt antialiased">
+        {children}
       </body>
     </html>
   );

@@ -39,7 +39,17 @@ const RISK_CLASS: Record<Risk, { text: string; bar: string; border: string }> =
     },
   };
 
-export function ScoreCard({ result }: { result: ScoreResult }) {
+export function ScoreCard({
+  result,
+  showEscalation = true,
+  showLinks = true,
+}: {
+  result: ScoreResult;
+  /** Off in the chat: an action button below already offers mode darurat. */
+  showEscalation?: boolean;
+  /** Off in the chat: ActionRow below the card is the single source of links. */
+  showLinks?: boolean;
+}) {
   const style = RISK_CLASS[result.risk];
   const modus = modusFor(result.relatedModule);
 
@@ -73,7 +83,8 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
         {result.hardOverride ? (
           <p className="flex items-center gap-1.5 text-danger text-xs">
             <TriangleAlert aria-hidden className="size-3.5" />
-            Permintaan OTP/PIN otomatis berisiko tinggi, apa pun skornya.
+            Indikator keras — permintaan OTP/PIN atau file APK — otomatis
+            berisiko tinggi, apa pun skornya.
           </p>
         ) : null}
       </CardHeader>
@@ -117,15 +128,18 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
           </ol>
         </section>
 
-        {modus ? (
+        {modus && showLinks ? (
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/belajar/${modus.no}`}
               data-pressable
-              className="inline-flex items-center gap-1 rounded-md border border-safe/40 bg-safe/10 px-3 py-1.5 font-medium text-safe text-sm hover:bg-safe/20"
+              className="group inline-flex items-center gap-1 rounded-md border border-safe/40 bg-safe/10 px-3 py-1.5 font-medium text-safe text-sm hover:bg-safe/20"
             >
               Pelajari pola ini
-              <ArrowRight aria-hidden className="size-3.5" />
+              <ArrowRight
+                aria-hidden
+                className="arrow-nudge arrow-nudge--right size-3.5"
+              />
             </Link>
             {modus.scenarioId ? (
               <Link
@@ -139,7 +153,7 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
           </div>
         ) : null}
 
-        {result.risk === "tinggi" ? (
+        {result.risk === "tinggi" && showEscalation ? (
           <Alert variant="destructive" className="border-danger/40">
             <TriangleAlert aria-hidden />
             <AlertTitle>Ini sedang terjadi?</AlertTitle>

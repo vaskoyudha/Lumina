@@ -157,9 +157,24 @@ d. No accent border rails, no eyebrow pills, no three-equal-card grid as the
 ## Using it here
 
 Tokens are available as a scoped stylesheet: `src/styles/appnext-tokens.css`,
-applied with `className="appnext"` on a subtree. They are **not** merged into
-Lumina's `--lumina-*` palette: Lumina is dark by requirement (the risk meter
-must read from the back of the room), AppNext is light-first. Mixing them in one
-token namespace would break both.
+applied with `className="appnext"` on a subtree. Since 2026-11-04 that subtree is
+the **whole app** — `body.appnext` in `src/app/layout.tsx` — because the team
+decided every screen ships light. Inside `.appnext`, the legacy `--lumina-*`
+names are remapped to the light AppNext values, so existing `text-dim`,
+`bg-panel` and `border-line` utilities resolve to the measured light palette
+without per-component edits. The original dark values remain under `.dark` in
+`globals.css` for any legacy subtree.
+
+The risk meter stays the one thing that must read from across the room, so its
+band colours are measured for a white ground rather than borrowed from the
+dark set:
+
+| Need | Token | Contrast on white |
+|---|---|---|
+| safe / accent fill | `--appnext-accent-deep` `#0e7c36` | 5.31:1 |
+| accent on white | `--appnext-accent` `#1BAB49` | 3.01:1 — not for small text |
+| danger text | `--appnext-danger` `#dc2626` | 4.83:1 |
+| warning text | `--appnext-warn-deep` `#b45309` | 5.02:1 |
+| body text | `--appnext-muted` `#606060` | 6.29:1 |
 
 For building pages in this style, load the `appnext-design` skill.

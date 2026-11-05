@@ -47,6 +47,16 @@ memberi tahu tiga orang lain **sebelum** commit, bukan sesudah (§9).
 
 **7. Tidak ada dependensi baru setelah hari ke-3** (§9).
 
+**8. `/darurat` tidak pernah dijaga login.** Mode darurat harus terbuka tanpa
+akun, sekarang dan setelah perubahan akses apa pun. Kalau middleware ditambahkan
+nanti, pengecualian `/darurat` masuk di commit yang sama.
+
+**9. Auth di proyek ini adalah demo, bukan auth sungguhan.** `demo-accounts.ts`
+membandingkan password dengan tabel literal; tidak ada hash, tidak ada database,
+tidak ada penyimpanan server. Jangan menyalin pola ini ke aplikasi yang menyimpan
+pengguna nyata. Menambah penyimpanan berarti melanggar §8b plan dan janji privasi
+proposal.
+
 ## Stack — jangan diganti tanpa kesepakatan
 
 | Lapisan | Pilihan | Versi terpasang |
@@ -103,16 +113,28 @@ ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
 Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
 dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 
+## Rute dan shell
+
+| Grup | Shell | Token | Isi |
+|---|---|---|---|
+| `(marketing)` | `MarketingNav` + footer | `--appnext-*`, terang | `/` landing |
+| `(app)` | `SiteNav` + footer | `--lumina-*`, gelap | companion, belajar, simulasi, darurat |
+| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*`, gelap | auth |
+
+Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
+ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
+
 ## Dua sistem desain, jangan dicampur
 
 | | Lumina (default) | AppNext |
 |---|---|---|
-| Ground | gelap `#0b0f14` | terang `#ffffff` |
+| Ground | terang `#ffffff` | terang `#ffffff` |
 | Namespace | `--lumina-*` | `--appnext-*`, di bawah `.appnext` |
 | Dipakai di | semua permukaan produk | halaman marketing/template |
+| Catatan | light mode adalah keputusan pemilik 5 November; nama token tetap | |
 | Alasan | meter merah harus terbaca dari belakang ruangan | mengikuti template SaaS |
 
-Permukaan produk (companion, belajar, simulasi, darurat) memakai token gelap.
+Permukaan produk (companion, belajar, simulasi, darurat) memakai token terang.
 AppNext hanya masuk lewat subtree ber-`className="appnext"`, tidak pernah ke
 `body` atau `@theme`. Detail: `docs/design-system/appnext.md`.
 
@@ -182,3 +204,13 @@ elements".
 Shell harus jalan di **380px**. Sebelum bilang sebuah halaman selesai, periksa
 lebar sempit: nav membungkus, tidak ada scroll horizontal, target sentuh cukup.
 Kontrol ikon-saja wajib punya nama aksesibel.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
