@@ -11,7 +11,13 @@ describe("scoreWithTrace", () => {
     const { trace } = scoreWithTrace({ text: SCAM });
     const ids = trace.stages.map((stage) => stage.id);
 
-    expect(ids).toEqual(["message", "link", "conversation", "scoring"]);
+    expect(ids).toEqual([
+      "message",
+      "link",
+      "identity",
+      "conversation",
+      "scoring",
+    ]);
     for (const stage of trace.stages) {
       expect(stage.ms).toBeGreaterThanOrEqual(0);
       expect(stage.label.length).toBeGreaterThan(0);

@@ -7,6 +7,7 @@ import {
 import { riskFor, type ScoreResult, type Signal } from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
 import { conversationSignals } from "@/lib/scoring/conversation";
+import { identitySignals } from "@/lib/scoring/identity";
 import { extractLinks, linkSignals } from "@/lib/scoring/link";
 import {
   detectMessage,
@@ -223,6 +224,10 @@ const DETECTORS: readonly {
         note: links.length === 0 ? "Tidak ada tautan pada pesan ini." : undefined,
       };
     },
+  },
+  {
+    id: "identity",
+    run: ({ text }) => identitySignals(text),
   },
   {
     id: "conversation",
