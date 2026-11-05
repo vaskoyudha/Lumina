@@ -101,12 +101,98 @@ function combinationSignal(hits: readonly RuleHit[]): Signal | null {
   return null;
 }
 
+export interface ConversationInput {
+  text: string;
+  /** Prior user texts in this conversation, oldest first. */
+  turns: readonly { text: string }[];
+}
+
 export interface ConversationResult {
   signals: Signal[];
   note?: string;
 }
 
-export function conversationSignals(text: string): ConversationResult {
+/**
+ * A single message has a shape; a *conversation* has a direction.
+ *
+ * The proposal promises "tahap eskalasi", which is a property of a sequence,
+ * not of a message. Four stages, in the order a real scam walks through them:
+ *
+ *   approach  → an offer, an introduction, a prize
+ *   trust     → a claim of authority or legitimacy
+ *   demand    → money, a transfer, a code
+ *   urgency   → a deadline, a threat to close
+ *
+ * The rule only fires when the *earlier* stage sits in a previous turn and the
+ * current turn has moved on to a later one. That is what makes it evidence of
+ * staging rather than of vocabulary: a scam script walks forward, and a real
+ * conversation does not.
+ */
+const STAGE_PATTERNS = [
+  {
+    stage: "approach",
+    pattern:
+      /\b(?:kenalan|perkenalkan|lowongan|tugas|investasi|selamat|menang|hadiah|undian|kak|gan)\b/i,
+  },
+  {
+    stage: "trust",
+    pattern:
+      /\b(?:saya dari|kami dari|pihak resmi|cs resmi|admin resmi|terdaftar|legal|berizin|ojk|bappebti)\b/i,
+  },
+  {
+    stage: "demand",
+    pattern:
+      /\b(?:transfer|top\s*up|topup|setor|biaya|bayar|kirim uang|rekening|kode otp|otp)\b/i,
+  },
+  {
+    stage: "urgency",
+    pattern:
+      /\b(?:sekarang|hari ini|sebelum|batas waktu|jam \d|blokir|diblokir|ditutup|dibatalkan|segera)\b/i,
+  },
+] as const;
+
+type StageName = (typeof STAGE_PATTERNS)[number]["stage"];
+
+function stagesIn(text: string): StageName[] {
+  return STAGE_PATTERNS.filter(({ pattern }) => pattern.test(text)).map(
+    ({ stage }) => stage,
+  );
+}
+
+export function conversationSignals({
+  text,
+  turns,
+}: ConversationInput): ConversationResult {
   const combo = combinationSignal(detectMessage(text));
-  return { signals: combo ? [combo] : [] };
+  const signals: Signal[] = combo ? [combo] : [];
+
+  if (turns.length === 0) {
+    return {
+      signals,
+      note: "Butuh pesan kedua untuk menilai tahapan.",
+    };
+  }
+
+  const current = stagesIn(text);
+  const earlier = turns.flatMap((previous) => stagesIn(previous.text));
+
+  const demandNow = current.includes("demand");
+  const urgencyNow = current.includes("urgency");
+
+  const staged =
+    (demandNow &&
+      (earlier.includes("approach") || earlier.includes("trust"))) ||
+    (urgencyNow && earlier.includes("demand"));
+
+  if (staged) {
+    signals.push({
+      label:
+        "Pola bicara bertahap: percakapan dibangun dulu, permintaan uang menyusul — ini ciri penipuan terencana",
+      weight: 0.5,
+      evidence: text.slice(0, 80),
+      agent: "conversation",
+    });
+  }
+
+  return { signals };
 }

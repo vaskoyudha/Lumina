@@ -231,7 +231,7 @@ const DETECTORS: readonly {
   },
   {
     id: "conversation",
-    run: ({ text }) => conversationSignals(text),
+    run: ({ text, turns }) => conversationSignals({ text, turns }),
   },
 ];
 
