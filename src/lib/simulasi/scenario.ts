@@ -106,6 +106,8 @@ export const L1_KURIR_APK: Scenario = {
         {
           label: "Jangan buka file; putuskan koneksi perangkat",
           verdict: "benar",
+          rationale:
+            "Menolak APK menghentikan langkah pemasangan. Berikutnya, coba isolasi dan pemeriksaan izin pada perangkat latihan; perangkat aslimu tidak berubah.",
           next: "isolate",
         },
       ],
@@ -122,7 +124,7 @@ export const L1_KURIR_APK: Scenario = {
       type: "tool_task",
       tool: "permissions",
       prompt:
-        "Periksa izin APK. Cabut akses SMS dan aksesibilitas yang tidak semestinya.",
+        "Pada contoh perangkat latihan, periksa dan cabut akses SMS serta aksesibilitas yang diminta APK.",
       on_success: "evidence",
     },
     {
@@ -149,6 +151,8 @@ export const L1_KURIR_APK: Scenario = {
         {
           label: "Jangan bagikan OTP; hubungi kurir lewat kanal resmi",
           verdict: "benar",
+          rationale:
+            "Kamu menjaga kode rahasia dan memverifikasi melalui kanal yang kamu cari sendiri. Simpan bukti pesan tanpa menyertakan OTP.",
           next: "report",
         },
       ],
@@ -165,10 +169,10 @@ export const L1_KURIR_APK: Scenario = {
       type: "ending",
       variant: "success",
       title: "Interaksi dihentikan",
-      text: "Kamu tidak memasang file dan sudah menyiapkan bukti untuk dilaporkan.",
+      text: "Latihan selesai dan bukti latihan sudah dirangkum. Tinjau keputusanmu sebelum mencoba lagi; tindakan dalam latihan tidak mengubah perangkat nyata.",
       debrief: [
         "Kurir resmi tidak meminta pemasangan APK melalui WhatsApp.",
-        "Jangan buka file atau tautan dari pengirim yang belum diverifikasi.",
+        "Jangan bagikan OTP, PIN, atau kata sandi kepada pengirim yang belum diverifikasi maupun orang yang mengaku petugas.",
         "Jika APK terpasang, putuskan koneksi dan cabut izin SMS serta aksesibilitas.",
         "Hubungi bank melalui nomor resmi bila data keuangan sempat dibagikan.",
       ],

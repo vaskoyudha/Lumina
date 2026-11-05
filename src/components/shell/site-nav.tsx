@@ -27,14 +27,14 @@ export function SiteNav() {
         <Link
           href="/"
           data-pressable
-          className="font-semibold text-txt text-lg tracking-tight"
+          className="inline-flex min-h-11 items-center font-semibold text-txt text-lg tracking-tight"
         >
           Lumina
         </Link>
 
         <nav
           aria-label="Navigasi utama"
-          className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1"
+          className="order-last -mx-1 flex min-w-0 w-full flex-wrap items-center gap-1 px-1 sm:order-none sm:w-auto sm:flex-1"
         >
           {DESTINATIONS.map(({ href, label }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -45,7 +45,7 @@ export function SiteNav() {
                 data-pressable
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "shrink-0 rounded-md px-3 py-1.5 text-sm",
+                  "inline-flex min-h-11 shrink-0 items-center rounded-md px-3 py-1.5 text-sm",
                   active
                     ? "bg-panel-2 text-txt"
                     : "text-dim hover:bg-panel-2 hover:text-txt",
@@ -61,7 +61,7 @@ export function SiteNav() {
           href="/darurat"
           data-pressable
           className={cn(
-            "ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium text-sm",
+            "ml-auto inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium text-sm",
             pathname.startsWith("/darurat")
               ? "border-danger bg-danger text-bg"
               : "border-danger/60 bg-danger/10 text-danger hover:bg-danger/20",
