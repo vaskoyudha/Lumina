@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CompanionEntry } from "@/components/companion/companion-entry";
+import { CompanionChat } from "@/components/companion/companion-chat";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function CompanionPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <CompanionEntry />
+      <CompanionChat />
     </div>
   );
 }

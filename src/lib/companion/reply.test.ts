@@ -1,0 +1,91 @@
+import {
+  composeReply,
+  isGreeting,
+  suggestedActions,
+} from "@/lib/companion/reply";
+import { scoreText } from "@/lib/scoring/score";
+
+const APK =
+  "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim.";
+
+describe("isGreeting", () => {
+  it("recognises Indonesian openers", () => {
+    expect(isGreeting("halo")).toBe(true);
+    expect(isGreeting("Hai, apa kabar?")).toBe(true);
+    expect(isGreeting("selamat pagi")).toBe(true);
+  });
+
+  it("does not treat a scam message opening with a greeting as small talk", () => {
+    expect(isGreeting(APK)).toBe(false);
+  });
+});
+
+describe("composeReply", () => {
+  it("never invents a score: it only reads the result it was given", () => {
+    const result = scoreText({ text: APK });
+    const reply = composeReply(APK, result, {
+      first: false,
+      containsContent: true,
+    });
+    expect(reply).toContain("berbahaya");
+    // The reply must not restate a number the engine did not produce.
+    expect(reply).not.toMatch(/\b\d{2}\/100\b/);
+  });
+
+  it("names the strongest finding in plain language", () => {
+    const result = scoreText({ text: APK });
+    const reply = composeReply(APK, result, {
+      first: false,
+      containsContent: true,
+    });
+    expect(reply.toLowerCase()).toContain("apk");
+  });
+
+  it("escalates to emergency language on a high-risk result", () => {
+    const result = scoreText({ text: APK });
+    const reply = composeReply(APK, result, {
+      first: false,
+      containsContent: true,
+    });
+    expect(reply.toLowerCase()).toContain("mode darurat");
+  });
+
+  it("stays calm on clean input", () => {
+    const text = "besok kita makan siang bareng ya";
+    const result = scoreText({ text });
+    const reply = composeReply(text, result, {
+      first: false,
+      containsContent: true,
+    });
+    expect(reply.toLowerCase()).not.toContain("mode darurat");
+    expect(reply.toLowerCase()).toContain("tidak ada pola");
+  });
+
+  it("asks for content politely when there is nothing to analyse", () => {
+    const reply = composeReply("ok", null, {
+      first: false,
+      containsContent: false,
+    });
+    expect(reply.length).toBeGreaterThan(0);
+    expect(reply.toLowerCase()).not.toContain("berbahaya");
+  });
+});
+
+describe("suggestedActions", () => {
+  it("offers module + emergency for the APK case", () => {
+    const result = scoreText({ text: APK });
+    const actions = suggestedActions(result);
+    expect(actions.some((a) => a.href === "/belajar/10")).toBe(true);
+    expect(actions.some((a) => a.href === "/darurat")).toBe(true);
+  });
+
+  it("offers the playable scenario because module 10 has one", () => {
+    const result = scoreText({ text: APK });
+    const actions = suggestedActions(result);
+    expect(actions.some((a) => a.href === "/simulasi/L1-kurir-apk")).toBe(true);
+  });
+
+  it("returns nothing when there is no result", () => {
+    expect(suggestedActions(null)).toEqual([]);
+  });
+});

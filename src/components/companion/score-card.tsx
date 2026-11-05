@@ -39,7 +39,17 @@ const RISK_CLASS: Record<Risk, { text: string; bar: string; border: string }> =
     },
   };
 
-export function ScoreCard({ result }: { result: ScoreResult }) {
+export function ScoreCard({
+  result,
+  showEscalation = true,
+  showLinks = true,
+}: {
+  result: ScoreResult;
+  /** Off in the chat: an action button below already offers mode darurat. */
+  showEscalation?: boolean;
+  /** Off in the chat: ActionRow below the card is the single source of links. */
+  showLinks?: boolean;
+}) {
   const style = RISK_CLASS[result.risk];
   const modus = modusFor(result.relatedModule);
 
@@ -118,7 +128,7 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
           </ol>
         </section>
 
-        {modus ? (
+        {modus && showLinks ? (
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/belajar/${modus.no}`}
@@ -143,7 +153,7 @@ export function ScoreCard({ result }: { result: ScoreResult }) {
           </div>
         ) : null}
 
-        {result.risk === "tinggi" ? (
+        {result.risk === "tinggi" && showEscalation ? (
           <Alert variant="destructive" className="border-danger/40">
             <TriangleAlert aria-hidden />
             <AlertTitle>Ini sedang terjadi?</AlertTitle>
