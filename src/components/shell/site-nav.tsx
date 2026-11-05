@@ -32,7 +32,7 @@ export function SiteNav({
         <Link
           href="/"
           data-pressable
-          className="font-semibold text-txt text-lg tracking-tight"
+          className="inline-flex min-h-11 items-center font-semibold text-txt text-lg tracking-tight"
         >
           Lumina
         </Link>
@@ -57,7 +57,7 @@ export function SiteNav({
                 data-pressable
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "shrink-0 rounded-md px-3 py-1.5 text-sm",
+                  "inline-flex min-h-11 shrink-0 items-center rounded-md px-3 py-1.5 text-sm",
                   active
                     ? "bg-panel-2 text-txt"
                     : "text-dim hover:bg-panel-2 hover:text-txt",
@@ -73,7 +73,7 @@ export function SiteNav({
           href="/darurat"
           data-pressable
           className={cn(
-            "ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium text-sm",
+            "ml-auto inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium text-sm",
             pathname.startsWith("/darurat")
               ? "border-danger bg-danger text-bg"
               : "border-danger/60 bg-danger/10 text-danger hover:bg-danger/20",

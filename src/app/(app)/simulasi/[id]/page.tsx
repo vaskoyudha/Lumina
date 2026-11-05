@@ -1,81 +1,57 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { BackButton } from "@/components/shell/back-button";
-import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
-import { MODUS } from "@/lib/modus";
+import { Runner } from "@/app/(app)/simulasi/[id]/Runner";
+import { Button } from "@/components/ui/button";
+import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
+import { MISSION } from "@/lib/simulasi/scenario";
 
-export const metadata: Metadata = { title: "Runner simulasi" };
+export const metadata: Metadata = {
+  title: MISSION.title,
+  description: "Misi simulasi Level 1: Paket sebelum pulang.",
+};
 
-/** One playable scenario today (§12: Level 1 only). */
 export function generateStaticParams() {
-  return MODUS.filter((m) => m.scenarioId !== null).map((m) => ({
-    id: m.scenarioId as string,
+  return SCENARIO_CATALOG.map(({ scenario }) => ({
+    id: scenario.id,
   }));
 }
 
-/**
- * Stream C's runner route. The React state-machine port is C's day-1 task
- * (§5-C: port the vanilla runner, do not rebuild it).
- *
- * This shell exists so Gate 0 passes and the companion's "Coba simulasi" link
- * resolves. It does not fake a playable scene.
- */
-
-/** Same reason as /belajar/[modul]: URL data behind a Suspense boundary. */
-async function RunnerBody({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const modus = MODUS.find((m) => m.scenarioId === id);
-
-  if (!modus) notFound();
-
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <BackButton href="/simulasi" label="Semua simulasi" />
-
-      <header className="mt-4 max-w-prose">
-        <h1 className="font-semibold text-2xl tracking-tight">
-          Level {modus.level} · {modus.nama}
-        </h1>
-        <p className="mt-1 text-dim text-xs">
-          Skenario <code className="text-txt">{id}</code> · 12 node · 3 tool
-          task
-        </p>
-      </header>
-
-      <div className="mt-6 rounded-lg border border-line bg-panel p-6">
-        <Empty>
-          <EmptyTitle>Runner belum diport (Stream C)</EmptyTitle>
-          <EmptyDescription>
-            Skenario dan perilakunya sudah ada di runner vanilla. Yang belum
-            selesai adalah port ke state machine React: node chat, panel tool
-            deck, dua meter, dan layar akhir.
-          </EmptyDescription>
-        </Empty>
-      </div>
-
-      <p className="mt-4 text-dim text-xs">
-        Kontrak untuk stream lain: skenario adalah sumber kebenaran, bukan
-        komponennya. Setiap <code>setTimeout</code> butuh cleanup saat unmount.
-      </p>
-    </div>
-  );
-}
-
-export default function RunnerPage({
+export default async function RunnerPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+  const scenario = SCENARIO_CATALOG.find((item) => item.scenario.id === id);
+
+  if (!scenario) notFound();
+
   return (
-    <Suspense
-      fallback={
-        <p className="mx-auto max-w-3xl px-4 py-10 text-dim text-sm sm:px-6">
-          Memuat skenario…
+    <div className="sim-page mx-auto min-w-0 max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <Button
+        asChild
+        data-pressable
+        className="sim-back-button min-h-11 text-base"
+        variant="outline"
+        size="lg"
+      >
+        <Link href="/simulasi">
+          <ArrowLeft aria-hidden="true" /> Kembali ke misi
+        </Link>
+      </Button>
+
+      <header className="sim-page-header mt-5 mb-5">
+        <p className="sim-page-level">
+          Level {scenario.scenario.level} · Misi interaktif
         </p>
-      }
-    >
-      <RunnerBody params={params} />
-    </Suspense>
+        <h1 className="sim-page-title">{MISSION.title}</h1>
+      </header>
+
+      <div className="min-w-0">
+        <Runner />
+      </div>
+    </div>
   );
 }

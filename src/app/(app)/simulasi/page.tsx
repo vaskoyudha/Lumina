@@ -1,86 +1,164 @@
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Clock3,
+  Gamepad2,
+  Package,
+  ShieldCheck,
+} from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MODUS } from "@/lib/modus";
+import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
+import { MISSION } from "@/lib/simulasi/scenario";
 
 export const metadata: Metadata = {
-  title: "Simulasi",
-  description: "Roleplay krisis: latih keputusan di bawah tekanan waktu.",
+  title: MISSION.title,
+  description:
+    "Latihan fiktif 3–5 menit tentang pesan kurir, APK, dan cara menjaga kendali ponsel.",
 };
 
-/**
- * Stream C's list. One playable scenario is the whole plan (§12: "Level 1
- * saja"). Planned levels are shown as "rencana" — never played as if built.
- */
-
-const PLAYABLE = MODUS.filter((m) => m.scenarioId !== null);
 const PLANNED = MODUS.filter(
-  (m) => m.scenarioId === null && m.scenarioPlanned !== null,
+  (modus) => modus.scenarioId === null && modus.scenarioPlanned !== null,
 );
+const incomingMessage = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).find(
+  (node) => node.type === "message" && node.attachment,
+);
+const endingCount = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).filter(
+  (node) => node.type === "ending",
+).length;
 
 export default function SimulasiPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <header className="max-w-prose">
-        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          Berlatih di bawah tekanan
-        </h1>
-        <p className="mt-2 text-dim text-sm">
-          Satu skenario yang bisa dimainkan sekarang. Meter panik naik saat kamu
-          berpikir, dan jawaban salah langsung dijelaskan tanpa memblokir
-          cerita.
-        </p>
-      </header>
+    <div className="sim-landing mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <section aria-labelledby="mission-title" className="sim-hero">
+        <div className="sim-hero-copy">
+          <p className="sim-eyebrow">
+            <Gamepad2 aria-hidden="true" /> Misi interaktif · Level 1
+          </p>
+          <h1 className="sim-hero-title" id="mission-title">
+            <span>Paket sebelum</span> <span>pulang</span>
+          </h1>
+          <p className="sim-hero-description">
+            <strong>Satu chat. Banyak jebakan.</strong> {MISSION.context}
+          </p>
+          <p className="sim-hero-objective">
+            {MISSION.role}. {MISSION.objective}
+          </p>
 
-      <section className="mt-8">
-        <h2 className="font-medium text-dim text-xs uppercase tracking-wide">
-          Bisa dimainkan
-        </h2>
-        <ul className="mt-3 flex flex-col gap-2">
-          {PLAYABLE.map((m) => (
-            <li key={m.id}>
-              <Link
-                href={`/simulasi/${m.scenarioId}`}
-                data-pressable
-                className="flex items-center gap-3 rounded-lg border border-line bg-panel px-4 py-3 hover:bg-panel-2"
-              >
-                <span className="flex-1">
-                  <span className="block font-medium text-sm text-txt">
-                    Level {m.level} · {m.nama}
-                  </span>
-                  <span className="mt-0.5 block text-dim text-xs">
-                    7 menit · tiga tool deck · dua jalur gagal
-                  </span>
-                </span>
-                <Badge variant="secondary" className="text-safe">
-                  Siap
-                </Badge>
+          <div className="sim-hero-actions">
+            <Button
+              asChild
+              data-pressable
+              className="sim-primary-button min-h-12 text-base"
+              size="lg"
+            >
+              <Link href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}>
+                Mulai misi <ArrowUpRight aria-hidden="true" />
               </Link>
+            </Button>
+            <Button
+              asChild
+              data-pressable
+              className="sim-secondary-button min-h-11 text-base"
+              variant="outline"
+              size="lg"
+            >
+              <Link href="/belajar/10">
+                Pelajari pola APK <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
+            <Link className="sim-emergency-link" href="/darurat">
+              Perlu bantuan sekarang?
+            </Link>
+          </div>
+
+          <ul className="sim-mission-meta" aria-label="Ringkasan misi">
+            <li>
+              <Clock3 aria-hidden="true" /> Perkiraan {MISSION.duration}
             </li>
-          ))}
-        </ul>
+            <li>
+              <Package aria-hidden="true" /> {MISSION.chapters.length} babak
+            </li>
+            <li>
+              <ShieldCheck aria-hidden="true" /> {endingCount} kemungkinan akhir
+            </li>
+          </ul>
+        </div>
+
+        <figure className="sim-hero-art">
+          <div className="sim-hero-art-frame">
+            <Image
+              src="/simulasi/parcel-playground.png"
+              alt=""
+              aria-hidden="true"
+              className="sim-hero-illustration"
+              width={1024}
+              height={1024}
+              priority
+              sizes="(min-width: 1024px) 46vw, 100vw"
+            />
+            <span className="sim-sticker" data-color="mint">
+              CERITA FIKTIF
+            </span>
+            <span className="sim-sticker" data-color="yellow">
+              Hadiah buat Ibu!
+            </span>
+            <span className="sim-sticker" data-color="coral">
+              Plot twist ↓
+            </span>
+          </div>
+          <figcaption className="sim-hero-caption">
+            Ada paket. Ada plot twist.
+            {incomingMessage?.type === "message" &&
+              incomingMessage.attachment && (
+                <span> · {incomingMessage.attachment.name}</span>
+              )}
+          </figcaption>
+        </figure>
       </section>
 
-      <section className="mt-8">
-        <h2 className="font-medium text-dim text-xs uppercase tracking-wide">
-          Rencana
-        </h2>
-        <p className="mt-1 text-dim text-xs">
-          Dideklarasikan sebagai rencana, bukan didemokan seolah jadi.
-        </p>
-        <ul className="mt-3 flex flex-col divide-y divide-line border-line border-y">
-          {PLANNED.map((m) => (
-            <li
-              key={m.id}
-              className="flex items-center gap-3 px-1 py-2.5 text-sm"
-            >
-              <span className="tabular w-8 shrink-0 text-dim">
-                {m.scenarioPlanned}
+      <section
+        aria-labelledby="chapters-heading"
+        className="sim-stage-road mt-8"
+      >
+        <div className="sim-stage-header">
+          <div>
+            <p className="sim-eyebrow">
+              Misi singkat, pilihanmu yang menentukan
+            </p>
+            <h2 id="chapters-heading">Alur misi</h2>
+          </div>
+          <span className="sim-stage-time">
+            Tiga babak · sekitar {MISSION.duration}
+          </span>
+        </div>
+        <ol className="sim-stage-list">
+          {MISSION.chapters.map((chapter, index) => (
+            <li className="sim-stage-stop" key={chapter}>
+              <span className="sim-stage-number">0{index + 1}</span>
+              <span className="sim-stage-copy">{chapter}</span>
+              <ArrowRight aria-hidden="true" />
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="planned-heading" className="sim-planned mt-9">
+        <header className="sim-page-header">
+          <h2 id="planned-heading">Level lain</h2>
+          <p>Masih direncanakan, belum bisa dimainkan.</p>
+        </header>
+        <ul className="sim-planned-list">
+          {PLANNED.map((modus) => (
+            <li key={modus.id}>
+              <span className="sim-planned-chip">
+                <span>{modus.scenarioPlanned}</span>
+                <span>{modus.nama}</span>
+                <span>Rencana</span>
               </span>
-              <span className="flex-1 text-dim">{m.nama}</span>
-              <Badge variant="outline" className="text-dim">
-                Rencana
-              </Badge>
             </li>
           ))}
         </ul>
