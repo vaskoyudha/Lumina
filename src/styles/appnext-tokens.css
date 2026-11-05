@@ -2,10 +2,10 @@
  * AppNext design tokens — extracted from https://appnext.framer.website/
  * Measured 2026-11-04. Full provenance: docs/design-system/appnext.md
  *
- * SCOPED. Everything lives under `.appnext` and cannot leak into Lumina's
- * dark palette. Lumina is dark by requirement (risk meter readable from the
- * back of a room); AppNext is light-first. Merging the two namespaces would
- * break both, so this file stays opt-in per subtree.
+ * SCOPED. Everything lives under `.appnext`. Lumina's own palette is also
+ * light since 5 November, so marketing and product now agree on ground; the
+ * namespaces stay separate so the type scale (Stack Sans vs Geist) and accent
+ * intensity (#1BAB49 marketing vs #0B7A45 UI) keep doing their own job.
  *
  * Usage:  <div className="appnext"> ... </div>
  */

@@ -74,7 +74,7 @@ export default function SimulasiPage() {
               key={m.id}
               className="flex items-center gap-3 px-1 py-2.5 text-sm"
             >
-              <span className="tabular w-8 shrink-0 text-dim/70">
+              <span className="tabular w-8 shrink-0 text-dim">
                 {m.scenarioPlanned}
               </span>
               <span className="flex-1 text-dim">{m.nama}</span>

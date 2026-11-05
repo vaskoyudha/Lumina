@@ -204,7 +204,12 @@ Lokasi: `src/app/globals.css`, namespace `--lumina-*`.
 --lumina-safe:#37d6a0; --lumina-danger:#ff5d5d; --lumina-warn:#ffb340;
 ```
 
-Gelap bukan selera — warna merah meter harus terbaca dari belakang ruangan.
+Warna merah meter harus terbaca dari belakang ruangan. **Update 5 November:**
+pemilik produk memilih **light mode** untuk seluruh aplikasi; larangan itu
+ternyata terpenuhi di terang juga — `#C81E1E` di atas putih = 5.7:1 dan meter
+dibuat solid setebal 8px. Nilai token lama (gelap) tidak lagi dipakai; nama
+token `--lumina-*` dipertahankan agar tidak ada komponen yang perlu ditulis
+ulang.
 
 **Catatan kontrak:** rencana menyebut token hijau sebagai `--accent`. shadcn/ui
 sudah memakai `--accent` sebagai surface hover netral, jadi memakainya akan

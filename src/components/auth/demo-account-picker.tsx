@@ -42,7 +42,7 @@ export function DemoAccountPicker({
               <p className="truncate text-dim text-xs">
                 {account.email} · {account.password}
               </p>
-              <p className="mt-0.5 text-dim/80 text-xs">{account.summary}</p>
+              <p className="mt-0.5 text-dim text-xs">{account.summary}</p>
             </div>
             <Button
               type="button"

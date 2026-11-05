@@ -128,12 +128,13 @@ ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
 
 | | Lumina (default) | AppNext |
 |---|---|---|
-| Ground | gelap `#0b0f14` | terang `#ffffff` |
+| Ground | terang `#ffffff` | terang `#ffffff` |
 | Namespace | `--lumina-*` | `--appnext-*`, di bawah `.appnext` |
 | Dipakai di | semua permukaan produk | halaman marketing/template |
+| Catatan | light mode adalah keputusan pemilik 5 November; nama token tetap | |
 | Alasan | meter merah harus terbaca dari belakang ruangan | mengikuti template SaaS |
 
-Permukaan produk (companion, belajar, simulasi, darurat) memakai token gelap.
+Permukaan produk (companion, belajar, simulasi, darurat) memakai token terang.
 AppNext hanya masuk lewat subtree ber-`className="appnext"`, tidak pernah ke
 `body` atau `@theme`. Detail: `docs/design-system/appnext.md`.
 

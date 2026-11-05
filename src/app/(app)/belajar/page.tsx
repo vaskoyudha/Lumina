@@ -60,20 +60,20 @@ export default function BelajarPage() {
                   </span>
                 </span>
 
-                <span className="tabular flex shrink-0 items-center gap-3 text-xs">
+                <span className="tabular flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs">
                   <span className="text-dim">
                     {m.laporan === null
                       ? formattedLaporan(m)
                       : `${formattedLaporan(m)} laporan`}
                   </span>
-                  <span className="text-dim/70">{m.kerugian}</span>
+                  <span className="text-dim">{m.kerugian}</span>
                   <Badge
                     variant={ready ? "secondary" : "outline"}
-                    className={ready ? "text-safe" : "text-dim"}
+                    className={ready ? "shrink-0 text-safe" : "shrink-0 text-dim"}
                   >
                     {STATUS_LABEL[m.modulStatus]}
                   </Badge>
-                  <ArrowRight aria-hidden className="size-3.5 text-dim/60" />
+                  <ArrowRight aria-hidden className="size-3.5 text-dim" />
                 </span>
               </Link>
             </li>

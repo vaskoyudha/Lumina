@@ -4,7 +4,8 @@ import { MarketingNav } from "@/components/marketing/marketing-nav";
 
 /**
  * (marketing) shell — light AppNext tokens, scoped under `.appnext`.
- * Never merged into --lumina-*, which stays dark for product surfaces.
+ * Never merged into --lumina-*; both are light now, but the type
+ * scale and accent intensity differ on purpose.
  */
 export const metadata: Metadata = {
   title: "Kenali penipuan sebelum uangnya hilang",

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { NavWithSession } from "@/components/shell/nav-with-session";
 
 /**
- * (app) shell — dark tokens, product chrome.
+ * (app) shell — Lumina light tokens, product chrome.
  * `/darurat` lives here and is never gated (AGENTS.md).
  *
  * The session read is inside the Suspense boundary, so routes that do not need
