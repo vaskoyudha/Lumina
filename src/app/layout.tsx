@@ -15,12 +15,15 @@ const inter = Inter({
 });
 
 /**
- * Root layout: document only. Chrome lives in the route groups so the light
- * marketing pages and auth pages do not inherit the dark app shell.
+ * Root shell only carries the document and the design-token ground.
  *
- *   (app)        dark shell — nav + footer, product surfaces
- *   (marketing)  light AppNext shell — landing page
- *   /masuk       light, centred, no app nav
+ * `body.appnext` installs the measured AppNext light palette once; the
+ * `--lumina-*` names are remapped inside that subtree, so every product
+ * surface and the marketing pages share one light ground.
+ *
+ * The chrome still lives in the route groups: `(app)` for the four product
+ * surfaces, `(chat)` for the full-height companion, `(marketing)` for the
+ * landing page, and `admin/` for its own separate shell.
  */
 
 export const metadata: Metadata = {
@@ -39,7 +42,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={`font-sans ${inter.variable}`}>
-      <body className="min-h-dvh bg-bg text-txt antialiased">{children}</body>
+      <body className="appnext min-h-dvh bg-bg text-txt antialiased">
+        {children}
+      </body>
     </html>
   );
 }

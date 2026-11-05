@@ -2,15 +2,18 @@ import { z } from "zod";
 import raw from "@/data/modus.json";
 
 /**
- * `modus.json` is the single source of truth for the 12 schemes (§11.2).
+ * `modus.json` is the single source of truth for the schemes (§11.2).
  * Stream B reads this file; it must not re-type the list.
  *
- * Validated on import so a typo fails the build, not the demo.
+ * Numbers 1..12 are the original curriculum; admin may add courses beyond that
+ * (approved by Stream A, 5 Nov 2026), so the list is a minimum, not a fixed
+ * length. Validated on import so a typo fails the build, not the demo.
  */
 
 export const ModusSchema = z.object({
   id: z.string(),
-  no: z.number().int().min(1).max(12),
+  /** 1..99 keeps `/belajar/13` and its two-digit label intact. */
+  no: z.number().int().min(1).max(99),
   nama: z.string(),
   /** IASC complaint count. `null` where the source has no figure. */
   laporan: z.number().int().nullable(),
@@ -30,8 +33,8 @@ export const ModusSchema = z.object({
 
 export const ModusListSchema = z
   .array(ModusSchema)
-  .length(12)
-  .refine((list) => new Set(list.map((m) => m.no)).size === 12, {
+  .min(12)
+  .refine((list) => new Set(list.map((m) => m.no)).size === list.length, {
     error: "nomor modus duplikat",
   });
 

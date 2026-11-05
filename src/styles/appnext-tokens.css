@@ -2,12 +2,13 @@
  * AppNext design tokens — extracted from https://appnext.framer.website/
  * Measured 2026-11-04. Full provenance: docs/design-system/appnext.md
  *
- * SCOPED. Everything lives under `.appnext`. Lumina's own palette is also
- * light since 5 November, so marketing and product now agree on ground; the
- * namespaces stay separate so the type scale (Stack Sans vs Geist) and accent
- * intensity (#1BAB49 marketing vs #0B7A45 UI) keep doing their own job.
+ * `.appnext` is installed once, on `body` (src/app/layout.tsx), so the whole
+ * app sits on the light palette. Inside the subtree the legacy `--lumina-*`
+ * names are remapped to measured light values; outside it (the `.dark` block
+ * in globals.css) the original dark values stay untouched for legacy subtrees.
  *
- * Usage:  <div className="appnext"> ... </div>
+ * Do not add a second `.appnext` wrapper — that double-defines the custom
+ * properties and makes an accidental dark island impossible to spot.
  */
 
 @layer components {
@@ -20,12 +21,31 @@
     --appnext-line: #eeeeee;
     --appnext-white: #ffffff;
     --appnext-accent: #1bab49;
-    --appnext-tint: #ebf9ff;
-    --appnext-blue: #40c6ff;
-    --appnext-blue-deep: #044680;
+    --appnext-accent-deep: #0e7c36;
     /* darker sibling of #1BAB49, for small text on white (4.5:1). The raw
        accent is for fills and large type only. */
     --appnext-accent-strong: #0b7a34;
+    --appnext-tint: #ebf9ff;
+    --appnext-blue: #40c6ff;
+    --appnext-blue-deep: #044680;
+    /* Danger is not in the Framer source; added as a measured extension so
+       wrong-answer and emergency states stay legible on a white ground.
+       Value: Tailwind red-600, the lightest red that keeps 4.6:1 on white. */
+    --appnext-danger: #dc2626;
+    --appnext-danger-deep: #991b1b;
+    --appnext-danger-wash: #fef2f2;
+    /* Warning extension, same provenance: amber-600 on white. */
+    --appnext-warn: #d97706;
+    /* Amber-600 reaches only 3.19:1 as text on white, so warning *text*
+       uses the next measured step (amber-700, 5.02:1). --appnext-warn stays
+       for bars/icons. */
+    --appnext-warn-deep: #b45309;
+    --appnext-warn-wash: #fffbeb;
+    /* Success wash (accent at low opacity on white) */
+    --appnext-accent-wash: #e9f9f0;
+    --appnext-accent-wash-2: #d3f2e1;
+    /* Dark chip ground for app mockups in marketing (never a text colour) */
+    --appnext-ink-3: #1c1c1c;
 
     /* alpha steps used by the source */
     --appnext-scrim-05: rgb(18 18 18 / 0.05);
@@ -154,65 +174,276 @@
     box-shadow: var(--appnext-shadow-ambient);
   }
 
-  /* Pills are for actions, not for status tags. */
-  .appnext-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 56px;
-    padding-inline: 24px;
-    border-radius: var(--appnext-r-pill);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    transition:
-      transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
-      background-color 160ms ease-out,
-      opacity 160ms ease-out;
+  /* ---- Learning surfaces (Stream B) --------------------------------------
+     The course is read on phones in bright rooms. Cards keep the AppNext
+     shape; state colours come from tokens so no hex lives in TSX. Actions use
+     the shadcn `Button`, cards the shadcn `Card` — no parallel class system. */
+
+  /* A surface band (alternating section ground) */
+  .appnext-band {
+    background: var(--appnext-surface);
   }
 
-  .appnext-button:active {
-    transform: scale(0.96);
-  }
+  /* ---- Course catalog & player (from reference platforms) -----------------
+     Coursera/Udemy catalog cards, Duolingo-ish learning path, Khan-style
+     visible momentum. All of it stays inside AppNext tokens. */
 
-  /*
-    Dual feedback on approach: a 1px lift plus a slightly deeper shadow, so the
-    control reads as lifting toward the cursor. Kept at 1px on purpose — a
-    larger lift slides the button out from under the pointer, the hover ends,
-    and the button flickers.
-  */
-  @media (hover: hover) and (pointer: fine) {
-    .appnext-button:hover {
-      transform: translateY(-1px);
-      transition-duration: 180ms;
-    }
-
-    .appnext-button--primary:hover {
-      box-shadow: 0 6px 18px -6px rgb(18 18 18 / 0.45);
-    }
-
-    .appnext-button--secondary:hover {
-      box-shadow:
-        0 1px 2px -1px rgb(0 0 0 / 0.2),
-        0 6px 18px -6px rgb(0 0 0 / 0.18);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .appnext-button:hover {
-      transform: none;
-    }
-  }
-
-  .appnext-button--primary {
+  /* Featured "start here" band: the one module that is fully written gets the
+     hero treatment, per Duolingo's single next action. */
+  .appnext-featured {
+    border-radius: var(--appnext-r-card);
     background: var(--appnext-ink-2);
+    color: var(--appnext-veil-80);
+    padding: 28px;
+  }
+
+  .appnext-featured :where(h2, h3) {
     color: var(--appnext-white);
   }
 
-  .appnext-button--secondary {
+  .appnext-featured :where(p, li) {
+    color: var(--appnext-veil-80);
+  }
+
+  /* Progress ring (SVG) track — Khan/Coursera momentum cue */
+  .appnext-ring-track {
+    stroke: var(--appnext-line);
+  }
+
+  .appnext-ring-fill {
+    stroke: var(--appnext-accent);
+    transition: stroke-dashoffset 240ms ease-out;
+  }
+
+  /* Vertical learning path: node dots connected by a line (Duolingo path) */
+  .appnext-path {
+    position: relative;
+  }
+
+  .appnext-path::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    left: 13px;
+    width: 2px;
+    background: var(--appnext-line);
+  }
+
+  .appnext-path > li {
+    position: relative;
+  }
+
+  /* Chat bubble for the anonymised example message */
+  .appnext-chat {
     background: var(--appnext-white);
+    border: 1px solid var(--appnext-line);
+    border-radius: 18px 18px 18px 6px;
+    padding: 14px 16px;
+    box-shadow: var(--appnext-shadow-soft);
+  }
+
+  .appnext-chat-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--appnext-muted);
+  }
+
+  /* Sticky curriculum sidebar on the module player (desktop only) */
+  .appnext-toc {
+    position: sticky;
+    top: 88px;
+  }
+
+  .appnext-toc-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 9px 12px;
+    border-radius: var(--appnext-r-sm);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--appnext-muted);
+    transition:
+      background-color 160ms ease-out,
+      color 160ms ease-out;
+  }
+
+  .appnext-toc-link:hover {
+    background: var(--appnext-surface);
+    color: var(--appnext-ink);
+  }
+
+  /* Numbered step marker (anatomy, report order) */
+  .appnext-step-dot {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--appnext-ink-2);
+    color: var(--appnext-white);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .appnext-danger-dot {
+    display: inline-flex;
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-top: 8px;
+    border-radius: 999px;
+    background: var(--appnext-danger);
+  }
+
+  /* Highlighted dangerous fragment inside the anonymised example */
+  .appnext-mark {
+    background: var(--appnext-danger-wash);
+    color: var(--appnext-danger-deep);
+    border-radius: 4px;
+    padding-inline: 2px;
+    box-shadow: inset 0 0 0 1px var(--appnext-danger);
+  }
+
+  /* Focus ring that stays visible on a white ground. */
+  .appnext :focus-visible {
+    outline: 2px solid var(--appnext-accent-deep);
+    outline-offset: 2px;
+  }
+
+  /* ---- Legacy utility remap ----------------------------------------------
+     Existing components colour themselves with the dark `--lumina-*`
+     utilities (`bg-panel`, `text-dim`, `border-line`…). Inside an `.appnext`
+     subtree those names resolve to the light palette instead, so a whole
+     surface turns light by wrapping it — no component edits, and the dark
+     values stay intact outside `.appnext`. New code should use the
+     `--appnext-*` names directly; this bridge is for migration.
+
+     The remap is done at the *variable* level, not by re-declaring utility
+     classes: `.appnext{--lumina-txt:…}` wins inside the subtree regardless of
+     stylesheet layer order, so `text-txt`, `text-dim/60`, `bg-panel-2` and the
+     shadcn `--foreground`/`--muted-foreground` aliases all resolve to the
+     measured AppNext values (appnext.md:31-33). Contrast on white:
+     ink 21:1, muted #606060 6.29:1, accent-deep 5.31:1, danger 4.83:1,
+     warn-deep 5.02:1. The dark --lumina-* values above stay untouched for
+     any subtree outside `.appnext`. */
+
+  /* Variable-level remap (see note above). Opacity suffixes on these utilities
+     (text-dim/60, text-txt/90) blend toward the background, which drops small
+     text below WCAG AA on a white ground; the class-level rules below pin
+     those variants to solid `muted` instead. */
+  .appnext {
+    --lumina-bg: #ffffff;
+    --lumina-panel: #ffffff;
+    --lumina-panel-2: #f4f4f4;
+    --lumina-line: #eeeeee;
+    --lumina-txt: #000000;
+    --lumina-dim: #606060;
+    --lumina-safe: #0e7c36;
+    --lumina-danger: #dc2626;
+    --lumina-warn: #b45309;
+
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #121212;
+    --popover: #ffffff;
+    --popover-foreground: #121212;
+    --primary: #121212;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f4f4;
+    --secondary-foreground: #121212;
+    --muted: #f4f4f4;
+    --muted-foreground: #606060;
+    --accent: #f4f4f4;
+    --accent-foreground: #121212;
+    --destructive: #991b1b;
+    --border: #eeeeee;
+    --input: #eeeeee;
+    --ring: #0e7c36;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #121212;
+    --sidebar-primary: #1bab49;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f4f4f4;
+    --sidebar-accent-foreground: #121212;
+    --sidebar-border: #eeeeee;
+    --sidebar-ring: #0e7c36;
+  }
+
+  .appnext :where(.bg-bg) {
+    background-color: var(--appnext-white);
+  }
+  .appnext :where(.bg-panel) {
+    background-color: var(--appnext-white);
+  }
+  .appnext :where(.bg-panel-2) {
+    background-color: var(--appnext-surface);
+  }
+  .appnext :where(.bg-panel\/30, .bg-panel\/50) {
+    background-color: var(--appnext-surface);
+  }
+  .appnext :where(.text-txt) {
+    color: var(--appnext-ink);
+  }
+  .appnext :where(.text-dim) {
+    color: var(--appnext-muted);
+  }
+  .appnext :where(.text-dim\/70, .text-dim\/60, .text-dim\/50) {
+    color: var(--appnext-muted);
+  }
+  .appnext :where(.text-txt\/90) {
     color: var(--appnext-ink-2);
-    box-shadow: var(--appnext-shadow-ambient);
+  }
+  .appnext :where(.border-line) {
+    border-color: var(--appnext-line);
+  }
+  .appnext :where(.divide-line) > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--appnext-line);
+  }
+  .appnext :where(.text-safe) {
+    color: var(--appnext-accent-deep);
+  }
+  .appnext :where(.bg-safe) {
+    background-color: var(--appnext-accent);
+  }
+  .appnext :where(.bg-safe\/10) {
+    background-color: var(--appnext-accent-wash);
+  }
+  .appnext :where(.bg-safe\/20) {
+    background-color: var(--appnext-accent-wash-2);
+  }
+  .appnext :where(.border-safe\/40, .border-safe\/50) {
+    border-color: var(--appnext-accent);
+  }
+  .appnext :where(.text-danger) {
+    color: var(--appnext-danger);
+  }
+  .appnext :where(.bg-danger) {
+    background-color: var(--appnext-danger);
+  }
+  .appnext :where(.bg-danger\/5, .bg-danger\/10, .bg-danger\/20) {
+    background-color: var(--appnext-danger-wash);
+  }
+  .appnext :where(.border-danger\/40, .border-danger\/50, .border-danger\/60) {
+    border-color: var(--appnext-danger);
+  }
+  .appnext :where(.text-warn) {
+    color: var(--appnext-warn-deep);
+  }
+  .appnext :where(.bg-warn) {
+    background-color: var(--appnext-warn);
+  }
+  .appnext :where(.border-warn\/40) {
+    border-color: var(--appnext-warn);
   }
 
   @media (max-width: 767px) {
@@ -237,4 +468,18 @@
       font-size: 28px;
     }
   }
+}
+
+/*
+ * Card ring — outside `@layer components` on purpose.
+ * The shadcn Card ships `ring-1 ring-foreground/10` as a *utility*; utilities
+ * outrank every layer, so a rule inside one cannot remove it. AppNext cards are
+ * borderless (appnext.md, rule e), and on a white ground a 1px ring reads as a
+ * drawn border. Unlayered declarations beat layered utilities, so this resets
+ * the ring variable — while each card still chooses its own radius and
+ * elevation (ambient for resting cards, soft for review rows) through utilities,
+ * which this rule deliberately does not touch.
+ */
+.appnext :where([data-slot="card"]) {
+  --tw-ring-shadow: 0 0 #0000;
 }

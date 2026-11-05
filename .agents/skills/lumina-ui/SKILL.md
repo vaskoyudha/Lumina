@@ -47,21 +47,27 @@ The palette lives in `src/app/globals.css` as `--lumina-*` and is exposed as
 Tailwind utilities. Use those names. A raw hex, `bg-red-500`, or `text-emerald-600`
 is a defect: it breaks the risk bands and fails review.
 
-| Token utility | Meaning |
-|---|---|
-| `bg-bg` | page background |
-| `bg-panel` | card / raised surface |
-| `bg-panel-2` | nested surface, hover, input fill |
-| `border-line` | the only border colour |
-| `text-txt` | primary text |
-| `text-dim` | secondary text |
-| `text-safe` / `bg-safe` | safe, correct, primary positive action |
-| `text-warn` / `bg-warn` | suspicious |
-| `text-danger` / `bg-danger` | danger, emergency |
+**Ground is light.** Since 2026-11-04 the whole app is one `body.appnext`
+subtree, which remaps the `--lumina-*` names to measured light values. The
+utility names below still work; only their resolved colours changed. Use the
+`--appnext-*` names for anything new.
+
+| Token utility | Meaning | On white |
+|---|---|---|
+| `bg-bg` | page background | `#ffffff` |
+| `bg-panel` | card / raised surface | `#ffffff` |
+| `bg-panel-2` | nested surface, hover, input fill | `#f4f4f4` |
+| `border-line` | the only border colour | `#eeeeee` |
+| `text-txt` | primary text | `#000000`, 21:1 |
+| `text-dim` | secondary text | `#606060`, 6.29:1 |
+| `text-safe` / `bg-safe` | safe, correct, positive action | `#0e7c36`, 5.31:1 |
+| `text-warn` / `bg-warn` | suspicious | `#b45309`, 5.02:1 |
+| `text-danger` / `bg-danger` | danger, emergency | `#dc2626`, 4.83:1 |
 
 `--accent` is shadcn's neutral hover surface, **not** the green. The green is
 `--lumina-safe`. Keep that distinction; renaming it breaks every component's
-hover state.
+hover state. `#1BAB49` is the brand accent but only 3.01:1 with white — use
+`--appnext-accent-deep` `#0e7c36` for a filled green action.
 
 Risk colour comes from the band, never from the raw number:
 
@@ -76,12 +82,15 @@ The demo is read from across a room, sometimes projected, sometimes on a phone
 held by one hand. So:
 
 a. The score meter and any panic/intrusion meter must be legible at a distance —
-   height, contrast, and a colour that survives projector washout.
+   height (`h-2.5` at minimum), contrast, and a colour that survives projector
+   washout. On white that means the deep band colours above, never a pale tint.
 b. Numerals that change use `.tabular` (tabular figures) so digits do not jitter.
 c. Body text stays at `16px` or larger on phones. The emergency page is used
    one-handed, at night, by someone frightened.
 d. Emergency surfaces carry no gamification: no score, no badge, no "selamat!".
    Numbered steps only.
+e. On a white ground nothing is colour-coded *only* by hue: pair the colour with
+   a label, icon, or shape so it survives colour-blindness and screenshots.
 
 ## Interaction floor
 

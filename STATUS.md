@@ -5,7 +5,13 @@ Gate 0 tercapai. Gate 1 tercapai untuk A dan D.
 | Stream | Gate 1 target | Status |
 |---|---|---|
 | A · Companion | tempel teks → `ScoreResult` valid | ✅ plus UI berjalan |
-| B · Belajar | `progress.ts` + modul 10 + list page | ◐ list page jadi, modul 10 belum |
+| B · Belajar | `progress.ts` + modul 10 + list page | ✅ modul 10 + katalog + admin course |
+
+**5 Nov 2026 — admin course (Stream B).** `/admin` mengelola isi course:
+create/read/update/delete draf di perangkat, pratinjau dengan `ModulBody`
+asli, lalu ekspor tiga potongan yang di-commit. Tidak ada DB, tidak ada login,
+tidak ada tombol yang menulis ke repo; `/belajar` tetap statis. "Lengkap"
+sekarang diturunkan dari `src/data/kurikulum.ts`, bukan dari `modulStatus`.
 | C · Simulasi | runner Level 1 sampai choice pertama | ✗ sumber FIRST90 belum ada |
 | D · Darurat + Shell | nav + home + token + lima rute | ✅ |
 

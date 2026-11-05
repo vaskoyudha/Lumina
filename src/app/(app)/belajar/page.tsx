@@ -1,8 +1,13 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { formattedLaporan, MODUS } from "@/lib/modus";
+import { BelajarProgress } from "@/components/belajar/belajar-progress";
+import { ModuleDoneMark } from "@/components/belajar/module-done-mark";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { isPublished } from "@/data/kurikulum";
+import { formattedLaporan, MODUS, type Modus } from "@/lib/modus";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Belajar",
@@ -11,79 +16,143 @@ export const metadata: Metadata = {
 };
 
 /**
- * Stream B's page. The list is generated from `modus.json` (§4: B must not
- * re-type the list). Only module 10 is written; the other eleven say
- * "segera" — honest beats a stub that pretends (§5-B).
+ * Stream B's catalog — generated from `modus.json` (§4: B must not re-type
+ * the list). Reference blend: Coursera/Udemy course grid (tile, meta, status),
+ * Duolingo "start here" featured module, Khan-style always-visible progress.
+ * Modules that are not written yet still say "Segera" honestly.
  */
 
-const STATUS_LABEL = {
-  lengkap: "Lengkap",
-  segera: "Segera",
-} as const;
+function ModuleCard({ m }: { m: Modus }) {
+  const ready = isPublished(m.no);
+  return (
+    <Card className="h-full gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]">
+      <Link
+        href={`/belajar/${m.no}`}
+        data-pressable
+        className="group flex h-full flex-col rounded-[24px] p-5 transition-transform duration-200 ease-out hover:-translate-y-0.5"
+      >
+        <span className="flex items-start justify-between gap-3">
+          <span
+            aria-hidden
+            className={cn(
+              "tabular inline-flex size-11 shrink-0 items-center justify-center rounded-2xl font-medium text-[15px]",
+              ready
+                ? "bg-[var(--appnext-accent-wash)] text-[color:var(--appnext-accent-deep)]"
+                : "bg-panel-2 text-txt",
+            )}
+          >
+            {String(m.no).padStart(2, "0")}
+          </span>
+          <span className="flex items-center gap-2">
+            <ModuleDoneMark no={m.no} />
+            <ArrowUpRight
+              aria-hidden
+              className="size-4 text-dim transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
+          </span>
+        </span>
+
+        <span className="mt-4 block font-medium text-lg text-txt leading-snug">
+          {m.nama}
+        </span>
+        <span className="mt-1.5 line-clamp-2 block text-dim text-sm leading-relaxed">
+          {m.ciri.join(" · ")}
+        </span>
+
+        <span className="tabular mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-5 text-xs">
+          <span className="text-dim">
+            {m.laporan === null
+              ? formattedLaporan(m)
+              : `${formattedLaporan(m)} laporan`}
+          </span>
+          <span aria-hidden className="text-dim">
+            ·
+          </span>
+          <span className="text-dim">{m.kerugian}</span>
+          <span aria-hidden className="text-dim">
+            ·
+          </span>
+          <span className="text-dim">Level {m.level}</span>
+          <span
+            className={
+              ready
+                ? "ml-auto font-medium text-[color:var(--appnext-accent-deep)]"
+                : "ml-auto text-dim"
+            }
+          >
+            {ready ? "Mulai belajar" : "Segera"}
+          </span>
+        </span>
+      </Link>
+    </Card>
+  );
+}
 
 export default function BelajarPage() {
   const sorted = [...MODUS].sort((a, b) => a.no - b.no);
-  const complete = sorted.filter((m) => m.modulStatus === "lengkap").length;
+  const featured = sorted.find((m) => isPublished(m.no));
+  const complete = sorted.filter((m) => isPublished(m.no)).length;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <header className="max-w-prose">
-        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          Pola penipuan yang paling banyak merugikan
-        </h1>
-        <p className="mt-2 text-dim text-sm">
+    <div className="appnext-container py-10 sm:py-14">
+      <header className="max-w-2xl">
+        <h1>Pola penipuan yang paling banyak merugikan</h1>
+        <p className="mt-3">
           Urutan mengikuti jumlah laporan IASC. Satu modul lengkap mengalahkan
-          dua belas halaman kosong — saat ini {complete} dari 12 modul selesai.
+          dua belas halaman kosong — saat ini {complete} dari {sorted.length}{" "}
+          modul selesai ditulis.
         </p>
+        <BelajarProgress />
       </header>
 
-      <ul className="mt-8 flex flex-col divide-y divide-line border-line border-y">
-        {sorted.map((m) => {
-          const ready = m.modulStatus === "lengkap";
-          return (
-            <li key={m.id}>
-              <Link
-                href={`/belajar/${m.no}`}
-                data-pressable
-                className="flex flex-col gap-1.5 px-1 py-4 hover:bg-panel sm:flex-row sm:items-center sm:gap-4"
+      {featured ? (
+        <section aria-labelledby="mulai-dari-sini" className="mt-10">
+          <div className="appnext-featured">
+            <p className="appnext-caption font-medium tracking-wide text-[color:var(--appnext-veil-80)] uppercase">
+              Mulai dari sini
+            </p>
+            <div className="mt-3 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-xl">
+                <h2 id="mulai-dari-sini">{featured.nama}</h2>
+                <p className="mt-2">{featured.ciri.join(" · ")}</p>
+                <p className="tabular appnext-caption mt-3 text-[color:var(--appnext-veil-80)]">
+                  Modul {String(featured.no).padStart(2, "0")} ·{" "}
+                  {formattedLaporan(featured)} laporan · {featured.kerugian} ·
+                  Level {featured.level}
+                </p>
+              </div>
+              <Button
+                asChild
+                className="w-fit shrink-0 rounded-full bg-[var(--appnext-accent-deep)] px-5 text-white hover:bg-[var(--appnext-ink-2)]"
               >
-                <span className="tabular w-6 shrink-0 text-dim text-sm">
-                  {String(m.no).padStart(2, "0")}
-                </span>
+                <Link href={`/belajar/${featured.no}`} data-pressable>
+                  Buka modul lengkap
+                  <ArrowRight aria-hidden />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-sm text-txt">
-                    {m.nama}
-                  </span>
-                  <span className="mt-0.5 block truncate text-dim text-xs">
-                    {m.ciri.join(" · ")}
-                  </span>
-                </span>
+      <section aria-labelledby="semua-modul" className="mt-12">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 id="semua-modul">Semua modul</h2>
+          <p className="appnext-caption tabular">
+            {complete} lengkap · {sorted.length - complete} segera
+          </p>
+        </div>
 
-                <span className="tabular flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs">
-                  <span className="text-dim">
-                    {m.laporan === null
-                      ? formattedLaporan(m)
-                      : `${formattedLaporan(m)} laporan`}
-                  </span>
-                  <span className="text-dim">{m.kerugian}</span>
-                  <Badge
-                    variant={ready ? "secondary" : "outline"}
-                    className={
-                      ready ? "shrink-0 text-safe" : "shrink-0 text-dim"
-                    }
-                  >
-                    {STATUS_LABEL[m.modulStatus]}
-                  </Badge>
-                  <ArrowRight aria-hidden className="size-3.5 text-dim" />
-                </span>
-              </Link>
+        <ul className="mt-5 grid list-none gap-5 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((m) => (
+            <li key={m.id} className="min-w-0">
+              <ModuleCard m={m} />
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      </section>
 
-      <p className="mt-6 text-dim text-xs">
+      <p className="appnext-caption mt-8">
         Kemajuan belajar disimpan di perangkat ini saja. Tanpa akun, tanpa
         unggahan.
       </p>
