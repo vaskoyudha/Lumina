@@ -126,3 +126,48 @@ describe("scoreText contract invariants", () => {
     expect(performance.now() - started).toBeLessThan(2000);
   });
 });
+
+describe("measured bench traps (5 Nov 2026)", () => {
+  // These four were LIVE engine defects found by the 40-message corpus. Each
+  // assertion is the exact measurement that turned red before the fix.
+
+  it("a bank OTP NOTIFICATION is not an OTP request", () => {
+    const result = scoreText({
+      text: "OTP Anda: 483221. Jangan berikan kode ini kepada siapa pun, termasuk petugas bank. Trx Rp250.000 untuk Tokopedia.",
+    });
+    expect(result.hardOverride).toBe(false);
+    expect(result.risk).not.toBe("tinggi");
+    expect(result.risk).not.toBe("mencurigakan");
+  });
+
+  it("a benign courier update keeps its institution weight low", () => {
+    const result = scoreText({
+      text: "[JNE Express] Paket JD04492332 sudah tiba di gudang kota Anda, estimasi besok pagi. Salam, tim kurir.",
+    });
+    expect(result.risk).toBe("rendah");
+  });
+
+  it("a fake courier update DOES escalate (authority + konfirmasi)", () => {
+    const result = scoreText({
+      text: "Paket Anda tertahan di gudang kurir, nomor pelacakan tidak valid. Konfirmasi alamat lewat bit.ly/kurircek untuk pembukaan kembali pengiriman.",
+    });
+    expect(result.risk).toBe("tinggi");
+  });
+
+  it("a polite OTP request ('saya perlu kode OTP') is still a hard request", () => {
+    const result = scoreText({
+      text: "Halo, saya petugas BNI. Ada transaksi anomali Rp1.900.000 di kartu ATM Anda. Untuk pembatalannya saya perlu kode OTP yang masuk di HP Anda sekarang.",
+    });
+    expect(result.hardOverride).toBe(true);
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("fake-call");
+  });
+
+  it("a QRIS sticker payment is caught and classified (was 0/bersih)", () => {
+    const result = scoreText({
+      text: "Barang sudah dikemas, bayar sisa ongkir via QRIS pada stiker ini (nama penerima a.n. Hadi Wibowo).",
+    });
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("quishing-qris");
+  });
+});

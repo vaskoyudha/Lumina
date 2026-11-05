@@ -50,6 +50,10 @@ const MODUS_KEYWORDS: ReadonlyArray<{ modus: string; pattern: RegExp }> = [
       /\b(?:share\s*screen|berbagi\s+layar|anydesk|teamviewer|remote)\b/i,
   },
   {
+    modus: "quishing-qris",
+    pattern: /\b(?:qris|qr\s*code|scan\s+qr|stiker\s+qr)\b/i,
+  },
+  {
     modus: "investasi-bodong",
     pattern:
       /\b(?:investasi|trading|crypto|kripto|profit|bunga|robot\s+trading)\b/i,
