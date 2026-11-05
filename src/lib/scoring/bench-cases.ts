@@ -249,4 +249,25 @@ export const LEGIT_CASES: BenchCase[] = [
     tag: "edukasi OJK",
     text: "[SIKAPI OJK] Jangan menyerahkan rekening atau kartu ATM Anda kepada orang lain. Data Anda bisa dipakai untuk pinjaman ilegal.",
   },
+  {
+    // Found by sampling replies rather than by the bench: urgency alone used
+    // to carry enough weight to cross into `mencurigakan`, so an ordinary
+    // promo read as a scam. Urgency is now gated on a demand.
+    id: "l21",
+    tag: "promo singkat",
+    text: "Promo berakhir malam ini, segera pesan sebelum kehabisan.",
+  },
+  {
+    id: "l22",
+    tag: "tenggat tanpa permintaan uang",
+    text: "Pendaftaran ditutup dalam 2 jam. Segera lengkapi berkas kamu.",
+  },
+  {
+    // A real KTA sold by a real bank: "tanpa jaminan" is a legitimate loan
+    // product. Only the illegal markers (tanpa cek BI, tidak terdaftar OJK)
+    // belong in the pinjol rule.
+    id: "l23",
+    tag: "kredit bank resmi",
+    text: "Kredit tanpa jaminan dari bank resmi, bunga 1,2% per bulan. Ajukan di kantor cabang.",
+  },
 ];

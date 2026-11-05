@@ -54,11 +54,31 @@ export const MESSAGE_RULES: readonly Rule[] = [
     pattern: /[\w-]+\.apk\b|\bfile\s+apk\b|\baplikasi\s+undangan\b/i,
   },
   {
+    // Gated the same way as fake-authority, for the same reason: "segera" is
+    // everywhere in legitimate commerce — "promo berakhir malam ini, segera
+    // pesan" is a real flash sale. Urgency is only a scam vector when the
+    // message also asks for something (pay, transfer, click, share).
     id: "urgency",
-    weight: 0.6,
+    weight: 0.3,
+    weightWithAction: 0.6,
     label: "Menekan dengan batas waktu agar korban tidak sempat memeriksa",
     pattern:
       /\b(?:segera|sekarang\s+juga|dalam\s+\d+\s*(?:jam|menit)|hari\s+ini\s+harus|batas\s+waktu|terakhir)\b/i,
+  },
+  {
+    // The illegal-loan vector. `pinjol-fiktif` has been a modus in modus.json
+    // since day one with no rule behind it, so this family was only ever
+    // caught by accident through its urgency words.
+    //
+    // The pattern deliberately names the *illegal* markers, not the loan
+    // product: "pinjaman tanpa jaminan" is a real KTA that real banks sell.
+    // "Tanpa cek BI", "tidak terdaftar OJK", and "teror sebar data" are not.
+    id: "pinjol",
+    weight: 0.7,
+    label:
+      "Menawarkan pinjaman yang melewati cek BI/OJK — pinjol legal tidak bisa memintanya",
+    pattern:
+      /\bpinjol\b|\btanpa\s+(?:cek\s+)?BI(?:\s*checking)?\b|\btidak\s+(?:terdaftar|berizin)\s+(?:di\s+)?OJK\b|\bteror\s+(?:data|kontak)\b|\bsebar\s+(?:data|kontak)\b/i,
   },
   {
     id: "block-threat",

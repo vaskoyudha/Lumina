@@ -220,6 +220,54 @@ describe("combination pass (note 01 §a)", () => {
   });
 });
 
+describe("urgency gate and the pinjol rule (5 Nov 2026)", () => {
+  it("does not let urgency alone cross into `mencurigakan`", () => {
+    // Found by reading replies, not by the bench: "segera" is everywhere in
+    // legitimate commerce, and at 0.6 it alone reached 60/mencurigakan.
+    const result = scoreText({
+      text: "Promo berakhir malam ini, segera pesan sebelum kehabisan.",
+    });
+
+    expect(result.score).toBeLessThan(40);
+    expect(result.risk).toBe("rendah");
+  });
+
+  it("still escalates urgency when the message also asks for something", () => {
+    const result = scoreText({
+      text: "Promo berakhir malam ini, segera transfer DP ke rekening pribadi saya.",
+    });
+
+    const urgency = result.signals.find((s) => s.label.includes("batas waktu"));
+    expect(urgency?.weight).toBe(0.6);
+  });
+
+  it("catches the illegal-loan markers, which had no rule before", () => {
+    // s13 used to be caught only by accident through its urgency words.
+    const result = scoreText({
+      text: "Pinjaman online dana cepat cair 5 menit, tanpa jaminan, tanpa cek BI. Segera ajukan via tautan sebelum kuota hari ini habis.",
+    });
+
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("pinjol-fiktif");
+    expect(
+      result.signals.some((s) => s.label.includes("melewati cek BI/OJK")),
+    ).toBe(true);
+  });
+
+  it("does not flag a legitimate loan product as pinjol", () => {
+    // "Pinjaman tanpa jaminan" is a real KTA that real banks sell. Only the
+    // illegal markers belong in the rule.
+    const result = scoreText({
+      text: "Kredit tanpa jaminan dari bank resmi, bunga 1,2% per bulan. Ajukan di kantor cabang.",
+    });
+
+    expect(
+      result.signals.some((s) => s.label.includes("melewati cek BI/OJK")),
+    ).toBe(false);
+    expect(result.risk).toBe("rendah");
+  });
+});
+
 describe("modus classification (5 Nov 2026)", () => {
   it("classifies the ordinary 'akun Anda akan diblokir' phrasing as phishing", () => {
     // The demo example, word for word. The keyword list used to require the

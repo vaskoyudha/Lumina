@@ -20,14 +20,15 @@ import { scoreText } from "./score";
  * in the same commit as the engine pass that earned them — a target and the
  * evidence for it may never drift apart across commits.
  *
- * Measured 5 Nov 2026, after the link.ts + message.ts pass:
- *   scam recall 1.00 (20/20)   hard catches 0.85 (17/20)   FP 0.00 (0/20)
+ * Measured 5 Nov 2026, after the link.ts + message.ts pass and the pinjol
+ * rule + urgency gate:
+ *   scam recall 1.00 (20/20)   hard catches 0.90 (18/20)   FP 0.00 (0/23)
  * Pre-fix measurement for comparison: recall 0.95, hard 0.85, FP 0.10.
  */
 
 const RECALL_TARGET = 0.95;
 const HARD_CATCH_TARGET = 0.8;
-const FALSE_POSITIVE_TARGET = 0.05; // 0 of 20 legit messages may leak
+const FALSE_POSITIVE_TARGET = 0.05; // 0 of 23 legit messages may leak
 
 function runCases(cases: readonly BenchCase[]): ScoreResult[] {
   return cases.map(({ text }) => scoreText({ text }));
@@ -78,7 +79,7 @@ describe("corpus bench — 20 scam messages", () => {
   });
 });
 
-describe("corpus bench — 20 legit messages (false positives)", () => {
+describe("corpus bench — 23 legit messages (false positives)", () => {
   const results = runCases(LEGIT_CASES);
   const flagged = results
     .map((r, i) => ({ case: LEGIT_CASES[i], r }))

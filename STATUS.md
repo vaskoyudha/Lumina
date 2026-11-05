@@ -20,8 +20,8 @@ e. Engine skor deterministik: Message Agent, Link Agent, Scoring Orchestrator.
 f. Panel bukti per agent, dengan penandaan `belum aktif` yang jujur.
 g. Tiga contoh §11.6 sebagai tombol di companion.
 h. Mode darurat: tiga kasus, checklist bernomor, kanal resmi, cetak.
-i. 90 test Jest, termasuk yang merender komponen React sungguhan.
-j. Korpus bench 40 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
+i. 98 test Jest, termasuk yang merender komponen React sungguhan.
+j. Korpus bench 43 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
    di balik setiap klaim akurasi; angkanya diukur, bukan dikutip.
 k. `src/lib/evidence/`: producer `EvidenceBundle` pertama (artefak → timeline →
    narasi). Panel bukti menampilkan artefaknya; kode OTP sengaja **tidak**
@@ -58,15 +58,15 @@ sedangkan proposal menyebut 88/100. Klaim di presentasi mengikuti hasil ukur
 
 ### Akurasi terukur — 5 November 2026
 
-Korpus 40 pesan (20 scam lintas 12 modus + 20 pesan sah yang sengaja memuat
+Korpus 43 pesan (20 scam lintas 12 modus + 23 pesan sah yang sengaja memuat
 jebakan false-positive klasik). Dijalankan oleh `score.bench.test.ts`, jadi
 angka ini bisa diverifikasi ulang oleh siapa pun, kapan pun.
 
 | Ukuran | Sebelum perbaikan | Sesudah | Target |
 |---|---|---|---|
 | Scam tertangkap (`mencurigakan`/`tinggi`) | 19/20 | **20/20** | ≥ 0.95 |
-| Scam langsung `tinggi` | 17/20 | **17/20** | ≥ 0.80 |
-| False positive pada pesan sah | 2/20 (10%) | **0/20** | < 5% |
+| Scam langsung `tinggi` | 17/20 | **18/20** | ≥ 0.80 |
+| False positive pada pesan sah | 2/20 (10%) | **0/23** | < 5% |
 
 Tiga defect yang diukur dan diperbaiki di commit `6e70f5e`:
 
@@ -79,9 +79,29 @@ b. Pesan kurir sah berbobot 70/tinggi karena menyebut institusi saja. Otoritas
 c. Scam stiker QRIS tidak tertangkap sama sekali (0/bersih). Sekarang 70/tinggi
    dan terklasifikasi `quishing-qris`.
 
-Batas yang diakui: tiga scam (love scam, jual-beli di luar marketplace, pinjol
-fiktif) berhenti di `mencurigakan`, bukan `tinggi`; dan merek tiga huruf hanya
-tertangkap bila ditempelkan sebagai awalan, bukan sisipan.
+Batas yang diakui: dua scam (love scam, jual-beli di luar marketplace) berhenti
+di `mencurigakan`, bukan `tinggi`; dan merek tiga huruf hanya tertangkap bila
+ditempelkan sebagai awalan, bukan sisipan.
+
+### Dua presisi yang ditemukan dengan membaca balasan — 5 November 2026
+
+Angka bench tidak menemukan keduanya; yang menemukan adalah membaca keluaran
+`composeReply` untuk kalimat yang tidak ada di korpus. Karena itu keduanya
+sekarang jadi kasus korpus, bukan hanya perbaikan sekali jalan.
+
+a. **"Segera" sendirian cukup untuk menuduh.** Bobot `urgency` 0.6 membuat
+   "Promo berakhir malam ini, segera pesan" berhenti di 60/`mencurigakan` —
+   pesan jualan biasa. Sekarang `urgency` bergerbang konteks seperti
+   `fake-authority`: 0.3 sendirian, 0.6 hanya bila pesan juga meminta
+   (bayar, transfer, klik, berbagi).
+
+b. **s13 tertangkap karena alasan yang salah.** Pesan pinjol ilegal hanya
+   memicu aturan `urgency`; tidak ada satu pun aturan untuk pola pinjol,
+   padahal `pinjol-fiktif` sudah jadi modus sejak hari pertama. Aturan `pinjol`
+   sekarang menyala pada penanda *ilegal* — `pinjol`, `tanpa cek BI`, `tidak
+   terdaftar OJK`, `teror/sebar data` — bukan pada produk pinjamannya, karena
+   "kredit tanpa jaminan" adalah KTA yang benar-benar dijual bank resmi.
+   Efeknya s13 naik ke 88/`tinggi`: scam langsung `tinggi` 17 → 18.
 
 ### Combination pass — 5 November 2026
 
@@ -98,6 +118,7 @@ yang benar-benar menyebut permintaan (biaya admin, top-up berulang, transfer
 di luar marketplace, stiker QRIS). Tagihan sah tanpa satu pun aturan menyala
 karena itu tidak pernah bisa mencapai kombinasi.
 
-Angka bench tidak berubah oleh lintasan ini: 20/20 tertangkap, 17/20 langsung
-`tinggi`, 0/20 false positive. Perubahannya ada di kualitas penjelasan, bukan
-di volume deteksi — dan itu memang tujuannya.
+Angka bench tidak berubah oleh lintasan kombinasi itu sendiri: 20/20
+tertangkap, 17/20 langsung `tinggi`, 0/20 false positive. Perubahannya ada di
+kualitas penjelasan, bukan di volume deteksi — dan itu memang tujuannya.
+Perbaikan presisi di bagian berikutnya yang menggeser angkanya.
