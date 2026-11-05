@@ -62,8 +62,8 @@ export function ClosingCta() {
         Coba dengan pesan yang benar-benar kamu terima.
       </h2>
       <p className="appnext-lead mx-auto mt-3 max-w-[48ch]">
-        Butuh sepuluh detik. Tidak perlu mendaftar, dan tidak ada yang dikirim
-        ke server.
+        Butuh sepuluh detik. Tidak perlu mendaftar, dan pesan yang kamu periksa
+        tidak pernah dikirim ke server.
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
         <Link
