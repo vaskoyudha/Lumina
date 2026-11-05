@@ -176,6 +176,12 @@ export function CourseEditor({ no }: { no: number }) {
             }
           : blankDraft(no, meta)),
     );
+    const saved = existing ? new Date(existing.updatedAt) : null;
+    setSavedAt(
+      saved && !Number.isNaN(saved.getTime())
+        ? saved.toLocaleTimeString("id-ID")
+        : null,
+    );
     setHydrated(true);
   }, [no, modus]);
 

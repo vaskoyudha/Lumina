@@ -76,6 +76,19 @@ describe("export course", () => {
     expect(bundle.moduleFile).toContain('contohSumber: "Tautan dari link"');
   });
 
+  it("escapes quotes and comment terminators in generated source", () => {
+    const uji = draft(13, 'Judul */ "palsu"');
+    uji.content.checklist[0] = 'Cek "undangan.apk"';
+    uji.content.lapor[0] = 'Jangan buka "file"';
+
+    const bundle = exportCourse(uji);
+
+    expect(bundle.moduleFile).toContain(String.raw`"Cek \"undangan.apk\""`);
+    expect(bundle.moduleFile).toContain(String.raw`"Jangan buka \"file\""`);
+    expect(bundle.moduleFile).toContain('Judul * / "palsu"');
+    expect(bundle.moduleFile).not.toContain("Judul */");
+  });
+
   it("flags courses past the original twelve", () => {
     expect(exportCourse(draft(13, "Baru")).requiresUnboundedList).toBe(true);
     expect(exportCourse(draft(7, "Lama")).requiresUnboundedList).toBe(false);
