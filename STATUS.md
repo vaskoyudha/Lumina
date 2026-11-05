@@ -1,4 +1,4 @@
-# Status — per 4 November 2026
+# Status — per 5 November 2026
 
 Gate 0 tercapai. Gate 1 tercapai untuk A dan D.
 
@@ -20,14 +20,19 @@ e. Engine skor deterministik: Message Agent, Link Agent, Scoring Orchestrator.
 f. Panel bukti per agent, dengan penandaan `belum aktif` yang jujur.
 g. Tiga contoh §11.6 sebagai tombol di companion.
 h. Mode darurat: tiga kasus, checklist bernomor, kanal resmi, cetak.
-i. 19 test Jest yang merender komponen React sungguhan.
+i. 81 test Jest, termasuk yang merender komponen React sungguhan.
+j. Korpus bench 40 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
+   di balik setiap klaim akurasi; angkanya diukur, bukan dikutip.
+k. `src/lib/evidence/`: producer `EvidenceBundle` pertama (artefak → timeline →
+   narasi). Panel bukti menampilkan artefaknya; kode OTP sengaja **tidak**
+   pernah diekstrak karena bundel ini keluar perangkat sebagai PDF.
 
 ## Yang belum ada
 
 | Item | Stream | Catatan |
 |---|---|---|
-| Lapisan percakapan + LLM | A | template dulu, LLM kalau waktu |
-| `evidence.ts` → `EvidenceBundle` | A | handoff ke D tanggal 6 Nov |
+| Lapisan percakapan | A | chat + balasan template berjalan; LLM belum disambungkan (keputusan privasi/waktu, `stream-A.md`) |
+| `evidence.ts` → `EvidenceBundle` | A | ✅ producer jadi; D memakai `buildEvidenceBundle()` untuk PDF |
 | Identity Agent (SPF/DKIM/DMARC) | A | cuttable |
 | `progress.ts` + modul 10 | B | modul 10 = angka IASC terkuat |
 | `Quiz.tsx` | B | penentu apakah terasa kursus |
@@ -50,3 +55,30 @@ item terbuka di `docs/plans/stream-A.md`.
 Contoh kasus 2 ("tugas like & top-up") diukur **85/100** oleh engine saat ini,
 sedangkan proposal menyebut 88/100. Klaim di presentasi mengikuti hasil ukur
 (§11.8). Selisih ini dicatat juga di `src/lib/scoring/score.test.ts`.
+
+### Akurasi terukur — 5 November 2026
+
+Korpus 40 pesan (20 scam lintas 12 modus + 20 pesan sah yang sengaja memuat
+jebakan false-positive klasik). Dijalankan oleh `score.bench.test.ts`, jadi
+angka ini bisa diverifikasi ulang oleh siapa pun, kapan pun.
+
+| Ukuran | Sebelum perbaikan | Sesudah | Target |
+|---|---|---|---|
+| Scam tertangkap (`mencurigakan`/`tinggi`) | 19/20 | **20/20** | ≥ 0.95 |
+| Scam langsung `tinggi` | 17/20 | **17/20** | ≥ 0.80 |
+| False positive pada pesan sah | 2/20 (10%) | **0/20** | < 5% |
+
+Tiga defect yang diukur dan diperbaiki di commit `6e70f5e`:
+
+a. Notifikasi OTP dari bank sendiri terbaca sebagai permintaan OTP (100/tinggi).
+   Sekarang `otp-request` menuntut kata kerja permintaan; notifikasi berbobot
+   0.15 dan berhenti di `rendah`.
+b. Pesan kurir sah berbobot 70/tinggi karena menyebut institusi saja. Otoritas
+   sekarang bergerbang konteks: 0.25, atau 0.7 hanya bila pesan juga meminta
+   pembayaran/konfirmasi/klik/berbagi.
+c. Scam stiker QRIS tidak tertangkap sama sekali (0/bersih). Sekarang 70/tinggi
+   dan terklasifikasi `quishing-qris`.
+
+Batas yang diakui: tiga scam (love scam, jual-beli di luar marketplace, pinjol
+fiktif) berhenti di `mencurigakan`, bukan `tinggi`; dan merek tiga huruf hanya
+tertangkap bila ditempelkan sebagai awalan, bukan sisipan.
