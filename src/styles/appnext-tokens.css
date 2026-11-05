@@ -23,6 +23,9 @@
     --appnext-tint: #ebf9ff;
     --appnext-blue: #40c6ff;
     --appnext-blue-deep: #044680;
+    /* darker sibling of #1BAB49, for small text on white (4.5:1). The raw
+       accent is for fills and large type only. */
+    --appnext-accent-strong: #0b7a34;
 
     /* alpha steps used by the source */
     --appnext-scrim-05: rgb(18 18 18 / 0.05);

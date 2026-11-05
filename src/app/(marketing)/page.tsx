@@ -1,3 +1,4 @@
+import { AgentFan } from "@/components/marketing/agent-fan";
 import { Capabilities } from "@/components/marketing/capabilities";
 import { Hero } from "@/components/marketing/hero";
 import { HowItWorks } from "@/components/marketing/how-it-works";
@@ -18,6 +19,26 @@ import { scoreText } from "@/lib/scoring/score";
 const DEMO_TEXT =
   "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim, isinya lengkap dengan lokasi acara.";
 
+function AgentSection() {
+  return (
+    <section className="appnext-container py-16 sm:py-20">
+      <div className="mx-auto max-w-[58ch] text-center">
+        <h2 className="appnext-h2 text-balance">
+          Empat agen bekerja sebelum jawaban muncul.
+        </h2>
+        <p className="appnext-lead mt-3">
+          Bukan satu model yang menilai, tapi beberapa pemeriksa yang masing-
+          masing melihat satu hal — lalu satu orkestrator yang menggabungkan
+          temuannya jadi skor.
+        </p>
+      </div>
+      <div className="mt-10">
+        <AgentFan />
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const demo = scoreText({ text: DEMO_TEXT });
 
@@ -25,6 +46,7 @@ export default function LandingPage() {
     <>
       <Hero score={demo.score} risk={RISK_LABEL[demo.risk]} />
       <LiveExample score={demo.score} risk={RISK_LABEL[demo.risk]} />
+      <AgentSection />
       <HowItWorks />
       <Capabilities />
       <Proof />

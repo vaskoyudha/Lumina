@@ -52,9 +52,7 @@ export function Proof() {
               <dt className="mt-2 text-[13px] leading-snug text-[#606060]">
                 {figure.label}
               </dt>
-              <p className="mt-2 text-[11px] text-[#606060]">
-                {figure.note}
-              </p>
+              <p className="mt-2 text-[11px] text-[#606060]">{figure.note}</p>
             </div>
           ))}
         </dl>

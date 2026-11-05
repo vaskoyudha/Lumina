@@ -69,7 +69,9 @@ export default function BelajarPage() {
                   <span className="text-dim">{m.kerugian}</span>
                   <Badge
                     variant={ready ? "secondary" : "outline"}
-                    className={ready ? "shrink-0 text-safe" : "shrink-0 text-dim"}
+                    className={
+                      ready ? "shrink-0 text-safe" : "shrink-0 text-dim"
+                    }
                   >
                     {STATUS_LABEL[m.modulStatus]}
                   </Badge>
