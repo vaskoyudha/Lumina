@@ -1,6 +1,6 @@
 ---
 name: appnext-design
-description: Use when building or restyling a light-first marketing surface in this repo — a landing page, pricing section, feature band, or app showcase that should read like the AppNext SaaS/Framer template. Carries the measured palette, type scale, shape and elevation of https://appnext.framer.website/, scoped so it never touches Lumina's dark tokens.
+description: Use when building or restyling any surface in this repo — page, section, card, feature band, or app showcase — that should read like the AppNext SaaS/Framer template. Carries the measured palette, type scale, shape and elevation of https://appnext.framer.website/ and the light-token contract the whole app now sits on.
 ---
 
 # AppNext design system
@@ -14,19 +14,24 @@ facts rather than starting points to improve.
 
 ## Scope rule, first
 
-AppNext is **light-first**. Lumina is **dark by requirement** (the risk meter
-has to read from the back of a room). Never merge the two token namespaces.
+AppNext is **light-first**, and since 2026-11-04 Lumina ships light too — the
+whole app is one `body.appnext` subtree. The token namespaces still do not
+merge: `.appnext` remaps `--lumina-*` *inside itself*, and the original dark
+values stay under `.dark` in `globals.css` for legacy subtrees.
 
 ```tsx
-// correct — isolated subtree
-<div className="appnext">
-  <div className="appnext-container">…</div>
-</div>
+// installed once, in src/app/layout.tsx
+<body className="appnext">…</body>
+
+// inside it, use the container and tokens as before
+<div className="appnext-container">…</div>
 ```
 
-Do not overwrite `--lumina-*`, do not add these to `@theme` in
-`src/app/globals.css`, and do not apply `.appnext` to `body`. A page that needs
-this style opts in explicitly.
+Do not add a second `.appnext` wrapper, do not re-declare `--lumina-*` in
+`@theme`, and do not add new `.dark` subtrees. The history: this style used to
+be opt-in per page and products kept dark tokens — the team reversed that on
+2026-11-04 so every screen reads in daylight. Read `AGENTS.md` → "Dua sistem
+desain" before changing the ground.
 
 ## The five rules that define the look
 
@@ -94,9 +99,12 @@ ambient shadow reads as two competing systems.
 
 ## Components that exist
 
-- `.appnext-button` + `--primary` (`#121212` fill) or `--secondary` (white fill,
-  ambient shadow). 56px tall, 24px padding, 12px label, pill.
-- `.appnext-card` — white, 24px, ambient shadow.
+- shadcn `Button` for every action, styled as the AppNext pill: 56px tall,
+  24px padding, 12px label, `rounded-full`. Primary fill `#121212`, secondary
+  white with the ambient shadow. Use `accent-deep` `#0e7c36` for a green
+  action; `#1BAB49` with white text is only 3.01:1.
+- shadcn `Card` for card surfaces: white, 24px radius, ambient shadow, no
+  border. `.appnext-tokens.css` removes the primitive's 1px ring unlayered.
 - `.appnext-container` — 1200px max, 24px inline padding.
 
 That is the whole component set the source justifies. If a surface needs
@@ -118,7 +126,12 @@ a bento band that already varies tile size, never as the page's main composition
 
 ## Where it belongs in this repo
 
-Not on Lumina's product surfaces. If this style is used, it is for a marketing
-or template page — a separate route, opt-in via `className="appnext"`. The
-companion, the learning module, the simulation runner and the emergency page
-keep the dark tokens, because those are used under pressure and in poor light.
+Everywhere. The companion, the learning module, the simulation runner and the
+emergency page all use these tokens, because the team decided on 2026-11-04 that
+every surface ships light. Marketing/template pages are no longer a special
+case — they simply are the same ground.
+
+The thing that must survive the change is *legibility*, not the palette's
+provenance: the risk meter and small status text use the measured deep values
+(`--appnext-danger #dc2626`, `--appnext-warn-deep #b45309`,
+`--appnext-accent-deep #0e7c36`), never the pale brand green on white.

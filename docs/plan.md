@@ -196,7 +196,10 @@ punya simulasi.
 
 ### Design tokens — milik D, dipakai semua
 
-Lokasi: `src/app/globals.css`, namespace `--lumina-*`.
+Lokasi: `src/app/globals.css`, namespace `--lumina-*`; token terang AppNext di
+`src/styles/appnext-tokens.css`, namespace `--appnext-*`.
+
+Nilai gelap asli (masih ada di bawah `.dark`, untuk subtree legacy):
 
 ```css
 --lumina-bg:#0b0f14; --lumina-panel:#121821; --lumina-panel-2:#182130;
@@ -204,7 +207,13 @@ Lokasi: `src/app/globals.css`, namespace `--lumina-*`.
 --lumina-safe:#37d6a0; --lumina-danger:#ff5d5d; --lumina-warn:#ffb340;
 ```
 
-Gelap bukan selera — warna merah meter harus terbaca dari belakang ruangan.
+Nilai terang yang dipakai sekarang (keputusan 4 Nov 2026): ground putih,
+`--lumina-txt → #000000`, `--lumina-dim → #606060`, `--lumina-safe → #0e7c36`,
+`--lumina-danger → #dc2626`, `--lumina-warn → #b45309`. Semua dipetakan ulang di
+dalam `.appnext` yang dipasang di `body`.
+
+Gelap bukan lagi default — tapi kontras tetap syarat: teks kecil dan meter harus
+terbaca di ground putih (lihat `docs/design-system/appnext.md`).
 
 **Catatan kontrak:** rencana menyebut token hijau sebagai `--accent`. shadcn/ui
 sudah memakai `--accent` sebagai surface hover netral, jadi memakainya akan
@@ -265,9 +274,11 @@ Cut kalau mepet: deteksi tautan → cut. LLM → cut, pakai template.
 5. Modul 1, 2, 7 kalau waktu tersisa.
 6. `adaptive.ts` paling akhir; kalau tidak selesai, urutkan saja.
 
-Struktur satu modul lengkap: anatomi (langkah 1..5) · contoh pesan Indonesia
-dianonimkan dengan bagian berbahaya ditandai · checklist 5 tanda bahaya · kuis
-3-5 soal dengan penjelasan tiap jawaban salah · langkah lapor berurutan.
+Struktur satu modul lengkap: anatomi (langkah 1..5) · contoh penipuan
+dianonimkan dengan bagian berbahaya ditandai — bentuknya bisa pesan, tautan,
+situs, atau panggilan (`contohJenis`), karena tidak semua penipuan berupa
+pesan · checklist 5 tanda bahaya · kuis 3-5 soal dengan penjelasan tiap
+jawaban salah · langkah lapor berurutan.
 
 Risiko: menulis konten itu lambat — satu modul bagus 2-3 jam. Kuis "apa itu
 phishing?" tidak menguji apa pun; kuis yang baik menampilkan pesan dan bertanya
@@ -486,6 +497,13 @@ Satu tabel, dua pemakai, disimpan sebagai `src/data/modus.json`.
 | 12 | Musiman & catut institusi | momen tahunan | — | — |
 
 Urutan pengerjaan modul: 10 → 1 → 2 → 7. Sisanya "segera".
+
+**Keputusan 5 Nov 2026 — jumlah modul tidak lagi dikunci 12.** Stream A
+menyetujui course baru bernomor di atas 12 lewat `/admin` (Stream B). Dua
+konsekuensinya: `no` di `modus.json` sah 1..99 dan daftarnya hanya wajib
+minimal 12; "lengkap" tidak lagi dibaca dari `modulStatus` tetapi dari
+`src/data/kurikulum.ts`, supaya status itu fakta dan bukan klaim. Modul baru
+tetap tidak punya simulasi (`scenarioId: null`) sampai Stream C menambahkannya.
 
 ### 11.3 Delapan fitur per jenis penipuan → Stream A
 

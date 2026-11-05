@@ -103,42 +103,61 @@ ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
 Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
 dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 
-## Dua sistem desain, jangan dicampur
+## Dua sistem desain, satu ground terang
 
-| | Lumina (default) | AppNext |
+| | Lumina (produk) | AppNext |
 |---|---|---|
-| Ground | gelap `#0b0f14` | terang `#ffffff` |
-| Namespace | `--lumina-*` | `--appnext-*`, di bawah `.appnext` |
-| Dipakai di | semua permukaan produk | halaman marketing/template |
-| Alasan | meter merah harus terbaca dari belakang ruangan | mengikuti template SaaS |
+| Ground | terang `#ffffff` | terang `#ffffff` |
+| Namespace | `--lumina-*` + `--appnext-*` | `--appnext-*`, di bawah `.appnext` |
+| Dipakai di | semua permukaan produk | marketing/template + seluruh shell |
+| Alasan | semua layar dibaca di ruang terang, termasuk HP di bawah sinar matahari | mengikuti template SaaS |
 
-Permukaan produk (companion, belajar, simulasi, darurat) memakai token gelap.
-AppNext hanya masuk lewat subtree ber-`className="appnext"`, tidak pernah ke
-`body` atau `@theme`. Detail: `docs/design-system/appnext.md`.
+**Keputusan 4 Nov 2026 — menyimpang dari aturan awal.** Permukaan produk
+(companion, belajar, simulasi, darurat) dan shell **terang**, bukan gelap.
+Teks dan meter harus tetap lolos kontras di ground putih; nilai terukur ada di
+`src/styles/appnext-tokens.css` (`--appnext-danger #dc2626`,
+`--appnext-accent-deep #0e7c36`, `--appnext-muted #606060`).
+
+`.appnext` sekarang dipasang sekali di `body` (`src/app/layout.tsx`) dan
+memetakan ulang variabel `--lumina-*` hanya di dalam subtree itu. Nilai gelap
+asli tetap ada di `globals.css` di bawah `.dark` untuk subtree legacy; jangan
+menambah `.dark` baru. Detail: `docs/design-system/appnext.md`.
 
 ## Layout
 
 ```
 src/
-├── app/                  rute (5 permukaan + darurat)
-│   ├── companion/        A · percakapan + panel bukti
-│   ├── belajar/          B · daftar + [modul]
-│   ├── simulasi/         C · daftar + [id]
-│   └── darurat/          D · triage + PDF
+├── app/                  root: dokumen + body.appnext saja
+│   ├── (user)/           shell murid: nav 4 permukaan + footer privasi
+│   │   ├── page.tsx      beranda
+│   │   ├── companion/    A · percakapan + panel bukti
+│   │   ├── belajar/      B · daftar + [modul]
+│   │   ├── simulasi/     C · daftar + [id]
+│   │   └── darurat/      D · triage + PDF
+│   └── admin/            B · area kerja kurikulum, shell sendiri
 ├── components/
 │   ├── ui/               shadcn — jangan diedit kecuali perbaikan registry
-│   ├── shell/            nav, layout
+│   ├── shell/            nav + layout murid
 │   ├── companion/        A
+│   ├── admin/            B
 │   └── darurat/          D
 ├── lib/
 │   ├── contracts/        BEKU — ScoreResult, EvidenceBundle
 │   ├── scoring/          A · agent deterministik
+│   ├── admin/            B · draf + ekspor course
 │   └── modus.ts          pembaca modus.json, tervalidasi zod
 └── data/
-    ├── modus.json        12 modus (§11.2), milik A, dibaca B
+    ├── modus.json        modus (§11.2), milik A, dibaca B
+    ├── kurikulum.ts      B · course yang benar-benar punya isi
+    ├── modul-schema.ts   B · kontrak isi course (zod)
     ├── official-domains.json
     └── triage.ts         D
 ```
+
+**Dua area, dua shell.** `(user)` dan `admin` tidak berbagi nav. Membuka
+`/admin` tidak boleh memperlihatkan Companion/Belajar/Simulasi/Darurat; satu-satunya
+jalan kembali adalah tautan keluar yang eksplisit. Ini yang membuat login nanti
+cukup memilih area — bukan menambah kondisi di dalam satu nav.
 
 ## Batas stream
 
@@ -148,7 +167,7 @@ minta bentuk datanya, bukan filenya.
 | Stream | Boleh | Jangan |
 |---|---|---|
 | A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `data/modus.json` | isi modul, runner, PDF |
-| B | `app/belajar/`, konten modul, `progress.ts` | engine skor, navigasi |
+| B | `app/belajar/`, `app/admin/`, `components/admin/`, konten modul, `progress.ts`, `data/kurikulum.ts`, `lib/admin/` | engine skor, navigasi |
 | C | `app/simulasi/`, runner, `validate.ts` | konten modul, PDF |
 | D | `app/darurat/`, `components/darurat/`, `app/layout.tsx`, `globals.css`, `pdf.ts` | engine skor, konten modul |
 
