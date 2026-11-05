@@ -49,6 +49,7 @@ if (typeof window !== "undefined") {
   if (!window.URL.createObjectURL) {
     let objectUrl = 0;
     Object.defineProperty(window.URL, "createObjectURL", {
+      configurable: true,
       writable: true,
       value: () => {
         objectUrl += 1;
@@ -56,6 +57,7 @@ if (typeof window !== "undefined") {
       },
     });
     Object.defineProperty(window.URL, "revokeObjectURL", {
+      configurable: true,
       writable: true,
       value: () => {},
     });

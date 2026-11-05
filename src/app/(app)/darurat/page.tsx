@@ -4,7 +4,7 @@ import { DaruratClient } from "@/components/darurat/darurat-client";
 export const metadata: Metadata = {
   title: "Mode darurat",
   description:
-    "Checklist berurutan untuk dipakai saat penipuan sedang terjadi: OTP, transfer, atau APK terpasang.",
+    "Checklist berurutan untuk dipakai saat penipuan sedang terjadi: kode OTP, transfer, tautan, lowongan palsu, atau APK terpasang.",
 };
 
 export default function DaruratPage() {
