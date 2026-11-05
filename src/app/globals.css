@@ -88,6 +88,31 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Streaming shimmer, extracted from the reference's `thinking-label-shimmer`:
+ * a 300%-wide gradient swept from 100% to 0% over 2.2s, linear and infinite.
+ * The gradient itself lives in `thinking-row.tsx` because it must be clipped to
+ * the text. Frozen at the midpoint under reduced motion so the label stays
+ * legible instead of disappearing.
+ */
+@keyframes thinking-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes thinking-shimmer {
+    from,
+    to {
+      background-position: 50% 0;
+    }
+  }
+}
+
 :root {
   /* --- Lumina palette: LIGHT mode, "Ink" ---
      Same token names, so no component needed rewriting.
