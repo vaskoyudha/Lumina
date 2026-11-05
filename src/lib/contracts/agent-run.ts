@@ -88,10 +88,12 @@ export const VoiceDigestSchema = z
     score: z.number().int().min(0).max(100),
     modusName: z.string(),
     findings: z.array(
-      z.object({
-        label: z.string(),
-        weight: z.number().min(0).max(1),
-      }),
+      z
+        .object({
+          label: z.string(),
+          weight: z.number().min(0).max(1),
+        })
+        .strict(),
     ),
     advice: z.array(z.string()),
     moduleNo: z.number().int().min(1).max(12).nullable(),
