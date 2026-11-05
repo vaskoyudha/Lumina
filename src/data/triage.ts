@@ -87,6 +87,66 @@ export const TRIAGE_CASES: readonly TriageCase[] = [
     ],
   },
   {
+    id: "tautan-diklik",
+    trigger: "Saya sudah mengklik tautan mencurigakan",
+    title: "Tautan phishing sudah diklik",
+    stop: "Jangan masukkan password atau kode OTP lagi di halaman yang terbuka dari tautan itu.",
+    steps: [
+      {
+        do: "Tutup halaman tautan; jangan isi formulir apa pun, termasuk verifikasi ulang.",
+        why: "Halaman itu bisa meminta data bertahap sampai kamu menyerahkan OTP.",
+      },
+      {
+        do: "Ganti password akun yang terkait dari perangkat lain, lalu aktifkan verifikasi dua langkah.",
+        why: "Password yang sudah diketik di halaman palsu harus dianggap bocor.",
+      },
+      {
+        do: "Keluarkan sesi yang tidak dikenal di pengaturan keamanan akun dan email.",
+        why: "Pelaku sering menyisakan sesi aktif agar bisa masuk lagi besok.",
+      },
+      {
+        do: "Cek mutasi rekening dan tagihan; hubungi bank kalau ada transaksi asing.",
+        why: "Transaksi kecil di awal biasanya uji coba sebelum pencurian besar.",
+      },
+      {
+        do: "Laporkan tautannya ke Komdigi dan cek nomor pengirimnya.",
+        why: "Laporan mempercepat pemblokiran tautan untuk korban berikutnya.",
+        href: "https://aduannomor.id",
+        hrefLabel: "aduannomor.id",
+      },
+    ],
+  },
+  {
+    id: "lowongan-palsu",
+    trigger: "Saya ditawari kerja atau tugas online berbayar",
+    title: "Lowongan kerja atau tugas berbayar palsu",
+    stop: "Jangan transfer uang apa pun lagi, termasuk biaya pelatihan, deposit, atau top-up.",
+    steps: [
+      {
+        do: "Hentikan semua transfer dan top-up ke aplikasi atau rekening yang diminta.",
+        why: "Skema ini hidup dari biaya yang terus bertambah sebelum pencairan palsu.",
+      },
+      {
+        do: "Simpan tangkapan layar iklan, chat, nomor rekening, dan bukti transfer.",
+        why: "Nomor rekening dan jam transfer adalah bukti yang dipakai bank.",
+      },
+      {
+        do: "Laporkan rekening penerima ke cekrekening.id.",
+        why: "Rekening yang dilaporkan ditandai untuk calon korban lain.",
+      },
+      {
+        do: "Laporkan lowongan dan akun perekrut ke platform tempat kamu menemukannya.",
+        why: "Akun yang dilaporkan berhenti menjangkau pencari kerja baru.",
+        href: "https://cekrekening.id",
+        hrefLabel: "cekrekening.id",
+      },
+      {
+        do: "Beri tahu teman yang ikut ditawari; jangan menunggu sampai mereka transfer.",
+        why: "Skema ini menyebar lewat ajakan orang yang sudah lebih dulu masuk.",
+      },
+    ],
+  },
+  {
     id: "apk-terpasang",
     trigger: "Saya sudah menginstal file APK",
     title: "APK sudah terpasang di ponsel",

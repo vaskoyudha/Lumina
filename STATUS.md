@@ -19,8 +19,12 @@ d. `modus.json`: 12 modus tervalidasi zod, satu sumber kebenaran untuk A dan B.
 e. Engine skor deterministik: Message Agent, Link Agent, Scoring Orchestrator.
 f. Panel bukti per agent, dengan penandaan `belum aktif` yang jujur.
 g. Tiga contoh §11.6 sebagai tombol di companion.
-h. Mode darurat: tiga kasus, checklist bernomor, kanal resmi, cetak.
-i. 19 test Jest yang merender komponen React sungguhan.
+h. Mode darurat: lima kasus, checklist bernomor, kanal resmi, cetak.
+i. Laporan darurat: pratinjau + `pdf.tsx` (`@react-pdf/renderer`) yang
+   menghasilkan PDF nyata di perangkat, lengkap dengan kronologi, rekening
+   pelaku, nominal, dan kolom tanda tangan.
+j. 31 test Jest yang merender komponen React sungguhan (dan satu jalur unduh
+   PDF).
 
 ## Yang belum ada
 
@@ -33,7 +37,6 @@ i. 19 test Jest yang merender komponen React sungguhan.
 | `Quiz.tsx` | B | penentu apakah terasa kursus |
 | Runner Level 1 (port React) | C | butuh sumber FIRST90 dipulihkan |
 | `validate.ts` untuk skenario | C | edge rusak = layar kosong saat demo |
-| `pdf.ts` + `ReportPreview` | D | `@react-pdf/renderer` sudah terpasang |
 
 ## Yang memblokir stream lain
 
