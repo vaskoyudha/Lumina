@@ -4,7 +4,9 @@ import { Bot, CircleDot, Loader2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
+import type { EvidenceBundle } from "@/lib/contracts/evidence";
 import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import { cn } from "@/lib/utils";
 
 /**
  * Right-hand evidence panel (§3). This panel is what makes Lumina read as an
@@ -42,7 +44,7 @@ const AGENT_LABEL: Record<
   evidence: {
     name: "Evidence Agent",
     task: "Menyusun EvidenceBundle untuk laporan",
-    state: "planned",
+    state: "live",
   },
   scoring: {
     name: "Scoring Orchestrator",
@@ -54,9 +56,12 @@ const AGENT_LABEL: Record<
 export function SignalPanel({
   result,
   sequence,
+  evidence,
 }: {
   result: ScoreResult | null;
   sequence: AgentId[];
+  /** What the Evidence Agent assembled, when this surface has produced one. */
+  evidence?: EvidenceBundle | null;
 }) {
   if (!result) {
     return (
@@ -95,6 +100,7 @@ export function SignalPanel({
   const scored = result.signals.some(
     (signal) => (signal.agent ?? "scoring") in AGENT_LABEL,
   );
+  const artifacts = evidence?.artifacts ?? [];
 
   return (
     <Card className="gap-0 border border-line bg-panel py-0 lg:sticky lg:top-20">
@@ -112,11 +118,39 @@ export function SignalPanel({
             <AgentRow
               key={agent}
               agent={agent}
-              findings={byAgent.get(agent) ?? 0}
+              findings={
+                agent === "evidence"
+                  ? artifacts.length
+                  : (byAgent.get(agent) ?? 0)
+              }
               ran={scored || (byAgent.get(agent) ?? 0) > 0}
+              neutral={agent === "evidence"}
             />
           ))}
         </ul>
+
+        {artifacts.length > 0 ? (
+          <div className="mt-5 border-line border-t pt-4">
+            <p className="font-medium text-txt text-xs">Bukti tercatat</p>
+            <ul className="mt-2 flex flex-col gap-2">
+              {artifacts.slice(0, 3).map((artifact) => (
+                <li key={artifact.id} className="leading-snug">
+                  <span className="block text-[0.7rem] text-dim">
+                    {artifact.label}
+                  </span>
+                  <span className="block break-all text-[0.72rem] text-txt">
+                    {artifact.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {artifacts.length > 3 ? (
+              <p className="mt-1.5 text-[0.7rem] text-dim">
+                +{artifacts.length - 3} bukti lain di laporan
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <dl className="mt-5 flex flex-col gap-2 border-line border-t pt-4 text-xs">
           <div className="flex items-center justify-between gap-3">
@@ -141,10 +175,16 @@ function AgentRow({
   agent,
   findings,
   ran,
+  neutral = false,
 }: {
   agent: AgentId;
   findings: number;
   ran: boolean;
+  /**
+   * A tally that is not a warning: artifacts collected, not risk findings.
+   * Same number, different meaning, so it must not inherit the warn colour.
+   */
+  neutral?: boolean;
 }) {
   const meta = AGENT_LABEL[agent];
   const planned = meta.state === "planned";
@@ -155,7 +195,10 @@ function AgentRow({
         {planned ? (
           <CircleDot aria-hidden className="size-3.5 text-dim/50" />
         ) : findings > 0 ? (
-          <CircleDot aria-hidden className="size-3.5 text-warn" />
+          <CircleDot
+            aria-hidden
+            className={cn("size-3.5", neutral ? "text-dim" : "text-warn")}
+          />
         ) : ran ? (
           <ShieldCheck aria-hidden className="size-3.5 text-safe" />
         ) : (
@@ -175,7 +218,9 @@ function AgentRow({
               belum aktif
             </Badge>
           ) : findings > 0 ? (
-            <span className="tabular text-warn">{findings}</span>
+            <span className={cn("tabular", neutral ? "text-dim" : "text-warn")}>
+              {findings}
+            </span>
           ) : null}
         </p>
         <p className="mt-0.5 text-[0.7rem] text-dim leading-snug">

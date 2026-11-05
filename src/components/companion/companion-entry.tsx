@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { scoreText } from "@/lib/scoring/score";
 
 /**
@@ -35,17 +36,39 @@ const EXAMPLES = [
   },
 ] as const;
 
-const AGENT_SEQUENCE: AgentId[] = ["message", "link", "conversation"];
+const AGENT_SEQUENCE: AgentId[] = [
+  "message",
+  "link",
+  "conversation",
+  "evidence",
+];
 
 export function CompanionEntry() {
   const [text, setText] = React.useState("");
   const [result, setResult] = React.useState<ScoreResult | null>(null);
+  /**
+   * The exact text that produced `result`. The textarea stays editable after
+   * "Periksa", and a bundle must never describe text that was not scored.
+   */
+  const [checkedText, setCheckedText] = React.useState("");
+  /** Stamped in the handler; reading the clock during render breaks prerender. */
+  const [checkedAt, setCheckedAt] = React.useState("");
 
   const run = React.useCallback((input: string) => {
     const trimmed = input.trim();
     if (!trimmed) return;
+    setCheckedText(trimmed);
+    setCheckedAt(new Date().toISOString());
     setResult(scoreText({ text: trimmed }));
   }, []);
+
+  const evidence = React.useMemo(
+    () =>
+      result && checkedText
+        ? buildEvidenceBundle([{ text: checkedText, at: checkedAt, result }])
+        : null,
+    [result, checkedText, checkedAt],
+  );
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
@@ -96,6 +119,8 @@ export function CompanionEntry() {
                 onClick={() => {
                   setText("");
                   setResult(null);
+                  setCheckedText("");
+                  setCheckedAt("");
                 }}
                 className="text-dim"
               >
@@ -135,7 +160,11 @@ export function CompanionEntry() {
         ) : null}
       </div>
 
-      <SignalPanel result={result} sequence={AGENT_SEQUENCE} />
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        evidence={evidence}
+      />
 
       <p className="text-dim text-xs lg:col-span-2">
         Butuh bantuan sekarang?{" "}

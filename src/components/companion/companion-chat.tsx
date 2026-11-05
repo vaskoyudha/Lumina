@@ -14,6 +14,7 @@ import {
   suggestedActions,
 } from "@/lib/companion/reply";
 import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { scoreText } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
 
@@ -31,10 +32,26 @@ interface Turn {
   id: number;
   role: "user" | "companion";
   text: string;
+  /**
+   * ISO 8601, stamped inside the send handler — never during render. Next 16
+   * fails the prerender of a client component that reads the clock, and the
+   * greeting turn has no timestamp worth keeping anyway.
+   */
+  at?: string;
   result?: ScoreResult;
+  /**
+   * On a reply turn: the user message it answered. The bundle extracts
+   * artifacts from that text, not from the companion's own prose.
+   */
+  source?: string;
 }
 
-const AGENT_SEQUENCE: AgentId[] = ["message", "link", "conversation"];
+const AGENT_SEQUENCE: AgentId[] = [
+  "message",
+  "link",
+  "conversation",
+  "evidence",
+];
 
 const EXAMPLES = [
   {
@@ -78,6 +95,22 @@ export function CompanionChat() {
     return null;
   }, [turns]);
 
+  /**
+   * The bundle Stream D turns into a PDF. Rebuilt from the log on every turn,
+   * so what the panel shows and what the report contains can never disagree.
+   */
+  const evidence = React.useMemo(
+    () =>
+      buildEvidenceBundle(
+        turns.flatMap((turn) =>
+          turn.result && turn.source
+            ? [{ text: turn.source, at: turn.at, result: turn.result }]
+            : [],
+        ),
+      ),
+    [turns],
+  );
+
   React.useEffect(() => {
     const log = scrollRef.current;
     if (!log) return;
@@ -97,7 +130,12 @@ export function CompanionChat() {
       const text = raw.trim();
       if (!text || busy) return;
 
-      const userTurn: Turn = { id: id(), role: "user", text };
+      const userTurn: Turn = {
+        id: id(),
+        role: "user",
+        text,
+        at: new Date().toISOString(),
+      };
       const hasContent = !isGreeting(text);
       const result = hasContent ? scoreText({ text }) : null;
 
@@ -119,7 +157,9 @@ export function CompanionChat() {
             id: id(),
             role: "companion",
             text: reply,
+            at: userTurn.at,
             result: result ?? undefined,
+            source: hasContent ? text : undefined,
           },
         ]);
         setThinking(false);
@@ -285,7 +325,11 @@ export function CompanionChat() {
         </p>
       </div>
 
-      <SignalPanel result={latestResult} sequence={AGENT_SEQUENCE} />
+      <SignalPanel
+        result={latestResult}
+        sequence={AGENT_SEQUENCE}
+        evidence={evidence}
+      />
     </div>
   );
 }
