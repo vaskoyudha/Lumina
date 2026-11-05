@@ -26,20 +26,15 @@ import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
  * this — they import POST directly and never run the route compiler.
  */
 
-/*
- * 20s, not 6s.
+/**
+ * 13s. Measured: 2.3-2.6 s typical, one successful call at 11.8 s.
  *
- * Measured on this machine through the Satu 9Router tunnel, DeepSeek V4.1
- * Flash takes 2.5s on a good call and 6.1s on a slow one. A 6s budget
- * therefore aborted real replies and silently swapped in the template, which
- * is exactly the "the agent is hardcoded" symptom: the same message produced a
- * model answer or a template answer depending on network luck.
- *
- * The number is a runaway guard, not a latency target. A judge waiting eight
- * seconds for a real reply is a better outcome than an instant canned one, and
- * the thinking row counts the wait out loud so it reads as work.
+ * The old 20 s ceiling existed because the client passed no abort signal, so a
+ * wedged socket left the composer disabled forever. The client now aborts at
+ * 15 s, and the server must give up first — otherwise it streams into a turn
+ * that has already been sealed and shown as a template.
  */
-const TIMEOUT_MS = 20000;
+const TIMEOUT_MS = 13000;
 
 const SYSTEM = [
   "Kamu adalah Lumina, pendamping yang membantu orang Indonesia memeriksa pesan yang mencurigakan.",
@@ -84,7 +79,16 @@ export async function POST(request: Request) {
           model,
           stream: true,
           temperature: 0.3,
-          max_tokens: 220,
+          /*
+           * 800, measured. This model is a reasoning model and
+           * `reasoning_tokens` are billed inside `completion_tokens`, so a 220
+           * cap is 220 minus 54-206 tokens of thinking. Measured: 40 -> 0
+           * visible characters, 80 -> 85 cut mid-word, 220 -> sometimes cut,
+           * 800 -> 359 characters with `finish_reason: "stop"`. 1600 was
+           * proposed and rejected: it buys more thinking on the critical path,
+           * not a longer answer.
+           */
+          max_tokens: 800,
           messages: [
             { role: "system", content: SYSTEM },
             { role: "user", content: JSON.stringify(parsed.data) },

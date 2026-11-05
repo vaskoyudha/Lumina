@@ -113,12 +113,28 @@ describe("CompanionChat · the language layer is actually called", () => {
     });
   });
 
-  it("falls back when the model's answer is cut off mid-sentence", async () => {
-    // The real failure seen in the browser: a half-sentence rendered as a
-    // finished answer. The template is a complete thought; a fragment is not.
-    fetchMock.mockResolvedValue(
-      okResponse("Pemeriksaan kali ini tidak menemukan indikasi mencurig"),
-    );
+  it("keeps a substantive reply that was cut off instead of swapping it", async () => {
+    // Measured: `max_tokens: 220` minus 54-157 reasoning tokens left replies
+    // ending mid-word. The reader watched that answer appear and then watched
+    // it get replaced by canned copy, which is what "hardcoded" looked like.
+    // With a 800-token budget this is rare; when it still happens, the part
+    // that was already read stays on screen.
+    const PARTIAL =
+      "Pesan ini meminta kode OTP lewat tautan yang bukan domain resmi bank, jadi jangan dibalas dulu";
+    fetchMock.mockResolvedValue(okResponse(PARTIAL));
+
+    await sendScam();
+
+    await waitFor(() => {
+      expect(screen.getByText(PARTIAL)).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByText(/Ini berbahaya\. Jangan bertindak dulu/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("still falls back when the cut leaves almost nothing", async () => {
+    fetchMock.mockResolvedValue(okResponse("Pemeriksaan kali"));
 
     await sendScam();
 
@@ -127,7 +143,7 @@ describe("CompanionChat · the language layer is actually called", () => {
         screen.getByText(/Ini berbahaya\. Jangan bertindak dulu/i),
       ).toBeInTheDocument();
     });
-    expect(screen.queryByText(/indikasi mencurig$/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Pemeriksaan kali")).not.toBeInTheDocument();
   });
 
   it("says the model was too slow instead of pretending it is unconfigured", async () => {

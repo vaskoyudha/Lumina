@@ -471,6 +471,14 @@ export function CompanionChat() {
           text: turn.text.slice(0, 2000),
         }));
 
+      /*
+       * 15 s, above the route's 13 s so the server is always the one that gives
+       * up first. Before this the call passed no signal at all: a wedged socket
+       * left `busy` true and the composer disabled with no way back.
+       */
+      const controller = new AbortController();
+      const abortTimer = setTimeout(() => controller.abort(), 15000);
+
       // Defensive: nothing below may leave `busy` stuck.
       try {
         if (lane === "periksa") {
@@ -486,9 +494,29 @@ export function CompanionChat() {
             return;
           }
 
-          const voice = await requestReply(digest, appendText);
-          if (voice.outcome === "model") {
-            finish(voice.text.trim(), "model");
+          const voice = await requestReply(
+            digest,
+            appendText,
+            controller.signal,
+          );
+
+          /*
+           * A reply that was cut but had already said something is kept.
+           * `isComplete` treats a missing full stop as a failed answer, but the
+           * reader has been watching those words arrive for two seconds —
+           * replacing them is the "it is hardcoded" symptom. Below 40
+           * characters there is effectively nothing to keep, so the template
+           * takes over.
+           */
+          const partial = voice.text.trim();
+          const keepPartial =
+            voice.outcome === "truncated" && partial.length >= 40;
+
+          if (voice.outcome === "model" || keepPartial) {
+            // `finish` turns the `truncated` reason into a trace note on the
+            // periksa card, so a kept partial answer is never labelled as a
+            // clean finish.
+            finish(partial, "model", keepPartial ? "truncated" : undefined);
           } else {
             finish(
               composeReply(text || attachments[0]?.name || "", result, {
@@ -508,6 +536,7 @@ export function CompanionChat() {
             digest,
             explanation: latestExplanation,
           }),
+          controller.signal,
         );
 
         if (answer.outcome === "model") {
@@ -530,6 +559,8 @@ export function CompanionChat() {
           "template",
           "failed",
         );
+      } finally {
+        clearTimeout(abortTimer);
       }
     },
     [active?.turns, activeId, busy, latestExplanation, latestResult],
