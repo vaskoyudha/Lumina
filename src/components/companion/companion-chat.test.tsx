@@ -50,6 +50,20 @@ describe("CompanionChat · evidence panel", () => {
     expect(screen.getAllByText(/belum aktif/i).length).toBeGreaterThan(0);
   });
 
+  it("names the modus instead of printing its internal id", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(
+      screen.getByRole("button", { name: /apk undangan pernikahan/i }),
+    );
+
+    expect(
+      await screen.findByText("File APK via WhatsApp"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("apk-whatsapp")).not.toBeInTheDocument();
+  });
+
   it("records the recipient name from a QRIS sticker typed into the chat", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);

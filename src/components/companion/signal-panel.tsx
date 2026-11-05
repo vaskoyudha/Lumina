@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import type { EvidenceBundle } from "@/lib/contracts/evidence";
 import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import { MODUS_BY_ID } from "@/lib/modus";
 import { cn } from "@/lib/utils";
 
 /**
@@ -159,7 +160,9 @@ export function SignalPanel({
           </div>
           <div className="flex items-center justify-between gap-3">
             <dt className="text-dim">Modus</dt>
-            <dd className="text-right text-txt">{result.modus}</dd>
+            <dd className="text-right text-txt">
+              {MODUS_BY_ID.get(result.modus)?.nama ?? "Belum dikenali"}
+            </dd>
           </div>
           <div className="flex items-center justify-between gap-3">
             <dt className="text-dim">Ditentukan oleh</dt>
