@@ -12,9 +12,65 @@ import { modusFor } from "@/lib/modus";
  * exactly. Upgrading to a model later means replacing this one function.
  */
 
-const GREETING = /^(halo|hai|hi|hello|selamat\s+(pagi|siang|malam|sore))\b/i;
+/**
+ * A message is a greeting when every word in it belongs to the greeting
+ * vocabulary.
+ *
+ * The previous rule was "starts with halo/hai and is under 40 characters",
+ * which classified `"Halo, ini dari BCA. Akun Anda diblokir."` (39 chars) as
+ * small talk and skipped the detectors entirely. Anchoring the start is not
+ * enough either — the whole message has to be greeting-shaped. Measured: this
+ * keeps all four short scams analysable and still recognises "hi apa kabar".
+ */
+const GREETING_TOKENS = new Set([
+  "halo",
+  "hallo",
+  "helo",
+  "hai",
+  "hi",
+  "hello",
+  "hei",
+  "selamat",
+  "pagi",
+  "siang",
+  "sore",
+  "malam",
+  "apa",
+  "kabar",
+  "kabarmu",
+  "kabarnya",
+  "terima",
+  "kasih",
+  "makasih",
+  "thanks",
+  "thank",
+  "you",
+  "ok",
+  "oke",
+  "okay",
+  "sip",
+  "baik",
+  "baiklah",
+  "boleh",
+  "siap",
+  "semua",
+  "semuanya",
+  "kak",
+  "min",
+  "admin",
+  "bang",
+  "mas",
+  "mbak",
+  "pak",
+  "bu",
+  "gan",
+  "sis",
+  "kalian",
+  "lumina",
+]);
 
-const SMALL_TALK = /^(apa kabar|terima\s+kasih|makasih|thanks|ok|oke)\b/i;
+/** Eight words is already a sentence; past that it is not a greeting. */
+const MAX_GREETING_TOKENS = 8;
 
 /**
  * Lowercase the first letter so a signal label can follow "Yang paling
@@ -48,7 +104,15 @@ function normalize(text: string): string {
 /** Does this look like a greeting rather than something to analyse? */
 export function isGreeting(text: string): boolean {
   const t = normalize(text);
-  return (GREETING.test(t) || SMALL_TALK.test(t)) && t.length < 40;
+  if (t.length === 0) return false;
+
+  const tokens = t
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((token) => token.length > 0);
+
+  if (tokens.length === 0 || tokens.length > MAX_GREETING_TOKENS) return false;
+  return tokens.every((token) => GREETING_TOKENS.has(token));
 }
 
 export function composeReply(

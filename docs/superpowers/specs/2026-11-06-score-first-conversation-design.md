@@ -160,6 +160,8 @@ export function planTurn(input: {
   result: ScoreResult | null; // null when the question-guard short-circuited
   lastResult: ScoreResult | null;
   lastExplanation: Explanation | null;
+  asked?: boolean;            // the guard already claimed this turn
+  attachments?: number;       // attachment-only turn is still a check
 }): TurnPlan;
 ```
 
@@ -168,18 +170,18 @@ Evaluation order, first match wins:
 | # | Test | Lane | Why |
 |---|---|---|---|
 | 1 | `result` has any signal with `weight > 0` | `periksa` | the engine found something; recall cannot depend on phrasing |
-| 2 | `extractLinks(text).length > 0` | `periksa` | a link deserves the Link Agent row even at score 0 |
-| 3 | phone pattern, or `\.apk\b`, or `\.pdf\b` | `periksa` | "is this number a scammer?" is a check |
-| 4 | money/transaction vocabulary (`transfer`, `rekening`, `bayar`, `top ?up`, `dana`, `ovo`, `gopay`, `pulsa`) | `periksa` | text about a transaction is checkable |
-| 5 | `text.length >= SHORTEST_SCAM` | `periksa` | message-shaped by length; constant pinned from `SCAM_CASES` |
-| 6 | `lastResult && /^(kenapa\|mengapa\|kok\|apa yang harus\|jelaskan\|maksudnya\|terus)/i` | `lanjutan` | answerable from the `Explanation` already in state |
-| 7 | question-shaped (`?` at end, or `SELF_QUESTION` pattern) | `tanya` | a question is not a message someone received |
-| 8 | greeting regex, now fully anchored | `obrolan` | small talk |
+| 2 | `extractLinks(text).length > 0` | `periksa` | a link deserves the Link Agent row even when nothing else scored |
+| 3 | an attachment, a phone pattern, or an `\.apk` / `\.pdf` name | `periksa` | an attached file or a number is something the user received |
+| 4 | `lastResult && lastExplanation && FOLLOW_UP` | `lanjutan` | answerable from the `Explanation` already in state |
+| 5 | money/transaction vocabulary (`transfer`, `rekening`, `bayar`, `top ?up`, `dana`, `ovo`, `gopay`, `pulsa`) | `periksa` | text about a transaction is checkable |
+| 6 | `text.length >= PASTE_LENGTH` (160) | `periksa` | length is a weak signal, so the bar is a pasted paragraph |
+| 7 | question-shaped (`?` at end, or `CONCEPT_QUESTION` pattern) | `tanya` | a question is not a message someone received |
+| 8 | greeting (fully anchored token match) | `obrolan` | small talk |
 | 9 | default | `obrolan` | nothing to check, nothing to answer |
 
-Tests 1-5 run **after** scoring, because the score is the strongest routing
-feature available and it costs 1 ms. Test 7 runs **before** scoring, because a
-question must not be scored at all (§1b).
+Tests 1-3 and 5-6 run **after** scoring, because the score is the strongest
+routing feature available and it costs 1 ms. Test 7 is what the question guard
+decides **before** scoring, because a question must not be scored at all (§1b).
 
 ### 2c. The question guard
 
@@ -187,7 +189,10 @@ question must not be scored at all (§1b).
 
 ```ts
 /** True when the text is a question about scams, not a message that uses one. */
-export function isQuestionAbout(text: string): boolean;
+export function isQuestionAbout(
+  text: string,
+  options?: { hasPriorVerdict?: boolean },
+): boolean;
 ```
 
 It runs before `scoreWithTrace`. A question is never scored, so "apa itu pinjol?"

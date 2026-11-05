@@ -18,6 +18,33 @@ describe("isGreeting", () => {
   it("does not treat a scam message opening with a greeting as small talk", () => {
     expect(isGreeting(APK)).toBe(false);
   });
+
+  it("does not skip a short scam that opens with a greeting", () => {
+    // Measured defect: `GREETING` was anchored only at the start and the guard
+    // was `length < 40`. These four never reached the detectors, so the user
+    // got the canned "Siap…" line for a real scam.
+    const shortScams = [
+      "Halo, ini dari BCA. Akun Anda diblokir.",
+      "Hai, ini undangan pernikahan.apk",
+      "Halo, selamat pagi. Anda menang undian.",
+      "Hi, ada lowongan kerja online.",
+    ];
+    for (const text of shortScams) {
+      expect(isGreeting(text)).toBe(false);
+    }
+  });
+
+  it("still recognises a greeting followed by small talk", () => {
+    expect(isGreeting("hi apa kabar")).toBe(true);
+    expect(isGreeting("halo min")).toBe(true);
+    expect(isGreeting("terima kasih")).toBe(true);
+    expect(isGreeting("selamat malam")).toBe(true);
+  });
+
+  it("does not treat a normal sentence as a greeting", () => {
+    expect(isGreeting("besok kita makan siang bareng ya")).toBe(false);
+    expect(isGreeting("siapa kamu")).toBe(false);
+  });
 });
 
 describe("composeReply", () => {
