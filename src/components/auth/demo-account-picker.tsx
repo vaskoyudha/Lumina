@@ -62,8 +62,9 @@ export function DemoAccountPicker({
       </ul>
 
       <p className="mt-3 text-dim text-xs leading-relaxed">
-        Ini akun demo untuk penilaian. Tidak ada data yang dikirim atau disimpan
-        di server. Progres belajar tersimpan di perangkat ini.
+        Ini akun demo untuk penilaian. Hanya kredensial demo yang dikirim; tidak
+        ada profil atau progres yang disimpan di server. Progres belajar
+        tersimpan di perangkat ini.
       </p>
     </section>
   );

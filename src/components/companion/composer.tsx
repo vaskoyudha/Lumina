@@ -307,8 +307,9 @@ export function Composer({
       </div>
 
       <p className="mt-2 text-[0.7rem] text-dim leading-snug">
-        Lampiran tidak diunggah ke mana pun. Nama berkas ikut diperiksa; isi
-        gambar belum bisa dibaca.
+        Pesan yang kamu periksa tidak pernah dikirim: yang keluar hanya temuan
+        dan pertanyaanmu sendiri. Lampiran tidak diunggah; nama berkas ikut
+        diperiksa, isi gambar belum bisa dibaca.
       </p>
     </div>
   );

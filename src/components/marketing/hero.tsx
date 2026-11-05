@@ -45,7 +45,7 @@ export function Hero({ score, risk }: { score: number; risk: string }) {
         </div>
 
         <p className="appnext-caption mt-4">
-          Tanpa akun. Tidak ada yang dikirim ke server.
+          Tanpa akun. Pemeriksaan berjalan di perangkatmu.
         </p>
       </div>
 

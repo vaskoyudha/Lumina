@@ -10,10 +10,12 @@ export function PrivacyNote() {
     <section className="bg-[#F4F4F4] py-16 sm:py-20">
       <div className="appnext-container grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
-          <h2 className="appnext-h2">Pesanmu tidak dikirim ke mana pun.</h2>
+          <h2 className="appnext-h2">Pesan yang kamu periksa tidak dikirim.</h2>
           <p className="appnext-lead mt-3">
-            Pemeriksaan berjalan di perangkat ini. Tidak ada unggahan, tidak ada
-            riwayat di server, dan tidak ada yang tersimpan setelah tab ditutup.
+            Pemeriksaan berjalan di perangkat ini. Untuk menyusun jawaban,
+            pertanyaanmu dan ringkasan temuan dikirim ke model — pesan yang kamu
+            periksa tidak pernah ikut. Tidak ada riwayat di server, dan tidak
+            ada yang tersimpan setelah tab ditutup.
           </p>
 
           <ul className="mt-5 flex flex-col gap-2 text-[14px] leading-relaxed text-[#606060]">

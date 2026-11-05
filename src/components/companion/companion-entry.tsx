@@ -72,7 +72,7 @@ export function CompanionEntry() {
         </h1>
         <p className="mt-2 max-w-prose text-dim text-sm">
           Tempel isi pesan, tautan, atau deskripsi telepon yang kamu terima.
-          Semuanya diperiksa di perangkat ini dan tidak dikirim ke mana pun.
+          Pesan itu diperiksa di perangkat ini dan tidak dikirim ke mana pun.
         </p>
 
         <form

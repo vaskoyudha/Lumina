@@ -45,11 +45,11 @@ describe("AuthPanel", () => {
     expect(screen.getAllByText(/Akun demo/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("admits in visible copy that nothing is stored server-side", () => {
+  it("admits in visible copy that only demo credentials are sent", () => {
     render(<AuthPanel />);
 
     expect(
-      screen.getByText(/tidak ada data yang dikirim atau disimpan di server/i),
+      screen.getByText(/hanya kredensial demo yang dikirim/i),
     ).toBeInTheDocument();
   });
 

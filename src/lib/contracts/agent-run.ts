@@ -70,7 +70,7 @@ export const STAGE_LABEL: Record<StageId, { label: string; task: string }> = {
   },
   voice: {
     label: "Penyusun bahasa",
-    task: "Menulis jawaban dari temuan, tanpa membaca pesanmu",
+    task: "Menulis jawaban dari temuan, bukan menilai ulang",
   },
 };
 
