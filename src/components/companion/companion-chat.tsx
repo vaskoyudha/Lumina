@@ -25,16 +25,22 @@ import {
   type VoiceOutcome,
 } from "@/components/companion/voice-client";
 import { Button } from "@/components/ui/button";
+import {
+  buildAnswerRequest,
+  requestAnswer,
+} from "@/lib/companion/answer-client";
 import { type Explanation, explain } from "@/lib/companion/explain";
 import {
+  composeAnswerFallback,
   composeReply,
-  isGreeting,
   suggestedActions,
 } from "@/lib/companion/reply";
+import { isQuestionAbout, type Lane, planTurn } from "@/lib/companion/turn";
 import {
   type AgentStage,
   type AgentTrace,
   STAGE_LABEL,
+  type VoiceDigest,
   voiceDigest,
 } from "@/lib/contracts/agent-run";
 import type { ScoreResult } from "@/lib/contracts/score";
@@ -89,6 +95,10 @@ interface Turn {
    * clock while rendering, and a `Date.now()` prop here would do exactly that.
    */
   voiceStartedAt?: number;
+  /** Which lane the router picked. Rendered as the honest reason, not a badge. */
+  lane?: Lane;
+  /** The reader's own words, kept only so the lane chip can re-send them. */
+  laneSource?: string;
 }
 
 interface Session {
@@ -144,6 +154,14 @@ export function CompanionChat() {
     return null;
   }, [turns]);
 
+  const latestExplanation = React.useMemo(() => {
+    for (let i = turns.length - 1; i >= 0; i--) {
+      const hit = turns[i]?.explanation;
+      if (hit) return hit;
+    }
+    return null;
+  }, [turns]);
+
   const evidence = React.useMemo(
     () =>
       buildEvidenceBundle(
@@ -168,7 +186,11 @@ export function CompanionChat() {
   }, [turns]);
 
   const send = React.useCallback(
-    async (raw: string, attachments: Attachment[] = []) => {
+    async (
+      raw: string,
+      attachments: Attachment[] = [],
+      options: { force?: "periksa" } = {},
+    ) => {
       const text = raw.trim();
       if ((!text && attachments.length === 0) || busy) return;
 
@@ -176,7 +198,6 @@ export function CompanionChat() {
       // part of what the engine reads: `undangan-nikah.apk` is the strongest
       // signal in the APK family and it is not prose anyone types.
       const scored = scoringTextWithAttachments(text, attachments);
-      const hasContent = !isGreeting(scored);
 
       // Stamped here, never during render: Next 16 fails the prerender of a
       // client component that reads the clock while rendering.
@@ -185,61 +206,95 @@ export function CompanionChat() {
       const target = activeId;
       if (target === undefined) return;
 
+      /*
+       * The question guard runs BEFORE scoring. Asking what a scam is must not
+       * produce a red card about the person asking: measured, "apa itu pinjol?"
+       * scored 70/tinggi and named the pinjol scheme. A question is not a
+       * message someone received, so the detectors never see it.
+       */
+      const asked = options.force
+        ? false
+        : isQuestionAbout(scored, { hasPriorVerdict: latestResult !== null });
+
+      /*
+       * Prior *checked* user turns go to the Conversation Agent so escalation
+       * across messages is visible. Chat lanes are excluded on purpose: the
+       * Conversation Agent models messages the user received, and feeding it
+       * "apa itu dana?" because the word "dana" appears there would let a
+       * question manufacture an escalation.
+       */
+      const priorTurns = (active?.turns ?? [])
+        .filter(
+          (turn) =>
+            turn.role === "user" &&
+            turn.lane === "periksa" &&
+            turn.text.trim().length > 0,
+        )
+        .map((turn) => ({ text: turn.text }));
+
+      const { result, trace } = asked
+        ? { result: null, trace: null }
+        : scoreWithTrace({ text: scored, turns: priorTurns });
+
+      const plan = planTurn({
+        text: scored,
+        result,
+        lastResult: latestResult,
+        lastExplanation: latestExplanation,
+        asked,
+        attachments: attachments.length,
+      });
+
+      const lane: Lane = options.force ? "periksa" : plan.lane;
+
+      /*
+       * The card and the trace render on `result`, never on `risk`. The bench
+       * records 20/20 caught but 18/20 `tinggi`; gating on `tinggi` would drop
+       * two scam samples and turn a 20/20 claim into 18/20 on stage.
+       */
+      const checked = lane === "periksa" && result !== null;
+
+      /*
+       * The user turn carries the lane too. The chat-lane history is built by
+       * filtering on `turn.lane`, and user turns have no lane of their own
+       * unless it is set here — otherwise history would contain companion
+       * answers with no questions in between.
+       */
       const userTurn: Turn = {
         id: id(),
         role: "user",
         text,
         attachments,
         at: stamp,
+        lane,
       };
 
-      /*
-       * The verdict is already final at this point — everything above is
-       * deterministic and offline. Everything below only decides how to say it.
-       *
-       * Prior user turns go to the Conversation Agent so escalation across
-       * messages is visible; a single message cannot be an escalation.
-       */
-      const priorTurns = (active?.turns ?? [])
-        .filter((turn) => turn.role === "user" && turn.text.trim().length > 0)
-        .map((turn) => ({ text: turn.text }));
-
-      const { result, trace } = hasContent
-        ? scoreWithTrace({ text: scored, turns: priorTurns })
-        : { result: null, trace: null };
-
-      // The Evidence Agent is measured separately because it runs here, on the
-      // turn, not inside the scorer.
       const evidenceStarted = performance.now();
-      const evidence = result
-        ? buildEvidenceBundle([{ text: scored, at: stamp, result }])
+      const evidenceBundle = checked
+        ? buildEvidenceBundle([{ text: scored, at: stamp, result: result }])
         : null;
       const evidenceMs = performance.now() - evidenceStarted;
-      const artifacts = evidence?.artifacts.length ?? 0;
+      const artifacts = evidenceBundle?.artifacts.length ?? 0;
 
-      /*
-       * The Evidence Agent contributes 0 to the header's finding count on
-       * purpose. It collects quotes and amounts; it does not produce signals.
-       * Counting artifacts there would print a number the score card cannot
-       * account for. Its own row states how many it recorded.
-       */
-      const evidenceStage: AgentStage | null = trace
-        ? {
-            id: "evidence",
-            ...STAGE_LABEL.evidence,
-            status: "selesai",
-            findings: 0,
-            ms: evidenceMs,
-            note:
-              artifacts > 0
-                ? `${artifacts} kutipan tercatat untuk laporan`
-                : "Tidak ada kutipan yang bisa dicatat.",
-          }
-        : null;
+      const evidenceStage: AgentStage | null =
+        trace && checked
+          ? {
+              id: "evidence",
+              ...STAGE_LABEL.evidence,
+              status: "selesai",
+              findings: 0,
+              ms: evidenceMs,
+              note:
+                artifacts > 0
+                  ? `${artifacts} kutipan tercatat untuk laporan`
+                  : "Tidak ada kutipan yang bisa dicatat.",
+            }
+          : null;
 
-      const stages: AgentStage[] = trace
-        ? [...trace.stages, ...(evidenceStage ? [evidenceStage] : [])]
-        : [];
+      const stages: AgentStage[] =
+        trace && checked
+          ? [...trace.stages, ...(evidenceStage ? [evidenceStage] : [])]
+          : [];
       const detectorMs = (trace?.totalMs ?? 0) + evidenceMs;
 
       const companionId = id();
@@ -251,7 +306,7 @@ export function CompanionChat() {
        * would let the header show a finished checkmark over work still in
        * flight — the one dishonest state this card could produce.
        */
-      const openTrace: AgentTrace | null = trace
+      const openTrace: AgentTrace | null = checked
         ? {
             stages: [
               ...stages,
@@ -278,7 +333,7 @@ export function CompanionChat() {
                     ? titleFor(text, attachments)
                     : session.title,
                 time: stamp.slice(11, 16),
-                risk: result?.risk ?? session.risk,
+                risk: checked ? (result?.risk ?? session.risk) : session.risk,
                 turns: [
                   ...session.turns,
                   userTurn,
@@ -311,8 +366,17 @@ export function CompanionChat() {
           ),
         );
 
+      /**
+       * A chunk is only appended while the turn is still streaming.
+       *
+       * This is the epoch guard: once `finish()` seals a turn, a chunk that
+       * arrives late from a slow socket has nowhere to land. Without it, a
+       * timed-out turn could regain text after the template was shown.
+       */
       const appendText = (chunk: string) =>
-        patchCompanion((turn) => ({ ...turn, text: turn.text + chunk }));
+        patchCompanion((turn) =>
+          turn.streaming ? { ...turn, text: turn.text + chunk } : turn,
+        );
 
       /**
        * Why the words came from a template, in the reader's language.
@@ -345,16 +409,21 @@ export function CompanionChat() {
           text: finalText,
           streaming: false,
           voiceStartedAt: undefined,
-          result: result ?? undefined,
-          source: hasContent ? scored : undefined,
+          lane,
+          laneSource: lane === "tanya" ? text : undefined,
+          result: checked ? (result ?? undefined) : undefined,
+          source: checked ? scored : undefined,
           /*
            * Only teach when something was actually found. A clean message has
            * no tactics and no scheme, and showing generic checks for "apa
            * kabar?" would be noise dressed as diligence.
            */
-          explanation: result?.signals.some((signal) => signal.weight > 0)
-            ? explain(result, scored)
-            : undefined,
+          explanation:
+            checked &&
+            result !== null &&
+            result.signals.some((signal) => signal.weight > 0)
+              ? explain(result, scored)
+              : undefined,
           trace: turn.trace
             ? {
                 // Replace the open `berjalan` stage rather than appending a
@@ -367,7 +436,9 @@ export function CompanionChat() {
                         ms: voiceMs,
                         note:
                           voice === "model"
-                            ? undefined
+                            ? reason === "truncated"
+                              ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
+                              : undefined
                             : templateNote(reason ?? "unconfigured"),
                       }
                     : stage,
@@ -379,39 +450,89 @@ export function CompanionChat() {
         setBusy(false);
       };
 
-      const fallback = composeReply(
-        text || attachments[0]?.name || "",
-        result,
-        {
-          first: false,
-          containsContent: hasContent,
-        },
-      );
-
-      const digest =
-        hasContent && result
+      const digest: VoiceDigest | null =
+        checked && result
           ? voiceDigest(
               result,
               modusFor(result.relatedModule)?.nama ?? result.modus,
             )
           : null;
 
-      if (!digest) {
-        finish(fallback, "template", "unconfigured");
-        return;
-      }
+      /*
+       * History for the chat lane. A turn that was checked carries the message
+       * someone received, so it is filtered out here rather than trusted to be
+       * dropped inside the route: the schema is strict, but the client decides
+       * what it is allowed to see.
+       */
+      const chatHistory = (active?.turns ?? [])
+        .filter((turn) => turn.lane === "tanya" || turn.lane === "obrolan")
+        .map((turn) => ({
+          role: turn.role,
+          text: turn.text.slice(0, 2000),
+        }));
 
-      const voice = await requestReply(digest, appendText);
+      // Defensive: nothing below may leave `busy` stuck.
+      try {
+        if (lane === "periksa") {
+          if (!digest) {
+            finish(
+              composeReply(text || attachments[0]?.name || "", null, {
+                first: false,
+                containsContent: false,
+              }),
+              "template",
+              "unconfigured",
+            );
+            return;
+          }
 
-      if (voice.outcome === "model") {
-        finish(voice.text.trim(), "model");
-      } else {
-        // The trace names the real reason. "Not configured" for a slow model
-        // was the sentence that made a working setup look hardcoded.
-        finish(fallback, "template", voice.outcome);
+          const voice = await requestReply(digest, appendText);
+          if (voice.outcome === "model") {
+            finish(voice.text.trim(), "model");
+          } else {
+            finish(
+              composeReply(text || attachments[0]?.name || "", result, {
+                first: false,
+                containsContent: true,
+              }),
+              "template",
+              voice.outcome,
+            );
+          }
+          return;
+        }
+
+        const answer = await requestAnswer(
+          buildAnswerRequest(lane, text, {
+            history: chatHistory,
+            digest,
+            explanation: latestExplanation,
+          }),
+        );
+
+        if (answer.outcome === "model") {
+          finish(answer.text, "model");
+        } else {
+          finish(
+            composeAnswerFallback(lane),
+            "template",
+            answer.outcome as VoiceOutcome,
+          );
+        }
+      } catch {
+        finish(
+          lane === "periksa"
+            ? composeReply(text || attachments[0]?.name || "", result, {
+                first: false,
+                containsContent: checked,
+              })
+            : composeAnswerFallback(lane),
+          "template",
+          "failed",
+        );
       }
     },
-    [active?.turns, activeId, busy],
+    [active?.turns, activeId, busy, latestExplanation, latestResult],
   );
 
   const startNew = () => {
@@ -593,6 +714,26 @@ export function CompanionChat() {
                           />
                         ) : null}
                       </p>
+                    ) : null}
+
+                    {turn.lane === "tanya" && turn.laneSource ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-dim text-[0.7rem]">
+                          Dijawab sebagai pertanyaan
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-dim text-xs hover:text-txt"
+                          onClick={() =>
+                            send(turn.laneSource ?? "", [], {
+                              force: "periksa",
+                            })
+                          }
+                        >
+                          Periksa sebagai pesan
+                        </Button>
+                      </div>
                     ) : null}
 
                     {turn.result && !turn.streaming ? (

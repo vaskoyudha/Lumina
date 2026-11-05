@@ -193,3 +193,22 @@ export function suggestedActions(result: ScoreResult | null) {
   }
   return actions;
 }
+
+/**
+ * The sentence shown when the model could not answer a conversational lane.
+ *
+ * Separate from `composeReply` because there is no verdict to talk about: a
+ * fallback that said "Saya belum menemukan apa pun di situ" answered a check
+ * the user never asked for.
+ */
+export function composeAnswerFallback(
+  lane: "tanya" | "lanjutan" | "obrolan",
+): string {
+  if (lane === "tanya") {
+    return "Saya belum bisa menjawab itu sekarang. Coba tanya lagi sebentar lagi, atau tempel pesan yang mencurigakan supaya saya periksa.";
+  }
+  if (lane === "lanjutan") {
+    return "Penjelasan tadi ada di kartu di atas. Kalau ada bagian yang ingin dibahas lagi, sebutkan bagiannya.";
+  }
+  return "Halo. Tempel pesan, tautan, atau ceritakan telepon yang kamu terima — saya periksa dan jelaskan polanya.";
+}

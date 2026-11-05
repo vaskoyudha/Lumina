@@ -98,7 +98,11 @@ describe("requestReply", () => {
 
     const result = await requestReply(digest, () => {});
     expect(result.outcome).toBe("truncated");
-    expect(result.text).toBe("");
+    // The partial text is returned now: the caller keeps what the reader has
+    // already seen instead of replacing it with a template.
+    expect(result.text).toBe(
+      "Pemeriksaan kali ini tidak menemukan indikasi mencurig",
+    );
   });
 
   it("accepts a reply that ends with a closing quote", async () => {

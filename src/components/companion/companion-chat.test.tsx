@@ -135,7 +135,16 @@ describe("CompanionChat · an honest zero", () => {
     // placeholder so the panel is never empty. That placeholder is not a
     // finding, and counting it printed "1 temuan" beside a 0/100 "Bersih"
     // verdict — the panel contradicting its own score.
-    await user.type(screen.getByLabelText(/pesan/i), "tesings");
+    //
+    // 215 characters: above PASTE_LENGTH, so the engine runs, but it contains
+    // no finding, link, phone, number, or money word. The card must read
+    // 0/100 "Bersih" and the panel must say "0 temuan".
+    const BENIGN_PASTE =
+      "besok pagi aku mau ke kampus lebih awal untuk mengurus surat keterangan " +
+      "aktif kuliah, lalu siangnya mampir ke perpustakaan mengembalikan buku " +
+      "yang sudah lewat tenggat dua hari. setelah itu kita makan siang bareng ya";
+
+    await user.type(screen.getByLabelText(/pesan/i), BENIGN_PASTE);
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     const panel = screen.getByRole("list", { name: /agent pada panel bukti/i });
@@ -147,6 +156,62 @@ describe("CompanionChat · an honest zero", () => {
     ).toBeInTheDocument();
     expect(
       within(card as HTMLElement).queryByText(/^1 temuan$/),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · a question is not a bad message", () => {
+  it("answers a question about a scam without a score card or a trace", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.type(screen.getByLabelText(/pesan/i), "apa itu pinjol?");
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    // The evidence panel always lists every agent by name, so the transcript is
+    // addressed by its own log: this turn must add no agent row to it.
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+
+    // The measured defect: this message used to score 70/tinggi, showing a red
+    // card about the person asking the question.
+    expect(
+      await within(log).findByText(/Dijawab sebagai pertanyaan/i),
+    ).toBeInTheDocument();
+    expect(within(log).queryByText(/70\/100/)).not.toBeInTheDocument();
+    expect(within(log).queryByText("Message Agent")).not.toBeInTheDocument();
+    expect(
+      within(log).queryByText("Scoring Orchestrator"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets the reader turn the question into a check with one tap", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.type(screen.getByLabelText(/pesan/i), "apa itu pinjol?");
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    const retry = await screen.findByRole("button", {
+      name: /periksa sebagai pesan/i,
+    });
+    await user.click(retry);
+
+    // Forced lane: the engine runs and the trace appears in the transcript,
+    // because the reader asked for a verdict rather than an explanation.
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+    expect(await within(log).findByText("Message Agent")).toBeInTheDocument();
+  });
+
+  it("keeps the trace and the card on a message that is actually checked", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+    expect(await within(log).findByText("Message Agent")).toBeInTheDocument();
+    expect(
+      within(log).queryByText(/Dijawab sebagai pertanyaan/i),
     ).not.toBeInTheDocument();
   });
 });

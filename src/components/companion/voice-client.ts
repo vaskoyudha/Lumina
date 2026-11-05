@@ -17,7 +17,7 @@ export type VoiceOutcome =
 
 export interface VoiceResult {
   outcome: VoiceOutcome;
-  /** Text received, already streamed to `onChunk`. Empty on every failure. */
+  /** Text received, already streamed to `onChunk`. Carries the partial text on `truncated`. */
   text: string;
 }
 
@@ -58,22 +58,23 @@ async function readErrorCode(response: Response): Promise<string> {
 }
 
 /**
- * Browser side of the language layer.
+ * Stream a POST and collect the text.
  *
- * Never throws. The caller always has `composeReply()` available, and a
- * rejected promise here would take a whole turn down for a cosmetic reason —
- * an offline venue is the expected case, not an exceptional one.
+ * Shared with the answer lane so both paths agree on what "the model answered"
+ * means: non-empty and finished. Extracted rather than duplicated because the
+ * truncation rules below are the ones that were wrong twice.
  */
-export async function requestReply(
-  digest: VoiceDigest,
+export async function requestStreamingText(
+  endpoint: string,
+  payload: unknown,
   onChunk: (text: string) => void,
   signal?: AbortSignal,
 ): Promise<VoiceResult> {
   try {
-    const response = await fetch("/api/companion/voice", {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(digest),
+      body: JSON.stringify(payload),
       signal,
     });
 
@@ -95,17 +96,14 @@ export async function requestReply(
       onChunk(chunk);
     }
 
-    // Flush whatever the decoder held back mid-character.
     const tail = decoder.decode();
     if (tail.length > 0) {
       text += tail;
       onChunk(tail);
     }
 
-    // An empty stream is a failure, not a silent blank answer. A stream that
-    // stops mid-word is a truncated answer, not a short one.
     if (text.trim().length === 0) return { outcome: "failed", text: "" };
-    if (!isComplete(text)) return { outcome: "truncated", text: "" };
+    if (!isComplete(text)) return { outcome: "truncated", text };
     return { outcome: "model", text };
   } catch (error) {
     const aborted =
@@ -113,4 +111,19 @@ export async function requestReply(
       (error.name === "AbortError" || error.name === "TimeoutError");
     return { outcome: aborted ? "timeout" : "failed", text: "" };
   }
+}
+
+/**
+ * Browser side of the verdict lane.
+ *
+ * Never throws. The caller always has `composeReply()` available, and a
+ * rejected promise here would take a whole turn down for a cosmetic reason —
+ * an offline venue is the expected case, not an exceptional one.
+ */
+export function requestReply(
+  digest: VoiceDigest,
+  onChunk: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<VoiceResult> {
+  return requestStreamingText("/api/companion/voice", digest, onChunk, signal);
 }
