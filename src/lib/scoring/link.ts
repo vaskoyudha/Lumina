@@ -350,16 +350,29 @@ export function linkSignals(text: string): Signal[] {
     seen.add(finding.link.registrable);
 
     const { kind, link, imitates } = finding;
+    /*
+     * Labels describe the class of problem; the host lives in `evidence`.
+     *
+     * This is a privacy boundary, not a style choice. `label` is part of the
+     * payload sent to the language layer (`VoiceDigest`), while `evidence` is
+     * not — so a hostname inside a label would smuggle the user's URL out
+     * through the one field that is allowed to leave. Keeping the host out of
+     * the label makes "no message substring leaves the device" a property of
+     * the whole digest rather than of one dropped field.
+     *
+     * Nothing is lost on screen: `score-card.tsx` renders the label and the
+     * evidence quote together, so the reader still sees the URL.
+     */
     const label =
       kind === "typosquat"
-        ? `Domain meniru ${imitates} — "${link.host}" bukan situs resmi`
+        ? `Domain meniru ${imitates} — bukan situs resmi`
         : kind === "shortener"
           ? "Tautan pendek menyembunyikan tujuan sebenarnya"
           : kind === "apk-host"
             ? "Alamat tautan menjual/mengirim APK, bukan aplikasi resmi"
             : kind === "risky-tld"
               ? `Domain berekstensi ".${link.tld}" yang sering dipakai penipuan`
-              : `Tautan tidak ada di daftar domain resmi: "${link.host}"`;
+              : "Tautan tidak ada di daftar domain resmi";
 
     signals.push({
       label,
