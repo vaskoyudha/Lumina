@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# The template is documentation, not a secret. Without this line `.env*`
+# swallows it, and a fresh clone has no record of which variables exist.
+!.env.example
 
 # vercel
 .vercel
