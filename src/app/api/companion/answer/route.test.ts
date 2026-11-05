@@ -78,7 +78,15 @@ describe("POST /api/companion/answer", () => {
     });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const response = await POST(request({ lane: "tanya", question: QUESTION }));
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: QUESTION,
+        history: [
+          { role: "user", text: "Halo, ini dari BCA. Akun Anda diblokir." },
+        ],
+      }),
+    );
     const body = (await response.json()) as { ok: boolean; text: string };
 
     expect(response.status).toBe(200);
