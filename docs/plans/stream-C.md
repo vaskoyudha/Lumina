@@ -7,6 +7,11 @@ Sumber produk tetap `docs/plan.md`. Arahan terbaru pemilik: perdalam pengalaman
 simulasi agar menarik dan dapat menjadi acuan visual bagi permukaan lain.
 Riset dan alasan desain ada di [catatan riset](../research/simulasi.md).
 
+Arahan visual terbaru pemilik mengesampingkan aturan palet gelap di Markdown
+proyek untuk simulasi. Tampilan papan permainan yang cerah, aset, dan prompt
+tercatat di [arah visual simulasi](../research/simulasi-visual.md). Tema tetap
+dibatasi pada rute simulasi agar tidak mengubah permukaan stream lain.
+
 ## 1. Versi terkecil yang berjalan dari awal sampai akhir
 
 Satu misi publik: `/simulasi/L1-kurir-apk`, berjudul **Paket sebelum pulang**.

@@ -21,7 +21,7 @@ describe("halaman misi simulasi", () => {
       "/simulasi/L1-kurir-apk",
     );
     const planned = screen.getByRole("region", { name: "Level lain" });
-    expect(within(planned).getAllByText(/· Rencana$/)).toHaveLength(4);
+    expect(within(planned).getAllByText("Rencana")).toHaveLength(4);
     expect(within(planned).queryByRole("link")).not.toBeInTheDocument();
   });
 });

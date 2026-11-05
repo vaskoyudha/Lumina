@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,24 +29,24 @@ export default async function RunnerPage({
   if (!scenario) notFound();
 
   return (
-    <div className="mx-auto min-w-0 max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="sim-page mx-auto min-w-0 max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       <Button
         asChild
         data-pressable
-        className="min-h-11 text-base"
+        className="sim-back-button min-h-11 text-base"
         variant="outline"
         size="lg"
       >
-        <Link href="/simulasi">Kembali ke simulasi</Link>
+        <Link href="/simulasi">
+          <ArrowLeft aria-hidden="true" /> Kembali ke misi
+        </Link>
       </Button>
 
-      <header className="mt-5 mb-5 max-w-prose">
-        <p className="mb-1 text-base text-dim">
+      <header className="sim-page-header mt-5 mb-5">
+        <p className="sim-page-level">
           Level {scenario.scenario.level} · Misi interaktif
         </p>
-        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          {MISSION.title}
-        </h1>
+        <h1 className="sim-page-title">{MISSION.title}</h1>
       </header>
 
       <div className="min-w-0">

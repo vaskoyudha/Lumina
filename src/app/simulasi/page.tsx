@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+  ArrowRight,
+  ArrowUpRight,
+  Clock3,
+  Gamepad2,
+  Package,
+  ShieldCheck,
+} from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { MODUS } from "@/lib/modus";
 import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
 import { MISSION } from "@/lib/simulasi/scenario";
@@ -32,122 +32,133 @@ const endingCount = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).filter(
 
 export default function SimulasiPage() {
   return (
-    <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6 max-w-prose">
-        <h1 className="font-semibold text-3xl tracking-tight sm:text-4xl">
-          {MISSION.title}
-        </h1>
-        <p className="mt-3 text-base text-dim">{MISSION.context}</p>
-      </header>
+    <div className="sim-landing mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <section aria-labelledby="mission-title" className="sim-hero">
+        <div className="sim-hero-copy">
+          <p className="sim-eyebrow">
+            <Gamepad2 aria-hidden="true" /> Misi interaktif · Level 1
+          </p>
+          <h1 className="sim-hero-title" id="mission-title">
+            <span>Paket sebelum</span> <span>pulang</span>
+          </h1>
+          <p className="sim-hero-description">
+            <strong>Satu chat. Banyak jebakan.</strong> {MISSION.context}
+          </p>
+          <p className="sim-hero-objective">
+            {MISSION.role}. {MISSION.objective}
+          </p>
 
-      <Card className="min-w-0 overflow-hidden border border-line bg-panel text-txt">
-        <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
-          <div className="grid min-w-0 content-start gap-5 p-5 sm:p-7">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="secondary"
-                className="min-h-7 text-base text-safe"
-              >
-                Misi aktif · Level 1
-              </Badge>
-              <span className="text-base text-dim">
-                Perkiraan {MISSION.duration}
-              </span>
-            </div>
-            <section aria-labelledby="objective-heading" className="grid gap-2">
-              <h2 id="objective-heading" className="font-semibold text-xl">
-                {MISSION.role}
-              </h2>
-              <p className="text-base text-dim">{MISSION.objective}</p>
-            </section>
+          <div className="sim-hero-actions">
             <Button
               asChild
               data-pressable
-              className="min-h-11 w-full bg-safe text-base text-bg hover:bg-safe/90 sm:w-fit"
+              className="sim-primary-button min-h-12 text-base"
               size="lg"
             >
               <Link href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}>
-                Mulai misi
+                Mulai misi <ArrowUpRight aria-hidden="true" />
               </Link>
             </Button>
-            <p className="text-base text-dim">
-              Cerita dan ponsel di dalam latihan ini sepenuhnya fiktif.
-            </p>
-            <div className="flex flex-wrap gap-x-5 gap-y-2 text-base">
-              <span>{MISSION.chapters.length} babak</span>
-              <span>{endingCount} kemungkinan akhir</span>
-            </div>
+            <Button
+              asChild
+              data-pressable
+              className="sim-secondary-button min-h-11 text-base"
+              variant="outline"
+              size="lg"
+            >
+              <Link href="/belajar/10">
+                Pelajari pola APK <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
+            <Link className="sim-emergency-link" href="/darurat">
+              Perlu bantuan sekarang?
+            </Link>
           </div>
 
-          <aside className="grid min-w-0 content-start gap-4 border-line border-t bg-panel-2 p-5 sm:p-7 lg:border-t-0 lg:border-l">
-            <div>
-              <p className="font-medium text-base">Pesan masuk</p>
-              <p className="text-base text-dim">{MISSION.contact}</p>
-            </div>
-            {incomingMessage?.type === "message" && (
-              <Card className="min-w-0 border border-line bg-panel text-txt">
-                <CardHeader>
-                  <CardTitle className="text-base">Pesan fiktif</CardTitle>
-                  <CardDescription className="text-base text-txt">
-                    {incomingMessage.text}
-                  </CardDescription>
-                </CardHeader>
-                {incomingMessage.attachment && (
-                  <CardContent className="pt-0">
-                    <Badge variant="outline" className="min-h-7 text-base">
-                      {incomingMessage.attachment.name}
-                    </Badge>
-                    <p className="mt-2 text-base text-dim">
-                      {incomingMessage.attachment.detail}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-            <p className="text-base text-dim">
-              Apa yang akan kamu lakukan sebelum paket hadiah Ibu dibawa
-              kembali?
-            </p>
-          </aside>
+          <ul className="sim-mission-meta" aria-label="Ringkasan misi">
+            <li>
+              <Clock3 aria-hidden="true" /> Perkiraan {MISSION.duration}
+            </li>
+            <li>
+              <Package aria-hidden="true" /> {MISSION.chapters.length} babak
+            </li>
+            <li>
+              <ShieldCheck aria-hidden="true" /> {endingCount} kemungkinan akhir
+            </li>
+          </ul>
         </div>
-      </Card>
 
-      <section aria-labelledby="chapters-heading" className="mt-7">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="chapters-heading" className="font-semibold text-lg">
-            Alur misi
-          </h2>
-          <span className="text-base text-dim">
+        <figure className="sim-hero-art">
+          <div className="sim-hero-art-frame">
+            <Image
+              src="/simulasi/parcel-playground.png"
+              alt=""
+              aria-hidden="true"
+              className="sim-hero-illustration"
+              width={1024}
+              height={1024}
+              priority
+              sizes="(min-width: 1024px) 46vw, 100vw"
+            />
+            <span className="sim-sticker" data-color="mint">
+              CERITA FIKTIF
+            </span>
+            <span className="sim-sticker" data-color="yellow">
+              Hadiah buat Ibu!
+            </span>
+            <span className="sim-sticker" data-color="coral">
+              Plot twist ↓
+            </span>
+          </div>
+          <figcaption className="sim-hero-caption">
+            Ada paket. Ada plot twist.
+            {incomingMessage?.type === "message" &&
+              incomingMessage.attachment && (
+                <span> · {incomingMessage.attachment.name}</span>
+              )}
+          </figcaption>
+        </figure>
+      </section>
+
+      <section
+        aria-labelledby="chapters-heading"
+        className="sim-stage-road mt-8"
+      >
+        <div className="sim-stage-header">
+          <div>
+            <p className="sim-eyebrow">
+              Misi singkat, pilihanmu yang menentukan
+            </p>
+            <h2 id="chapters-heading">Alur misi</h2>
+          </div>
+          <span className="sim-stage-time">
             Tiga babak · sekitar {MISSION.duration}
           </span>
         </div>
-        <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+        <ol className="sim-stage-list">
           {MISSION.chapters.map((chapter, index) => (
-            <li key={chapter} className="min-w-0">
-              <Separator className="mb-3" />
-              <p className="tabular text-sm text-dim">0{index + 1}</p>
-              <p className="mt-1 font-medium text-base">{chapter}</p>
+            <li className="sim-stage-stop" key={chapter}>
+              <span className="sim-stage-number">0{index + 1}</span>
+              <span className="sim-stage-copy">{chapter}</span>
+              <ArrowRight aria-hidden="true" />
             </li>
           ))}
         </ol>
       </section>
 
-      <section aria-labelledby="planned-heading" className="mt-8">
-        <h2 id="planned-heading" className="font-semibold text-base">
-          Level lain
-        </h2>
-        <p className="mt-1 text-base text-dim">
-          Level berikutnya masih direncanakan dan belum bisa dimainkan.
-        </p>
-        <ul className="mt-3 flex min-w-0 flex-wrap gap-2">
+      <section aria-labelledby="planned-heading" className="sim-planned mt-9">
+        <header className="sim-page-header">
+          <h2 id="planned-heading">Level lain</h2>
+          <p>Masih direncanakan, belum bisa dimainkan.</p>
+        </header>
+        <ul className="sim-planned-list">
           {PLANNED.map((modus) => (
-            <li key={modus.id} className="min-w-0 max-w-full">
-              <Badge
-                variant="outline"
-                className="h-auto min-h-8 max-w-full !whitespace-normal break-words text-base text-dim"
-              >
-                {modus.scenarioPlanned} · {modus.nama} · Rencana
-              </Badge>
+            <li key={modus.id}>
+              <span className="sim-planned-chip">
+                <span>{modus.scenarioPlanned}</span>
+                <span>{modus.nama}</span>
+                <span>Rencana</span>
+              </span>
             </li>
           ))}
         </ul>

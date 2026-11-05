@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, Coffee, Package, Shield, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -47,7 +48,7 @@ function Meter({
   danger?: boolean;
 }) {
   return (
-    <div className="grid min-w-0 gap-1">
+    <div className="sim-meter" data-tone={danger ? "danger" : "warn"}>
       <div className="flex justify-between gap-2 text-base">
         <span>{label}</span>
         <strong className="tabular">
@@ -250,11 +251,11 @@ export function Runner() {
     ? TACTICS.filter((tactic) => tactics.includes(tactic.id))
     : [];
   const collection = (
-    <section className="grid gap-3">
+    <section className="sim-side-panel grid gap-3">
       <Button
         data-pressable
         variant="outline"
-        className={`${button} justify-between`}
+        className={`${button} sim-tactics-toggle justify-between`}
         aria-expanded={collectionOpen}
         onClick={() => setCollectionOpen(!collectionOpen)}
       >
@@ -264,7 +265,7 @@ export function Runner() {
       {collectionOpen &&
         (tacticCards.length ? (
           tacticCards.map((tactic) => (
-            <Card key={tactic.id} className="bg-panel-2">
+            <Card key={tactic.id} className="sim-tactic-card">
               <CardHeader>
                 <CardTitle className="text-base">{tactic.name}</CardTitle>
                 <CardDescription className="text-base">
@@ -284,52 +285,62 @@ export function Runner() {
 
   if (!started)
     return (
-      <Card className="min-w-0">
-        <CardHeader>
-          <CardTitle className="text-2xl">Briefing misi</CardTitle>
-          <p className="text-base text-dim">Perkiraan {MISSION.duration}</p>
-          <CardDescription className="text-base">
+      <section className="sim-briefing">
+        <div className="sim-briefing-intro">
+          <div className="sim-parcel-art" aria-hidden="true">
+            <Package size={82} strokeWidth={1.5} />
+            <span>✦</span>
+          </div>
+          <p className="sim-briefing-label">
+            <span>Briefing misi</span> · {MISSION.duration}
+          </p>
+          <h2>Siap jadi pemeran utama?</h2>
+          <p>
             {MISSION.role} · {MISSION.context}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-5">
-          <p className="text-base">
+          </p>
+          <p>
             <strong>Tujuan:</strong> {MISSION.objective}
           </p>
-          <p className="text-base text-dim">
+          <p>
             Semua pesan dan alat di sini fiktif. Latihan tidak mengubah
             perangkat atau mengirim laporan.
           </p>
-          <div className="grid gap-2">
-            <h2 className="font-semibold text-lg">Pilih cara bermain</h2>
-            <Button
-              data-pressable
-              variant={mode === "santai" ? "secondary" : "outline"}
-              aria-pressed={mode === "santai"}
-              className={`${button} justify-start`}
-              onClick={() => setMode("santai")}
-            >
-              Santai · tanpa tekanan waktu otomatis
-            </Button>
-            <Button
-              data-pressable
-              variant={mode === "tantangan" ? "secondary" : "outline"}
-              aria-pressed={mode === "tantangan"}
-              className={`${button} justify-start`}
-              onClick={() => setMode("tantangan")}
-            >
-              Tantangan · tekanan naik jika akses aplikasi terbuka
-            </Button>
-          </div>
+        </div>
+        <div className="sim-briefing-choices">
+          <h2>Pilih cara bermain</h2>
           <Button
             data-pressable
-            className={`${button} w-fit`}
+            variant="outline"
+            aria-pressed={mode === "santai"}
+            data-selected={mode === "santai"}
+            data-mode="santai"
+            className={`${button} sim-mode-ticket`}
+            onClick={() => setMode("santai")}
+          >
+            <Coffee aria-hidden="true" />
+            <span>Santai · tanpa tekanan waktu otomatis</span>
+          </Button>
+          <Button
+            data-pressable
+            variant="outline"
+            aria-pressed={mode === "tantangan"}
+            data-selected={mode === "tantangan"}
+            data-mode="tantangan"
+            className={`${button} sim-mode-ticket`}
+            onClick={() => setMode("tantangan")}
+          >
+            <Zap aria-hidden="true" />
+            <span>Tantangan · tekanan naik jika akses aplikasi terbuka</span>
+          </Button>
+          <Button
+            data-pressable
+            className={`${button} sim-start-button`}
             onClick={() => setStarted(true)}
           >
-            Mulai misi
+            Mulai misi <ArrowRight aria-hidden="true" />
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     );
   if (!active)
     return (
@@ -340,7 +351,10 @@ export function Runner() {
   if (ended) {
     const ending = active.type === "ending" ? active : defaultEnding;
     return (
-      <div className="grid min-w-0 gap-4">
+      <div
+        className="sim-ending"
+        data-outcome={failure ? "failure" : ending.variant}
+      >
         <Card>
           <CardHeader>
             <Badge
@@ -356,7 +370,7 @@ export function Runner() {
               {failure ?? ending.text}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-5">
+          <CardContent className="sim-ending-content grid gap-5">
             {failure && latest?.rationale && (
               <Alert
                 role="status"
@@ -379,7 +393,10 @@ export function Runner() {
             <section className="grid gap-2">
               <h2 className="font-semibold text-lg">Jejak keputusan</h2>
               {decisions.map((choice, index) => (
-                <div key={`${index}-${choice.label}`} className="grid gap-1">
+                <div
+                  key={`${index}-${choice.label}`}
+                  className="sim-decision-entry grid gap-1"
+                >
                   <p className="text-base">
                     <strong>
                       {choice.verdict === "benar"
@@ -411,7 +428,7 @@ export function Runner() {
               </section>
             )}
             {collection}
-            <div className="flex flex-wrap gap-3">
+            <div className="sim-end-actions flex flex-wrap gap-3">
               <Button
                 data-pressable
                 variant={
@@ -456,7 +473,7 @@ export function Runner() {
   }
   const task = active.type === "tool_task" ? active : null;
   const tool = task && (
-    <Card className="min-w-0 border-warn">
+    <Card className="sim-tool-panel min-w-0">
       <CardHeader>
         <CardTitle className="text-lg">
           {scenario.tools.find((item) => item.id === task.tool)?.name}
@@ -489,7 +506,7 @@ export function Runner() {
                   variant={
                     revoked.includes(permission.id) ? "secondary" : "outline"
                   }
-                  className={button}
+                  className={`${button} sim-tool-option`}
                   disabled={paused}
                   aria-pressed={revoked.includes(permission.id)}
                   onClick={() => setRevoked(toggle(revoked, permission.id))}
@@ -520,7 +537,7 @@ export function Runner() {
                 key={item.id}
                 data-pressable
                 variant={proof.includes(item.id) ? "secondary" : "outline"}
-                className={`${button} justify-start`}
+                className={`${button} sim-tool-option justify-start`}
                 aria-pressed={proof.includes(item.id)}
                 disabled={paused}
                 onClick={() => {
@@ -560,9 +577,9 @@ export function Runner() {
   );
   return (
     <div className="grid min-w-0 gap-4">
-      <Card>
+      <Card className="sim-hud">
         <CardContent className="grid gap-4 pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="sim-hud-header flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-semibold text-base">{MISSION.title}</p>
               <p className="text-base text-dim">
@@ -606,7 +623,7 @@ export function Runner() {
           <Button
             data-pressable
             variant="outline"
-            className={`${button} w-fit`}
+            className={`${button} sim-mission-controls w-fit`}
             disabled={paused || breathingUsed}
             onClick={() => {
               setPanic(Math.max(0, panic - 15));
@@ -618,12 +635,16 @@ export function Runner() {
           </Button>
         </CardContent>
       </Card>
-      <section className="flex flex-wrap gap-2" aria-label="Bab misi">
+      <section
+        className="sim-chapters flex flex-wrap gap-2"
+        aria-label="Bab misi"
+      >
         {MISSION.chapters.map((chapter, index) => (
           <Badge
             key={chapter}
             variant={active.chapter === index + 1 ? "secondary" : "outline"}
-            className="text-base"
+            className="sim-chapter text-base"
+            data-active={active.chapter === index + 1}
           >
             {index + 1}. {chapter}
           </Badge>
@@ -637,14 +658,20 @@ export function Runner() {
           </AlertDescription>
         </Alert>
       )}
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] lg:items-start">
+      <div className="sim-play-grid grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] lg:items-start">
         <div className="grid min-w-0 gap-4">
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle className="text-lg">{MISSION.contact}</CardTitle>
-              <CardDescription className="text-base">
-                {MISSION.contactDetail}
-              </CardDescription>
+          <Card className="sim-phone min-w-0">
+            <CardHeader className="sim-phone-header">
+              <span className="sim-phone-avatar" aria-hidden="true">
+                <Package />
+              </span>
+              <div>
+                <CardTitle className="text-lg">{MISSION.contact}</CardTitle>
+                <CardDescription className="text-base">
+                  {MISSION.contactDetail}
+                </CardDescription>
+                <span className="sim-phone-status">Percakapan latihan</span>
+              </div>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div
@@ -653,13 +680,14 @@ export function Runner() {
                 aria-label="Percakapan latihan"
                 // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus and scroll the transcript.
                 tabIndex={0}
-                className="flex max-h-96 flex-col gap-3 overflow-y-auto p-1 pr-2"
+                className="sim-transcript flex max-h-96 flex-col gap-3 overflow-y-auto p-1 pr-2"
               >
                 {transcript.map((entry) =>
                   entry.kind === "reply" ? (
                     <Card
                       key={`reply-${entry.id}`}
-                      className="ml-auto w-fit max-w-[90%] shrink-0 bg-panel"
+                      className="sim-bubble ml-auto w-fit max-w-[90%] shrink-0"
+                      data-kind="reply"
                     >
                       <CardContent className="grid gap-1 p-3">
                         <p className="font-semibold text-base">Raka · Kamu</p>
@@ -669,7 +697,12 @@ export function Runner() {
                   ) : (
                     <Card
                       key={entry.node.id}
-                      className={`w-fit max-w-[90%] shrink-0 ${entry.node.speaker === MISSION.contact ? "bg-panel-2" : "bg-panel"}`}
+                      className="sim-bubble w-fit max-w-[90%] shrink-0"
+                      data-kind={
+                        entry.node.speaker === MISSION.contact
+                          ? "incoming"
+                          : "system"
+                      }
                     >
                       <CardContent className="grid gap-2 p-3">
                         <p className="font-semibold text-base">
@@ -681,7 +714,7 @@ export function Runner() {
                             <Button
                               data-pressable
                               variant="outline"
-                              className={`${button} w-fit`}
+                              className={`${button} sim-attachment w-fit`}
                               disabled={paused}
                               aria-expanded={attachmentOpen.includes(
                                 entry.node.id,
@@ -712,7 +745,7 @@ export function Runner() {
                   ),
                 )}
                 {active.type === "message" && !paused && (
-                  <p className="text-base text-dim">
+                  <p className="sim-typing text-base text-dim">
                     {active.speaker === MISSION.contact
                       ? "Pengirim sedang mengetik…"
                       : "Catatan latihan sedang disiapkan…"}
@@ -733,6 +766,8 @@ export function Runner() {
               {latest?.rationale && (
                 <Alert
                   role="status"
+                  className="sim-feedback"
+                  data-tone={latest.verdict === "salah" ? "danger" : "safe"}
                   variant={
                     latest.verdict === "salah" ? "destructive" : "default"
                   }
@@ -748,17 +783,20 @@ export function Runner() {
                 </Alert>
               )}
               {active.type === "choice" && (
-                <div className="grid gap-3">
+                <div className="sim-choice-panel grid gap-3">
                   <h2 className="font-semibold text-lg">{active.prompt}</h2>
-                  {active.choices.map((choice) => (
+                  {active.choices.map((choice, index) => (
                     <Button
                       key={choice.label}
                       data-pressable
                       variant="outline"
                       disabled={paused}
-                      className={`${button} justify-start text-left`}
+                      className={`${button} sim-choice-button justify-start text-left`}
                       onClick={() => choose(choice)}
                     >
+                      <span aria-hidden="true">
+                        {String.fromCharCode(65 + index)}
+                      </span>
                       {choice.label}
                     </Button>
                   ))}
@@ -769,10 +807,10 @@ export function Runner() {
         </div>
         <aside className="grid min-w-0 gap-4">
           {tool}
-          <Card>
+          <Card className="sim-side-panel">
             <CardHeader>
               <CardTitle className="text-lg">
-                Status perangkat latihan
+                <Shield aria-hidden="true" /> Status perangkat latihan
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2 text-base">
