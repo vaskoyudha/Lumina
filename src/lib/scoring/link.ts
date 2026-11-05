@@ -318,7 +318,11 @@ export function classifyLink(raw: string): LinkFinding | null {
   }
 
   if (CREDENTIAL_PATH.test(pathOf(link.raw))) {
-    return { link, kind: "credential-path", weight: WEIGHTS["credential-path"] };
+    return {
+      link,
+      kind: "credential-path",
+      weight: WEIGHTS["credential-path"],
+    };
   }
 
   if (APK_HOST_HINTS.some((h) => link.host.includes(h))) {

@@ -27,7 +27,10 @@ describe("scoreWithTrace", () => {
 
   it("attributes each surviving signal to exactly one stage", () => {
     const { result, trace } = scoreWithTrace({ text: SCAM });
-    const counted = trace.stages.reduce((sum, stage) => sum + stage.findings, 0);
+    const counted = trace.stages.reduce(
+      (sum, stage) => sum + stage.findings,
+      0,
+    );
     // The orchestrator produces no findings of its own; only detectors do.
     expect(counted).toBe(result.signals.length);
   });

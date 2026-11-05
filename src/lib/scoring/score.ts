@@ -221,7 +221,8 @@ const DETECTORS: readonly {
       const links = extractLinks(text);
       return {
         signals: linkSignals(text),
-        note: links.length === 0 ? "Tidak ada tautan pada pesan ini." : undefined,
+        note:
+          links.length === 0 ? "Tidak ada tautan pada pesan ini." : undefined,
       };
     },
   },
@@ -342,8 +343,7 @@ export function scoreWithTrace(input: ScoreInput): TracedScore {
    */
   for (const stage of stages) {
     stage.findings = result.signals.filter(
-      (signal) =>
-        signal.weight > 0 && (signal.agent ?? "scoring") === stage.id,
+      (signal) => signal.weight > 0 && (signal.agent ?? "scoring") === stage.id,
     ).length;
     stage.status =
       stage.findings > 0 ? "temuan" : stage.note ? "dilewati" : "selesai";

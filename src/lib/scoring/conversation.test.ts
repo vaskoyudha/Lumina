@@ -4,7 +4,9 @@ import { conversationSignals } from "@/lib/scoring/conversation";
 const turn = (text: string) => ({ text });
 
 const labels = (input: Parameters<typeof conversationSignals>[0]) =>
-  conversationSignals(input).signals.map((signal) => signal.label).join(" ");
+  conversationSignals(input)
+    .signals.map((signal) => signal.label)
+    .join(" ");
 
 describe("Conversation Agent — escalation", () => {
   it("fires when an approach is followed by a demand", () => {

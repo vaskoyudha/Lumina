@@ -17,8 +17,14 @@ import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
  * verdict, which was already decided before this handler was called.
  */
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+/*
+ * No segment config here on purpose. This Next version has
+ * `cacheComponents` enabled, and it rejects `export const runtime` and
+ * `export const dynamic` with "not compatible with nextConfig.cacheComponents".
+ * Neither is needed: a POST handler that reads a request body is never
+ * cached, and Node is already the default runtime. Unit tests could not catch
+ * this — they import POST directly and never run the route compiler.
+ */
 
 const TIMEOUT_MS = 6000;
 
