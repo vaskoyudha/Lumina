@@ -8,8 +8,11 @@
 /*
   LUMINA DESIGN TOKENS — single source of truth.
 
-  Dark is not a taste decision: the red meter must read from the back of the
-  room during the demo (plan §4). No component may hardcode a colour.
+  Light-first. Every route sits inside `body.appnext` (src/app/layout.tsx),
+  which remaps these names to the measured AppNext light values. The reason
+  the meter still has to be loud is unchanged from the plan: it is read from
+  the back of the room, so contrast — not darkness — is the requirement.
+  No component may hardcode a colour.
 
   CONTRACT NOTE (§9 "announce before changing the contract"):
   the plan names one token `--accent` (#37d6a0, safe). shadcn/ui already owns
@@ -77,7 +80,9 @@
 }
 
 :root {
-  /* --- Lumina palette (plan §4) --- */
+  /* --- Lumina palette: the dark fallback, kept for legacy `.dark` subtrees.
+         `.appnext` re-declares these to the light measured values, and every
+         product route lives inside it. --- */
   --lumina-bg: #0b0f14;
   --lumina-panel: #121821;
   --lumina-panel-2: #182130;
@@ -88,42 +93,42 @@
   --lumina-danger: #ff5d5d;
   --lumina-warn: #ffb340;
 
-  /* --- shadcn/ui surfaces, derived from the palette above --- */
-  --background: var(--lumina-bg);
-  --foreground: var(--lumina-txt);
-  --card: var(--lumina-panel);
-  --card-foreground: var(--lumina-txt);
-  --popover: var(--lumina-panel-2);
-  --popover-foreground: var(--lumina-txt);
-  --primary: var(--lumina-txt);
-  --primary-foreground: var(--lumina-bg);
-  --secondary: var(--lumina-panel-2);
-  --secondary-foreground: var(--lumina-txt);
-  --muted: var(--lumina-panel-2);
-  --muted-foreground: var(--lumina-dim);
-  --accent: var(--lumina-panel-2);
-  --accent-foreground: var(--lumina-txt);
-  --destructive: var(--lumina-danger);
-  --border: var(--lumina-line);
-  --input: var(--lumina-line);
-  --ring: var(--lumina-safe);
+  /* --- shadcn/ui surfaces, scoped to the app: light (AppNext default) --- */
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #121212;
+  --popover: #ffffff;
+  --popover-foreground: #121212;
+  --primary: #121212;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f4;
+  --secondary-foreground: #121212;
+  --muted: #f4f4f4;
+  --muted-foreground: #606060;
+  --accent: #f4f4f4;
+  --accent-foreground: #121212;
+  --destructive: #dc2626;
+  --border: #eeeeee;
+  --input: #eeeeee;
+  --ring: #0e7c36;
 
-  --chart-1: var(--lumina-safe);
-  --chart-2: var(--lumina-warn);
-  --chart-3: var(--lumina-danger);
-  --chart-4: var(--lumina-dim);
-  --chart-5: var(--lumina-line);
+  --chart-1: #1bab49;
+  --chart-2: #d97706;
+  --chart-3: #dc2626;
+  --chart-4: #606060;
+  --chart-5: #eeeeee;
 
   --radius: 0.625rem;
 
-  --sidebar: var(--lumina-panel);
-  --sidebar-foreground: var(--lumina-txt);
-  --sidebar-primary: var(--lumina-safe);
-  --sidebar-primary-foreground: var(--lumina-bg);
-  --sidebar-accent: var(--lumina-panel-2);
-  --sidebar-accent-foreground: var(--lumina-txt);
-  --sidebar-border: var(--lumina-line);
-  --sidebar-ring: var(--lumina-safe);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #121212;
+  --sidebar-primary: #1bab49;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f4;
+  --sidebar-accent-foreground: #121212;
+  --sidebar-border: #eeeeee;
+  --sidebar-ring: #0e7c36;
 }
 
 .dark {
@@ -162,7 +167,10 @@
 
   html {
     @apply font-sans;
-    color-scheme: dark;
+    /* Light-first product shell (AppNext). Dark tokens remain defined for
+       legacy subtrees outside `.appnext`; every product route lives inside
+       the `.appnext` wrapper in the root layout. */
+    color-scheme: light;
   }
 
   body {

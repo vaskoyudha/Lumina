@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { Suspense } from "react";
 import "./globals.css";
-import { SiteNav } from "@/components/shell/site-nav";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
@@ -16,29 +14,22 @@ export const metadata: Metadata = {
     "Asisten yang menjelaskan kenapa sebuah pesan berbahaya, mengajarkan polanya, dan menyiapkan laporan kalau kamu sudah kena.",
 };
 
+/**
+ * Root shell only carries the document and the design-token ground.
+ *
+ * The product chrome (nav + footer) lives in `app/(user)/layout.tsx`, and the
+ * admin chrome lives in `app/admin/layout.tsx`. That split is deliberate: the
+ * admin is a separate area, not a page inside the learner app, so opening
+ * `/admin` must not show the four learner destinations at all.
+ */
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={cn("dark font-sans", geist.variable)}>
-      <body className="min-h-dvh bg-bg text-txt">
-        <div className="flex min-h-dvh flex-col">
-          <Suspense
-            fallback={<div className="h-14 border-line border-b bg-panel" />}
-          >
-            <SiteNav />
-          </Suspense>
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-line px-4 py-6 text-dim text-sm sm:px-6">
-            <p className="mx-auto max-w-6xl">
-              Lumina tidak menyimpan percakapan. Tidak ada akun, tidak ada
-              unggahan ke server. Tutup tab, riwayatnya hilang.
-            </p>
-          </footer>
-        </div>
-      </body>
+    <html lang="id" className={cn("font-sans", geist.variable)}>
+      <body className="appnext min-h-dvh">{children}</body>
     </html>
   );
 }
