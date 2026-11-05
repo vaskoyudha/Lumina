@@ -549,14 +549,24 @@ Siapkan ketiganya sebagai tombol "coba contoh" di companion — ✅ sudah.
 | UI | shadcn/ui, base radix | komposisi, bukan markup sendiri |
 | AI agents & skor | TypeScript, rule + deterministic | **tanpa ML berbayar** |
 | Data eksternal | blocklist, domain resmi RI | boleh gagal tanpa memblokir UI |
-| Privasi | OCR/QR **di perangkat**; tanpa simpan default | tidak ada upload, tidak ada penyimpanan |
+| Privasi | Pemeriksaan **di perangkat**; percakapan dikirim ke model dengan pemberitahuan; tanpa simpan | skor tidak pernah bergantung jaringan, tidak ada penyimpanan |
 | Fase 2 | model klasifikasi Python + Crypto Agent | **jangan dibangun** |
 
 Dua janji privasi yang mengikat:
 
-a. **Konten pengguna tidak dikirim ke AI pihak ketiga.** Kalau A memakai LLM,
-   kirim hanya hasil sinyal, atau beri tahu pengguna secara eksplisit. Titik
-   paling rawan — **putuskan di hari 1**.
+a. **Pemeriksaan tidak pernah meninggalkan perangkat; percakapan boleh, dengan
+   pemberitahuan.** Skor, `risk`, dan `signals` dihitung lokal dan tidak pernah
+   bergantung pada jaringan. Isi percakapan dikirim ke model untuk menyusun
+   jawaban, dan pengguna diberi tahu hal itu **secara eksplisit dan permanen** —
+   satu baris di bawah kotak tulis, bukan dialog sekali lewat yang bisa
+   ditutup. Kalimatnya: *"Percakapan ini dikirim ke model untuk menyusun
+   jawaban. Pemeriksaan tetap di perangkat ini."*
+
+   Batas yang tetap berlaku: model tidak pernah diminta memberi skor, tidak
+   pernah menjadi sumber `signals`, dan tidak bisa menurunkan temuan yang sudah
+   dihitung lokal (lihat §3b). Kalau model mati, jawaban jatuh ke templat dan
+   skor tidak berubah sedikit pun.
+
 b. **Tanpa simpan default.** Percakapan hilang saat tab ditutup.
 
 Yang sengaja tidak dibuat: persona honeypot, akun berbayar, bot Telegram.
