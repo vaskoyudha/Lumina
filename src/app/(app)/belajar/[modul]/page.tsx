@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BackButton } from "@/components/shell/back-button";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
@@ -22,11 +23,13 @@ export function generateStaticParams() {
   return MODUS.map((m) => ({ modul: String(m.no) }));
 }
 
-export default async function ModulPage({
-  params,
-}: {
-  params: Promise<{ modul: string }>;
-}) {
+/**
+ * `params` is URL data, and touching it during prerendering is an error under
+ * Cache Components even when the route has generateStaticParams. Awaiting it
+ * inside a Suspense boundary moves the read to the point where the segment is
+ * known, which is what Next.js asks for.
+ */
+async function ModulBody({ params }: { params: Promise<{ modul: string }> }) {
   const { modul } = await params;
   const no = Number.parseInt(modul, 10);
   const entry = Number.isNaN(no) ? null : (MODUS_BY_NO.get(no) ?? null);
@@ -97,5 +100,23 @@ export default async function ModulPage({
         </Link>
       ) : null}
     </div>
+  );
+}
+
+export default function ModulPage({
+  params,
+}: {
+  params: Promise<{ modul: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <p className="mx-auto max-w-3xl px-4 py-10 text-dim text-sm sm:px-6">
+          Memuat modul…
+        </p>
+      }
+    >
+      <ModulBody params={params} />
+    </Suspense>
   );
 }

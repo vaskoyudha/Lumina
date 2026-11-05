@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BackButton } from "@/components/shell/back-button";
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty";
 import { MODUS } from "@/lib/modus";
@@ -21,11 +22,8 @@ export function generateStaticParams() {
  * resolves. It does not fake a playable scene.
  */
 
-export default async function RunnerPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+/** Same reason as /belajar/[modul]: URL data behind a Suspense boundary. */
+async function RunnerBody({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const modus = MODUS.find((m) => m.scenarioId === id);
 
@@ -61,5 +59,23 @@ export default async function RunnerPage({
         komponennya. Setiap <code>setTimeout</code> butuh cleanup saat unmount.
       </p>
     </div>
+  );
+}
+
+export default function RunnerPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <p className="mx-auto max-w-3xl px-4 py-10 text-dim text-sm sm:px-6">
+          Memuat skenario…
+        </p>
+      }
+    >
+      <RunnerBody params={params} />
+    </Suspense>
   );
 }
