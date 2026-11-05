@@ -80,9 +80,10 @@ export function RegisterForm() {
         <Field orientation="horizontal">
           <Checkbox id="consent" name="consent" />
           <FieldLabel htmlFor="consent" className="font-normal leading-snug">
-            Saya paham profil dan progres hanya tersimpan di perangkat ini. Yang
-            dikirim ke server hanya sesi masuk demo — bukan pesan yang saya
-            periksa.
+            Saya paham profil dan progres hanya tersimpan di perangkat ini. Saat
+            mendaftar, yang dikirim ke server hanya sesi masuk demo. Pertanyaan
+            di companion dikirim ke model untuk dijawab; pesan yang saya periksa
+            tidak pernah ikut.
           </FieldLabel>
         </Field>
 

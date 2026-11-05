@@ -14,8 +14,8 @@ export function PrivacyNote() {
           <p className="appnext-lead mt-3">
             Pemeriksaan berjalan di perangkat ini. Untuk menyusun jawaban,
             pertanyaanmu dan ringkasan temuan dikirim ke model — pesan yang kamu
-            periksa tidak pernah ikut. Tidak ada riwayat di server, dan tidak
-            ada yang tersimpan setelah tab ditutup.
+            periksa tidak pernah ikut. Tidak ada riwayat percakapan di server,
+            dan riwayat percakapan hilang saat tab ditutup.
           </p>
 
           <ul className="mt-5 flex flex-col gap-2 text-[14px] leading-relaxed text-[#606060]">
