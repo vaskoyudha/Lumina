@@ -172,6 +172,54 @@ describe("measured bench traps (5 Nov 2026)", () => {
   });
 });
 
+describe("combination pass (note 01 §a)", () => {
+  it("names the combo when a prize requires a payment first", () => {
+    const result = scoreText({
+      text: "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.",
+    });
+
+    const signal = result.signals.find((s) => s.agent === "conversation");
+    expect(signal).toBeDefined();
+    expect(signal?.label).toMatch(/hadiah.*pembayaran lebih dulu/i);
+    expect(signal?.evidence).toMatch(/selamat anda menang/i);
+  });
+
+  it("names the combo when a deadline is paired with a demand for money", () => {
+    const result = scoreText({
+      text: "Tagihan denda parkir harus diselesaikan dalam 2 jam. Transfer langsung ke rekening pribadi petugas ya.",
+    });
+
+    const signal = result.signals.find((s) => s.agent === "conversation");
+    expect(signal).toBeDefined();
+    expect(signal?.label).toMatch(/mendesak sekaligus meminta uang/i);
+  });
+
+  it("never invents a combination on a legitimate bill", () => {
+    const result = scoreText({
+      text: "[PLN] Tagihan Nov Rp278.400 jatuh tempo 15 Nov. Bayar via VA 778820083xx atau saldoku.",
+    });
+
+    expect(result.signals.some((s) => s.agent === "conversation")).toBe(false);
+    expect(result.risk).toBe("bersih");
+  });
+
+  it("does not call a bare deadline a combination", () => {
+    // Urgency alone is one vector. A seller saying "segera" is not two scams.
+    const result = scoreText({
+      text: "Promo berakhir malam ini, segera pesan sebelum kehabisan.",
+    });
+
+    expect(result.signals.some((s) => s.agent === "conversation")).toBe(false);
+  });
+
+  it("keeps the honest empty state when nothing matched", () => {
+    const result = scoreText({ text: "Halo kak, gimana kabarnya?" });
+
+    expect(result.signals).toHaveLength(1);
+    expect(result.signals[0]?.weight).toBe(0);
+  });
+});
+
 describe("modus classification (5 Nov 2026)", () => {
   it("classifies the ordinary 'akun Anda akan diblokir' phrasing as phishing", () => {
     // The demo example, word for word. The keyword list used to require the

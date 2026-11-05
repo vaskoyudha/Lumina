@@ -45,9 +45,51 @@ describe("CompanionChat · evidence panel", () => {
       ).not.toBeInTheDocument();
     }
 
-    // The agents that really are unbuilt stay labelled as such.
-    expect(screen.getByText("Conversation Agent")).toBeInTheDocument();
-    expect(screen.getAllByText(/belum aktif/i).length).toBeGreaterThan(0);
+    // The one agent we have not built stays labelled as such. Identity Agent
+    // is listed last for exactly this reason: a panel of green ticks would be
+    // claiming a detector we do not have.
+    const identityRow = screen.getByText("Identity Agent").closest("li");
+    expect(identityRow).not.toBeNull();
+    if (identityRow) {
+      expect(
+        within(identityRow as HTMLElement).getByText(/belum aktif/i),
+      ).toBeInTheDocument();
+    }
+
+    // And the Conversation Agent, which used to say "belum aktif", now runs:
+    // it is the combination pass that pairs a deadline with a demand.
+    const conversationRow = screen
+      .getByText("Conversation Agent")
+      .closest("li");
+    expect(conversationRow).not.toBeNull();
+    if (conversationRow) {
+      expect(
+        within(conversationRow as HTMLElement).queryByText(/belum aktif/i),
+      ).not.toBeInTheDocument();
+    }
+  });
+
+  it("surfaces the combination finding when two vectors agree", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.type(
+      screen.getByLabelText(/pesan/i),
+      "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.",
+    );
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    // The finding itself, in the result card the user reads.
+    expect(
+      await screen.findByText(/hadiah tetapi meminta pembayaran lebih dulu/i),
+    ).toBeInTheDocument();
+
+    // And the panel credits it to a real agent, with a count beside the name.
+    const row = screen.getByText("Conversation Agent").closest("li");
+    expect(row).not.toBeNull();
+    if (row) {
+      expect(within(row as HTMLElement).getByText(/^1$/)).toBeInTheDocument();
+    }
   });
 
   it("names the modus instead of printing its internal id", async () => {

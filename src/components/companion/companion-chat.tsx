@@ -3,6 +3,7 @@
 import { ArrowRight, Send, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
   isGreeting,
   suggestedActions,
 } from "@/lib/companion/reply";
-import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import type { ScoreResult } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { scoreText } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
@@ -45,13 +46,6 @@ interface Turn {
    */
   source?: string;
 }
-
-const AGENT_SEQUENCE: AgentId[] = [
-  "message",
-  "link",
-  "conversation",
-  "evidence",
-];
 
 const EXAMPLES = [
   {

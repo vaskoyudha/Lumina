@@ -3,12 +3,13 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import type { AgentId, ScoreResult } from "@/lib/contracts/score";
+import type { ScoreResult } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { scoreText } from "@/lib/scoring/score";
 
@@ -35,13 +36,6 @@ const EXAMPLES = [
     text: "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa agar akun tidak ditutup permanen.",
   },
 ] as const;
-
-const AGENT_SEQUENCE: AgentId[] = [
-  "message",
-  "link",
-  "conversation",
-  "evidence",
-];
 
 export function CompanionEntry() {
   const [text, setText] = React.useState("");

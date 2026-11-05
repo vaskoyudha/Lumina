@@ -39,8 +39,8 @@ const AGENT_LABEL: Record<
   },
   conversation: {
     name: "Conversation Agent",
-    task: "Tanda bahaya yang menumpuk, tahap eskalasi",
-    state: "planned",
+    task: "Vektor bahaya yang menumpuk: desakan + uang, hadiah + biaya",
+    state: "live",
   },
   evidence: {
     name: "Evidence Agent",
