@@ -186,9 +186,9 @@ describe("isQuestionAbout · narrow on purpose", () => {
   });
 
   it("never guards a message someone received", () => {
-    expect(
-      isQuestionAbout("Halo, ini dari BCA. Akun Anda diblokir."),
-    ).toBe(false);
+    expect(isQuestionAbout("Halo, ini dari BCA. Akun Anda diblokir.")).toBe(
+      false,
+    );
     expect(isQuestionAbout("Halo, ini dari BCA. Akun Anda diblokir?")).toBe(
       false,
     );
@@ -200,9 +200,9 @@ describe("isQuestionAbout · narrow on purpose", () => {
   });
 
   it("leaves a follow-up to the lanjutan lane", () => {
-    expect(isQuestionAbout("kenapa berbahaya?", { hasPriorVerdict: true })).toBe(
-      false,
-    );
+    expect(
+      isQuestionAbout("kenapa berbahaya?", { hasPriorVerdict: true }),
+    ).toBe(false);
   });
 });
 
