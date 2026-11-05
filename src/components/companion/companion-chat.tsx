@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus, PanelRight, Paperclip, Plus } from "lucide-react";
+import { History, PanelRight, Paperclip } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
@@ -11,9 +11,11 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
+import { NavRail } from "@/components/companion/nav-rail";
 import { ScenarioCards } from "@/components/companion/scenario-cards";
 import type { Scenario } from "@/components/companion/scenarios";
 import { ScoreCard } from "@/components/companion/score-card";
+import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,30 +29,27 @@ import { scoreText } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
 
 /**
- * Companion — a full-height chat surface, structured after the reference chat
- * UI in `lumina-references/` and rebuilt on this project's primitives.
+ * Companion — the full chat workspace. No site nav: navigation is the rail.
  *
- * Layout copied from that reference, because it is what makes a chat feel like
- * an application rather than a form on a page:
+ * Layout from the reference chat UI (`ChatPanel.vue`):
  *
- *   ┌───────────┬─────────────────────────────┬──────────────┐
- *   │ sessions  │  header (title + actions)    │ evidence     │
- *   │ sidebar   │  ─────────────────────────── │ panel        │
- *   │ (240px)   │  centred message column      │ (336px)      │
- *   │           │  ─────────────────────────── │              │
- *   │           │  composer (pinned bottom)    │              │
- *   └───────────┴─────────────────────────────┴──────────────┘
+ *   ┌────┬──────────┬───────────────────────────────┬────────────┐
+ *   │ 64 │ sessions │  slim header (title · actions) │ evidence   │
+ *   │ rail│ (240px) │  ───────────────────────────── │ (336px)    │
+ *   │    │          │  centred column, scrolls       │            │
+ *   │    │          │  ───────────────────────────── │            │
+ *   │    │          │  composer, pinned              │            │
+ *   └────┴──────────┴───────────────────────────────┴────────────┘
  *
- * The main panel is a raised card with its own border and radius, sitting on
- * the grey page — the reference does this, and it is what makes the chat read
- * as a distinct workspace instead of content flowing down a document.
+ * The main panel is a raised card with a 14px radius sitting 10px inside the
+ * shell, exactly as the reference does — that inset is what makes the chat
+ * read as a workspace rather than a page.
  *
- * Two deliberate departures, both product decisions rather than taste:
- *   a. Conversations live in memory only. The privacy promise (§11.6) says
- *      closing the tab loses the history, so there is no storage call anywhere
- *      in this file — the sidebar list is React state and nothing else.
- *   b. The evidence panel is a real third column rather than a hidden drawer,
- *      because the agent-by-agent evidence IS the product's argument.
+ * Two product decisions that override the reference:
+ *   a. History is React state only. The privacy promise (§11.6) says closing
+ *      the tab loses the conversation, so there is no storage call here.
+ *   b. The evidence panel is a real column on desktop, not a drawer, because
+ *      the agent-by-agent evidence IS the argument the product makes.
  */
 
 interface Turn {
@@ -67,9 +66,12 @@ interface Turn {
 
 interface Session {
   id: number;
-  /** Derived from the first user message, like the reference's session list. */
   title: string;
   turns: Turn[];
+  /** Band of the last check in this conversation, for the sidebar's second row. */
+  risk?: "bersih" | "rendah" | "mencurigakan" | "tinggi";
+  /** Short clock time, printed on the title row like the reference does. */
+  time?: string;
 }
 
 const GREETING =
@@ -96,17 +98,10 @@ export function CompanionChat() {
   const [sessions, setSessions] = React.useState<Session[]>(() => [
     newSession(),
   ]);
-  /**
-   * `null` means "the newest session", not "id 1". Session ids come from a
-   * module-level counter, so hardcoding the first id silently stops matching as
-   * soon as anything else has minted one — the send then lands on a session
-   * that does not exist and the panel stays empty.
-   */
+  /** `null` = the newest session, never a hardcoded id. */
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [thinking, setThinking] = React.useState(false);
-  // `false` = the overlay is closed. The desktop column is always visible via
-  // `xl:block`, so this only governs the phone overlay.
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -123,10 +118,6 @@ export function CompanionChat() {
     return null;
   }, [turns]);
 
-  /**
-   * The bundle Stream D turns into a PDF. Rebuilt from the log on every turn,
-   * so what the panel shows and what the report contains cannot disagree.
-   */
   const evidence = React.useMemo(
     () =>
       buildEvidenceBundle(
@@ -140,19 +131,14 @@ export function CompanionChat() {
   );
 
   React.useEffect(() => {
-    // The dependency on `turns` is the trigger, not the subject: this runs
-    // after every appended turn so the newest one is visible.
+    // `turns` is the trigger: this runs after every appended turn so the newest
+    // one is anchored to the top of the log.
     if (turns.length <= 1) return;
     const log = scrollRef.current;
     if (!log) return;
     const nodes = log.querySelectorAll<HTMLElement>("[data-turn]");
     const last = nodes[nodes.length - 1];
-    // Anchor the newest turn to the top: a result card is taller than the
-    // viewport, so scrolling to the bottom would hide the sentence the reply
-    // just added.
-    if (last) {
-      log.scrollTop = last.offsetTop - log.offsetTop - 8;
-    }
+    if (last) log.scrollTop = last.offsetTop - log.offsetTop - 8;
   }, [turns]);
 
   const send = React.useCallback(
@@ -160,21 +146,22 @@ export function CompanionChat() {
       const text = raw.trim();
       if ((!text && attachments.length === 0) || busy) return;
 
-      /**
-       * What the engine reads includes the attachment filenames: a file called
-       * `undangan-nikah.apk` is the strongest signal in the APK family, and it
-       * arrives as a name, not as prose the user types.
-       */
+      // Attachment filenames are part of what the user received, so they are
+      // part of what the engine reads: `undangan-nikah.apk` is the strongest
+      // signal in the APK family and it is not prose anyone types.
       const scored = scoringTextWithAttachments(text, attachments);
       const hasContent = !isGreeting(scored);
       const result = hasContent ? scoreText({ text: scored }) : null;
 
+      // Stamped here, never during render: Next 16 fails the prerender of a
+      // client component that reads the clock while rendering.
+      const stamp = new Date().toISOString();
       const userTurn: Turn = {
         id: id(),
         role: "user",
         text,
         attachments,
-        at: new Date().toISOString(),
+        at: stamp,
       };
 
       const target = activeId;
@@ -191,13 +178,14 @@ export function CompanionChat() {
                   session.turns.length <= 1
                     ? titleFor(text, attachments)
                     : session.title,
+                time: stamp.slice(11, 16),
                 turns: [...session.turns, userTurn],
               }
             : session,
         ),
       );
 
-      // Brief delay so the panel reads as work happening, not an instant
+      // A short pause so the panel reads as work happening, not an instant
       // answer that might as well have been static text.
       window.setTimeout(() => {
         const reply = composeReply(text || attachments[0]?.name || "", result, {
@@ -209,6 +197,7 @@ export function CompanionChat() {
             session.id === target
               ? {
                   ...session,
+                  risk: result?.risk ?? session.risk,
                   turns: [
                     ...session.turns,
                     {
@@ -241,123 +230,77 @@ export function CompanionChat() {
   const empty = turns.length <= 1;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 overflow-hidden">
-      {/* ── Session sidebar ─────────────────────────────────────────────── */}
-      <aside
+    <div className="flex h-full min-h-0 overflow-hidden">
+      <NavRail />
+
+      <SessionSidebar
+        sessions={sessions}
+        activeId={activeId}
+        onSelect={(sessionId) => {
+          setSelectedId(sessionId);
+          setShowSessions(false);
+        }}
+        onNew={startNew}
+        onClose={() => setShowSessions(false)}
         className={cn(
-          "flex w-60 shrink-0 flex-col gap-2 p-2.5",
-          // On phones it slides over the chat instead of stealing width.
-          "max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-20 max-lg:w-64 max-lg:border-line max-lg:border-r max-lg:bg-bg",
-          showSessions ? "max-lg:flex" : "max-lg:hidden",
+          "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:w-64 max-md:border-line max-md:border-r max-md:bg-bg",
+          showSessions ? "max-md:flex" : "max-md:hidden",
         )}
-      >
-        <Button
-          onClick={startNew}
-          variant="outline"
-          className="w-full justify-start gap-2 border-field bg-panel text-txt"
-        >
-          <Plus aria-hidden strokeWidth={1.8} className="size-4" />
-          Percakapan baru
-        </Button>
+      />
 
-        <p className="mt-2 px-1 font-medium text-dim text-xs uppercase tracking-wide">
-          Riwayat
-        </p>
-
-        <ul className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
-          {sessions.map((session) => (
-            <li key={session.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedId(session.id);
-                  setShowSessions(false);
-                }}
-                aria-current={session.id === activeId ? "true" : undefined}
-                className={cn(
-                  "mb-0.5 flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150",
-                  session.id === activeId
-                    ? "bg-panel-2 text-txt"
-                    : "text-dim hover:bg-panel-2 hover:text-txt",
-                )}
-              >
-                <MessageSquarePlus
-                  aria-hidden
-                  strokeWidth={1.5}
-                  className="mt-0.5 size-3.5 shrink-0"
-                />
-                <span className="line-clamp-2 leading-snug">
-                  {session.title}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <p className="px-1 text-[0.65rem] text-dim leading-snug">
-          Riwayat hanya ada di tab ini. Tutup tab, hilang.
-        </p>
-      </aside>
-
-      {/* ── Main chat panel ─────────────────────────────────────────────── */}
-      <section className="m-2.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-line bg-panel shadow-rest max-lg:m-0 max-lg:rounded-none max-lg:border-0 max-lg:shadow-none">
-        <header className="flex shrink-0 items-center gap-2 border-line border-b px-4 py-3">
+      {/* Main panel: a raised card inset 10px inside the shell. */}
+      <section className="m-2.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-line bg-panel shadow-rest max-md:m-0 max-md:rounded-none max-md:border-0 max-md:shadow-none">
+        <header className="flex h-11 shrink-0 items-center gap-2 border-line border-b px-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setShowSessions((v) => !v)}
-            aria-label="Tampilkan riwayat percakapan"
+            aria-label="Riwayat percakapan"
             aria-expanded={showSessions}
-            className="size-8 text-dim lg:hidden"
+            className="size-8 text-dim md:hidden"
           >
-            <MessageSquarePlus
-              aria-hidden
-              strokeWidth={1.5}
-              className="size-4"
-            />
+            <History aria-hidden strokeWidth={1.6} className="size-4" />
           </Button>
 
-          <span className="truncate font-semibold text-base text-txt">
+          <span className="truncate font-semibold text-[15px] text-txt">
             {active?.title ?? "Percakapan baru"}
           </span>
 
           <div className="ml-auto flex items-center gap-1">
             <Button
               variant="ghost"
-              size="icon"
-              onClick={() => setShowEvidence((v) => !v)}
-              aria-label="Tampilkan panel bukti"
-              aria-expanded={showEvidence}
-              className="size-8 text-dim xl:hidden"
+              size="sm"
+              onClick={startNew}
+              className="h-7 text-dim text-xs hover:text-txt"
             >
-              <PanelRight aria-hidden strokeWidth={1.5} className="size-4" />
+              Percakapan baru
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              onClick={startNew}
-              className="hidden text-dim sm:inline-flex"
+              size="icon"
+              onClick={() => setShowEvidence((v) => !v)}
+              aria-label="Panel bukti"
+              aria-expanded={showEvidence}
+              className="size-8 text-dim xl:hidden"
             >
-              Mulai ulang
+              <PanelRight aria-hidden strokeWidth={1.6} className="size-4" />
             </Button>
           </div>
         </header>
 
         {empty ? (
-          /* ── New-chat state: hero, cards, composer ──────────────────── */
           <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto px-4 py-6">
             <div className="mx-auto w-full max-w-[760px]">
               <div className="mb-6 text-center">
-                <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
+                <h1 className="font-semibold text-[clamp(19px,2.4vw,30px)] leading-tight tracking-[-0.6px]">
                   Periksa sebelum kamu percaya.
                 </h1>
-                <p className="mt-2 text-dim text-sm">
-                  Tempel pesan, tautan, atau lampirkan tangkapan layar. Semuanya
-                  diperiksa di perangkat ini.
+                <p className="mt-2 text-dim text-[13px]">
+                  Pilih contoh di bawah, atau tempel pesan yang kamu terima.
                 </p>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-5">
                 <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
               </div>
 
@@ -371,7 +314,6 @@ export function CompanionChat() {
           </div>
         ) : (
           <>
-            {/* ── Conversation ─────────────────────────────────────────── */}
             <div
               ref={scrollRef}
               className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-5"
@@ -468,7 +410,6 @@ export function CompanionChat() {
               ) : null}
             </div>
 
-            {/* ── Composer, pinned ─────────────────────────────────────── */}
             <div className="shrink-0 border-line border-t px-4 py-3">
               <div className="mx-auto w-full max-w-[760px]">
                 <Composer
@@ -482,14 +423,10 @@ export function CompanionChat() {
         )}
       </section>
 
-      {/* ── Evidence panel ─────────────────────────────────────────────── */}
       <aside
         className={cn(
           "w-[21rem] shrink-0 overflow-y-auto p-2.5 xl:block",
-          // Desktop: always a third column. Below `xl` it becomes an overlay
-          // the header button opens — a panel hidden by CSS regardless of the
-          // toggle would make that button do nothing.
-          "max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-20 max-xl:w-[20rem] max-xl:border-line max-xl:border-l max-xl:bg-bg",
+          "max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-30 max-xl:w-[20rem] max-xl:border-line max-xl:border-l max-xl:bg-bg",
           showEvidence ? "max-xl:block" : "max-xl:hidden",
         )}
       >
@@ -498,7 +435,7 @@ export function CompanionChat() {
             variant="ghost"
             size="sm"
             onClick={() => setShowEvidence(false)}
-            className="text-dim"
+            className="h-7 text-dim text-xs"
           >
             Tutup
           </Button>

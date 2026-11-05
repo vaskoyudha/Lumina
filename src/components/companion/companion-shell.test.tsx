@@ -58,7 +58,11 @@ describe("CompanionChat · shell", () => {
       expect(screen.getAllByText(/risiko tinggi/i).length).toBeGreaterThan(0);
     });
 
-    await user.click(screen.getByRole("button", { name: /percakapan baru/i }));
+    // Both the sidebar and the header offer "new conversation" — the sidebar
+    // one is canonical, the header copy is a convenience.
+    await user.click(
+      screen.getAllByRole("button", { name: /percakapan baru/i })[0],
+    );
 
     // Back to the empty state, and the first session is still listed.
     expect(
