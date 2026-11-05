@@ -150,6 +150,7 @@ export function CourseEditor({ no }: { no: number }) {
   // steps instead of the first form field.
   useEffect(() => {
     if (window.location.hash === "#terbit") setTab("terbit");
+    else if (window.location.hash === "#pratinjau") setTab("pratinjau");
   }, []);
 
   useEffect(() => {

@@ -106,7 +106,7 @@ export function StringListEditor({
               value={item}
               onChange={(e) => replace(index, e.target.value)}
               rows={1}
-              className="min-h-9"
+              className="min-h-11"
               aria-label={`${label} ${index + 1}`}
             />
             <RowControls

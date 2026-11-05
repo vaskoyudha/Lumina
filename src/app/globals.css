@@ -343,3 +343,34 @@ html {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * Print. The app shell is a fixed-viewport document with `main` as its only
+ * scroll container, so the browser would otherwise print one clipped screen.
+ * Only the requested content (e.g. the triage checklist) is printed: chrome,
+ * the site footer, and anything marked `data-print="hide"` are removed, and
+ * every clipping ancestor is released for the page flow.
+ */
+@media print {
+  [data-print="hide"],
+  header,
+  footer {
+    display: none !important;
+  }
+
+  [data-app-shell] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-app-shell] > main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+}

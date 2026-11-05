@@ -2,7 +2,7 @@
    by the stream owner and deliberately scoped to simulation routes. */
 .sim-world {
   --sim-ink: #30283f;
-  --sim-muted: #6e6375;
+  --sim-muted: #5f5468;
   --sim-paper: #fff8eb;
   --sim-white: #fffefa;
   --sim-coral: #ff8966;
@@ -150,6 +150,7 @@ body[data-simulation-theme="playground"] > div > footer {
 .sim-landing {
   max-width: 1200px;
   padding-top: 58px;
+  overflow-x: clip;
 }
 
 .sim-hero {
@@ -570,11 +571,11 @@ body[data-simulation-theme="playground"] > div > footer {
 }
 
 .sim-meter [data-slot="progress-indicator"] {
-  background: var(--sim-coral);
+  background: var(--lumina-danger);
 }
 
 .sim-meter[data-tone="warn"] [data-slot="progress-indicator"] {
-  background: #bba4ef;
+  background: var(--lumina-warn);
 }
 
 .sim-chapters {
@@ -815,8 +816,14 @@ body[data-simulation-theme="playground"] > div > footer {
   box-shadow: 2px 3px 0 #30283f33;
 }
 
-.sim-world .sim-feedback[data-tone="danger"] {
+.sim-world [data-slot="alert"][data-tone="danger"] {
   background: #ffe0d5;
+}
+
+.sim-world [data-slot="badge"][data-tone="danger"] {
+  background: #ffe0d5;
+  border-color: #8d2431;
+  color: #8d2431;
 }
 
 .sim-ending {
@@ -1080,6 +1087,27 @@ body[data-simulation-theme="playground"] > div > footer {
   }
   .sim-end-actions > * {
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .sim-hero-art-frame {
+    border-radius: 34px;
+  }
+  .sim-hero-illustration {
+    transform: rotate(-3deg) scale(1);
+    animation: none;
+  }
+  .sim-hero-art > .sim-sticker:first-of-type,
+  .sim-hero-art > .sim-sticker:last-of-type {
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+  }
+  .sim-sticker {
+    max-width: 150px;
+    font-size: 0.78rem;
   }
 }
 

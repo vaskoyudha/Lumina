@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Playwright MCP artifacts (browser logs, not project code)
 .playwright-mcp/
+
+# Local screenshots and verify logs used during review, never shipped
+/.cache/

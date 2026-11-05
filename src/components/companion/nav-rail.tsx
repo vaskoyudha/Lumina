@@ -62,7 +62,7 @@ function RailItem({
         "grid size-11 place-items-center rounded-md transition-[background-color,color] duration-150 ease-out",
         emergency
           ? active
-            ? "bg-danger text-white"
+            ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
             ? "bg-txt/12 text-txt"

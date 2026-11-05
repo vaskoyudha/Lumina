@@ -95,7 +95,7 @@ export function BelajarProgress() {
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={done}
-        className="mt-3 h-2 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-[var(--appnext-accent)]"
+        className="mt-3 h-2.5 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-[var(--appnext-accent)]"
       />
     </output>
   );

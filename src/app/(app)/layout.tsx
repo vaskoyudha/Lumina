@@ -18,13 +18,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     they simply scroll inside `main`, and the nav and footer stay put.
   */
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-bg text-txt">
+    <div
+      data-app-shell
+      className="flex h-dvh flex-col overflow-hidden bg-bg text-txt"
+    >
       <Suspense
         fallback={<div className="h-14 border-line border-b bg-panel" />}
       >
         <NavWithSession />
       </Suspense>
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <main className="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
         {children}
       </main>
       <footer className="shrink-0 border-line border-t px-4 py-6 text-dim text-sm sm:px-6">

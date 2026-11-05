@@ -130,7 +130,7 @@ function ContohFrame({ modul }: { modul: ModuleContent }) {
       <div className="appnext-band rounded-3xl p-4 sm:p-5">
         <Card className="max-w-xl gap-0 overflow-hidden rounded-[18px] py-0 shadow-[var(--appnext-shadow-soft)]">
           <div className="flex items-center gap-2 border-b border-line bg-panel-2 px-3 py-2">
-            <span className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-txt text-xs">
+            <span className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-txt text-xs">
               <Icon aria-hidden className="size-3.5 shrink-0 text-dim" />
               <span className="truncate">{sumber}</span>
             </span>
@@ -320,7 +320,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         {modul.scenarioId ? (
           <Button
             asChild
-            className="w-fit rounded-full bg-[var(--appnext-ink-2)] text-white hover:bg-[var(--appnext-accent-deep)]"
+            className="min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
           >
             <Link href={`/simulasi/${modul.scenarioId}`} data-pressable>
               Latih pola ini di simulasi

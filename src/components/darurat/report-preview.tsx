@@ -1,5 +1,4 @@
 import { FileText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -20,8 +19,8 @@ import { REPORT_STATEMENT, type ReportModel } from "@/lib/darurat/report";
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:gap-3">
-      <dt className="text-dim text-xs sm:text-sm">{label}</dt>
-      <dd className="break-words text-sm text-txt">{value}</dd>
+      <dt className="text-dim text-sm">{label}</dt>
+      <dd className="break-words text-txt">{value}</dd>
     </div>
   );
 }
@@ -44,13 +43,13 @@ export function ReportPreview({ model }: { model: ReportModel }) {
           className="flex flex-col gap-2"
         >
           <div className="flex items-center justify-between gap-3">
-            <h3 id="laporan-pelapor" className="font-medium text-sm text-txt">
+            <h3 id="laporan-pelapor" className="font-medium text-txt">
               Pelapor
             </h3>
-            <Badge variant="outline" className="text-[0.65rem]">
-              <FileText aria-hidden className="size-3" />
+            <span className="inline-flex items-center gap-1 text-dim text-sm">
+              <FileText aria-hidden className="size-4" />
               Laporan pengguna
-            </Badge>
+            </span>
           </div>
           <dl className="flex flex-col gap-1.5">
             <Row label="Nama" value={model.reporter.name} />
@@ -65,7 +64,7 @@ export function ReportPreview({ model }: { model: ReportModel }) {
           aria-labelledby="laporan-kejadian"
           className="flex flex-col gap-2"
         >
-          <h3 id="laporan-kejadian" className="font-medium text-sm text-txt">
+          <h3 id="laporan-kejadian" className="font-medium text-txt">
             Kejadian
           </h3>
           <dl className="flex flex-col gap-1.5">
@@ -85,7 +84,7 @@ export function ReportPreview({ model }: { model: ReportModel }) {
           aria-labelledby="laporan-kronologi"
           className="flex flex-col gap-2"
         >
-          <h3 id="laporan-kronologi" className="font-medium text-sm text-txt">
+          <h3 id="laporan-kronologi" className="font-medium text-txt">
             Kronologi
           </h3>
           {model.chronology.length > 0 ? (
@@ -113,7 +112,7 @@ export function ReportPreview({ model }: { model: ReportModel }) {
           aria-labelledby="laporan-bukti"
           className="flex flex-col gap-2"
         >
-          <h3 id="laporan-bukti" className="font-medium text-sm text-txt">
+          <h3 id="laporan-bukti" className="font-medium text-txt">
             Bukti yang disimpan
           </h3>
           <ul className="flex flex-col gap-2">
@@ -136,7 +135,7 @@ export function ReportPreview({ model }: { model: ReportModel }) {
           aria-labelledby="laporan-pernyataan"
           className="flex flex-col gap-3"
         >
-          <h3 id="laporan-pernyataan" className="font-medium text-sm text-txt">
+          <h3 id="laporan-pernyataan" className="font-medium text-txt">
             Pernyataan dan tanda tangan
           </h3>
           <p className="text-dim text-sm leading-relaxed">{REPORT_STATEMENT}</p>

@@ -35,7 +35,7 @@ import {
  * are filled, instead of producing a useless document.
  */
 
-type DownloadStatus = "idle" | "loading" | "error";
+type DownloadStatus = "idle" | "loading" | "error" | "done";
 
 export function ReportBuilder({ modus }: { modus: string }) {
   const [draft, setDraft] = useState<ReportDraft>(SAMPLE_REPORT_DRAFT);
@@ -56,7 +56,7 @@ export function ReportBuilder({ modus }: { modus: string }) {
       // Loaded on demand: @react-pdf/renderer never enters the main bundle.
       const { downloadReportPdf } = await import("@/lib/darurat/pdf");
       await downloadReportPdf({ draft, bundle: SAMPLE_BUNDLE, modus });
-      setStatus("idle");
+      setStatus("done");
     } catch {
       setStatus("error");
     }
@@ -68,7 +68,7 @@ export function ReportBuilder({ modus }: { modus: string }) {
         <h2 id="laporan-bank" className="font-semibold text-xl tracking-tight">
           Siapkan laporan untuk bank
         </h2>
-        <p className="mt-2 max-w-prose text-dim text-sm">
+        <p className="mt-2 max-w-prose text-dim">
           Bank meminta kronologi, nomor rekening pelaku, dan nominal. Isi
           datanya, periksa pratinjau, lalu unduh PDF. Berkas dibuat di perangkat
           ini dan tidak dikirim ke mana pun.
@@ -216,7 +216,7 @@ export function ReportBuilder({ modus }: { modus: string }) {
               <div className="flex flex-wrap items-center gap-3">
                 <Button
                   type="button"
-                  className="h-10 bg-safe px-4 text-bg hover:bg-safe/90"
+                  className="h-11 bg-safe px-4 text-bg hover:bg-safe/90"
                   disabled={missing.length > 0 || status === "loading"}
                   onClick={handleDownload}
                 >
@@ -233,7 +233,7 @@ export function ReportBuilder({ modus }: { modus: string }) {
                     ? "Menyiapkan PDF…"
                     : "Unduh laporan PDF"}
                 </Button>
-                <p className="text-dim text-xs">
+                <p className="text-dim text-sm">
                   {missing.length > 0
                     ? `Lengkapi dulu: ${missing.join(", ")}.`
                     : "PDF siap diunduh. Tidak ada data yang dikirim."}
@@ -245,7 +245,9 @@ export function ReportBuilder({ modus }: { modus: string }) {
                   ? "Sedang menyiapkan PDF."
                   : status === "error"
                     ? "PDF gagal dibuat."
-                    : ""}
+                    : status === "done"
+                      ? "PDF selesai diunduh."
+                      : ""}
               </p>
 
               {status === "error" ? (

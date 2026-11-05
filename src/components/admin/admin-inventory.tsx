@@ -40,13 +40,17 @@ const TAKEN_NUMBERS = MODUS.map((m) => m.no);
 export function AdminInventory() {
   const router = useRouter();
   const [store, setStore] = useState<DraftStore>(EMPTY_STORE);
+  const [hydrated, setHydrated] = useState(false);
   // Create is a two-step action: the first click reveals the form so a name
   // can be typed, because the catalog renders `nama` and an unnamed course
   // would print as an empty row.
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
 
-  const reRead = useCallback(() => setStore(loadDrafts()), []);
+  const reRead = useCallback(() => {
+    setStore(loadDrafts());
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     reRead();
@@ -93,15 +97,16 @@ export function AdminInventory() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="appnext-caption tabular">
-            {publishedCount} terbit · {store.courses.length} draf di perangkat
-            ini
+            {hydrated
+              ? `${publishedCount} terbit · ${store.courses.length} draf di perangkat ini`
+              : "Membaca draf di perangkat ini…"}
           </p>
         </div>
         <Button
           type="button"
           onClick={() => setCreating((open) => !open)}
           aria-expanded={creating}
-          className="rounded-full"
+          className="min-h-11 rounded-full"
         >
           <Plus aria-hidden />
           Course baru
@@ -133,7 +138,7 @@ export function AdminInventory() {
                   required
                 />
               </Field>
-              <Button type="submit" className="rounded-full">
+              <Button type="submit" className="min-h-11 rounded-full">
                 Buat draf
               </Button>
             </form>
@@ -178,8 +183,16 @@ export function AdminInventory() {
 
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {row.published ? (
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/${row.no}`} data-pressable>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="min-h-11"
+                      >
+                        <Link
+                          href={`/admin/${row.no}#pratinjau`}
+                          data-pressable
+                        >
                           Pratinjau
                         </Link>
                       </Button>
@@ -188,6 +201,7 @@ export function AdminInventory() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="min-h-11"
                         onClick={() => handleRemoveDraft(row.no)}
                       >
                         <Trash2 aria-hidden />
@@ -195,14 +209,19 @@ export function AdminInventory() {
                       </Button>
                     ) : null}
                     {row.siap ? (
-                      <Button asChild variant="outline" size="sm">
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="min-h-11"
+                      >
                         <Link href={`/admin/${row.no}#terbit`} data-pressable>
                           <Upload aria-hidden />
                           Terbitkan
                         </Link>
                       </Button>
                     ) : null}
-                    <Button asChild size="sm">
+                    <Button asChild size="sm" className="min-h-11">
                       <Link href={`/admin/${row.no}`} data-pressable>
                         {row.published
                           ? "Ubah"

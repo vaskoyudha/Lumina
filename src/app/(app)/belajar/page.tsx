@@ -123,7 +123,7 @@ export default function BelajarPage() {
               </div>
               <Button
                 asChild
-                className="w-fit shrink-0 rounded-full bg-[var(--appnext-accent-deep)] px-5 text-white hover:bg-[var(--appnext-ink-2)]"
+                className="min-h-11 w-fit shrink-0 rounded-full bg-[var(--appnext-accent-deep)] px-5 text-bg hover:bg-[var(--appnext-ink-2)]"
               >
                 <Link href={`/belajar/${featured.no}`} data-pressable>
                   Buka modul lengkap

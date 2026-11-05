@@ -92,6 +92,8 @@ export function Runner() {
   const pausedRef = useRef(paused);
   const revealClock = useRef<{ id: string; remaining: number } | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const promptRef = useRef<HTMLHeadingElement>(null);
+  const endingRef = useRef<HTMLDivElement>(null);
   activeRef.current = activeId;
   pausedRef.current = paused;
   const ended = !!failure || active?.type === "ending";
@@ -185,6 +187,12 @@ export function Runner() {
     if (transcript.length && transcriptRef.current)
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
   }, [transcript]);
+  useEffect(() => {
+    if (!started) return;
+    if (ended) endingRef.current?.focus();
+    else if (active?.type === "choice" || active?.type === "tool_task")
+      promptRef.current?.focus();
+  }, [active?.type, ended, started]);
 
   function choose(choice: ScenarioChoice) {
     if (
@@ -267,7 +275,9 @@ export function Runner() {
           tacticCards.map((tactic) => (
             <Card key={tactic.id} className="sim-tactic-card">
               <CardHeader>
-                <CardTitle className="text-base">{tactic.name}</CardTitle>
+                <CardTitle role="heading" aria-level={3} className="text-base">
+                  {tactic.name}
+                </CardTitle>
                 <CardDescription className="text-base">
                   “{tactic.quote}”
                 </CardDescription>
@@ -344,12 +354,13 @@ export function Runner() {
     );
   if (!active)
     return (
-      <Alert variant="destructive">
+      <Alert variant="destructive" data-tone="danger">
         <AlertTitle>Skenario tidak tersedia</AlertTitle>
       </Alert>
     );
   if (ended) {
     const ending = active.type === "ending" ? active : defaultEnding;
+    const emergency = Boolean(failure) || ending.variant === "compromised";
     return (
       <div
         className="sim-ending"
@@ -359,11 +370,18 @@ export function Runner() {
           <CardHeader>
             <Badge
               variant={failure ? "destructive" : "secondary"}
+              data-tone={failure ? "danger" : undefined}
               className="w-fit"
             >
               {failure ? "Misi dihentikan" : "Misi selesai"}
             </Badge>
-            <CardTitle className="text-2xl">
+            <CardTitle
+              ref={endingRef}
+              tabIndex={-1}
+              role="heading"
+              aria-level={2}
+              className="text-2xl outline-none"
+            >
               {failure ? "Berhenti dan ambil langkah aman" : ending.title}
             </CardTitle>
             <CardDescription className="text-base">
@@ -374,6 +392,7 @@ export function Runner() {
             {failure && latest?.rationale && (
               <Alert
                 role="status"
+                data-tone={latest.verdict === "salah" ? "danger" : undefined}
                 variant={latest.verdict === "salah" ? "destructive" : "default"}
               >
                 <AlertTitle>Penjelasan pilihan</AlertTitle>
@@ -431,9 +450,7 @@ export function Runner() {
             <div className="sim-end-actions flex flex-wrap gap-3">
               <Button
                 data-pressable
-                variant={
-                  ending.variant === "compromised" ? "outline" : "default"
-                }
+                variant={emergency ? "outline" : "default"}
                 className={button}
                 onClick={reset}
               >
@@ -450,10 +467,8 @@ export function Runner() {
               <Button
                 asChild
                 data-pressable
-                variant={
-                  ending.variant === "compromised" ? "default" : "outline"
-                }
-                className={`${button} ${ending.variant === "compromised" ? "order-first" : ""}`}
+                variant={emergency ? "default" : "outline"}
+                className={`${button} ${emergency ? "order-first" : ""}`}
               >
                 <Link href="/darurat">Buka mode darurat</Link>
               </Button>
@@ -475,7 +490,13 @@ export function Runner() {
   const tool = task && (
     <Card className="sim-tool-panel min-w-0">
       <CardHeader>
-        <CardTitle className="text-lg">
+        <CardTitle
+          ref={promptRef}
+          tabIndex={-1}
+          role="heading"
+          aria-level={2}
+          className="text-lg outline-none"
+        >
           {scenario.tools.find((item) => item.id === task.tool)?.name}
         </CardTitle>
         <CardDescription className="text-base">{task.prompt}</CardDescription>
@@ -645,6 +666,7 @@ export function Runner() {
             variant={active.chapter === index + 1 ? "secondary" : "outline"}
             className="sim-chapter text-base"
             data-active={active.chapter === index + 1}
+            aria-current={active.chapter === index + 1 ? "step" : undefined}
           >
             {index + 1}. {chapter}
           </Badge>
@@ -666,7 +688,9 @@ export function Runner() {
                 <Package />
               </span>
               <div>
-                <CardTitle className="text-lg">{MISSION.contact}</CardTitle>
+                <CardTitle role="heading" aria-level={2} className="text-lg">
+                  {MISSION.contact}
+                </CardTitle>
                 <CardDescription className="text-base">
                   {MISSION.contactDetail}
                 </CardDescription>
@@ -745,7 +769,10 @@ export function Runner() {
                   ),
                 )}
                 {active.type === "message" && !paused && (
-                  <p className="sim-typing text-base text-dim">
+                  <p
+                    className="sim-typing text-base text-dim"
+                    aria-hidden="true"
+                  >
                     {active.speaker === MISSION.contact
                       ? "Pengirim sedang mengetik…"
                       : "Catatan latihan sedang disiapkan…"}
@@ -784,7 +811,13 @@ export function Runner() {
               )}
               {active.type === "choice" && (
                 <div className="sim-choice-panel grid gap-3">
-                  <h2 className="font-semibold text-lg">{active.prompt}</h2>
+                  <h2
+                    ref={promptRef}
+                    tabIndex={-1}
+                    className="font-semibold text-lg outline-none"
+                  >
+                    {active.prompt}
+                  </h2>
                   {active.choices.map((choice, index) => (
                     <Button
                       key={choice.label}
@@ -809,7 +842,7 @@ export function Runner() {
           {tool}
           <Card className="sim-side-panel">
             <CardHeader>
-              <CardTitle className="text-lg">
+              <CardTitle role="heading" aria-level={2} className="text-lg">
                 <Shield aria-hidden="true" /> Status perangkat latihan
               </CardTitle>
             </CardHeader>

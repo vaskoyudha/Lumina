@@ -169,7 +169,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
                         <Button
                           type="button"
                           size="sm"
-                          className="mt-2 w-fit rounded-full bg-[var(--appnext-ink-2)] text-white hover:bg-[var(--appnext-accent-deep)]"
+                          className="mt-2 min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
                           onClick={() => retryQuestion(q.id)}
                         >
                           Coba soal ini lagi
@@ -185,7 +185,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
         {!passed ? (
           <Button
             type="button"
-            className="w-fit rounded-full bg-[var(--appnext-ink-2)] text-white hover:bg-[var(--appnext-accent-deep)]"
+            className="min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
             onClick={retry}
           >
             Coba lagi
@@ -207,7 +207,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
           aria-valuemin={0}
           aria-valuemax={total}
           aria-valuenow={index + 1}
-          className="h-2 flex-1 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-[var(--appnext-accent)]"
+          className="h-2.5 flex-1 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-[var(--appnext-accent)]"
         />
       </div>
 
@@ -284,7 +284,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
       {locked && !isLast ? (
         <Button
           type="button"
-          className="w-fit rounded-full bg-[var(--appnext-accent-deep)] text-white hover:bg-[var(--appnext-ink-2)]"
+          className="min-h-11 w-fit rounded-full bg-[var(--appnext-accent-deep)] text-bg hover:bg-[var(--appnext-ink-2)]"
           onClick={next}
         >
           Soal berikutnya

@@ -19,24 +19,31 @@ export function DaruratClient() {
       <div className="flex flex-col gap-6">
         <TriageChecklist activeId={activeId} onSelect={setActiveId} />
 
-        <div className="flex flex-wrap items-center gap-3 border-line border-t pt-5">
+        <div
+          data-print="hide"
+          className="flex flex-wrap items-center gap-3 border-line border-t pt-5"
+        >
           <Button
             variant="outline"
-            className="h-10"
+            className="h-11"
             onClick={() => window.print()}
           >
             <Printer data-icon="inline-start" aria-hidden />
             Cetak checklist ini
           </Button>
-          <Button asChild variant="ghost" className="h-10 text-dim">
+          <Button asChild variant="ghost" className="h-11 text-dim">
             <Link href="/companion">Periksa pesannya dulu</Link>
           </Button>
         </div>
       </div>
 
-      <Separator />
+      <div data-print="hide">
+        <Separator />
+      </div>
 
-      <ReportBuilder modus={active?.title ?? "Dugaan penipuan"} />
+      <div data-print="hide">
+        <ReportBuilder modus={active?.title ?? "Dugaan penipuan"} />
+      </div>
     </div>
   );
 }
