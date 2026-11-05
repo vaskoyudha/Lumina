@@ -8,8 +8,14 @@ export const metadata: Metadata = {
 };
 
 export default function CompanionPage() {
+  /*
+    Full-height app surface, not a document. The chat shell owns its own scroll
+    containers, so the page itself must not scroll. The whole chain has to be
+    `flex` with `min-h-0`, or the shell collapses to the height of its content
+    instead of filling the viewport.
+  */
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div className="flex min-h-0 flex-1 flex-col">
       <CompanionChat />
     </div>
   );

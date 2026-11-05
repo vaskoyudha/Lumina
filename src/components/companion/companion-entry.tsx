@@ -84,24 +84,30 @@ export function CompanionEntry() {
         >
           <Field>
             <FieldLabel htmlFor="pesan">Isi pesan</FieldLabel>
-            <Textarea
-              id="pesan"
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              rows={7}
-              placeholder='Contoh: "Selamat siang Bu, ini undangan pernikahan..."'
-              className="bg-panel-2"
-            />
+            {/*
+              Same raised-field treatment as the chat composer: white surface,
+              hairline border, wide soft shadow that deepens on focus. The two
+              surfaces are the same control and must not drift apart.
+            */}
+            <div className="rounded-md border border-field bg-panel p-2.5 shadow-rest transition-[border-color,box-shadow] duration-150 ease-out focus-within:border-txt focus-within:shadow-lift">
+              <Textarea
+                id="pesan"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                rows={7}
+                placeholder='Contoh: "Selamat siang Bu, ini undangan pernikahan..."'
+                className="resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+              />
+            </div>
             <FieldDescription>
               Tidak ada akun dan tidak ada unggahan ke server.
             </FieldDescription>
           </Field>
-
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button
               type="submit"
               disabled={text.trim().length === 0}
-              className="h-10 bg-safe px-4 text-bg hover:bg-safe/90"
+              className="h-10 px-4"
             >
               Periksa pesan
               <ArrowRight data-icon="inline-end" aria-hidden />

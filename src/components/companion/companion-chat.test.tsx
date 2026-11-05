@@ -26,9 +26,7 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(
-      screen.getByRole("button", { name: /apk undangan pernikahan/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
 
     // The artifact label is the panel's, not the score card's: it names the
     // file the message asked the user to open.
@@ -96,9 +94,7 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(
-      screen.getByRole("button", { name: /apk undangan pernikahan/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
 
     expect(
       await screen.findByText("File APK via WhatsApp"),

@@ -39,7 +39,14 @@ export function SiteNav({
 
         <nav
           aria-label="Navigasi utama"
-          className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1"
+          /*
+            On phones the three destinations get their own row and wrap. The
+            previous `overflow-x-auto` row scrolled them out of sight: at 380px
+            the nav held 261px of content in a 123px box, so "Belajar" and
+            "Simulasi" were clipped behind a scroller and the Darurat button
+            overlapped them. A destination you cannot see is not reachable.
+          */
+          className="order-3 -mx-1 flex w-full basis-full flex-wrap items-center gap-1 px-1 sm:order-none sm:mx-0 sm:w-auto sm:min-w-0 sm:flex-1 sm:basis-auto sm:px-0"
         >
           {DESTINATIONS.map(({ href, label }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);

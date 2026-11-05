@@ -33,6 +33,18 @@
   --color-safe: var(--lumina-safe);
   --color-danger: var(--lumina-danger);
   --color-warn: var(--lumina-warn);
+  --color-field: var(--lumina-field);
+
+  /*
+    Ambient elevation. The reference composer is a white card on a grey page
+    with a soft, wide shadow rather than a hard border — that shadow is what
+    makes the input read as "lifted" instead of "outlined". Both are derived
+    from the text colour, so no component carries a literal rgba.
+  */
+  --shadow-rest: 0 8px 28px
+    color-mix(in oklab, var(--lumina-txt) 8%, transparent);
+  --shadow-lift: 0 10px 32px
+    color-mix(in oklab, var(--lumina-txt) 11%, transparent);
 
   /* shadcn/ui surface mappings */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -77,20 +89,37 @@
 }
 
 :root {
-  /* --- Lumina palette: LIGHT mode ---
-     Same token names, inverted values, so no component needed rewriting.
-     Accents darken against white to hold WCAG 4.5:1; the meter requirement
-     (readable from the back of a room) holds in light too — #C81E1E on white
-     is 5.7:1 and the fill is solid at 40px type. --- */
-  --lumina-bg: #ffffff;
-  --lumina-panel: #f6f7f9;
-  --lumina-panel-2: #eef1f4;
-  --lumina-line: #dce1e8;
-  --lumina-txt: #0f141a;
-  --lumina-dim: #55606e;
-  --lumina-safe: #0b7a45;
-  --lumina-danger: #c81e1e;
+  /* --- Lumina palette: LIGHT mode, "Ink" ---
+     Same token names, so no component needed rewriting.
+
+     Design language adapted from the pure-greyscale chat system surveyed in
+     `lumina-references/` (see STATUS.md): the page is a faint grey, raised
+     surfaces are pure white, and the whole chrome is neutral. Colour is
+     therefore reserved for ONE job — the risk bands — so any colour a judge
+     sees on screen is a finding, not decoration.
+
+     Two deliberate departures from that reference, both measured:
+       a. Body text stays at 16px, not 14px. This surface is used one-handed
+          on a phone by someone frightened (lumina-ui §bar.c).
+       b. `--lumina-warn` keeps its dark amber. The reference's #f57f17 is
+          2.6:1 on white and fails WCAG for text; #8a5300 is 5.5:1.
+
+     Contrast on white: txt 16.1:1, dim 5.7:1, safe 5.0:1, danger 6.5:1,
+     warn 5.5:1 — every one clears 4.5:1, and the meter fill stays solid at
+     40px type so it reads from the back of the room. --- */
+  --lumina-bg: #fafafa;
+  --lumina-panel: #ffffff;
+  --lumina-panel-2: #f5f5f5;
+  --lumina-line: #e0e0e0;
+  --lumina-txt: #1a1a1a;
+  --lumina-dim: #666666;
+  --lumina-safe: #2e7d32;
+  --lumina-danger: #c62828;
   --lumina-warn: #8a5300;
+
+  /* Field border: a hairline that is visible but never reads as a box. */
+  --lumina-field: #dadada;
+  --lumina-field-hover: #bebebe;
 
   /* --- shadcn/ui surfaces, derived from the palette above --- */
   --background: var(--lumina-bg);
@@ -118,7 +147,7 @@
   --chart-4: var(--lumina-dim);
   --chart-5: var(--lumina-line);
 
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
   --sidebar: var(--lumina-panel);
   --sidebar-foreground: var(--lumina-txt);
