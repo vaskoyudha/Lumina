@@ -26,12 +26,17 @@ j. Korpus bench 43 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
 k. `src/lib/evidence/`: producer `EvidenceBundle` pertama (artefak → timeline →
    narasi). Panel bukti menampilkan artefaknya; kode OTP sengaja **tidak**
    pernah diekstrak karena bundel ini keluar perangkat sebagai PDF.
+l. 6 November 2026 — companion merutekan giliran secara deterministik: `periksa`
+   menjalankan engine lalu menyusun jawaban; `tanya`, `lanjutan`, dan `obrolan`
+   dijawab tanpa kartu skor dan tanpa jejak agent. Pesan yang diperiksa tidak
+   pernah meninggalkan perangkat — yang dikirim hanya pertanyaan pengguna dan
+   ringkasan temuan tanpa kutipan, dan tidak ada riwayat percakapan di server.
 
 ## Yang belum ada
 
 | Item | Stream | Catatan |
 |---|---|---|
-| Lapisan percakapan | A | chat + balasan template berjalan; LLM belum disambungkan (keputusan privasi/waktu, `stream-A.md`) |
+| Lapisan percakapan | A | ✅ LLM tersambung lewat rute jawaban; pesan yang diperiksa tetap di perangkat |
 | `evidence.ts` → `EvidenceBundle` | A | ✅ producer jadi; D memakai `buildEvidenceBundle()` untuk PDF |
 | Identity Agent (SPF/DKIM/DMARC) | A | cuttable |
 | `progress.ts` + modul 10 | B | modul 10 = angka IASC terkuat |
