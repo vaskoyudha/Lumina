@@ -16,6 +16,20 @@ const GREETING = /^(halo|hai|hi|hello|selamat\s+(pagi|siang|malam|sore))\b/i;
 
 const SMALL_TALK = /^(apa kabar|terima\s+kasih|makasih|thanks|ok|oke)\b/i;
 
+/**
+ * Lowercase the first letter so a signal label can follow "Yang paling
+ * menonjol: ". Skipped when the word starts with an acronym — turning "APK
+ * hilang" into "aPK hilang" is worse than an awkward capital.
+ */
+function lowerFirst(text: string): string {
+  const [first = "", second = ""] = text.split("");
+  if (!first || first !== first.toUpperCase()) return text;
+  if (second && second === second.toUpperCase() && /[A-Z]/.test(second)) {
+    return text;
+  }
+  return first.toLowerCase() + text.slice(1);
+}
+
 export interface ReplyContext {
   /** True when this is the first user turn. */
   first: boolean;
@@ -71,18 +85,23 @@ export function composeReply(
   // Name the strongest finding in plain language: the single most useful
   // sentence for someone deciding what to do next.
   const top = result.signals.find((signal) => signal.weight > 0);
-  const finding = top
-    ? `Yang paling menonjol: ${top.label.charAt(0).toLowerCase()}${top.label.slice(1)}.`
-    : "";
+  const finding = top ? `Yang paling menonjol: ${lowerFirst(top.label)}.` : "";
 
-  const modusLine = modus
-    ? ` Polanya paling mirip dengan ${modus.nama.toLowerCase()}.`
-    : "";
+  // The modus name keeps its own capitalisation. "File APK via WhatsApp" is a
+  // name from modus.json; lowercasing it to "file apk via whatsapp" looks like
+  // internal data leaking into the sentence.
+  const modusLine = modus ? ` Polanya paling mirip dengan ${modus.nama}.` : "";
 
+  // Only promise a module when there is one. `relatedModule` is null for
+  // `tidak-dikenali`, and `suggestedActions` renders no button in that case —
+  // the old sentence offered to explain "lewat modul yang terkait" and then
+  // showed nothing to click.
   const next =
     result.risk === "tinggi"
       ? " Kalau uang sudah terkirim atau kode OTP sudah kamu berikan, berhenti di sini dan buka mode darurat."
-      : " Kalau mau, saya bisa jelaskan polanya lebih jauh lewat modul yang terkait.";
+      : modus
+        ? " Kalau mau, saya bisa jelaskan polanya lebih jauh lewat modul yang terkait."
+        : " Kalau ada pesan lain dari pengirim yang sama, tempel juga — beberapa pesan sekaligus sering lebih jelas daripada satu.";
 
   return `${lead} ${finding}${modusLine}${next}`.replace(/\s+/g, " ").trim();
 }

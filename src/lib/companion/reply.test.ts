@@ -89,3 +89,65 @@ describe("suggestedActions", () => {
     expect(suggestedActions(null)).toEqual([]);
   });
 });
+
+describe("copy quality (5 Nov 2026)", () => {
+  it("keeps the modus name's own capitalisation", () => {
+    const reply = composeReply(APK, scoreText({ text: APK }), {
+      first: false,
+      containsContent: true,
+    });
+
+    // "File APK via WhatsApp" is a name from modus.json. Lowercasing it to
+    // "file apk via whatsapp" reads as internal data leaking into the prose.
+    expect(reply).toContain("File APK via WhatsApp");
+    expect(reply).not.toContain("file apk via whatsapp");
+  });
+
+  it("does not promise a module when there is no module to link", () => {
+    // `tidak-dikenali` means `relatedModule` is null, so `suggestedActions`
+    // renders no button. The old sentence offered "lewat modul yang terkait"
+    // and then showed nothing to click.
+    const text = "Promo berakhir malam ini, segera pesan sebelum kehabisan.";
+    const result = scoreText({ text });
+    expect(result.relatedModule).toBeNull();
+
+    const reply = composeReply(text, result, {
+      first: false,
+      containsContent: true,
+    });
+    const actions = suggestedActions(result);
+
+    expect(reply).not.toMatch(/modul yang terkait/i);
+    expect(actions.some((a) => a.href.startsWith("/belajar/"))).toBe(false);
+  });
+
+  it("still promises the module when one exists", () => {
+    // Only the `mencurigakan` branch offers the module: at `tinggi` the reply
+    // gives the emergency instruction instead, which is the right priority.
+    const text =
+      "Sayang, paketku tertahan di imigrasi. Kirim uang biaya bea masuknya ke rekening pribadi pak imigrasinya ya. Aku rindu, video call besok?";
+    const result = scoreText({ text });
+    expect(result.risk).toBe("mencurigakan");
+    expect(result.relatedModule).not.toBeNull();
+
+    const reply = composeReply(text, result, {
+      first: false,
+      containsContent: true,
+    });
+
+    expect(reply).toMatch(/modul yang terkait/i);
+    expect(
+      suggestedActions(result).some((a) => a.href.startsWith("/belajar/")),
+    ).toBe(true);
+  });
+
+  it("never mangles an acronym into a lowercase first letter", () => {
+    // Defensive: a future signal label may start with "APK".
+    const reply = composeReply(APK, scoreText({ text: APK }), {
+      first: false,
+      containsContent: true,
+    });
+
+    expect(reply).not.toMatch(/\baPK\b/);
+  });
+});
