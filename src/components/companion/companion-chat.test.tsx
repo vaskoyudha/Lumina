@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
@@ -213,5 +213,65 @@ describe("CompanionChat · a question is not a bad message", () => {
     expect(
       within(log).queryByText(/Dijawab sebagai pertanyaan/i),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · a follow-up answers from the verdict it followed", () => {
+  const originalFetch = global.fetch;
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("posts the prior verdict's digest on a lanjutan turn", async () => {
+    // jsdom has no Response, so the stub exposes only what the clients read.
+    const calls: { url: string; body: unknown }[] = [];
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      calls.push({
+        url,
+        body: init?.body ? JSON.parse(String(init.body)) : null,
+      });
+      return Promise.resolve({
+        ok: false,
+        status: 503,
+        body: null,
+        json: async () => ({ error: "not-configured" }),
+      });
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+
+    // The result card is the signal that the check finished and `busy` is back
+    // to false, so the follow-up can be sent.
+    await screen.findByText("File APK via WhatsApp");
+
+    await user.type(screen.getByLabelText(/pesan/i), "kenapa berbahaya?");
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    await waitFor(() => {
+      expect(calls.some((call) => call.url === "/api/companion/answer")).toBe(
+        true,
+      );
+    });
+
+    const answer = calls.find((call) => call.url === "/api/companion/answer");
+    const body = answer?.body as {
+      lane: string;
+      digest: { score: number; risk: string } | null;
+    };
+
+    expect(body.lane).toBe("lanjutan");
+    expect(body.digest).not.toBeNull();
+    expect(typeof body.digest?.score).toBe("number");
+    expect(typeof body.digest?.risk).toBe("string");
   });
 });

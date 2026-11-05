@@ -450,13 +450,24 @@ export function CompanionChat() {
         setBusy(false);
       };
 
+      /*
+       * The follow-up lane answers *from* the verdict it followed, so it must
+       * carry that verdict: `buildAnswerRequest` forwards the digest only for
+       * `lanjutan`, and the route's prompt expects one. Without this the model
+       * saw `digest: null` and could only speak from the tactics.
+       */
+      const digestOf = (verdict: ScoreResult): VoiceDigest =>
+        voiceDigest(
+          verdict,
+          modusFor(verdict.relatedModule)?.nama ?? verdict.modus,
+        );
+
       const digest: VoiceDigest | null =
         checked && result
-          ? voiceDigest(
-              result,
-              modusFor(result.relatedModule)?.nama ?? result.modus,
-            )
-          : null;
+          ? digestOf(result)
+          : lane === "lanjutan" && latestResult
+            ? digestOf(latestResult)
+            : null;
 
       /*
        * History for the chat lane. A turn that was checked carries the message
