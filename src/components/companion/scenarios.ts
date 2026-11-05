@@ -39,7 +39,7 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: "topup",
-    label: "Tugas & top-up",
+    label: "Tugas top-up",
     hint: "Komisi yang menuntut setoran",
     text: "Halo kak, tugas hari ini tinggal like 10 video, komisi Rp15.000 sudah masuk. Untuk lanjut ke tugas berikutnya, kakak perlu top up saldo Rp500.000 dulu ya biar bisa ikut penarikan.",
     icon: MessageSquareWarning,
@@ -53,7 +53,7 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: "undian",
-    label: "Undian berhadiah",
+    label: "Undian",
     hint: "Hadiah yang meminta biaya",
     text: "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.",
     icon: Gift,

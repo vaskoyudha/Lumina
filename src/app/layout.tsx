@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+/**
+ * Inter, matching the reference chat UI's `$font-ui` stack
+ * (`'Inter', system-ui, -apple-system, sans-serif`). Loaded through
+ * `next/font` so it is self-hosted and needs no network at runtime — the same
+ * file the browser would get from the system stack, just guaranteed.
+ */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 /**
  * Root layout: document only. Chrome lives in the route groups so the light
@@ -28,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`font-sans ${geist.variable}`}>
+    <html lang="id" className={`font-sans ${inter.variable}`}>
       <body className="min-h-dvh bg-bg text-txt antialiased">{children}</body>
     </html>
   );

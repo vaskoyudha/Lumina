@@ -256,7 +256,7 @@ export function CompanionChat() {
           variant="outline"
           className="w-full justify-start gap-2 border-field bg-panel text-txt"
         >
-          <Plus aria-hidden className="size-4" />
+          <Plus aria-hidden strokeWidth={1.8} className="size-4" />
           Percakapan baru
         </Button>
 
@@ -283,6 +283,7 @@ export function CompanionChat() {
               >
                 <MessageSquarePlus
                   aria-hidden
+                  strokeWidth={1.5}
                   className="mt-0.5 size-3.5 shrink-0"
                 />
                 <span className="line-clamp-2 leading-snug">
@@ -309,7 +310,11 @@ export function CompanionChat() {
             aria-expanded={showSessions}
             className="size-8 text-dim lg:hidden"
           >
-            <MessageSquarePlus aria-hidden className="size-4" />
+            <MessageSquarePlus
+              aria-hidden
+              strokeWidth={1.5}
+              className="size-4"
+            />
           </Button>
 
           <span className="truncate font-semibold text-base text-txt">
@@ -325,7 +330,7 @@ export function CompanionChat() {
               aria-expanded={showEvidence}
               className="size-8 text-dim xl:hidden"
             >
-              <PanelRight aria-hidden className="size-4" />
+              <PanelRight aria-hidden strokeWidth={1.5} className="size-4" />
             </Button>
             <Button
               variant="ghost"
@@ -408,6 +413,7 @@ export function CompanionChat() {
                                 <span className="flex max-w-[10rem] items-center gap-1.5 px-2 py-1.5">
                                   <Paperclip
                                     aria-hidden
+                                    strokeWidth={1.5}
                                     className="size-3 shrink-0 text-dim"
                                   />
                                   <span className="min-w-0">

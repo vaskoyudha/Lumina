@@ -175,7 +175,11 @@ export function Composer({
                 </div>
               ) : (
                 <div className="flex max-w-[180px] items-center gap-2 px-2.5 py-2">
-                  <Paperclip aria-hidden className="size-4 shrink-0 text-dim" />
+                  <Paperclip
+                    aria-hidden
+                    strokeWidth={1.5}
+                    className="size-4 shrink-0 text-dim"
+                  />
                   <span className="min-w-0">
                     <span className="block truncate text-txt text-xs">
                       {attachment.name}
@@ -195,7 +199,7 @@ export function Composer({
                 aria-label={`Hapus lampiran ${attachment.name}`}
                 className="absolute top-1 right-1 size-6 rounded-full border border-line bg-panel/90 text-dim hover:text-txt"
               >
-                <X aria-hidden className="size-3" />
+                <X aria-hidden strokeWidth={2} className="size-3" />
               </Button>
             </li>
           ))}
@@ -273,9 +277,9 @@ export function Composer({
             size="icon"
             onClick={() => inputRef.current?.click()}
             aria-label="Lampirkan gambar atau berkas"
-            className="size-8 rounded-full text-dim hover:text-txt"
+            className="size-7 rounded-full text-dim hover:text-txt"
           >
-            <ImageIcon aria-hidden className="size-4" />
+            <ImageIcon aria-hidden strokeWidth={1.8} className="size-4" />
           </Button>
 
           <span className="hidden text-dim text-xs sm:inline">
@@ -287,12 +291,16 @@ export function Composer({
             onClick={submit}
             disabled={busy || !canSend}
             aria-label={submitLabel}
-            className="ml-auto size-8 shrink-0 rounded-full p-0"
+            className="ml-auto size-[30px] shrink-0 rounded-full p-0"
           >
             {busy ? (
-              <Loader2 aria-hidden className="size-4 animate-spin" />
+              <Loader2
+                aria-hidden
+                strokeWidth={2}
+                className="size-[17px] animate-spin"
+              />
             ) : (
-              <ArrowUp aria-hidden className="size-4" />
+              <ArrowUp aria-hidden strokeWidth={2.2} className="size-[17px]" />
             )}
           </Button>
         </div>
