@@ -73,8 +73,10 @@ const MODUS_KEYWORDS: ReadonlyArray<{ modus: string; pattern: RegExp }> = [
   },
   {
     modus: "phishing-tautan",
+    // "Akun Anda akan diblokir dalam 2 jam" is the ordinary Indonesian
+    // phrasing; the exact string "akun diblokir" never appears in it.
     pattern:
-      /\b(?:login|verifikasi\s+akun|tautan|link|password|akun\s+diblokir)\b/i,
+      /\b(?:login|verifikasi\s+akun|tautan|link|password|akun\s+(?:anda\s+)?(?:akan\s+)?(?:diblokir|ditutup|dibekukan))\b/i,
   },
   {
     modus: "jual-beli-palsu",

@@ -171,3 +171,34 @@ describe("measured bench traps (5 Nov 2026)", () => {
     expect(result.modus).toBe("quishing-qris");
   });
 });
+
+describe("modus classification (5 Nov 2026)", () => {
+  it("classifies the ordinary 'akun Anda akan diblokir' phrasing as phishing", () => {
+    // The demo example, word for word. The keyword list used to require the
+    // exact string "akun diblokir", which real Indonesian does not use —
+    // "akan diblokir" is how the threat is actually written. The message
+    // scored 96 and still came back `tidak-dikenali`, so the panel printed
+    // "Belum dikenali" beside a "risiko tinggi" verdict.
+    const result = scoreText({
+      text: "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa agar akun tidak ditutup permanen.",
+    });
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("phishing-tautan");
+  });
+
+  it("still classifies the terse imperative form", () => {
+    const result = scoreText({
+      text: "Akun diblokir. Login di bca-verifikasi.site untuk membuka kembali.",
+    });
+    expect(result.modus).toBe("phishing-tautan");
+  });
+
+  it("does not read a benign account notification as phishing", () => {
+    // Widening a keyword list is how a detector starts accusing ordinary
+    // messages. A transaction receipt mentions "akun" and no threat at all.
+    const result = scoreText({
+      text: "Transaksi Rp50.000 di akun kamu berhasil. Saldo tersisa Rp1.250.000.",
+    });
+    expect(result.modus).toBe("tidak-dikenali");
+  });
+});
