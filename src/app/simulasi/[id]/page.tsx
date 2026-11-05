@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { Runner } from "@/app/simulasi/[id]/Runner";
 import { Button } from "@/components/ui/button";
 import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
+import { MISSION } from "@/lib/simulasi/scenario";
 
 export const metadata: Metadata = {
-  title: "Latihan simulasi",
-  description:
-    "Latihan fiktif untuk mengenali dan merespons pesan penipuan dengan aman.",
+  title: MISSION.title,
+  description: "Misi simulasi Level 1: Paket sebelum pulang.",
 };
 
 export function generateStaticParams() {
@@ -39,14 +39,13 @@ export default async function RunnerPage({
         <Link href="/simulasi">Kembali ke simulasi</Link>
       </Button>
 
-      <header className="mt-5 mb-6 max-w-prose">
-        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          Level {scenario.scenario.level} · {scenario.scenario.title}
-        </h1>
-        <p className="mt-2 text-base text-dim">
-          Ini latihan fiktif yang aman. Alat dan pilihan hanya simulasi; tidak
-          ada berkas yang dipasang atau laporan yang dikirim.
+      <header className="mt-5 mb-5 max-w-prose">
+        <p className="mb-1 text-base text-dim">
+          Level {scenario.scenario.level} · Misi interaktif
         </p>
+        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
+          {MISSION.title}
+        </h1>
       </header>
 
       <div className="min-w-0">

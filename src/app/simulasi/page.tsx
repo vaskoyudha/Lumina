@@ -6,174 +6,152 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { MODUS } from "@/lib/modus";
 import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
+import { MISSION } from "@/lib/simulasi/scenario";
 
 export const metadata: Metadata = {
-  title: "Simulasi Aman",
+  title: MISSION.title,
   description:
-    "Latihan fiktif mengenali APK penipuan dan mengambil langkah aman.",
+    "Latihan fiktif 3–5 menit tentang pesan kurir, APK, dan cara menjaga kendali ponsel.",
 };
 
 const PLANNED = MODUS.filter(
   (modus) => modus.scenarioId === null && modus.scenarioPlanned !== null,
 );
+const incomingMessage = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).find(
+  (node) => node.type === "message" && node.attachment,
+);
+const endingCount = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).filter(
+  (node) => node.type === "ending",
+).length;
 
 export default function SimulasiPage() {
   return (
     <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <header className="max-w-prose">
-        <h1 className="font-semibold text-2xl tracking-tight sm:text-3xl">
-          Latihan mengenali penipuan
+      <header className="mb-6 max-w-prose">
+        <h1 className="font-semibold text-3xl tracking-tight sm:text-4xl">
+          {MISSION.title}
         </h1>
-        <p className="mt-3 text-base text-dim">
-          Coba satu skenario fiktif tentang pesan kurir yang meminta kamu
-          memasang APK. Latihan ini aman: tindakan di dalamnya hanya simulasi.
-        </p>
+        <p className="mt-3 text-base text-dim">{MISSION.context}</p>
       </header>
 
-      <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]">
-        <section aria-labelledby="playable-heading" className="min-w-0">
-          <h2
-            className="mb-3 font-medium text-base text-txt"
-            id="playable-heading"
-          >
-            Bisa dimainkan
-          </h2>
-          <ul className="grid gap-4">
-            {SCENARIO_CATALOG.map((entry) => {
-              const { scenario } = entry;
-              const modus = MODUS.find(
-                (item) => item.scenarioId === scenario.id,
-              );
-
-              return (
-                <li key={scenario.id}>
-                  <Card className="border border-line bg-panel text-txt">
-                    <CardHeader>
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <Badge
-                          variant="secondary"
-                          className="min-h-7 text-base text-safe"
-                        >
-                          Siap dimainkan
-                        </Badge>
-                        <span className="text-base text-dim">
-                          Level {scenario.level} · Mudah
-                        </span>
-                      </div>
-                      <CardTitle className="pt-2 text-xl">
-                        {modus?.nama ?? scenario.title}
-                      </CardTitle>
-                      <CardDescription className="text-base text-dim">
-                        Hadapi pesan WhatsApp fiktif yang menyertakan file APK.
-                        Pilih langkah untuk menjaga perangkat dan akun tetap
-                        aman.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardFooter className="border-line bg-panel-2">
-                      <Button
-                        asChild
-                        data-pressable
-                        className="min-h-11 w-full bg-safe text-base text-bg hover:bg-safe/90 sm:w-auto"
-                        size="lg"
-                      >
-                        <Link href={`/simulasi/${scenario.id}`}>
-                          Mulai latihan
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
-        <aside className="grid min-w-0 content-start gap-6">
-          <Card className="border border-line bg-panel text-txt">
-            <CardHeader>
-              <CardTitle className="text-lg">Yang akan kamu latih</CardTitle>
-              <CardDescription className="text-base text-dim">
-                Kenali tanda bahaya, lalu pilih respons yang melindungi akun dan
-                perangkat.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="grid gap-3 text-base text-txt">
-                <li>
-                  <span className="font-medium">Tiga alat:</span> isolasi
-                  perangkat, pemeriksaan izin, dan laporan bukti.
-                </li>
-                <li>
-                  <span className="font-medium">Dua meter risiko:</span> panik
-                  meningkat setelah pilihan berisiko; intrusi naik saat menunggu
-                  di titik keputusan.
-                </li>
-                <li>Setiap pilihan dijelaskan dan cerita tetap berlanjut.</li>
-              </ul>
-            </CardContent>
-            <CardFooter className="flex flex-col items-stretch gap-2 border-line bg-panel-2 sm:flex-row sm:flex-wrap">
-              <Button
-                asChild
-                data-pressable
-                className="min-h-11 text-base"
-                variant="outline"
-                size="lg"
+      <Card className="min-w-0 overflow-hidden border border-line bg-panel text-txt">
+        <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
+          <div className="grid min-w-0 content-start gap-5 p-5 sm:p-7">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="secondary"
+                className="min-h-7 text-base text-safe"
               >
-                <Link href="/belajar/10">Pelajari pola APK</Link>
-              </Button>
-              <Button
-                asChild
-                data-pressable
-                className="min-h-11 text-base"
-                variant="outline"
-                size="lg"
-              >
-                <Link href="/darurat">Butuh bantuan sekarang?</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <section aria-labelledby="planned-heading" className="min-w-0">
-            <h2
-              className="mb-3 font-medium text-base text-txt"
-              id="planned-heading"
+                Misi aktif · Level 1
+              </Badge>
+              <span className="text-base text-dim">
+                Perkiraan {MISSION.duration}
+              </span>
+            </div>
+            <section aria-labelledby="objective-heading" className="grid gap-2">
+              <h2 id="objective-heading" className="font-semibold text-xl">
+                {MISSION.role}
+              </h2>
+              <p className="text-base text-dim">{MISSION.objective}</p>
+            </section>
+            <Button
+              asChild
+              data-pressable
+              className="min-h-11 w-full bg-safe text-base text-bg hover:bg-safe/90 sm:w-fit"
+              size="lg"
             >
-              Dalam rencana
-            </h2>
-            <Card className="border border-line bg-panel text-txt">
-              <CardContent className="py-2">
-                <ul className="divide-y divide-line">
-                  {PLANNED.map((modus) => (
-                    <li
-                      key={modus.id}
-                      className="flex min-w-0 items-center gap-3 py-3"
-                    >
-                      <span className="w-10 shrink-0 font-medium text-base text-dim">
-                        {modus.scenarioPlanned}
-                      </span>
-                      <span className="min-w-0 flex-1 text-base text-txt">
-                        {modus.nama}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="min-h-7 text-base text-dim"
-                      >
-                        Rencana
-                      </Badge>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          </section>
-        </aside>
-      </div>
+              <Link href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}>
+                Mulai misi
+              </Link>
+            </Button>
+            <p className="text-base text-dim">
+              Cerita dan ponsel di dalam latihan ini sepenuhnya fiktif.
+            </p>
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-base">
+              <span>{MISSION.chapters.length} babak</span>
+              <span>{endingCount} kemungkinan akhir</span>
+            </div>
+          </div>
+
+          <aside className="grid min-w-0 content-start gap-4 border-line border-t bg-panel-2 p-5 sm:p-7 lg:border-t-0 lg:border-l">
+            <div>
+              <p className="font-medium text-base">Pesan masuk</p>
+              <p className="text-base text-dim">{MISSION.contact}</p>
+            </div>
+            {incomingMessage?.type === "message" && (
+              <Card className="min-w-0 border border-line bg-panel text-txt">
+                <CardHeader>
+                  <CardTitle className="text-base">Pesan fiktif</CardTitle>
+                  <CardDescription className="text-base text-txt">
+                    {incomingMessage.text}
+                  </CardDescription>
+                </CardHeader>
+                {incomingMessage.attachment && (
+                  <CardContent className="pt-0">
+                    <Badge variant="outline" className="min-h-7 text-base">
+                      {incomingMessage.attachment.name}
+                    </Badge>
+                    <p className="mt-2 text-base text-dim">
+                      {incomingMessage.attachment.detail}
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+            )}
+            <p className="text-base text-dim">
+              Apa yang akan kamu lakukan sebelum paket hadiah Ibu dibawa
+              kembali?
+            </p>
+          </aside>
+        </div>
+      </Card>
+
+      <section aria-labelledby="chapters-heading" className="mt-7">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="chapters-heading" className="font-semibold text-lg">
+            Alur misi
+          </h2>
+          <span className="text-base text-dim">
+            Tiga babak · sekitar {MISSION.duration}
+          </span>
+        </div>
+        <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+          {MISSION.chapters.map((chapter, index) => (
+            <li key={chapter} className="min-w-0">
+              <Separator className="mb-3" />
+              <p className="tabular text-sm text-dim">0{index + 1}</p>
+              <p className="mt-1 font-medium text-base">{chapter}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="planned-heading" className="mt-8">
+        <h2 id="planned-heading" className="font-semibold text-base">
+          Level lain
+        </h2>
+        <p className="mt-1 text-base text-dim">
+          Level berikutnya masih direncanakan dan belum bisa dimainkan.
+        </p>
+        <ul className="mt-3 flex min-w-0 flex-wrap gap-2">
+          {PLANNED.map((modus) => (
+            <li key={modus.id} className="min-w-0 max-w-full">
+              <Badge
+                variant="outline"
+                className="h-auto min-h-8 max-w-full !whitespace-normal break-words text-base text-dim"
+              >
+                {modus.scenarioPlanned} · {modus.nama} · Rencana
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

@@ -1,4 +1,8 @@
-import type { Scenario, ScenarioNode } from "@/lib/simulasi/scenario";
+import {
+  type Scenario,
+  type ScenarioNode,
+  TACTICS,
+} from "@/lib/simulasi/scenario";
 
 const HUD_MIN = 0;
 const HUD_MAX = 100;
@@ -16,6 +20,7 @@ function isFiniteNumber(value: number): boolean {
 
 export function validateScenario(scenario: Scenario): string[] {
   const errors: string[] = [];
+  const tacticIds = new Set(TACTICS.map((tactic) => tactic.id));
   const nodeIds = new Set<string>();
   const toolIds = new Set<string>();
   const nodesById = new Map<string, ScenarioNode>();
@@ -38,6 +43,27 @@ export function validateScenario(scenario: Scenario): string[] {
   if (!start) errors.push(`Start node "${scenario.start}" does not exist.`);
 
   for (const node of scenario.nodes) {
+    if (
+      node.chapter !== undefined &&
+      node.chapter !== 1 &&
+      node.chapter !== 2 &&
+      node.chapter !== 3
+    ) {
+      errors.push(`Node "${node.id}" chapter must be 1, 2, or 3.`);
+    }
+
+    if (
+      node.type === "message" &&
+      node.delay_ms !== undefined &&
+      (!isFiniteNumber(node.delay_ms) ||
+        node.delay_ms < 0 ||
+        node.delay_ms > 10_000)
+    ) {
+      errors.push(
+        `Message node "${node.id}" delay_ms must be finite and between 0 and 10000.`,
+      );
+    }
+
     if (node.type === "message" && !nodeIds.has(node.next)) {
       errors.push(`Node "${node.id}" points to missing node "${node.next}".`);
     }
@@ -64,6 +90,25 @@ export function validateScenario(scenario: Scenario): string[] {
           errors.push(
             `Choice in "${node.id}" panic effect must be finite and between 0 and ${HUD_MAX}.`,
           );
+        }
+        if (choice.tactic !== undefined && !tacticIds.has(choice.tactic)) {
+          errors.push(
+            `Choice in "${node.id}" references unknown tactic "${choice.tactic}".`,
+          );
+        }
+        if (
+          choice.compromisesDevice !== undefined &&
+          typeof choice.compromisesDevice !== "boolean"
+        ) {
+          errors.push(
+            `Choice in "${node.id}" compromisesDevice must be a boolean.`,
+          );
+        }
+        if (
+          choice.sharesOtp !== undefined &&
+          typeof choice.sharesOtp !== "boolean"
+        ) {
+          errors.push(`Choice in "${node.id}" sharesOtp must be a boolean.`);
         }
         if (!nodeIds.has(choice.next)) {
           errors.push(

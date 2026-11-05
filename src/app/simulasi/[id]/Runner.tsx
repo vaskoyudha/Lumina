@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,249 +14,429 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
-  L1_KURIR_APK,
+  MISSION,
+  PERMISSIONS,
+  REPORT_ARTIFACTS,
   type ScenarioChoice,
   type ScenarioNode,
-  type ToolId,
+  L1_KURIR_APK as scenario,
+  TACTICS,
+  type TacticId,
 } from "@/lib/simulasi/scenario";
 
-const SCENARIO = L1_KURIR_APK;
-type HistoryEntry = { speaker: string; text: string };
-type ReportArtifact = "pesan" | "nama-file" | "izin";
-type Permission = "SMS" | "aksesibilitas";
-const artifacts: { id: ReportArtifact; label: string }[] = [
-  { id: "pesan", label: "Tangkapan layar pesan" },
-  { id: "nama-file", label: "Nama file APK" },
-  { id: "izin", label: "Daftar izin yang diminta" },
-];
+type Message = Extract<ScenarioNode, { type: "message" }>;
+type Ending = Extract<ScenarioNode, { type: "ending" }>;
+type Mode = "santai" | "tantangan";
+type TranscriptEntry =
+  | { kind: "message"; node: Message }
+  | { kind: "reply"; id: string; text: string };
+const button = "min-h-11 h-auto whitespace-normal text-base";
+const defaultEnding = scenario.nodes.find(
+  (node): node is Ending => node.type === "ending",
+) as Ending;
 
 function Meter({
   label,
   value,
   max,
-  tone,
+  danger,
 }: {
   label: string;
   value: number;
   max: number;
-  tone: "warn" | "danger";
+  danger?: boolean;
 }) {
-  const percent = Math.min(100, Math.max(0, (value / max) * 100));
   return (
-    <div className="grid gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold text-base">{label}</span>
-        <span className="tabular text-xl font-bold">
+    <div className="grid min-w-0 gap-1">
+      <div className="flex justify-between gap-2 text-base">
+        <span>{label}</span>
+        <strong className="tabular">
           {Math.round(value)} / {max}
-        </span>
+        </strong>
       </div>
       <Progress
-        value={percent}
+        value={(value / max) * 100}
         max={100}
         aria-label={label}
-        aria-valuenow={Math.round(value)}
         aria-valuemin={0}
         aria-valuemax={max}
-        className={`h-5 bg-panel-2 ${tone === "danger" ? "[&_[data-slot=progress-indicator]]:bg-danger" : "[&_[data-slot=progress-indicator]]:bg-warn"}`}
+        aria-valuenow={Math.round(value)}
+        className={`h-4 bg-panel-2 ${danger ? "[&_[data-slot=progress-indicator]]:bg-danger" : "[&_[data-slot=progress-indicator]]:bg-warn"}`}
       />
     </div>
   );
 }
 
 export function Runner() {
-  const [activeId, setActiveId] = useState(SCENARIO.start);
-  const [visited, setVisited] = useState<string[]>([SCENARIO.start]);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [panic, setPanic] = useState(SCENARIO.hud.panic.start);
-  const [intrusion, setIntrusion] = useState(SCENARIO.hud.intrusion.start);
-  const [feedbackChoice, setFeedbackChoice] = useState<ScenarioChoice | null>(
-    null,
-  );
-  const [panicFailure, setPanicFailure] = useState(false);
+  const [mode, setMode] = useState<Mode>("santai");
+  const [started, setStarted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [activeId, setActiveId] = useState(scenario.start);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
+  const [visited, setVisited] = useState<string[]>([scenario.start]);
+  const [decisions, setDecisions] = useState<ScenarioChoice[]>([]);
+  const [panic, setPanic] = useState(scenario.hud.panic.start);
+  const [intrusion, setIntrusion] = useState(scenario.hud.intrusion.start);
+  const [compromised, setCompromised] = useState(false);
   const [isolated, setIsolated] = useState(false);
-  const [revoked, setRevoked] = useState<Permission[]>([]);
-  const [reportArtifacts, setReportArtifacts] = useState<ReportArtifact[]>([]);
-  const [reportComplete, setReportComplete] = useState(false);
-  const [wrongChoices, setWrongChoices] = useState<ScenarioChoice[]>([]);
-  const activeNode = SCENARIO.nodes.find((node) => node.id === activeId);
-  const failure = panicFailure
-    ? SCENARIO.hud.panic.fail_message
-    : intrusion >= SCENARIO.hud.intrusion.max
-      ? SCENARIO.hud.intrusion.fail_message
-      : null;
+  const [breathingUsed, setBreathingUsed] = useState(false);
+  const [revoked, setRevoked] = useState<string[]>([]);
+  const [proof, setProof] = useState<string[]>([]);
+  const [unsafeNotice, setUnsafeNotice] = useState(false);
+  const [attachmentOpen, setAttachmentOpen] = useState<string[]>([]);
+  const [collectionOpen, setCollectionOpen] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const active = scenario.nodes.find((node) => node.id === activeId);
+  const activeRef = useRef(activeId);
+  const pausedRef = useRef(paused);
+  const revealClock = useRef<{ id: string; remaining: number } | null>(null);
+  const transcriptRef = useRef<HTMLDivElement>(null);
+  activeRef.current = activeId;
+  pausedRef.current = paused;
+  const ended = !!failure || active?.type === "ending";
+  const tactics = [
+    ...new Set(
+      decisions
+        .map((choice) => choice.tactic)
+        .filter((id): id is TacticId => !!id),
+    ),
+  ];
+  const latest = decisions.at(-1);
+  const latestTactic = TACTICS.find((tactic) => tactic.id === latest?.tactic);
 
+  const reveal = useCallback((node: Message) => {
+    if (activeRef.current !== node.id || pausedRef.current) return;
+    activeRef.current = node.next;
+    setTranscript((current) =>
+      current.some(
+        (item) => item.kind === "message" && item.node.id === node.id,
+      )
+        ? current
+        : [...current, { kind: "message", node }],
+    );
+    setVisited((current) => [...current, node.next]);
+    setActiveId(node.next);
+  }, []);
+  useEffect(() => {
+    if (!started || paused || ended || active?.type !== "message") return;
+    const reduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (revealClock.current?.id !== active.id) {
+      revealClock.current = {
+        id: active.id,
+        remaining: reduced ? 0 : (active.delay_ms ?? 0),
+      };
+    }
+    const startedAt = Date.now();
+    const timeout = window.setTimeout(
+      () => reveal(active),
+      revealClock.current.remaining,
+    );
+    return () => {
+      window.clearTimeout(timeout);
+      if (revealClock.current?.id === active.id) {
+        revealClock.current.remaining = Math.max(
+          0,
+          revealClock.current.remaining - (Date.now() - startedAt),
+        );
+      }
+    };
+  }, [active, ended, paused, reveal, started]);
   useEffect(() => {
     if (
-      (activeNode?.type !== "choice" && activeNode?.type !== "tool_task") ||
-      isolated ||
-      failure
+      !started ||
+      paused ||
+      ended ||
+      mode !== "tantangan" ||
+      !compromised ||
+      isolated
     )
       return;
-    const interval = window.setInterval(() => {
-      setIntrusion((current) =>
-        Math.min(
-          SCENARIO.hud.intrusion.max,
-          current + SCENARIO.hud.intrusion.rate_per_second,
+    const interval = window.setInterval(
+      () =>
+        setIntrusion((current) =>
+          Math.min(
+            scenario.hud.intrusion.max,
+            current + scenario.hud.intrusion.rate_per_second,
+          ),
         ),
-      );
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [activeNode, failure, isolated]);
-
-  function advance(next: string) {
-    setVisited((current) =>
-      current.includes(next) ? current : [...current, next],
+      1000,
     );
-    setActiveId(next);
-  }
-  function choose(
-    node: Extract<ScenarioNode, { type: "choice" }>,
-    index: number,
-  ) {
-    const choice = node.choices[index];
-    if (!choice || failure) return;
-    setFeedbackChoice(choice);
-    if (choice.verdict === "salah") {
-      setWrongChoices((current) => [...current, choice]);
-      const nextPanic = Math.min(
-        SCENARIO.hud.panic.max,
-        panic + (choice.panic ?? 15),
-      );
-      setPanic(nextPanic);
-      if (nextPanic >= SCENARIO.hud.panic.fail_at) {
-        setPanicFailure(true);
-        return;
+    return () => window.clearInterval(interval);
+  }, [started, paused, ended, mode, compromised, isolated]);
+  useEffect(() => {
+    if (started && !ended && intrusion >= scenario.hud.intrusion.max)
+      setFailure(scenario.hud.intrusion.fail_message);
+  }, [started, ended, intrusion]);
+  useEffect(() => {
+    if (!started || ended) return;
+    function onVisibility() {
+      if (document.hidden) {
+        pausedRef.current = true;
+        setPaused(true);
       }
     }
-    advance(choice.next);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [started, ended]);
+  useEffect(() => {
+    if (transcript.length && transcriptRef.current)
+      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+  }, [transcript]);
+
+  function choose(choice: ScenarioChoice) {
+    if (
+      paused ||
+      ended ||
+      active?.type !== "choice" ||
+      activeRef.current !== active.id
+    )
+      return;
+    activeRef.current = choice.next;
+    setTranscript((current) => [
+      ...current,
+      { kind: "reply", id: active.id, text: choice.label },
+    ]);
+    setDecisions((current) => [...current, choice]);
+    if (choice.compromisesDevice) setCompromised(true);
+    const nextPanic = Math.min(
+      scenario.hud.panic.max,
+      panic + (choice.panic ?? 0),
+    );
+    setPanic(nextPanic);
+    if (nextPanic >= scenario.hud.panic.fail_at) {
+      setFailure(scenario.hud.panic.fail_message);
+      return;
+    }
+    setVisited((current) => [...current, choice.next]);
+    setActiveId(choice.next);
+  }
+  function advance(next: string) {
+    if (!paused && !ended) {
+      activeRef.current = next;
+      setVisited((current) => [...current, next]);
+      setActiveId(next);
+    }
   }
   function reset() {
-    setActiveId(SCENARIO.start);
-    setVisited([SCENARIO.start]);
-    setHistory([]);
-    setPanic(SCENARIO.hud.panic.start);
-    setIntrusion(SCENARIO.hud.intrusion.start);
-    setFeedbackChoice(null);
-    setPanicFailure(false);
+    activeRef.current = scenario.start;
+    pausedRef.current = false;
+    revealClock.current = null;
+    setStarted(false);
+    setPaused(false);
+    setActiveId(scenario.start);
+    setTranscript([]);
+    setVisited([scenario.start]);
+    setDecisions([]);
+    setPanic(scenario.hud.panic.start);
+    setIntrusion(scenario.hud.intrusion.start);
+    setCompromised(false);
     setIsolated(false);
+    setBreathingUsed(false);
     setRevoked([]);
-    setReportArtifacts([]);
-    setReportComplete(false);
-    setWrongChoices([]);
+    setProof([]);
+    setUnsafeNotice(false);
+    setAttachmentOpen([]);
+    setCollectionOpen(false);
+    setFailure(null);
   }
-  function togglePermission(permission: Permission) {
-    setRevoked((current) =>
-      current.includes(permission)
-        ? current.filter((item) => item !== permission)
-        : [...current, permission],
-    );
+  function toggle(list: string[], value: string) {
+    return list.includes(value)
+      ? list.filter((item) => item !== value)
+      : [...list, value];
   }
-  function toggleArtifact(artifact: ReportArtifact) {
-    setReportArtifacts((current) =>
-      current.includes(artifact)
-        ? current.filter((item) => item !== artifact)
-        : [...current, artifact],
-    );
-  }
-  const feedback = feedbackChoice?.rationale && (
-    <Alert
-      role="status"
-      variant={feedbackChoice.verdict === "salah" ? "destructive" : "default"}
-    >
-      <AlertTitle>Penjelasan pilihan</AlertTitle>
-      <AlertDescription>{feedbackChoice.rationale}</AlertDescription>
-    </Alert>
+  const tacticCards = tactics.length
+    ? TACTICS.filter((tactic) => tactics.includes(tactic.id))
+    : [];
+  const collection = (
+    <section className="grid gap-3">
+      <Button
+        data-pressable
+        variant="outline"
+        className={`${button} justify-between`}
+        aria-expanded={collectionOpen}
+        onClick={() => setCollectionOpen(!collectionOpen)}
+      >
+        Koleksi taktik · {tactics.length} ditemukan{" "}
+        <span aria-hidden="true">{collectionOpen ? "−" : "+"}</span>
+      </Button>
+      {collectionOpen &&
+        (tacticCards.length ? (
+          tacticCards.map((tactic) => (
+            <Card key={tactic.id} className="bg-panel-2">
+              <CardHeader>
+                <CardTitle className="text-base">{tactic.name}</CardTitle>
+                <CardDescription className="text-base">
+                  “{tactic.quote}”
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-base">{tactic.lesson}</CardContent>
+            </Card>
+          ))
+        ) : (
+          <p className="text-base text-dim">
+            Taktik yang kamu temukan akan muncul di sini.
+          </p>
+        ))}
+    </section>
   );
-  const ending =
-    activeNode?.type === "ending"
-      ? activeNode
-      : SCENARIO.nodes.find((node) => node.type === "ending");
 
-  if (!activeNode)
+  if (!started)
+    return (
+      <Card className="min-w-0">
+        <CardHeader>
+          <CardTitle className="text-2xl">Briefing misi</CardTitle>
+          <p className="text-base text-dim">Perkiraan {MISSION.duration}</p>
+          <CardDescription className="text-base">
+            {MISSION.role} · {MISSION.context}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-5">
+          <p className="text-base">
+            <strong>Tujuan:</strong> {MISSION.objective}
+          </p>
+          <p className="text-base text-dim">
+            Semua pesan dan alat di sini fiktif. Latihan tidak mengubah
+            perangkat atau mengirim laporan.
+          </p>
+          <div className="grid gap-2">
+            <h2 className="font-semibold text-lg">Pilih cara bermain</h2>
+            <Button
+              data-pressable
+              variant={mode === "santai" ? "secondary" : "outline"}
+              aria-pressed={mode === "santai"}
+              className={`${button} justify-start`}
+              onClick={() => setMode("santai")}
+            >
+              Santai · tanpa tekanan waktu otomatis
+            </Button>
+            <Button
+              data-pressable
+              variant={mode === "tantangan" ? "secondary" : "outline"}
+              aria-pressed={mode === "tantangan"}
+              className={`${button} justify-start`}
+              onClick={() => setMode("tantangan")}
+            >
+              Tantangan · tekanan naik jika akses aplikasi terbuka
+            </Button>
+          </div>
+          <Button
+            data-pressable
+            className={`${button} w-fit`}
+            onClick={() => setStarted(true)}
+          >
+            Mulai misi
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  if (!active)
     return (
       <Alert variant="destructive">
         <AlertTitle>Skenario tidak tersedia</AlertTitle>
       </Alert>
     );
-  if (failure || activeNode.type === "ending") {
+  if (ended) {
+    const ending = active.type === "ending" ? active : defaultEnding;
     return (
-      <div className="grid gap-4 [&_a]:text-base [&_button]:text-base">
-        {feedback}
+      <div className="grid min-w-0 gap-4">
         <Card>
           <CardHeader>
             <Badge
               variant={failure ? "destructive" : "secondary"}
               className="w-fit"
             >
-              {failure ? "Simulasi berhenti" : "Selesai"}
+              {failure ? "Misi dihentikan" : "Misi selesai"}
             </Badge>
             <CardTitle className="text-2xl">
-              {failure
-                ? "Interaksi dihentikan"
-                : activeNode.type === "ending"
-                  ? activeNode.title
-                  : "Interaksi dihentikan"}
+              {failure ? "Berhenti dan ambil langkah aman" : ending.title}
             </CardTitle>
             <CardDescription className="text-base">
-              {failure ?? (activeNode.type === "ending" ? activeNode.text : "")}
+              {failure ?? ending.text}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <h2 className="font-semibold text-lg">Empat hal untuk diingat</h2>
-            <ol className="grid list-decimal gap-3 pl-5 text-base">
-              {ending?.debrief.map((line) => (
-                <li key={line}>{line}</li>
+          <CardContent className="grid gap-5">
+            {failure && latest?.rationale && (
+              <Alert
+                role="status"
+                variant={latest.verdict === "salah" ? "destructive" : "default"}
+              >
+                <AlertTitle>Penjelasan pilihan</AlertTitle>
+                <AlertDescription className="text-base">
+                  {latest.rationale}
+                </AlertDescription>
+              </Alert>
+            )}
+            <section>
+              <h2 className="font-semibold text-lg">Empat hal untuk diingat</h2>
+              <ol className="grid list-decimal gap-2 pl-5 text-base">
+                {ending.debrief.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ol>
+            </section>
+            <section className="grid gap-2">
+              <h2 className="font-semibold text-lg">Jejak keputusan</h2>
+              {decisions.map((choice, index) => (
+                <div key={`${index}-${choice.label}`} className="grid gap-1">
+                  <p className="text-base">
+                    <strong>
+                      {choice.verdict === "benar"
+                        ? "Langkah aman"
+                        : "Langkah berisiko"}
+                      :
+                    </strong>{" "}
+                    {choice.label}
+                  </p>
+                  <p className="text-base text-dim">{choice.rationale}</p>
+                </div>
               ))}
-            </ol>
-            {wrongChoices.length > 0 && (
-              <section className="grid gap-2">
+              {decisions.length === 0 && (
+                <p className="text-base">Belum ada keputusan.</p>
+              )}
+            </section>
+            {proof.length > 0 && (
+              <section>
                 <h2 className="font-semibold text-lg">
-                  Pilihan berisiko dalam latihan
+                  Bukti latihan yang dipilih
                 </h2>
-                <ul className="grid list-disc gap-2 pl-5 text-base">
-                  {wrongChoices.map((choice) => (
-                    <li key={choice.label}>
-                      {choice.label}: {choice.rationale}
-                    </li>
+                <ul className="list-disc pl-5 text-base">
+                  {REPORT_ARTIFACTS.filter((item) =>
+                    proof.includes(item.id),
+                  ).map((item) => (
+                    <li key={item.id}>{item.label}</li>
                   ))}
                 </ul>
               </section>
             )}
-            {reportComplete && (
-              <div>
-                <h2 className="font-semibold text-lg">
-                  Ringkasan bukti latihan
-                </h2>
-                <p className="text-base">
-                  {artifacts
-                    .filter((item) => reportArtifacts.includes(item.id))
-                    .map((item) => item.label)
-                    .join(", ")}
-                  .
-                </p>
-              </div>
-            )}
-            <div className="flex flex-wrap gap-3 pt-2">
+            {collection}
+            <div className="flex flex-wrap gap-3">
               <Button
                 data-pressable
-                className="min-h-11 text-base"
+                variant={
+                  ending.variant === "compromised" ? "outline" : "default"
+                }
+                className={button}
                 onClick={reset}
               >
-                Ulangi simulasi
+                Coba jalur lain
               </Button>
               <Button
                 asChild
                 data-pressable
                 variant="outline"
-                className="min-h-11 text-base"
+                className={button}
               >
                 <Link href="/belajar/10">Pelajari pola ini</Link>
               </Button>
               <Button
                 asChild
                 data-pressable
-                variant="outline"
-                className="min-h-11 text-base"
+                variant={
+                  ending.variant === "compromised" ? "default" : "outline"
+                }
+                className={`${button} ${ending.variant === "compromised" ? "order-first" : ""}`}
               >
                 <Link href="/darurat">Buka mode darurat</Link>
               </Button>
@@ -264,7 +444,7 @@ export function Runner() {
                 asChild
                 data-pressable
                 variant="outline"
-                className="min-h-11 text-base"
+                className={button}
               >
                 <Link href="/simulasi">Semua simulasi</Link>
               </Button>
@@ -274,205 +454,360 @@ export function Runner() {
       </div>
     );
   }
-  const currentTool = activeNode.type === "tool_task" ? activeNode : null;
-  function toolDone(tool: ToolId) {
-    return tool === "isolation"
-      ? isolated
-      : tool === "permissions"
-        ? revoked.length === 2
-        : reportComplete;
-  }
-  return (
-    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start [&_button]:text-base">
-      <div className="grid min-w-0 gap-5">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">{SCENARIO.scenario.title}</CardTitle>
-            <CardDescription className="text-base">
-              Ini latihan; pilihan dan alat tidak mengubah perangkat nyata.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {feedback}
-            {history.map((entry, index) => (
-              <div key={`${entry.speaker}-${index}`} className="grid gap-1">
-                <p className="text-base text-dim">{entry.speaker}</p>
-                <p className="text-base">{entry.text}</p>
-              </div>
-            ))}
-            {activeNode.type === "message" && (
-              <div className="grid gap-3">
-                <div className="grid gap-1">
-                  <p className="text-base text-dim">{activeNode.speaker}</p>
-                  <p className="text-base">{activeNode.text}</p>
-                </div>
+  const task = active.type === "tool_task" ? active : null;
+  const tool = task && (
+    <Card className="min-w-0 border-warn">
+      <CardHeader>
+        <CardTitle className="text-lg">
+          {scenario.tools.find((item) => item.id === task.tool)?.name}
+        </CardTitle>
+        <CardDescription className="text-base">{task.prompt}</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        {task.tool === "isolation" && (
+          <Button
+            data-pressable
+            className={button}
+            disabled={paused}
+            onClick={() => {
+              setIsolated(true);
+              advance(task.on_success);
+            }}
+          >
+            Aktifkan mode pesawat
+          </Button>
+        )}
+        {task.tool === "permissions" && (
+          <>
+            <p className="text-base">
+              Cabut kedua izin pada perangkat latihan.
+            </p>
+            {PERMISSIONS.map((permission) => (
+              <div key={permission.id} className="grid gap-1">
                 <Button
                   data-pressable
-                  className="w-fit min-h-11 text-base"
-                  onClick={() => {
-                    setHistory((current) => [
-                      ...current,
-                      { speaker: activeNode.speaker, text: activeNode.text },
-                    ]);
-                    advance(activeNode.next);
-                  }}
+                  variant={
+                    revoked.includes(permission.id) ? "secondary" : "outline"
+                  }
+                  className={button}
+                  disabled={paused}
+                  aria-pressed={revoked.includes(permission.id)}
+                  onClick={() => setRevoked(toggle(revoked, permission.id))}
                 >
-                  Lanjut
+                  Cabut izin {permission.label}
                 </Button>
+                <p className="text-base text-dim">{permission.detail}</p>
               </div>
-            )}
-            {activeNode.type === "choice" && (
-              <div className="grid gap-3">
-                <h2 className="font-medium text-lg">{activeNode.prompt}</h2>
-                {activeNode.choices.map((choice, index) => (
-                  <Button
-                    key={choice.label}
-                    data-pressable
-                    variant="outline"
-                    className="h-auto min-h-12 justify-start whitespace-normal px-4 py-3 text-left text-base"
-                    onClick={() => choose(activeNode, index)}
-                  >
-                    {choice.label}
-                  </Button>
-                ))}
-              </div>
-            )}
-            {currentTool && (
-              <div className="grid gap-2">
-                <h2 className="font-medium text-lg">{currentTool.prompt}</h2>
-                <p className="text-base text-dim">
-                  Gunakan alat aktif di dek perangkat.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      <Card className="min-w-0">
-        <CardHeader>
-          <CardTitle className="text-lg">Dek perangkat</CardTitle>
-          <CardDescription className="text-base">
-            Alat latihan terbuka sesuai alur cerita.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-5">
-          <Meter
-            label="Panik"
-            value={panic}
-            max={SCENARIO.hud.panic.max}
-            tone="danger"
-          />
-          <Meter
-            label="Intrusi"
-            value={intrusion}
-            max={SCENARIO.hud.intrusion.max}
-            tone="warn"
-          />
-          {SCENARIO.tools.map((tool) => {
-            const done = toolDone(tool.id);
-            const active = currentTool?.tool === tool.id;
-            const unlocked = visited.includes(tool.unlocked_at);
-            return (
-              <section
-                key={tool.id}
-                className="grid min-w-0 gap-3 border-t border-line pt-4"
+            ))}
+            <Button
+              data-pressable
+              className={button}
+              disabled={paused || revoked.length !== PERMISSIONS.length}
+              onClick={() => advance(task.on_success)}
+            >
+              Selesai memeriksa izin
+            </Button>
+          </>
+        )}
+        {task.tool === "report" && (
+          <>
+            <p className="text-base">
+              Pilih sedikitnya dua bukti aman. Jangan masukkan data nyata atau
+              kode rahasia.
+            </p>
+            {REPORT_ARTIFACTS.map((item) => (
+              <Button
+                key={item.id}
+                data-pressable
+                variant={proof.includes(item.id) ? "secondary" : "outline"}
+                className={`${button} justify-start`}
+                aria-pressed={proof.includes(item.id)}
+                disabled={paused}
+                onClick={() => {
+                  if (!item.safe) {
+                    setUnsafeNotice(true);
+                    return;
+                  }
+                  setUnsafeNotice(false);
+                  setProof(toggle(proof, item.id));
+                }}
               >
-                <div className="flex min-w-0 items-center justify-between gap-2">
-                  <h3 className="min-w-0 font-semibold text-base">
-                    {tool.name}
-                  </h3>
-                  <Badge variant={done ? "secondary" : "outline"}>
-                    {done
-                      ? "Selesai"
-                      : active
-                        ? "Aktif"
-                        : unlocked
-                          ? "Terbuka"
-                          : "Terkunci"}
-                  </Badge>
-                </div>
-                {active && tool.id === "isolation" && (
-                  <Button
-                    data-pressable
-                    className="h-auto min-h-12 whitespace-normal text-base"
-                    onClick={() => {
-                      setIsolated(true);
-                      advance(currentTool.on_success);
-                    }}
-                  >
-                    Aktifkan mode pesawat
-                  </Button>
-                )}
-                {active && tool.id === "permissions" && (
-                  <div className="grid gap-3">
-                    <p className="text-base">
-                      Pilih setiap izin untuk mencabutnya dalam latihan.
-                    </p>
-                    {(["SMS", "aksesibilitas"] as const).map((permission) => (
-                      <Button
-                        key={permission}
-                        data-pressable
-                        variant={
-                          revoked.includes(permission) ? "secondary" : "outline"
-                        }
-                        aria-pressed={revoked.includes(permission)}
-                        className="min-h-12 whitespace-normal text-base"
-                        onClick={() => togglePermission(permission)}
-                      >
-                        Izin {permission}:{" "}
-                        {revoked.includes(permission) ? "dicabut" : "aktif"}
-                      </Button>
-                    ))}
-                    <Button
-                      data-pressable
-                      className="min-h-11 text-base"
-                      disabled={revoked.length !== 2}
-                      onClick={() => advance(currentTool.on_success)}
-                    >
-                      Selesai memeriksa izin
-                    </Button>
-                  </div>
-                )}
-                {active && tool.id === "report" && (
-                  <div className="grid gap-3">
-                    <p className="text-base">
-                      Pilih contoh bukti aman. Jangan masukkan data atau kode
-                      rahasia nyata.
-                    </p>
-                    {artifacts.map((artifact) => (
-                      <Button
-                        key={artifact.id}
-                        data-pressable
-                        variant={
-                          reportArtifacts.includes(artifact.id)
-                            ? "secondary"
-                            : "outline"
-                        }
-                        aria-pressed={reportArtifacts.includes(artifact.id)}
-                        className="h-auto min-h-12 justify-start whitespace-normal text-left text-base"
-                        onClick={() => toggleArtifact(artifact.id)}
-                      >
-                        {artifact.label}
-                      </Button>
-                    ))}
-                    <Button
-                      data-pressable
-                      className="min-h-11 text-base"
-                      disabled={reportArtifacts.length === 0}
-                      onClick={() => {
-                        setReportComplete(true);
-                        advance(currentTool.on_success);
-                      }}
-                    >
-                      Siapkan laporan
-                    </Button>
-                  </div>
-                )}
-              </section>
-            );
-          })}
+                {item.label}
+              </Button>
+            ))}
+            {unsafeNotice && (
+              <Alert role="status" variant="destructive">
+                <AlertTitle>
+                  Kode rahasia tidak aman disimpan sebagai bukti
+                </AlertTitle>
+                <AlertDescription className="text-base">
+                  Jangan sertakan OTP atau PIN dalam laporan.
+                </AlertDescription>
+              </Alert>
+            )}
+            <Button
+              data-pressable
+              className={button}
+              disabled={paused || proof.length < 2}
+              onClick={() => advance(task.on_success)}
+            >
+              Siapkan bukti
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+  return (
+    <div className="grid min-w-0 gap-4">
+      <Card>
+        <CardContent className="grid gap-4 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-base">{MISSION.title}</p>
+              <p className="text-base text-dim">
+                {mode === "santai" ? "Santai" : "Tantangan"} ·{" "}
+                {paused ? "Dijeda" : "Sedang berlangsung"}
+              </p>
+            </div>
+            <Button
+              data-pressable
+              variant="outline"
+              className={button}
+              onClick={() => {
+                pausedRef.current = !paused;
+                setPaused(!paused);
+              }}
+            >
+              {paused ? "Lanjutkan misi" : "Jeda"}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Meter
+              label="Panik"
+              value={panic}
+              max={scenario.hud.panic.max}
+              danger
+            />
+            <Meter
+              label="Intrusi"
+              value={intrusion}
+              max={scenario.hud.intrusion.max}
+            />
+          </div>
+          <p className="text-base text-dim">
+            {!compromised
+              ? "Belum ada akses"
+              : isolated
+                ? "Terputus"
+                : "Akses aplikasi terbuka"}{" "}
+            {mode === "santai" ? " · tekanan waktu mati" : " · mode Tantangan"}
+          </p>
+          <Button
+            data-pressable
+            variant="outline"
+            className={`${button} w-fit`}
+            disabled={paused || breathingUsed}
+            onClick={() => {
+              setPanic(Math.max(0, panic - 15));
+              setBreathingUsed(true);
+            }}
+          >
+            Tarik napas{" "}
+            {breathingUsed ? "· sudah digunakan" : "· kurangi panik 15"}
+          </Button>
         </CardContent>
       </Card>
+      <section className="flex flex-wrap gap-2" aria-label="Bab misi">
+        {MISSION.chapters.map((chapter, index) => (
+          <Badge
+            key={chapter}
+            variant={active.chapter === index + 1 ? "secondary" : "outline"}
+            className="text-base"
+          >
+            {index + 1}. {chapter}
+          </Badge>
+        ))}
+      </section>
+      {paused && (
+        <Alert role="status">
+          <AlertTitle>Misi dijeda</AlertTitle>
+          <AlertDescription className="text-base">
+            Pesan dan tekanan berhenti hingga kamu melanjutkan.
+          </AlertDescription>
+        </Alert>
+      )}
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] lg:items-start">
+        <div className="grid min-w-0 gap-4">
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle className="text-lg">{MISSION.contact}</CardTitle>
+              <CardDescription className="text-base">
+                {MISSION.contactDetail}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div
+                ref={transcriptRef}
+                role="log"
+                aria-label="Percakapan latihan"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus and scroll the transcript.
+                tabIndex={0}
+                className="flex max-h-96 flex-col gap-3 overflow-y-auto p-1 pr-2"
+              >
+                {transcript.map((entry) =>
+                  entry.kind === "reply" ? (
+                    <Card
+                      key={`reply-${entry.id}`}
+                      className="ml-auto w-fit max-w-[90%] shrink-0 bg-panel"
+                    >
+                      <CardContent className="grid gap-1 p-3">
+                        <p className="font-semibold text-base">Raka · Kamu</p>
+                        <p className="text-base">{entry.text}</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card
+                      key={entry.node.id}
+                      className={`w-fit max-w-[90%] shrink-0 ${entry.node.speaker === MISSION.contact ? "bg-panel-2" : "bg-panel"}`}
+                    >
+                      <CardContent className="grid gap-2 p-3">
+                        <p className="font-semibold text-base">
+                          {entry.node.speaker}
+                        </p>
+                        <p className="text-base">{entry.node.text}</p>
+                        {entry.node.attachment && (
+                          <>
+                            <Button
+                              data-pressable
+                              variant="outline"
+                              className={`${button} w-fit`}
+                              disabled={paused}
+                              aria-expanded={attachmentOpen.includes(
+                                entry.node.id,
+                              )}
+                              onClick={() =>
+                                setAttachmentOpen(
+                                  toggle(attachmentOpen, entry.node.id),
+                                )
+                              }
+                            >
+                              Periksa lampiran · {entry.node.attachment.name}
+                            </Button>
+                            {attachmentOpen.includes(entry.node.id) && (
+                              <Alert>
+                                <AlertTitle>
+                                  {entry.node.attachment.name}
+                                </AlertTitle>
+                                <AlertDescription className="text-base">
+                                  {entry.node.attachment.detail}. Ini contoh,
+                                  tidak ada unduhan.
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ),
+                )}
+                {active.type === "message" && !paused && (
+                  <p className="text-base text-dim">
+                    {active.speaker === MISSION.contact
+                      ? "Pengirim sedang mengetik…"
+                      : "Catatan latihan sedang disiapkan…"}
+                  </p>
+                )}
+              </div>
+              {active.type === "message" && (
+                <Button
+                  data-pressable
+                  variant="outline"
+                  disabled={paused}
+                  className={`${button} w-fit`}
+                  onClick={() => reveal(active)}
+                >
+                  Tampilkan pesan sekarang
+                </Button>
+              )}
+              {latest?.rationale && (
+                <Alert
+                  role="status"
+                  variant={
+                    latest.verdict === "salah" ? "destructive" : "default"
+                  }
+                >
+                  <AlertTitle>
+                    {latestTactic
+                      ? `Taktik terungkap: ${latestTactic.name}`
+                      : "Penjelasan pilihan"}
+                  </AlertTitle>
+                  <AlertDescription className="text-base">
+                    {latest.rationale}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {active.type === "choice" && (
+                <div className="grid gap-3">
+                  <h2 className="font-semibold text-lg">{active.prompt}</h2>
+                  {active.choices.map((choice) => (
+                    <Button
+                      key={choice.label}
+                      data-pressable
+                      variant="outline"
+                      disabled={paused}
+                      className={`${button} justify-start text-left`}
+                      onClick={() => choose(choice)}
+                    >
+                      {choice.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        <aside className="grid min-w-0 gap-4">
+          {tool}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                Status perangkat latihan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-2 text-base">
+              {!compromised ? (
+                <p>
+                  Belum ada akses aplikasi; isolasi dan pemeriksaan izin tidak
+                  diperlukan pada jalur ini.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Isolasi:{" "}
+                    {isolated
+                      ? "Terputus"
+                      : visited.includes(
+                            scenario.tools.find(
+                              (item) => item.id === "isolation",
+                            )?.unlocked_at ?? "",
+                          )
+                        ? "Siap digunakan"
+                        : "Belum tersedia"}
+                  </p>
+                  <p>
+                    Izin sensitif:{" "}
+                    {revoked.length === PERMISSIONS.length
+                      ? "Keduanya dicabut"
+                      : `${revoked.length} dari ${PERMISSIONS.length} dicabut`}
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          {collection}
+        </aside>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,24 @@ function cloneScenario(): Scenario {
   return JSON.parse(JSON.stringify(L1_KURIR_APK)) as Scenario;
 }
 
+function reachableFrom(scenario: Scenario, startId: string): Set<string> {
+  const nodes = new Map(scenario.nodes.map((node) => [node.id, node]));
+  const reachable = new Set<string>();
+  const pending = [startId];
+  while (pending.length > 0) {
+    const id = pending.pop();
+    if (!id || reachable.has(id)) continue;
+    reachable.add(id);
+    const node = nodes.get(id);
+    if (!node) continue;
+    if (node.type === "message") pending.push(node.next);
+    if (node.type === "choice")
+      pending.push(...node.choices.map((choice) => choice.next));
+    if (node.type === "tool_task") pending.push(node.on_success);
+  }
+  return reachable;
+}
+
 describe("validateScenario", () => {
   it("accepts the playable L1 scenario", () => {
     expect(validateScenario(L1_KURIR_APK)).toEqual([]);
@@ -155,7 +173,11 @@ describe("validateScenario", () => {
     );
     if (!otpDecision || otpDecision.type !== "choice")
       throw new Error("Fixture choice missing");
-    otpDecision.choices[0].rationale = "  ";
+    const wrongOtpChoice = otpDecision.choices.find(
+      (choice) => choice.verdict === "salah",
+    );
+    if (!wrongOtpChoice) throw new Error("Wrong choice missing");
+    wrongOtpChoice.rationale = "  ";
     expect(validateScenario(noRationale)).toContain(
       'Wrong choice in "otp-decision" must have a non-empty rationale.',
     );
@@ -277,6 +299,77 @@ describe("validateScenario", () => {
     expect(errors).toContain(
       "Grade min values must be finite numbers between 0 and 100.",
     );
+  });
+
+  it("validates chapter, message delay, tactic references, and optional flags", () => {
+    const scenario = cloneScenario();
+    const intro = scenario.nodes.find((node) => node.id === "intro");
+    const decision = scenario.nodes.find((node) => node.id === "decision");
+    if (!intro || intro.type !== "message")
+      throw new Error("Fixture message missing");
+    if (!decision || decision.type !== "choice")
+      throw new Error("Fixture choice missing");
+
+    (intro as unknown as { chapter: number }).chapter = 4;
+    intro.delay_ms = Number.POSITIVE_INFINITY;
+    decision.choices[0].tactic = "made-up" as never;
+    decision.choices[0].compromisesDevice = "yes" as unknown as boolean;
+    decision.choices[0].sharesOtp = 1 as unknown as boolean;
+
+    const errors = validateScenario(scenario);
+    expect(errors).toContain('Node "intro" chapter must be 1, 2, or 3.');
+    expect(errors).toContain(
+      'Message node "intro" delay_ms must be finite and between 0 and 10000.',
+    );
+    expect(errors).toContain(
+      'Choice in "decision" references unknown tactic "made-up".',
+    );
+    expect(errors).toContain(
+      'Choice in "decision" compromisesDevice must be a boolean.',
+    );
+    expect(errors).toContain(
+      'Choice in "decision" sharesOtp must be a boolean.',
+    );
+  });
+
+  it.each([
+    ["negative", -1],
+    ["over ten seconds", 10_001],
+  ])("rejects message delay that is %s", (_label, delay) => {
+    const scenario = cloneScenario();
+    const intro = scenario.nodes.find((node) => node.id === "intro");
+    if (!intro || intro.type !== "message")
+      throw new Error("Fixture message missing");
+    intro.delay_ms = delay;
+    expect(validateScenario(scenario)).toContain(
+      'Message node "intro" delay_ms must be finite and between 0 and 10000.',
+    );
+  });
+
+  it("keeps the safe branch clear of device cleanup and sends shared OTP to compromise", () => {
+    const safeDecision = L1_KURIR_APK.nodes.find(
+      (node) => node.id === "safe-decision",
+    );
+    if (!safeDecision || safeDecision.type !== "choice")
+      throw new Error("Fixture safe decision missing");
+    const safeChoice = safeDecision.choices.find(
+      (choice) => choice.verdict === "benar",
+    );
+    if (!safeChoice) throw new Error("Safe choice missing");
+    const safeRoute = reachableFrom(L1_KURIR_APK, safeChoice.next);
+    expect(safeRoute.has("isolate")).toBe(false);
+    expect(safeRoute.has("inspect")).toBe(false);
+    expect(safeRoute.has("ending-safe")).toBe(true);
+
+    const otpDecision = L1_KURIR_APK.nodes.find(
+      (node) => node.id === "otp-decision",
+    );
+    if (!otpDecision || otpDecision.type !== "choice")
+      throw new Error("Fixture OTP decision missing");
+    const sharedOtp = otpDecision.choices.find((choice) => choice.sharesOtp);
+    if (!sharedOtp) throw new Error("OTP-sharing choice missing");
+    const compromisedRoute = reachableFrom(L1_KURIR_APK, sharedOtp.next);
+    expect(compromisedRoute.has("ending-compromised")).toBe(true);
   });
 
   it("requires grades to be strictly descending", () => {

@@ -8,19 +8,23 @@ jest.mock("next/navigation", () => ({
 }));
 
 describe("simulation routes", () => {
-  it("prerenders only the playable level and renders its real runner", async () => {
+  it("prerenders only the playable level and opens the real mission briefing", async () => {
     expect(generateStaticParams()).toEqual([{ id: "L1-kurir-apk" }]);
     render(
       await RunnerPage({ params: Promise.resolve({ id: "L1-kurir-apk" }) }),
     );
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      /kurir meminta pasang apk/i,
+      /paket sebelum pulang/i,
     );
-    expect(screen.getByRole("button", { name: /^lanjut$/i })).toBeEnabled();
-    expect(screen.getByRole("progressbar", { name: /panik/i })).toHaveAttribute(
-      "aria-valuenow",
-      "25",
+    expect(screen.getByText("Level 1 · Misi interaktif")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /pilih cara bermain/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /santai/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
+    expect(screen.getByRole("button", { name: /mulai misi/i })).toBeEnabled();
   });
 
   it.each([
