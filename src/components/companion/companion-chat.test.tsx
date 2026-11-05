@@ -35,7 +35,12 @@ describe("CompanionChat · evidence panel", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/bukti tercatat/i)).toBeInTheDocument();
 
-    const evidenceRow = screen.getByText("Evidence Agent").closest("li");
+    // The trace card in the transcript also names every agent, so the panel's
+    // rows are addressed by their own list rather than by the label alone.
+    const panel = within(
+      screen.getByRole("list", { name: /agent pada panel bukti/i }),
+    );
+    const evidenceRow = panel.getByText("Evidence Agent").closest("li");
     expect(evidenceRow).not.toBeNull();
     if (evidenceRow) {
       expect(
@@ -46,7 +51,7 @@ describe("CompanionChat · evidence panel", () => {
     // The one agent we have not built stays labelled as such. Identity Agent
     // is listed last for exactly this reason: a panel of green ticks would be
     // claiming a detector we do not have.
-    const identityRow = screen.getByText("Identity Agent").closest("li");
+    const identityRow = panel.getByText("Identity Agent").closest("li");
     expect(identityRow).not.toBeNull();
     if (identityRow) {
       expect(
@@ -56,9 +61,7 @@ describe("CompanionChat · evidence panel", () => {
 
     // And the Conversation Agent, which used to say "belum aktif", now runs:
     // it is the combination pass that pairs a deadline with a demand.
-    const conversationRow = screen
-      .getByText("Conversation Agent")
-      .closest("li");
+    const conversationRow = panel.getByText("Conversation Agent").closest("li");
     expect(conversationRow).not.toBeNull();
     if (conversationRow) {
       expect(
@@ -83,7 +86,11 @@ describe("CompanionChat · evidence panel", () => {
     ).toBeInTheDocument();
 
     // And the panel credits it to a real agent, with a count beside the name.
-    const row = screen.getByText("Conversation Agent").closest("li");
+    const row = within(
+      screen.getByRole("list", { name: /agent pada panel bukti/i }),
+    )
+      .getByText("Conversation Agent")
+      .closest("li");
     expect(row).not.toBeNull();
     if (row) {
       expect(within(row as HTMLElement).getByText(/^1$/)).toBeInTheDocument();
@@ -116,5 +123,30 @@ describe("CompanionChat · evidence panel", () => {
       await screen.findByText(/nama penerima yang disebut/i),
     ).toBeInTheDocument();
     expect(screen.getByText("Hadi Wibowo")).toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · an honest zero", () => {
+  it("does not report a finding when nothing was recognised", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    // The engine answers an unrecognised message with a single weight-0
+    // placeholder so the panel is never empty. That placeholder is not a
+    // finding, and counting it printed "1 temuan" beside a 0/100 "Bersih"
+    // verdict — the panel contradicting its own score.
+    await user.type(screen.getByLabelText(/pesan/i), "tesings");
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    const panel = screen.getByRole("list", { name: /agent pada panel bukti/i });
+    const card = panel.closest("[data-slot='card']") ?? document.body;
+
+    expect(await screen.findByText(/0\/100/)).toBeInTheDocument();
+    expect(
+      within(card as HTMLElement).getByText(/^0 temuan$/),
+    ).toBeInTheDocument();
+    expect(
+      within(card as HTMLElement).queryByText(/^1 temuan$/),
+    ).not.toBeInTheDocument();
   });
 });

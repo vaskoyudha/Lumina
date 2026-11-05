@@ -26,7 +26,20 @@ import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
  * this — they import POST directly and never run the route compiler.
  */
 
-const TIMEOUT_MS = 6000;
+/*
+ * 20s, not 6s.
+ *
+ * Measured on this machine through the Satu 9Router tunnel, DeepSeek V4.1
+ * Flash takes 2.5s on a good call and 6.1s on a slow one. A 6s budget
+ * therefore aborted real replies and silently swapped in the template, which
+ * is exactly the "the agent is hardcoded" symptom: the same message produced a
+ * model answer or a template answer depending on network luck.
+ *
+ * The number is a runaway guard, not a latency target. A judge waiting eight
+ * seconds for a real reply is a better outcome than an instant canned one, and
+ * the thinking row counts the wait out loud so it reads as work.
+ */
+const TIMEOUT_MS = 20000;
 
 const SYSTEM = [
   "Kamu adalah Lumina, pendamping yang membantu orang Indonesia memeriksa pesan yang mencurigakan.",
@@ -88,9 +101,25 @@ export async function POST(request: Request) {
         "cache-control": "no-store",
       },
     });
-  } catch {
-    return fail(503, "upstream-unreachable");
-  } finally {
+  } catch (error) {
     clearTimeout(timer);
+    /*
+     * A timeout and an unreachable endpoint are different failures and must not
+     * share a message. Reporting "not configured" for a slow model is what made
+     * a working setup look hardcoded.
+     */
+    const aborted =
+      error instanceof Error &&
+      (error.name === "AbortError" || error.name === "TimeoutError");
+    return fail(503, aborted ? "upstream-timeout" : "upstream-unreachable");
   }
+  /*
+   * Deliberately NOT clearing the timer on the success path.
+   *
+   * `streamChatText` keeps reading after this function returns, so clearing
+   * here would disarm the only guard the stream has: a stalled upstream would
+   * then stream forever. Letting the timer fire aborts a fetch that has already
+   * been consumed, which is a no-op, so the cost of leaving it armed is nil and
+   * the ceiling it provides is real.
+   */
 }

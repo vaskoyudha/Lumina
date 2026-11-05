@@ -3,6 +3,7 @@
 import { History, PanelRight, Paperclip } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { AgentTraceCard } from "@/components/companion/agent-trace";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import {
   type Attachment,
@@ -11,21 +12,35 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
+import { ExplanationCard } from "@/components/companion/explanation-card";
 import { NavRail } from "@/components/companion/nav-rail";
 import { ScenarioCards } from "@/components/companion/scenario-cards";
 import type { Scenario } from "@/components/companion/scenarios";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
+import { ThinkingRow } from "@/components/companion/thinking-row";
+import {
+  requestReply,
+  type VoiceOutcome,
+} from "@/components/companion/voice-client";
 import { Button } from "@/components/ui/button";
+import { type Explanation, explain } from "@/lib/companion/explain";
 import {
   composeReply,
   isGreeting,
   suggestedActions,
 } from "@/lib/companion/reply";
+import {
+  type AgentStage,
+  type AgentTrace,
+  STAGE_LABEL,
+  voiceDigest,
+} from "@/lib/contracts/agent-run";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
-import { scoreText } from "@/lib/scoring/score";
+import { modusFor } from "@/lib/modus";
+import { scoreWithTrace } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
 
 /**
@@ -62,6 +77,18 @@ interface Turn {
   /** The text that produced `result`, including attachment filenames. */
   source?: string;
   attachments?: Attachment[];
+  /** What the agents actually did for this turn, measured. */
+  trace?: AgentTrace;
+  /** The teaching layer: tactics, anatomy, checks, and where to report. */
+  explanation?: Explanation;
+  /** True while the language layer is still writing. */
+  streaming?: boolean;
+  /**
+   * Epoch ms when the language request left. Stamped in the handler, never in
+   * render: Next 16 fails the prerender of a client component that reads the
+   * clock while rendering, and a `Date.now()` prop here would do exactly that.
+   */
+  voiceStartedAt?: number;
 }
 
 interface Session {
@@ -101,7 +128,6 @@ export function CompanionChat() {
   /** `null` = the newest session, never a hardcoded id. */
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [thinking, setThinking] = React.useState(false);
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -142,7 +168,7 @@ export function CompanionChat() {
   }, [turns]);
 
   const send = React.useCallback(
-    (raw: string, attachments: Attachment[] = []) => {
+    async (raw: string, attachments: Attachment[] = []) => {
       const text = raw.trim();
       if ((!text && attachments.length === 0) || busy) return;
 
@@ -151,11 +177,14 @@ export function CompanionChat() {
       // signal in the APK family and it is not prose anyone types.
       const scored = scoringTextWithAttachments(text, attachments);
       const hasContent = !isGreeting(scored);
-      const result = hasContent ? scoreText({ text: scored }) : null;
 
       // Stamped here, never during render: Next 16 fails the prerender of a
       // client component that reads the clock while rendering.
       const stamp = new Date().toISOString();
+
+      const target = activeId;
+      if (target === undefined) return;
+
       const userTurn: Turn = {
         id: id(),
         role: "user",
@@ -164,11 +193,81 @@ export function CompanionChat() {
         at: stamp,
       };
 
-      const target = activeId;
-      if (target === undefined) return;
+      /*
+       * The verdict is already final at this point — everything above is
+       * deterministic and offline. Everything below only decides how to say it.
+       *
+       * Prior user turns go to the Conversation Agent so escalation across
+       * messages is visible; a single message cannot be an escalation.
+       */
+      const priorTurns = (active?.turns ?? [])
+        .filter((turn) => turn.role === "user" && turn.text.trim().length > 0)
+        .map((turn) => ({ text: turn.text }));
+
+      const { result, trace } = hasContent
+        ? scoreWithTrace({ text: scored, turns: priorTurns })
+        : { result: null, trace: null };
+
+      // The Evidence Agent is measured separately because it runs here, on the
+      // turn, not inside the scorer.
+      const evidenceStarted = performance.now();
+      const evidence = result
+        ? buildEvidenceBundle([{ text: scored, at: stamp, result }])
+        : null;
+      const evidenceMs = performance.now() - evidenceStarted;
+      const artifacts = evidence?.artifacts.length ?? 0;
+
+      /*
+       * The Evidence Agent contributes 0 to the header's finding count on
+       * purpose. It collects quotes and amounts; it does not produce signals.
+       * Counting artifacts there would print a number the score card cannot
+       * account for. Its own row states how many it recorded.
+       */
+      const evidenceStage: AgentStage | null = trace
+        ? {
+            id: "evidence",
+            ...STAGE_LABEL.evidence,
+            status: "selesai",
+            findings: 0,
+            ms: evidenceMs,
+            note:
+              artifacts > 0
+                ? `${artifacts} kutipan tercatat untuk laporan`
+                : "Tidak ada kutipan yang bisa dicatat.",
+          }
+        : null;
+
+      const stages: AgentStage[] = trace
+        ? [...trace.stages, ...(evidenceStage ? [evidenceStage] : [])]
+        : [];
+      const detectorMs = (trace?.totalMs ?? 0) + evidenceMs;
+
+      const companionId = id();
+      const voiceStartedAt = Date.now();
+
+      /*
+       * The language stage is attached immediately as `berjalan`, because it
+       * genuinely is running from this moment. Attaching it only at the end
+       * would let the header show a finished checkmark over work still in
+       * flight — the one dishonest state this card could produce.
+       */
+      const openTrace: AgentTrace | null = trace
+        ? {
+            stages: [
+              ...stages,
+              {
+                id: "voice",
+                ...STAGE_LABEL.voice,
+                status: "berjalan",
+                findings: 0,
+                ms: 0,
+              },
+            ],
+            totalMs: detectorMs,
+          }
+        : null;
 
       setBusy(true);
-      setThinking(true);
       setSessions((prev) =>
         prev.map((session) =>
           session.id === target
@@ -179,45 +278,140 @@ export function CompanionChat() {
                     ? titleFor(text, attachments)
                     : session.title,
                 time: stamp.slice(11, 16),
-                turns: [...session.turns, userTurn],
+                risk: result?.risk ?? session.risk,
+                turns: [
+                  ...session.turns,
+                  userTurn,
+                  {
+                    id: companionId,
+                    role: "companion",
+                    text: "",
+                    at: stamp,
+                    streaming: true,
+                    voiceStartedAt,
+                    trace: openTrace ?? undefined,
+                  },
+                ],
               }
             : session,
         ),
       );
 
-      // A short pause so the panel reads as work happening, not an instant
-      // answer that might as well have been static text.
-      window.setTimeout(() => {
-        const reply = composeReply(text || attachments[0]?.name || "", result, {
-          first: false,
-          containsContent: hasContent,
-        });
+      const patchCompanion = (patch: (turn: Turn) => Turn) =>
         setSessions((prev) =>
           prev.map((session) =>
             session.id === target
               ? {
                   ...session,
-                  risk: result?.risk ?? session.risk,
-                  turns: [
-                    ...session.turns,
-                    {
-                      id: id(),
-                      role: "companion",
-                      text: reply,
-                      at: userTurn.at,
-                      result: result ?? undefined,
-                      source: hasContent ? scored : undefined,
-                    },
-                  ],
+                  turns: session.turns.map((turn) =>
+                    turn.id === companionId ? patch(turn) : turn,
+                  ),
                 }
               : session,
           ),
         );
-        setThinking(false);
+
+      const appendText = (chunk: string) =>
+        patchCompanion((turn) => ({ ...turn, text: turn.text + chunk }));
+
+      /**
+       * Why the words came from a template, in the reader's language.
+       *
+       * Four different failures used to share one sentence, and that sentence
+       * claimed the model was not configured. When the real cause was a slow
+       * network, the interface was lying about its own setup.
+       */
+      const templateNote = (reason: VoiceOutcome): string => {
+        if (reason === "timeout") {
+          return "Model terlalu lambat menjawab; jawaban disusun dari templat.";
+        }
+        if (reason === "truncated") {
+          return "Jawaban model terpotong di tengah; jawaban disusun ulang dari templat.";
+        }
+        if (reason === "unconfigured") {
+          return "Model tidak dikonfigurasi; jawaban disusun dari templat.";
+        }
+        return "Model gagal dihubungi; jawaban disusun dari templat.";
+      };
+
+      const finish = (
+        finalText: string,
+        voice: "model" | "template",
+        reason?: VoiceOutcome,
+      ) => {
+        const voiceMs = Date.now() - voiceStartedAt;
+        patchCompanion((turn) => ({
+          ...turn,
+          text: finalText,
+          streaming: false,
+          voiceStartedAt: undefined,
+          result: result ?? undefined,
+          source: hasContent ? scored : undefined,
+          /*
+           * Only teach when something was actually found. A clean message has
+           * no tactics and no scheme, and showing generic checks for "apa
+           * kabar?" would be noise dressed as diligence.
+           */
+          explanation: result?.signals.some((signal) => signal.weight > 0)
+            ? explain(result, scored)
+            : undefined,
+          trace: turn.trace
+            ? {
+                // Replace the open `berjalan` stage rather than appending a
+                // second one: one stage, one outcome.
+                stages: turn.trace.stages.map((stage) =>
+                  stage.id === "voice"
+                    ? {
+                        ...stage,
+                        status: voice === "model" ? "selesai" : "dilewati",
+                        ms: voiceMs,
+                        note:
+                          voice === "model"
+                            ? undefined
+                            : templateNote(reason ?? "unconfigured"),
+                      }
+                    : stage,
+                ),
+                totalMs: detectorMs + voiceMs,
+              }
+            : undefined,
+        }));
         setBusy(false);
-      }, 420);
+      };
+
+      const fallback = composeReply(
+        text || attachments[0]?.name || "",
+        result,
+        {
+          first: false,
+          containsContent: hasContent,
+        },
+      );
+
+      const digest =
+        hasContent && result
+          ? voiceDigest(
+              result,
+              modusFor(result.relatedModule)?.nama ?? result.modus,
+            )
+          : null;
+
+      if (!digest) {
+        finish(fallback, "template", "unconfigured");
+        return;
+      }
+
+      const voice = await requestReply(digest, appendText);
+
+      if (voice.outcome === "model") {
+        finish(voice.text.trim(), "model");
+      } else {
+        // The trace names the real reason. "Not configured" for a slow model
+        // was the sentence that made a working setup look hardcoded.
+        finish(fallback, "template", voice.outcome);
+      }
     },
-    [activeId, busy],
+    [active?.turns, activeId, busy],
   );
 
   const startNew = () => {
@@ -380,34 +574,48 @@ export function CompanionChat() {
                     data-turn
                     className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
                   >
-                    <p className="max-w-[92%] whitespace-pre-wrap rounded-[10px] bg-panel-2 px-3.5 py-2.5 text-base text-txt">
-                      {turn.text}
-                    </p>
+                    {turn.trace ? <AgentTraceCard trace={turn.trace} /> : null}
 
-                    {turn.result ? (
+                    {turn.streaming && turn.text.length === 0 ? (
+                      <ThinkingRow
+                        label="Menyusun jawaban"
+                        startedAt={turn.voiceStartedAt ?? null}
+                      />
+                    ) : null}
+
+                    {turn.text.length > 0 ? (
+                      <p className="max-w-[92%] whitespace-pre-wrap rounded-[10px] bg-panel-2 px-3.5 py-2.5 text-base text-txt">
+                        {turn.text}
+                        {turn.streaming ? (
+                          <span
+                            aria-hidden
+                            className="ms-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-dim align-baseline"
+                          />
+                        ) : null}
+                      </p>
+                    ) : null}
+
+                    {turn.result && !turn.streaming ? (
                       <>
                         <ScoreCard
                           result={turn.result}
                           showEscalation={false}
                           showLinks={false}
                         />
+                        {turn.explanation ? (
+                          <ExplanationCard
+                            explanation={turn.explanation}
+                            schemeName={
+                              modusFor(turn.result.relatedModule)?.nama ?? null
+                            }
+                          />
+                        ) : null}
                         <ActionRow result={turn.result} />
                       </>
                     ) : null}
                   </div>
                 ),
               )}
-
-              {thinking ? (
-                <div className="mx-auto flex w-full max-w-[820px]">
-                  <div className="flex items-center gap-1.5 rounded-[10px] bg-panel-2 px-3.5 py-3">
-                    <span className="size-1.5 animate-pulse rounded-full bg-dim" />
-                    <span className="size-1.5 animate-pulse rounded-full bg-dim [animation-delay:150ms]" />
-                    <span className="size-1.5 animate-pulse rounded-full bg-dim [animation-delay:300ms]" />
-                    <span className="sr-only">Companion sedang memeriksa</span>
-                  </div>
-                </div>
-              ) : null}
             </div>
 
             <div className="shrink-0 border-line border-t px-4 py-3">

@@ -89,6 +89,19 @@ describe("POST /api/companion/voice", () => {
     expect(response.status).toBe(503);
   });
 
+  it("names a timeout as a timeout, not as missing configuration", async () => {
+    // The defect this guards: an abort used to surface as
+    // "upstream-unreachable", and the client then told the reader the model
+    // was not configured. A working setup looked hardcoded.
+    const abort = new Error("The operation was aborted");
+    abort.name = "AbortError";
+    jest.spyOn(global, "fetch").mockRejectedValue(abort);
+
+    const response = await POST(request(digest));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: "upstream-timeout" });
+  });
+
   it("returns 503 when the endpoint is unreachable", async () => {
     jest.spyOn(global, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
     const response = await POST(request(digest));

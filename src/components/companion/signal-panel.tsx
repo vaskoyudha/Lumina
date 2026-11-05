@@ -83,7 +83,10 @@ export function SignalPanel({
             </EmptyDescription>
           </Empty>
 
-          <ul className="mt-5 flex flex-col gap-2.5">
+          <ul
+            aria-label="Agent pada panel bukti"
+            className="mt-5 flex flex-col gap-2.5"
+          >
             {sequence.map((agent) => (
               <AgentRow key={agent} agent={agent} findings={0} ran={false} />
             ))}
@@ -93,12 +96,20 @@ export function SignalPanel({
     );
   }
 
+  /*
+   * A weight-0 signal is the engine's "nothing recognised" placeholder, not a
+   * finding. Counting `signals.length` printed "1 temuan" beside a 0/100
+   * "Bersih" verdict, so the panel contradicted the score it sits next to.
+   * The trace card already counts only `weight > 0`; this now matches it.
+   */
+  const findings = result.signals.filter((signal) => signal.weight > 0);
+
   const byAgent = new Map<AgentId, number>();
-  for (const signal of result.signals) {
+  for (const signal of findings) {
     const agent = signal.agent ?? "scoring";
     byAgent.set(agent, (byAgent.get(agent) ?? 0) + 1);
   }
-  const scored = result.signals.some(
+  const scored = findings.some(
     (signal) => (signal.agent ?? "scoring") in AGENT_LABEL,
   );
   const artifacts = evidence?.artifacts ?? [];
@@ -127,12 +138,15 @@ export function SignalPanel({
         <CardTitle className="flex items-center justify-between font-medium text-sm text-txt">
           <span>Panel bukti</span>
           <Badge variant="secondary" className="tabular text-xs">
-            {result.signals.length} temuan
+            {findings.length} temuan
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="py-4">
-        <ul className="flex flex-col gap-2.5">
+        <ul
+          aria-label="Agent pada panel bukti"
+          className="flex flex-col gap-2.5"
+        >
           {sequence.map((agent) => (
             <AgentRow
               key={agent}
