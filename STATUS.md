@@ -20,7 +20,7 @@ e. Engine skor deterministik: Message Agent, Link Agent, Scoring Orchestrator.
 f. Panel bukti per agent, dengan penandaan `belum aktif` yang jujur.
 g. Tiga contoh §11.6 sebagai tombol di companion.
 h. Mode darurat: tiga kasus, checklist bernomor, kanal resmi, cetak.
-i. 84 test Jest, termasuk yang merender komponen React sungguhan.
+i. 90 test Jest, termasuk yang merender komponen React sungguhan.
 j. Korpus bench 40 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
    di balik setiap klaim akurasi; angkanya diukur, bukan dikutip.
 k. `src/lib/evidence/`: producer `EvidenceBundle` pertama (artefak → timeline →
@@ -82,3 +82,22 @@ c. Scam stiker QRIS tidak tertangkap sama sekali (0/bersih). Sekarang 70/tinggi
 Batas yang diakui: tiga scam (love scam, jual-beli di luar marketplace, pinjol
 fiktif) berhenti di `mencurigakan`, bukan `tinggi`; dan merek tiga huruf hanya
 tertangkap bila ditempelkan sebagai awalan, bukan sisipan.
+
+### Combination pass — 5 November 2026
+
+`score.ts` sekarang punya satu lintasan lagi setelah akumulasi: kalau dua
+*vektor* bahaya hidup sekaligus (desakan + permintaan uang, hadiah + biaya,
+desakan + permintaan kode, rahasia + uang), ia menjadi temuan tersendiri
+dengan kalimat yang menjelaskan mengapa gabungannya lebih buruk daripada
+jumlah bagiannya. Itu mekanisme pertama **Conversation Agent**, yang sejak
+commit ini berstatus aktif di panel.
+
+Gerbangnya yang menjaga presisi: sebuah vektor hanya dihitung bila aturannya
+sendiri sudah menyala ≥ 0.5, dan vektor "uang" hanya dinyalakan oleh aturan
+yang benar-benar menyebut permintaan (biaya admin, top-up berulang, transfer
+di luar marketplace, stiker QRIS). Tagihan sah tanpa satu pun aturan menyala
+karena itu tidak pernah bisa mencapai kombinasi.
+
+Angka bench tidak berubah oleh lintasan ini: 20/20 tertangkap, 17/20 langsung
+`tinggi`, 0/20 false positive. Perubahannya ada di kualitas penjelasan, bukan
+di volume deteksi — dan itu memang tujuannya.

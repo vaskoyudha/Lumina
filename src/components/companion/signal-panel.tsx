@@ -102,6 +102,24 @@ export function SignalPanel({
     (signal) => (signal.agent ?? "scoring") in AGENT_LABEL,
   );
   const artifacts = evidence?.artifacts ?? [];
+  /**
+   * One row per *kind* of evidence, not per value. A prize message quantifies
+   * two amounts, and listing "Nominal uang yang disebut" twice reads like a
+   * rendering bug to anyone scanning the panel. The bundle keeps them as
+   * separate artifacts because the PDF cites each one.
+   */
+  const artifactGroups = [
+    ...artifacts
+      .reduce((groups, artifact) => {
+        const seen = groups.get(artifact.label);
+        groups.set(artifact.label, {
+          label: artifact.label,
+          values: seen ? [...seen.values, artifact.value] : [artifact.value],
+        });
+        return groups;
+      }, new Map<string, { label: string; values: string[] }>())
+      .values(),
+  ];
 
   return (
     <Card className="gap-0 border border-line bg-panel py-0 lg:sticky lg:top-20">
@@ -134,20 +152,20 @@ export function SignalPanel({
           <div className="mt-5 border-line border-t pt-4">
             <p className="font-medium text-txt text-xs">Bukti tercatat</p>
             <ul className="mt-2 flex flex-col gap-2">
-              {artifacts.slice(0, 3).map((artifact) => (
-                <li key={artifact.id} className="leading-snug">
+              {artifactGroups.slice(0, 3).map((group) => (
+                <li key={group.label} className="leading-snug">
                   <span className="block text-[0.7rem] text-dim">
-                    {artifact.label}
+                    {group.label}
                   </span>
                   <span className="block break-all text-[0.72rem] text-txt">
-                    {artifact.value}
+                    {group.values.join(" · ")}
                   </span>
                 </li>
               ))}
             </ul>
-            {artifacts.length > 3 ? (
+            {artifactGroups.length > 3 ? (
               <p className="mt-1.5 text-[0.7rem] text-dim">
-                +{artifacts.length - 3} bukti lain di laporan
+                +{artifactGroups.length - 3} jenis bukti lain di laporan
               </p>
             ) : null}
           </div>
