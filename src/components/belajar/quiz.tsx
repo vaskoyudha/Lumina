@@ -169,7 +169,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
                         <Button
                           type="button"
                           size="sm"
-                          className="mt-2 min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
+                          className="mt-2 min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
                           onClick={() => retryQuestion(q.id)}
                         >
                           Coba soal ini lagi
@@ -185,7 +185,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
         {!passed ? (
           <Button
             type="button"
-            className="min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
+            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
             onClick={retry}
           >
             Coba lagi

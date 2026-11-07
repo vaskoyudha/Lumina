@@ -58,6 +58,7 @@
   --color-ink-soft: var(--lumina-ink-soft);
   --color-ink-mute: var(--lumina-ink-mute);
   --color-ink-faint: var(--lumina-ink-faint);
+  --color-ink-line: var(--lumina-ink-line);
   --color-chip: var(--lumina-chip);
   --color-chip-hover: var(--lumina-chip-hover);
   --color-edge: var(--lumina-edge);
@@ -287,6 +288,11 @@
   --lumina-ink-soft: #262626; /* nav / thread body text */
   --lumina-ink-mute: #525252; /* icon grey */
   --lumina-ink-faint: #a3a3a3; /* captions, placeholders */
+  --lumina-ink-line: color-mix(
+    in srgb,
+    var(--lumina-bg) 38%,
+    transparent
+  ); /* dim edge on black action fills */
   --lumina-chip: #f7f7f8; /* circular icon button fill */
   --lumina-chip-hover: #f5f5f6;
   --lumina-edge: #ebebeb; /* pill border */
@@ -560,6 +566,17 @@ html {
     transparent 1.15px
   );
   background-size: 14px 14px;
+}
+
+/*
+ * Black action fills (the shadcn default variant, plus asChild anchors that keep
+ * `bg-primary`) get a dim edge so they read as a button instead of a void on
+ * dark surfaces. tailwind-merge drops `bg-primary` whenever a component
+ * overrides the background, so coloured buttons are untouched.
+ */
+button.bg-primary,
+a.bg-primary {
+  border-color: var(--lumina-ink-line);
 }
 
 /*
