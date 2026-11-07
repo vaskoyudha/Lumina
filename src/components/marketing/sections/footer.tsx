@@ -33,7 +33,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="cta-dark-bg px-3 pt-20 pb-4 text-white sm:px-6">
+    <footer className="cta-dark-bg px-3 pt-20 pb-20 text-white sm:px-6">
       <div className="mx-auto max-w-2xl px-4 pb-14 text-center">
         <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-amberwarm-300/30 bg-espresso-800/90 px-3.5 py-1 font-semibold text-[10px] text-amberwarm-200 uppercase tracking-widest">
           <span>☺</span>

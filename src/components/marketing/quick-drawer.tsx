@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { LuminaLogo } from "@/components/brand/lumina-logo";
 import { useSite } from "@/components/marketing/site-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { scrollToId } from "@/lib/scroll";
-import { brand, drawerLinks } from "@/lib/site";
+import { drawerLinks } from "@/lib/site";
 
 export function QuickDrawer() {
   const { drawerOpen, closeDrawer } = useSite();
@@ -32,8 +33,8 @@ export function QuickDrawer() {
         <div className="flex h-full flex-col justify-between overflow-y-auto p-6">
           <div>
             <div className="flex items-center justify-between border-white/10 border-b pb-5">
-              <SheetTitle className="font-display font-semibold text-lg text-white">
-                {brand.name}
+              <SheetTitle className="flex items-center">
+                <LuminaLogo tone="onDark" className="h-7 w-auto" />
               </SheetTitle>
               <Button
                 id="close-quick-drawer"
