@@ -107,7 +107,7 @@ melewati gate.
 
 a. `cacheComponents` aktif, jadi `export const runtime` / `export const dynamic`
    di route atau page ditolak. Halaman dinamis memakai `export const instant =
-   false` (lihat `src/app/(app)/belajar/[modul]/page.tsx`); route handler tanpa
+   false` (lihat `src/app/(chat)/belajar/[modul]/page.tsx`); route handler tanpa
    segment config (lihat `src/app/api/companion/answer/route.ts`).
 b. Membaca cookie di layout membuat semua rute dinamis. Bungkus pembaca sesi
    dalam `Suspense` seperti `NavWithSession`
@@ -169,8 +169,8 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 | Grup | Shell | Token | Isi |
 |---|---|---|---|
 | `(marketing)` | `SiteHeader` + `Footer` + `QuickDrawer` | `.landing` (cream/espresso) | `/` landing |
-| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | belajar, simulasi, darurat, profil |
-| `(chat)` | tanpa nav, rail sendiri | `--lumina-*` via `.appnext` | `/companion` |
+| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | simulasi, darurat, profil |
+| `(chat)` | tanpa nav, sidebar sendiri | `--lumina-*` via `.appnext` | `/companion`, `/belajar` |
 | `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
 | `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
 | `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
@@ -218,11 +218,12 @@ src/
 ├── app/
 │   ├── (marketing)/          landing `/` — SiteHeader + Footer + QuickDrawer
 │   ├── (app)/                SiteNav + footer
-│   │   ├── belajar/          B · daftar + [modul]
 │   │   ├── simulasi/         C · daftar + [id] + layout runner
 │   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
-│   │   └── profil/           akun + kemajuan perangkat
-│   ├── (chat)/companion/     A · percakapan + panel bukti, tanpa nav
+│   │   └── profil/           akun demo + kemajuan perangkat
+│   ├── (chat)/               tanpa nav, footer ada di sidebar
+│   │   ├── companion/        A · percakapan + panel bukti
+│   │   └── belajar/          B · katalog + [modul], sidebar Companion
 │   ├── admin/                workbench kurikulum, AdminNav sendiri
 │   ├── api/companion/        answer, vision, voice (route handler)
 │   ├── masuk/ daftar/        auth akun, tanpa chrome
@@ -258,7 +259,7 @@ sesuatu, minta bentuk datanya, bukan filenya.
 | Stream | Boleh | Jangan |
 |---|---|---|
 | A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner, PDF |
-| B | `app/(app)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
+| B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
 | C | `app/(app)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
 | D | `app/(app)/darurat/`, `components/darurat/`, `lib/darurat/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
 
