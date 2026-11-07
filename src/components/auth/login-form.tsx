@@ -5,15 +5,9 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type AuthResult, login } from "@/lib/auth/actions";
-import { seedProgress } from "@/lib/progress";
 
 const fieldShell =
   "rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-brand/70 focus-within:bg-brand-soft/40";
@@ -41,12 +35,8 @@ export function LoginForm({
 
   useEffect(() => {
     if (!state?.ok || !state.account) return;
-    seedProgress({
-      completedModules: state.account.seed.completedModules,
-      badges: state.account.seed.badges,
-      missedPatterns: [],
-    });
     router.push("/companion");
+    router.refresh();
   }, [state, router]);
 
   return (
@@ -63,6 +53,7 @@ export function LoginForm({
               type="email"
               autoComplete="email"
               required
+              maxLength={254}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="nama@contoh.id"
@@ -82,9 +73,10 @@ export function LoginForm({
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
+              maxLength={128}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="minimal 8 karakter"
+              placeholder="Password akunmu"
               className="h-12 rounded-2xl border-0 bg-transparent px-4 pr-12 text-base focus-visible:ring-0"
             />
             <Button
@@ -96,18 +88,15 @@ export function LoginForm({
               }
               aria-pressed={showPassword}
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-xl text-muted-foreground hover:bg-transparent hover:text-foreground"
+              className="absolute top-1/2 right-1 size-11 -translate-y-1/2 rounded-full text-muted-foreground hover:bg-transparent hover:text-foreground"
             >
               {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
             </Button>
           </div>
-          <FieldDescription>
-            Akun demo memakai password <code>demo1234</code>.
-          </FieldDescription>
         </Field>
 
         {state?.error ? (
-          <Alert variant="destructive">
+          <Alert role="alert" variant="destructive">
             <AlertDescription>{state.error}</AlertDescription>
           </Alert>
         ) : null}
@@ -115,7 +104,7 @@ export function LoginForm({
         <Button
           type="submit"
           disabled={pending}
-          className="h-12 w-full rounded-2xl bg-brand font-medium text-bg transition-colors hover:bg-brand/90"
+          className="h-12 w-full rounded-full bg-brand font-medium text-bg transition-colors hover:bg-brand/90"
         >
           {pending ? (
             <Loader2

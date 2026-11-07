@@ -57,12 +57,13 @@ tahu tiga orang lain **sebelum** commit, bukan sesudah (§9).
 akun, sekarang dan setelah perubahan akses apa pun. Kalau middleware ditambahkan
 nanti, pengecualian `/darurat` masuk di commit yang sama.
 
-**9. Auth di proyek ini adalah demo, bukan auth sungguhan.** `demo-accounts.ts`
-membandingkan password dengan tabel literal; sesi adalah cookie HMAC bertanda
-tangan (`src/lib/auth/session.ts`), tanpa hash, tanpa database, tanpa penyimpanan
-server. `AUTH_SECRET` (min. 16 karakter) wajib di production; dev memakai fallback
-tetap. Jangan menyalin pola ini ke aplikasi yang menyimpan pengguna nyata.
-Menambah penyimpanan berarti melanggar §8b plan dan janji privasi proposal.
+**9. Auth menyimpan akun sungguhan.** Keputusan pemilik produk 7 November 2026
+mengizinkan database akun dan Google OAuth, menggantikan fasad demo. SQLite
+menyimpan identitas, hash scrypt password, hash token sesi, dan transaksi OAuth
+sementara. Progres dan percakapan tidak masuk database akun. Node >=22.13 dan
+disk persisten wajib; konfigurasi serta batas hosting ada di `docs/auth.md`.
+`google-auth-library` adalah tambahan dependensi yang diizinkan untuk perubahan
+ini. Jangan mengembalikan password literal atau sesi demo.
 
 ## Stack — jangan diganti tanpa kesepakatan
 
@@ -118,7 +119,8 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 
 `.env.example` adalah daftar variabel; `.env.local` tidak di-commit.
 
-- `AUTH_SECRET` — kunci cookie sesi, wajib ≥16 karakter di production.
+- `AUTH_DATABASE_PATH` — file SQLite pada disk persisten (default `data/auth.sqlite`).
+- `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; lihat `docs/auth.md`.
 - `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
   OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan
   panggilan jaringan dan jatuh ke `src/lib/companion/reply.ts`; route
@@ -169,7 +171,7 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 | `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | belajar, simulasi, darurat, profil |
 | `(chat)` | tanpa nav, rail sendiri | `--lumina-*` via `.appnext` | `/companion` |
 | `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
-| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth demo |
+| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
 | `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
 
 Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
@@ -181,7 +183,7 @@ bukan tombol. Jangan menambahkan tautan admin ke nav publik.
 
 ### Titik masuk auth
 
-Masuk dan daftar selalu lewat satu dialog kaca, bukan halaman baru:
+Navigasi membuka satu dialog bersama; halaman langsung tersedia di `/masuk` dan `/daftar`:
 `AuthDialog` (`src/components/auth/auth-dialog.tsx`), trigger-less dan
 controlled, dengan tab Masuk/Daftar dari `AuthPanel`.
 
@@ -192,8 +194,8 @@ controlled, dengan tab Masuk/Daftar dari `AuthPanel`.
 | Rail + sidebar companion | `CompanionAuth` | `iconsOnly` memakai tombol ikon saja; nama aksesibel wajib |
 
 Sesudah masuk, ketiganya menampilkan `UserMenu` (atau kartu profil) yang menuju
-`/profil`. `/masuk` dan `/daftar` tetap ada untuk tautan langsung; keduanya
-merender `AuthPanel` yang sama, jadi jangan menaruh logika sesi di sana.
+`/profil`. `/masuk` dan `/daftar` adalah halaman langsung untuk login dan register;
+keduanya menyusun `AuthPanel` yang sama. Logika sesi tetap di `lib/auth/`.
 
 ## Tiga lapisan token, jangan dicampur
 
@@ -218,11 +220,11 @@ src/
 │   │   ├── belajar/          B · daftar + [modul]
 │   │   ├── simulasi/         C · daftar + [id] + layout runner
 │   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
-│   │   └── profil/           akun demo + kemajuan perangkat
+│   │   └── profil/           akun + kemajuan perangkat
 │   ├── (chat)/companion/     A · percakapan + panel bukti, tanpa nav
 │   ├── admin/                workbench kurikulum, AdminNav sendiri
 │   ├── api/companion/        answer, vision, voice (route handler)
-│   ├── masuk/ daftar/        auth demo, tanpa chrome
+│   ├── masuk/ daftar/        auth akun, tanpa chrome
 │   └── layout.tsx            `body.appnext`, font, token ground
 ├── components/
 │   ├── ui/                   shadcn — jangan diedit kecuali perbaikan registry
@@ -235,7 +237,7 @@ src/
 │   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run
 │   ├── scoring/              engine deterministik: score, message, link, identity, conversation
 │   ├── companion/            turn, reply, explain, answer-client, vision-client, voice-stream
-│   ├── auth/                 demo-accounts, session, server-session, actions
+│   ├── auth/                 database, accounts, password, google, session, actions
 │   ├── simulasi/             catalog, scenario, validate
 │   ├── darurat/              report, pdf
 │   ├── evidence/             bundle, extract, timeline, narrative

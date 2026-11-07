@@ -18,6 +18,9 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
+Node.js minimal 22.13. Akun email/password menggunakan SQLite; Google OAuth
+memerlukan konfigurasi di `.env.local`. Panduan: [`docs/auth.md`](docs/auth.md).
+
 ## Perintah
 
 ```bash
@@ -75,8 +78,9 @@ src/
 `src/lib/scoring/score.ts`, deterministik dan tanpa jaringan. Kalau model bahasa
 mati di venue, deteksi tetap tampil.
 
-**Tanpa akun, tanpa simpan.** Progres belajar di localStorage. Percakapan hilang
-saat tab ditutup.
+**Akun opsional.** Identitas akun dan sesi tersimpan di SQLite. Progres belajar
+tetap di localStorage; percakapan hilang saat tab ditutup. Darurat selalu
+terbuka tanpa akun.
 
 **Kejujuran di atas kelengkapan.** Modul yang belum ditulis berstatus `segera`,
 agent yang belum dibangun ditandai `belum aktif`, simulasi yang belum jadi

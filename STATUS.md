@@ -1,5 +1,11 @@
 # Status — per 5 November 2026
 
+**7 November 2026 — autentikasi sungguhan (permintaan pemilik produk).**
+`/daftar` dan `/masuk` menjadi halaman terpisah. Akun email/password disimpan
+di SQLite dengan scrypt, sesi dapat dicabut, dan Google OAuth memakai state,
+PKCE, nonce serta verifikasi ID token. Kredensial Google perlu diisi lewat
+`.env.local`. Progres tetap lokal. Panduan dan batas hosting: `docs/auth.md`.
+
 Gate 0 tercapai. Gate 1 tercapai untuk A dan D.
 
 | Stream | Gate 1 target | Status |

@@ -32,8 +32,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
       <footer className="shrink-0 border-line border-t px-4 py-6 text-dim text-sm sm:px-6">
         <p className="mx-auto max-w-6xl">
-          Lumina tidak menyimpan percakapan. Akun hanya untuk demo. Tutup tab,
-          riwayatnya hilang.
+          Akun bersifat opsional. Progres belajar tetap di perangkat ini. Tutup
+          tab, riwayat percakapannya hilang.
         </p>
       </footer>
     </div>

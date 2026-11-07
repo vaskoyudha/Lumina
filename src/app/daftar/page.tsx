@@ -1,6 +1,15 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { AuthPage } from "@/components/auth/auth-page";
 
-/** `/daftar` is a tab on `/masuk`; keep the URL working for anyone who types it. */
-export default function DaftarPage() {
-  redirect("/masuk?tab=daftar");
+export const metadata: Metadata = {
+  title: "Daftar",
+  description: "Buat akun Lumina dengan Google atau email dan password.",
+};
+
+export default function DaftarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  return <AuthPage intent="daftar" searchParams={searchParams} />;
 }
