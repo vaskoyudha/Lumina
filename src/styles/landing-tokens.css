@@ -195,7 +195,7 @@
         rgba(120, 62, 22, 0.3) 68%,
         rgba(180, 112, 48, 0.15) 100%
       ),
-      url("/images/hero.jpg");
+      url("/images/hero-mascot.png");
     background-size: cover;
     background-position: center right;
   }
@@ -216,7 +216,7 @@
           rgba(78, 33, 12, 0.6) 62%,
           rgba(120, 62, 22, 0.28) 100%
         ),
-        url("/images/hero.jpg");
+        url("/images/hero-mascot.png");
       background-size:
         100% 100%,
         100% 100%,
@@ -370,7 +370,7 @@
         rgb(24 24 24 / 0.58) 68%,
         rgb(40 40 40 / 0.32) 100%
       ),
-      url("/images/hero.jpg");
+      url("/images/hero-mascot.png");
     background-size: cover;
     background-position: center right;
   }
@@ -431,7 +431,7 @@
           rgb(14 14 14 / 0.66) 62%,
           rgb(28 28 28 / 0.34) 100%
         ),
-        url("/images/hero.jpg");
+        url("/images/hero-mascot.png");
       background-size:
         100% 100%,
         100% 100%,
