@@ -161,7 +161,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
                         </p>
                         <p className="text-dim text-sm">
                           Yang aman:{" "}
-                          <span className="text-[color:var(--appnext-accent-deep)]">
+                          <span className="text-brand-ink">
                             {correct?.label}
                           </span>
                         </p>
@@ -169,7 +169,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
                         <Button
                           type="button"
                           size="sm"
-                          className="mt-2 min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
+                          className="mt-2 min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-brand-strong"
                           onClick={() => retryQuestion(q.id)}
                         >
                           Coba soal ini lagi
@@ -185,7 +185,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
         {!passed ? (
           <Button
             type="button"
-            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
+            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-brand-strong"
             onClick={retry}
           >
             Coba lagi
@@ -207,7 +207,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
           aria-valuemin={0}
           aria-valuemax={total}
           aria-valuenow={index + 1}
-          className="h-2.5 flex-1 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-[var(--appnext-accent)]"
+          className="h-2.5 flex-1 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-brand"
         />
       </div>
 
@@ -242,7 +242,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
               className={cn(
                 "h-auto min-h-[52px] w-full justify-start gap-3 rounded-2xl px-4 py-3 text-left text-base font-normal whitespace-normal text-[color:var(--appnext-ink-2)]",
                 "aria-disabled:cursor-default",
-                "data-[state=correct]:border-[color:var(--appnext-accent)] data-[state=correct]:bg-[var(--appnext-accent-wash)] data-[state=correct]:text-[color:var(--appnext-accent-deep)]",
+                "data-[state=correct]:border-brand data-[state=correct]:bg-brand-soft data-[state=correct]:text-brand-ink",
                 "data-[state=wrong]:border-[color:var(--appnext-danger)] data-[state=wrong]:bg-[var(--appnext-danger-wash)] data-[state=wrong]:text-[color:var(--appnext-danger-deep)]",
               )}
             >
@@ -250,8 +250,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
                 aria-hidden
                 className={cn(
                   "inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-line font-medium text-[13px]",
-                  state === "correct" &&
-                    "border-[color:var(--appnext-accent)] text-[color:var(--appnext-accent-deep)]",
+                  state === "correct" && "border-brand text-brand-ink",
                   state === "wrong" &&
                     "border-[color:var(--appnext-danger)] text-[color:var(--appnext-danger-deep)]",
                 )}
@@ -276,7 +275,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
       ) : null}
 
       {locked && wasCorrect && !isLast ? (
-        <p className="font-medium text-[color:var(--appnext-accent-deep)]">
+        <p className="font-medium text-brand-ink">
           Betul — itu yang menghentikan penipuan sebelum uang bergerak.
         </p>
       ) : null}
@@ -284,7 +283,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
       {locked && !isLast ? (
         <Button
           type="button"
-          className="min-h-11 w-fit rounded-full bg-[var(--appnext-accent-deep)] text-bg hover:bg-[var(--appnext-ink-2)]"
+          className="min-h-11 w-fit rounded-full bg-brand-strong text-bg hover:bg-[var(--appnext-ink-2)]"
           onClick={next}
         >
           Soal berikutnya

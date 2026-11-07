@@ -16,8 +16,7 @@ import {
 import { logout } from "@/lib/auth/actions";
 
 /**
- * Logged-in affordance in the app nav. Demo-scope: shows the name from the
- * signed cookie and the way to `/profil`, the device-only profile summary.
+ * Shows the database session identity and the way to `/profil`.
  * There are still no settings and no avatar upload — nothing to edit.
  */
 export function UserMenu({ nama, email }: { nama: string; email: string }) {
@@ -56,7 +55,7 @@ export function UserMenu({ nama, email }: { nama: string; email: string }) {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/masuk" className="flex items-center gap-2">
-            Ganti akun demo
+            Ganti akun
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

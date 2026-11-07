@@ -180,7 +180,10 @@ export function NavRail({
         <Fragment key={item.href}>
           <RailItem
             {...item}
-            active={isActive(item.href)}
+            active={
+              isActive(item.href) &&
+              !(item.href === "/companion" && agentsActive)
+            }
             iconsOnly={iconsOnly}
             onClick={item.href === "/companion" ? onShowChat : undefined}
           />

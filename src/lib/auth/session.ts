@@ -1,96 +1,71 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
-/**
- * Demo session — signed cookie, no server-side storage.
- *
- * The payload carries only a name, an email, and an expiry. Nothing about the
- * user's activity leaves their device, so a stolen cookie leaks a display name
- * and nothing else. This is a facade for the judged demo, not real auth:
- * there is no password hash, no revocation list, and no database.
- *
- * Server-only. Never import from a client component.
- */
+import "server-only";
+import { randomBytes } from "node:crypto";
+import { type Account, digest } from "@/lib/auth/accounts";
+import { authDatabase } from "@/lib/auth/database";
 
 export const SESSION_COOKIE = "lumina_session";
-const SESSION_TTL_SECONDS = 60 * 60 * 24;
-/** "Ingat saya" keeps the facade for a month instead of one day. */
-export const SESSION_REMEMBER_TTL_SECONDS = 60 * 60 * 24 * 30;
+export const SESSION_MAX_AGE = 60 * 60 * 24;
 
-export interface SessionPayload {
-  email: string;
-  nama: string;
-  /** Unix seconds. */
+export interface SessionPayload extends Account {
   exp: number;
 }
 
-function secret(): string {
-  const fromEnv = process.env.AUTH_SECRET;
-  if (fromEnv && fromEnv.length >= 16) return fromEnv;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "AUTH_SECRET wajib diisi di production (minimal 16 karakter). " +
-        "Jangan memakai fallback dev untuk deployment.",
-    );
-  }
-  // Deterministic dev fallback so a cookie survives `next dev` restarts.
-  return "lumina-dev-only-secret-do-not-ship";
-}
+export const sessionCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: SESSION_MAX_AGE,
+};
 
-function toBase64Url(input: string): string {
-  return Buffer.from(input, "utf8").toString("base64url");
-}
-
-function fromBase64Url(input: string): string {
-  return Buffer.from(input, "base64url").toString("utf8");
-}
-
-export function signPayload(payload: SessionPayload): string {
-  const body = toBase64Url(JSON.stringify(payload));
-  const mac = createHmac("sha256", secret()).update(body).digest("base64url");
-  return `${body}.${mac}`;
-}
-
-export function verifyPayload(
-  token: string | undefined | null,
-): SessionPayload | null {
-  if (!token) return null;
-  const [body, mac] = token.split(".");
-  if (!body || !mac) return null;
-
-  const expected = createHmac("sha256", secret())
-    .update(body)
-    .digest("base64url");
-  const given = Buffer.from(mac);
-  const wanted = Buffer.from(expected);
-  if (given.length !== wanted.length) return null;
-  if (!timingSafeEqual(given, wanted)) return null;
-
+export async function createSession(
+  userId: string,
+  previous?: string,
+): Promise<string> {
+  const token = randomBytes(32).toString("base64url");
+  const client = await authDatabase().connect();
   try {
-    const parsed = JSON.parse(fromBase64Url(body)) as SessionPayload;
-    if (
-      typeof parsed.email !== "string" ||
-      typeof parsed.nama !== "string" ||
-      typeof parsed.exp !== "number"
-    ) {
-      return null;
-    }
-    if (parsed.exp * 1000 < Date.now()) return null;
-    return parsed;
-  } catch {
-    return null;
+    await client.query("BEGIN");
+    await client.query(
+      "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '24 hours')",
+      [digest(token), userId],
+    );
+    if (previous)
+      await client.query("DELETE FROM sessions WHERE token_hash = $1", [
+        digest(previous),
+      ]);
+    await client.query("COMMIT");
+    return token;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
   }
 }
-
-export function newPayload(
-  email: string,
-  nama: string,
-  ttlSeconds: number = SESSION_TTL_SECONDS,
-): SessionPayload {
+export async function readSession(
+  token: string | undefined,
+): Promise<SessionPayload | null> {
+  if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
+  const row = (
+    await authDatabase().query<Account & { expires_at: Date }>(
+      `SELECT users.id, users.email, users.nama, users.created_at, sessions.expires_at
+    FROM sessions JOIN users ON users.id = sessions.user_id WHERE token_hash = $1 AND expires_at > now()`,
+      [digest(token)],
+    )
+  ).rows[0];
+  if (!row) return null;
   return {
-    email,
-    nama,
-    exp: Math.floor(Date.now() / 1000) + ttlSeconds,
+    id: row.id,
+    email: row.email,
+    nama: row.nama,
+    created_at: new Date(row.created_at).toISOString(),
+    exp: Math.floor(new Date(row.expires_at).getTime() / 1000),
   };
 }
-
-export const SESSION_MAX_AGE = SESSION_TTL_SECONDS;
+export async function revokeSession(token: string | undefined): Promise<void> {
+  if (token)
+    await authDatabase().query("DELETE FROM sessions WHERE token_hash = $1", [
+      digest(token),
+    ]);
+}
