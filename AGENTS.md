@@ -58,11 +58,11 @@ akun, sekarang dan setelah perubahan akses apa pun. Kalau middleware ditambahkan
 nanti, pengecualian `/darurat` masuk di commit yang sama.
 
 **9. Auth menyimpan akun sungguhan.** Keputusan pemilik produk 7 November 2026
-mengizinkan database akun dan Google OAuth, menggantikan fasad demo. SQLite
+mengizinkan database akun dan Google OAuth, menggantikan fasad demo. PostgreSQL
 menyimpan identitas, hash scrypt password, hash token sesi, dan transaksi OAuth
-sementara. Progres dan percakapan tidak masuk database akun. Node >=22.13 dan
-disk persisten wajib; konfigurasi serta batas hosting ada di `docs/auth.md`.
-`google-auth-library` adalah tambahan dependensi yang diizinkan untuk perubahan
+sementara. Progres dan percakapan tidak masuk database akun. Node 24 dan
+volume PostgreSQL persisten wajib; konfigurasi serta batas hosting ada di `docs/auth.md`.
+`google-auth-library`, `pg`, dan `@types/pg` adalah tambahan dependensi yang diizinkan untuk perubahan
 ini. Jangan mengembalikan password literal atau sesi demo.
 
 ## Stack — jangan diganti tanpa kesepakatan
@@ -119,7 +119,8 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 
 `.env.example` adalah daftar variabel; `.env.local` tidak di-commit.
 
-- `AUTH_DATABASE_PATH` — file SQLite pada disk persisten (default `data/auth.sqlite`).
+- `DATABASE_URL` — koneksi PostgreSQL runtime; jalankan `npm run db:migrate` sebelum app.
+- `TEST_DATABASE_URL` — database khusus pengujian (nama berakhiran `_test`); jangan gunakan database produksi.
 - `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; lihat `docs/auth.md`.
 - `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
   OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan

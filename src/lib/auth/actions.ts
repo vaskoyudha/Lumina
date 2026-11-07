@@ -24,8 +24,7 @@ export interface AuthResult {
 
 async function signedIn(account: Account): Promise<AuthResult> {
   const jar = await cookies();
-  const token = createSession(account.id);
-  revokeSession(jar.get(SESSION_COOKIE)?.value);
+  const token = await createSession(account.id, jar.get(SESSION_COOKIE)?.value);
   jar.set(SESSION_COOKIE, token, sessionCookieOptions);
   return { ok: true, account: { email: account.email, nama: account.nama } };
 }
@@ -45,7 +44,7 @@ export async function login(
   formData: FormData,
 ): Promise<AuthResult> {
   try {
-    consumeAttempt("login:global", 200);
+    await consumeAttempt("login:global", 200);
     const account = await authenticatePassword(
       String(formData.get("email") ?? ""),
       String(formData.get("password") ?? ""),
@@ -61,7 +60,7 @@ export async function register(
   formData: FormData,
 ): Promise<AuthResult> {
   try {
-    consumeAttempt("register:global", 50);
+    await consumeAttempt("register:global", 50);
     const account = await registerAccount({
       nama: String(formData.get("nama") ?? ""),
       email: String(formData.get("email") ?? ""),
@@ -76,7 +75,13 @@ export async function register(
 
 export async function logout(): Promise<void> {
   const jar = await cookies();
-  revokeSession(jar.get(SESSION_COOKIE)?.value);
+  try {
+    await revokeSession(jar.get(SESSION_COOKIE)?.value);
+  } catch {
+    throw new Error(
+      "Layanan akun sedang tidak tersedia. Coba keluar lagi sebentar.",
+    );
+  }
   jar.delete(SESSION_COOKIE);
   redirect("/");
 }

@@ -17,5 +17,5 @@ export async function getSession(): Promise<SessionPayload | null> {
   await connection();
 
   const jar = await cookies();
-  return readSession(jar.get(SESSION_COOKIE)?.value);
+  return readSession(jar.get(SESSION_COOKIE)?.value).catch(() => null);
 }
