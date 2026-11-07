@@ -120,6 +120,8 @@ interface Turn {
   /** The text that produced `result`, including attachment filenames. */
   source?: string;
   attachments?: Attachment[];
+  /** Why an attached image could not be read; absent when every image was read. */
+  visionNote?: string;
   /** What the agents actually did for this turn, measured. */
   trace?: AgentTrace;
   /** The teaching layer: tactics, anatomy, checks, and where to report. */
@@ -340,6 +342,35 @@ export function CompanionChat({
        * a verdict.
        */
       const transcription = await transcribeImages(attachments);
+
+      /*
+       * A failed pixel read is a receipt, not a silent fallback. Without it the
+       * turn still scores from the filename, and the reader would believe the
+       * screenshot itself was examined.
+       */
+      if (hasImages && transcription.failed > 0) {
+        setSessions((prev) =>
+          prev.map((session) =>
+            session.id === target
+              ? {
+                  ...session,
+                  turns: session.turns.map((turn) =>
+                    turn.id === userTurn.id
+                      ? {
+                          ...turn,
+                          visionNote:
+                            transcription.failed === transcription.attempted
+                              ? `${transcription.failed} gambar gagal dibaca; pemeriksaan hanya memakai nama berkas.`
+                              : `${transcription.failed} dari ${transcription.attempted} gambar gagal dibaca; sisanya diperiksa.`,
+                        }
+                      : turn,
+                  ),
+                }
+              : session,
+          ),
+        );
+      }
+
       const scored = [
         transcription.text,
         scoringTextWithAttachments(text, attachments),
@@ -416,7 +447,9 @@ export function CompanionChat({
           ? {
               id: "evidence",
               ...STAGE_LABEL.evidence,
-              status: "selesai",
+              // No artifact means the stage did not produce evidence. It must
+              // not wear a finished tick over a bundle it never filled.
+              status: artifacts > 0 ? "selesai" : "dilewati",
               findings: 0,
               ms: evidenceMs,
               note:
@@ -457,6 +490,19 @@ export function CompanionChat({
           }
         : null;
 
+      /*
+       * The teaching layer is a pure function of the verdict, so it is computed
+       * once here and reused when the turn seals. The card can then render the
+       * same explanation immediately, before the language layer has written a
+       * word — the verdict is not allowed to wait for the voice.
+       */
+      const explanation =
+        checked &&
+        result !== null &&
+        result.signals.some((signal) => signal.weight > 0)
+          ? explain(result, scored)
+          : undefined;
+
       setBusy(true);
       setSessions((prev) =>
         prev.map((session) =>
@@ -482,6 +528,7 @@ export function CompanionChat({
                     voiceStartedAt,
                     result: checked ? (result ?? undefined) : undefined,
                     source: checked ? scored : undefined,
+                    explanation,
                     trace: openTrace ?? undefined,
                   },
                 ],
@@ -551,17 +598,7 @@ export function CompanionChat({
           laneSource: lane === "tanya" ? text : undefined,
           result: checked ? (result ?? undefined) : undefined,
           source: checked ? scored : undefined,
-          /*
-           * Only teach when something was actually found. A clean message has
-           * no tactics and no scheme, and showing generic checks for "apa
-           * kabar?" would be noise dressed as diligence.
-           */
-          explanation:
-            checked &&
-            result !== null &&
-            result.signals.some((signal) => signal.weight > 0)
-              ? explain(result, scored)
-              : undefined,
+          explanation,
           trace: turn.trace
             ? {
                 // Replace the open `berjalan` stage rather than appending a
@@ -1037,6 +1074,12 @@ export function CompanionChat({
                             ))}
                           </ul>
                         ) : null}
+
+                        {turn.visionNote ? (
+                          <p className="max-w-[85%] text-right text-[11px] text-danger leading-snug">
+                            {turn.visionNote}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   ) : (
@@ -1088,10 +1131,11 @@ export function CompanionChat({
                         </div>
                       ) : null}
 
-                      {turn.result && !turn.streaming ? (
+                      {turn.result ? (
                         <>
                           <ScoreCard
                             result={turn.result}
+                            trace={turn.trace}
                             showEscalation={false}
                             showLinks={false}
                           />

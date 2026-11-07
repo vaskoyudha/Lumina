@@ -905,9 +905,10 @@ export function SignalPanel({
                 <VoiceNode code={voiceCode(sequence.length)} status="pending" />
               </div>
 
-              <p className="mt-3 flex items-center gap-1.5 rounded-full bg-txt/5 px-2.5 py-1.5 text-[10.5px] text-dim">
-                <Lock aria-hidden className="size-3 shrink-0" />
-                Pesan tidak dikirim ke mana pun saat diperiksa.
+              <p className="mt-3 flex items-start gap-1.5 rounded-[10px] bg-txt/5 px-2.5 py-1.5 text-[10.5px] text-dim leading-snug">
+                <Lock aria-hidden className="mt-px size-3 shrink-0" />
+                Pesan lengkap tetap di perangkat; ringkasan tanpa kutipan bisa
+                sampai ke lapisan bahasa.
               </p>
             </div>
           </CardContent>
@@ -960,7 +961,9 @@ export function SignalPanel({
     const ran =
       stage?.status === "selesai" ||
       stage?.status === "temuan" ||
-      (agent === "evidence" && evidence != null);
+      (agent === "evidence" &&
+        evidence != null &&
+        stage?.status !== "dilewati");
     const status: NodeStatus = !trace
       ? "pending"
       : ran
@@ -1059,7 +1062,7 @@ export function SignalPanel({
                 {result.hardOverride ? (
                   <p className="mt-1 flex items-center gap-1 text-[11px] text-danger">
                     <TriangleAlert aria-hidden className="size-3 shrink-0" />
-                    Permintaan OTP atau file APK memaksa risiko tinggi.
+                    Permintaan OTP, PIN, atau password memaksa risiko tinggi.
                   </p>
                 ) : null}
                 {result.advice[0] && result.risk !== "bersih" ? (
@@ -1277,6 +1280,10 @@ export function SignalPanel({
         <p className="text-[10.5px] text-dim leading-snug">
           Skor dihitung di perangkat oleh{" "}
           <span className="text-txt">scoring.ts</span> (deterministik).
+        </p>
+        <p className="mt-1 text-[10.5px] text-dim leading-snug">
+          Pesan lengkap tetap di perangkat; ringkasan tanpa kutipan bisa sampai
+          ke lapisan bahasa.
         </p>
         {result.risk === "tinggi" ? (
           <Button

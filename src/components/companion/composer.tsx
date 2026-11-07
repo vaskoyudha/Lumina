@@ -372,8 +372,10 @@ export function Composer({
         reader but does not add a line of chrome.
       */}
       <p className="sr-only">
-        Percakapan ini dikirim ke model untuk menyusun jawaban. Pemeriksaan
-        tetap di perangkat ini dan percakapan tidak disimpan.
+        Isi pesan lengkap tidak dikirim: pemeriksaan berjalan di perangkat ini.
+        Yang bisa sampai ke lapisan bahasa hanya ringkasan temuan tanpa kutipan,
+        dan gambar yang kamu lampirkan dikirim ke layanan baca gambar untuk
+        disalin teksnya. Percakapan tidak disimpan.
       </p>
     </div>
   );

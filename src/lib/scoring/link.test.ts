@@ -60,6 +60,22 @@ describe("link classification — measured defect regressions", () => {
   });
 });
 
+describe("link classification — the exact brand SLD on the wrong suffix", () => {
+  it("flags bca.com as an imitation of BCA", () => {
+    // Measured defect: the imitation resolver declined when the normalized SLD
+    // equalled the brand, on the assumption that equality meant "the official
+    // path". The official check runs first, so by this point equality can only
+    // mean the brand name bought on a suffix the brand does not own.
+    const f = classifyLink("bca.com");
+    expect(f?.kind).toBe("typosquat");
+    expect(f?.imitates).toBe("BCA");
+  });
+
+  it("still resolves the real registrable before the imitation pass", () => {
+    expect(classifyLink("bca.co.id")?.kind).toBe("official");
+  });
+});
+
 describe("Link Agent — structural additions", () => {
   it("flags a punycode host", () => {
     // \u0441 is CYRILLIC SMALL LETTER ES, not Latin "c". The WHATWG URL parser

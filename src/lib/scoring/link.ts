@@ -412,7 +412,9 @@ function normalizeSld(raw: string): string {
  */
 function imitatesBrand(normalizedSld: string, brand?: string): boolean {
   if (!brand) return false;
-  if (normalizedSld === brand) return false; // exact = official path
+  // The official registrable was resolved before this runs, so an exact SLD
+  // match here can only mean the brand's name bought on a suffix the brand
+  // does not own (`bca.com`). It is a typosquat, not an official path.
   if (editDistance(normalizedSld, brand) <= 2) return true;
   return normalizedSld.includes(brand);
 }
@@ -425,7 +427,8 @@ function imitatesBrand(normalizedSld: string, brand?: string): boolean {
  * a documented limitation.
  */
 function prefixedBy(normalizedSld: string, brand: string): boolean {
-  if (normalizedSld === brand) return false;
+  // Same reasoning as `imitatesBrand`: reaching this point with an exact SLD
+  // means the registrable is not official (`bca.com`), so it imitates.
   return normalizedSld.startsWith(brand);
 }
 

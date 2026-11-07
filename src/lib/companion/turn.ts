@@ -57,7 +57,7 @@ const FOLLOW_UP =
 const CONCEPT_QUESTION: readonly RegExp[] = [
   /^(apa|apakah)\s+(itu|sih|yang\s+dimaksud|arti|artinya|beda|bedanya|perbedaan)\b/i,
   /^(jelaskan|maksudnya|artinya)\b/i,
-  /^(bagaimana|gimana)\s+(cara\s+)?(mengenali|menghindari|menangani|melapor|memeriksa|kerja|bekerja|membedakan)\b/i,
+  /^(bagaimana|gimana)\s+(cara\s+)?(mengenali|menghindari|menangani|melapor|memeriksa|kerja|bekerja|membedakan|bayar|membayar|pakai|memakai)\b/i,
   /^(kenapa|mengapa|kok)\s+(bisa|bisakah|sih)\b/i,
   /^(siapa|apa)\s+(kamu|ini|lumina)\b/i,
   /^(kamu|ini)\s+(siapa|apa|bisa)\b/i,
