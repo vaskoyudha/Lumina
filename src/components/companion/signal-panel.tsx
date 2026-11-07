@@ -17,9 +17,17 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import {
+  buildPanelWires,
+  type PanelWire,
+  WIRE_METRICS,
+  type WireHead,
+  type WireTone,
+} from "@/components/companion/panel-wires";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +46,7 @@ import { cn } from "@/lib/utils";
 /**
  * Right-hand evidence panel (§3) — drawn as the agent graph from the Cortex
  * reference: one verdict node, five branch nodes, one synthesis node, joined by
- * SVG fan-out and convergence curves over a dotted canvas.
+ * an orthogonal fan rail and return rail over a dotted canvas.
  *
  * The graph is the structure the reference asked for, but every wire is backed
  * by data we actually have: a branch turns green only when its detector ran, a
@@ -73,6 +81,23 @@ const NODE_LABEL: Record<string, string> = {
   skipped: "Dilewati",
   failed: "Gagal",
   pending: "Tanpa catatan",
+};
+
+/** Port fills follow the branch's measured status, not the wire's own guess. */
+const PORT_IN: Record<NodeStatus, string> = {
+  pending: "border-dot",
+  ran: "border-brand-strong",
+  live: "border-brand-strong",
+  skipped: "border-dot-soft",
+  failed: "border-danger",
+};
+
+const PORT_OUT: Record<NodeStatus, string> = {
+  pending: "bg-dot",
+  ran: "bg-brand-strong",
+  live: "bg-brand-strong",
+  skipped: "bg-dot-soft",
+  failed: "bg-danger",
 };
 
 /**
@@ -125,14 +150,14 @@ function VennMark() {
   );
 }
 
-/** Entry pill + dashed stem + port, cloned from the reference canvas. */
+/** Entry pill + stem + port, cloned from the reference canvas. */
 function EntryPort({ label }: { label: string }) {
   return (
     <div className="mb-1 flex flex-col items-center">
       <div className="rounded-full border border-edge bg-panel/90 px-2 py-0.5 font-mono text-[9.5px] text-ink-mute uppercase tracking-wider">
         {label}
       </div>
-      <div className="h-3 border-dot border-l border-dashed" />
+      <div className="h-3 border-brand-edge border-l" />
       <div
         className="-mb-1.5 z-10 size-2.5 rounded-full border-2 border-dot bg-panel"
         data-node="entry"
@@ -145,18 +170,10 @@ function EntryPort({ label }: { label: string }) {
 type PortPoint = {
   x: number;
   y: number;
-  live: boolean;
-  status: string;
+  status?: string;
 };
 
-type GraphWire = {
-  key: string;
-  d: string;
-  active: boolean;
-  muted: boolean;
-};
-
-function sameWires(a: GraphWire[], b: GraphWire[]): boolean {
+function sameWires(a: PanelWire[], b: PanelWire[]): boolean {
   return (
     a.length === b.length &&
     a.every((wire, index) => {
@@ -165,8 +182,10 @@ function sameWires(a: GraphWire[], b: GraphWire[]): boolean {
         other != null &&
         wire.key === other.key &&
         wire.d === other.d &&
-        wire.active === other.active &&
-        wire.muted === other.muted
+        wire.tone === other.tone &&
+        wire.head?.x === other.head?.x &&
+        wire.head?.y === other.head?.y &&
+        wire.head?.dir === other.head?.dir
       );
     })
   );
@@ -180,7 +199,7 @@ function sameWires(a: GraphWire[], b: GraphWire[]): boolean {
  */
 function useGraphWires(canvasRef: RefObject<HTMLDivElement | null>) {
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const [wires, setWires] = useState<GraphWire[]>([]);
+  const [wires, setWires] = useState<PanelWire[]>([]);
 
   const measure = useCallback(() => {
     const canvas = canvasRef.current;
@@ -213,8 +232,7 @@ function useGraphWires(canvasRef: RefObject<HTMLDivElement | null>) {
       ports.set(`${node}:${port}`, {
         x,
         y,
-        live: element.dataset.live === "true",
-        status: element.dataset.status ?? "",
+        status: element.dataset.status,
       });
     }
 
@@ -225,49 +243,18 @@ function useGraphWires(canvasRef: RefObject<HTMLDivElement | null>) {
           node.startsWith("agent-") && all.indexOf(node) === index,
       );
 
-    const root = ports.get("root:out");
-    const synthesisIn = ports.get("synthesis:in");
-    const synthesisOut = ports.get("synthesis:out");
-    const voiceIn = ports.get("voice:in");
-    const next: GraphWire[] = [];
-
-    if (root) {
-      const trunk = 8;
-      for (const agent of agents) {
-        const target = ports.get(`${agent}:in`);
-        if (!target) continue;
-        const middle = (root.y + trunk + target.y) / 2;
-        next.push({
-          key: `root:${agent}`,
-          d: `M ${root.x} ${root.y} L ${root.x} ${root.y + trunk} C ${root.x} ${middle}, ${target.x} ${middle}, ${target.x} ${target.y}`,
-          active: target.live,
-          muted: target.status === "pending" || target.status === "skipped",
-        });
-      }
-    }
-
-    if (synthesisIn) {
-      for (const agent of agents) {
-        const source = ports.get(`${agent}:out`);
-        if (!source) continue;
-        const approach = Math.max(synthesisIn.y - 12, source.y);
-        next.push({
-          key: `${agent}:synthesis`,
-          d: `M ${source.x} ${source.y} C ${source.x} ${approach}, ${synthesisIn.x} ${approach}, ${synthesisIn.x} ${synthesisIn.y}`,
-          active: synthesisIn.live,
-          muted: source.status === "pending" || source.status === "skipped",
-        });
-      }
-    }
-
-    if (synthesisOut && voiceIn) {
-      next.push({
-        key: "synthesis:voice",
-        d: `M ${synthesisOut.x} ${synthesisOut.y} C ${synthesisOut.x} ${synthesisOut.y + 6}, ${voiceIn.x} ${voiceIn.y - 6}, ${voiceIn.x} ${voiceIn.y}`,
-        active: voiceIn.live,
-        muted: voiceIn.status === "pending" || voiceIn.status === "skipped",
-      });
-    }
+    const next = buildPanelWires({
+      width,
+      rootOut: ports.get("root:out"),
+      synthesisIn: ports.get("synthesis:in"),
+      synthesisOut: ports.get("synthesis:out"),
+      voiceIn: ports.get("voice:in"),
+      agents: agents.map((id) => ({
+        id,
+        in: ports.get(`${id}:in`),
+        out: ports.get(`${id}:out`),
+      })),
+    });
 
     setSize((prev) =>
       prev.width === width && prev.height === height ? prev : { width, height },
@@ -303,7 +290,62 @@ function useGraphWires(canvasRef: RefObject<HTMLDivElement | null>) {
     return () => window.removeEventListener("resize", measure);
   }, [measure]);
 
+  /*
+   * Tones are read from `data-status`, and a trace update does not necessarily
+   * resize a port. Re-measure after every commit; the state setters bail when
+   * the geometry and tones are unchanged, so this cannot loop.
+   */
+  useLayoutEffect(() => {
+    measure();
+  });
+
   return { attachCanvas, ...size, wires };
+}
+
+const WIRE_TONE: Record<
+  WireTone,
+  { fill: string; pulse: boolean; stroke: string; width: number }
+> = {
+  base: {
+    fill: "fill-brand-edge",
+    pulse: false,
+    stroke: "stroke-brand-edge",
+    width: 1.2,
+  },
+  ran: {
+    fill: "fill-brand-strong",
+    pulse: false,
+    stroke: "stroke-brand-strong",
+    width: 1.5,
+  },
+  live: {
+    fill: "fill-brand-strong",
+    pulse: true,
+    stroke: "stroke-brand-strong",
+    width: 2,
+  },
+  skipped: {
+    fill: "fill-dot",
+    pulse: false,
+    stroke: "stroke-dot",
+    width: 1.2,
+  },
+  failed: {
+    fill: "fill-danger",
+    pulse: false,
+    stroke: "stroke-danger",
+    width: 1.5,
+  },
+};
+
+/** Filled triangle: tip on the port edge, base on the wire's own endpoint. */
+function headPoints(head: WireHead): string {
+  const length = WIRE_METRICS.head;
+  const half = WIRE_METRICS.halfHead;
+  if (head.dir === "right") {
+    return `${head.x},${head.y} ${head.x - length},${head.y - half} ${head.x - length},${head.y + half}`;
+  }
+  return `${head.x},${head.y} ${head.x - half},${head.y - length} ${head.x + half},${head.y - length}`;
 }
 
 function GraphWires({
@@ -313,7 +355,7 @@ function GraphWires({
 }: {
   height: number;
   width: number;
-  wires: GraphWire[];
+  wires: PanelWire[];
 }) {
   if (width <= 0 || height <= 0) return null;
 
@@ -325,23 +367,26 @@ function GraphWires({
       preserveAspectRatio="none"
       viewBox={`0 0 ${width} ${height}`}
     >
-      {wires.map((wire) => (
-        <path
-          className={cn(
-            "stroke-brand-strong transition-opacity duration-150",
-            wire.active
-              ? "opacity-100 motion-safe:animate-pulse"
-              : wire.muted
-                ? "opacity-25"
-                : "opacity-45",
-          )}
-          d={wire.d}
-          key={wire.key}
-          strokeDasharray={wire.muted ? "4 4" : undefined}
-          strokeWidth={wire.active ? 2.2 : 1.4}
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
+      {wires.map((wire) => {
+        const tone = WIRE_TONE[wire.tone];
+        return (
+          <g data-tone={wire.tone} data-wire={wire.key} key={wire.key}>
+            <path
+              className={cn(
+                "transition-colors duration-150",
+                tone.stroke,
+                tone.pulse && "motion-safe:animate-pulse",
+              )}
+              d={wire.d}
+              strokeWidth={tone.width}
+              vectorEffect="non-scaling-stroke"
+            />
+            {wire.head ? (
+              <polygon className={tone.fill} points={headPoints(wire.head)} />
+            ) : null}
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -384,12 +429,12 @@ function AgentNode({
       data-node={`agent-${nodeId}`}
       data-status={status}
     >
-      <span className="absolute top-4 -left-[9px] flex items-center">
-        <span className="mr-0.5 h-0 w-0 border-y-[3.5px] border-y-transparent border-l-[5px] border-l-brand" />
+      <span className="absolute top-4 -left-[2px] flex items-center">
         <span
           className={cn(
-            "size-2.5 rounded-full border-2 border-dot bg-panel",
-            live && "border-brand-strong motion-safe:animate-ping",
+            "size-2.5 rounded-full border-2 bg-panel",
+            PORT_IN[status],
+            live && "motion-safe:animate-ping",
           )}
           data-live={live ? "true" : undefined}
           data-node={`agent-${nodeId}`}
@@ -426,7 +471,11 @@ function AgentNode({
         <span>Then</span>
         <span className="font-mono text-[10.5px]">→ &nbsp;{nextCode}</span>
         <span
-          className="absolute top-1/2 -right-[5px] size-2.5 -translate-y-1/2 rounded-full bg-brand-strong"
+          className={cn(
+            "absolute top-1/2 -right-[5px] size-2.5 -translate-y-1/2 rounded-full",
+            PORT_OUT[status],
+            live && "motion-safe:animate-ping",
+          )}
           data-live={live ? "true" : undefined}
           data-node={`agent-${nodeId}`}
           data-port="out"
@@ -590,7 +639,8 @@ function VoiceNode({
       <span
         aria-hidden
         className={cn(
-          "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel",
+          "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-panel",
+          PORT_IN[status],
           live && "motion-safe:animate-ping",
         )}
         data-live={live ? "true" : undefined}
@@ -814,14 +864,20 @@ export function SignalPanel({
               >
                 <span
                   aria-hidden
-                  className="absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel"
+                  className={cn(
+                    "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-panel",
+                    PORT_IN.pending,
+                  )}
                   data-node="synthesis"
                   data-port="in"
                   data-status="pending"
                 />
                 <span
                   aria-hidden
-                  className="absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel"
+                  className={cn(
+                    "absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full",
+                    PORT_OUT.pending,
+                  )}
                   data-node="synthesis"
                   data-port="out"
                   data-status="pending"
@@ -937,6 +993,7 @@ export function SignalPanel({
           : voiceStage?.status === "dilewati"
             ? "skipped"
             : "pending";
+  const synthesisStatus: NodeStatus = trace ? "ran" : "pending";
   const ranCount = nodes.filter((node) => node.status === "ran").length;
   const findingsKey = `${result.score}-${findings
     .map((signal) => signal.label)
@@ -1038,14 +1095,17 @@ export function SignalPanel({
               aria-labelledby={`${titleId}-findings`}
               className="relative rounded-[14px] border border-brand-line bg-panel px-3.5 py-2.5 shadow-rest"
               data-node="synthesis"
-              data-status={trace ? "ran" : "pending"}
+              data-status={synthesisStatus}
             >
               <span
                 aria-hidden
-                className="absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel"
+                className={cn(
+                  "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-panel",
+                  PORT_IN[synthesisStatus],
+                )}
                 data-node="synthesis"
                 data-port="in"
-                data-status={trace ? "ran" : "pending"}
+                data-status={synthesisStatus}
               />
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2.5">
@@ -1156,10 +1216,13 @@ export function SignalPanel({
               ) : null}
               <span
                 aria-hidden
-                className="absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel"
+                className={cn(
+                  "absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full",
+                  PORT_OUT[synthesisStatus],
+                )}
                 data-node="synthesis"
                 data-port="out"
-                data-status={trace ? "ran" : "pending"}
+                data-status={synthesisStatus}
               />
             </section>
 
