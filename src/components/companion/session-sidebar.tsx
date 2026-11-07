@@ -30,9 +30,9 @@ import { cn } from "@/lib/utils";
  *
  * The panels: history and navigation are collapsible sections. `Collapse` folds
  * the whole column to a 60px icon rail (an icon drawer, not a second navigation
- * tree); the same button expands it again. On `< md` the sidebar is the overlay
- * drawer and always renders expanded, because a 60px rail over the conversation
- * is not a drawer, it is a stripe.
+ * tree); the same button expands it again. On
+ * `< md` the sidebar is the overlay drawer and always renders expanded, because
+ * a 60px rail over the conversation is not a drawer, it is a stripe.
  *
  * What is still ours:
  *   a. Session rows are two lines. Cortex prints one line with a timestamp, but
@@ -41,6 +41,9 @@ import { cn } from "@/lib/utils";
  *   b. The footer is the privacy promise, not an account card. History lives in
  *      React state only (§11.6), so the bottom slot says exactly that.
  *   c. The `⌘K` chip is wired: it focuses the search field, it is not a decal.
+ *   d. The "Agen" option in `NavRail` opens the detector overview in the center
+ *      column, read straight from `AGENT_SEQUENCE` + `STAGE_LABEL` so that view
+ *      and the evidence panel can never disagree about who checks what.
  */
 
 export interface SessionSummary {
@@ -154,6 +157,9 @@ export function SessionSidebar({
   onClose,
   collapsed = false,
   onToggleCollapse,
+  agentsActive = false,
+  onShowAgents,
+  onShowChat,
   auth,
 }: {
   sessions: readonly SessionSummary[];
@@ -165,6 +171,11 @@ export function SessionSidebar({
   /** Desktop icon rail. Ignored below `md`, where the drawer is always full. */
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  /** True while the center column shows the detector overview. */
+  agentsActive?: boolean;
+  onShowAgents?: () => void;
+  /** Companion row: return the center column to the conversation. */
+  onShowChat?: () => void;
   /** Account slot; the flag is true when the sidebar is the 60px rail. */
   auth?: (iconsOnly: boolean) => React.ReactNode;
 }) {
@@ -359,7 +370,8 @@ export function SessionSidebar({
 
         <div className="my-2.5 border-t border-txt/[0.06]" />
 
-        {/* Two collapsible panels: the thread list and the destinations. */}
+        {/* Two collapsible panels: the thread list and the navigation block
+            (which carries the expandable agent list). */}
         <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-0.5">
           <Collapsible
             open={openPanels.history}
@@ -383,9 +395,13 @@ export function SessionSidebar({
               setOpenPanels((prev) => ({ ...prev, menu: open }))
             }
           >
-            <SectionTrigger open={openPanels.menu} label="Menu" count={4} />
+            <SectionTrigger open={openPanels.menu} label="Menu" count={5} />
             <CollapsibleContent className="pt-0.5">
-              <NavRail />
+              <NavRail
+                agentsActive={agentsActive}
+                onShowAgents={onShowAgents}
+                onShowChat={onShowChat}
+              />
             </CollapsibleContent>
           </Collapsible>
         </div>
@@ -442,7 +458,12 @@ export function SessionSidebar({
 
       <div className="my-1 w-8 border-t border-txt/[0.06]" />
 
-      <NavRail iconsOnly />
+      <NavRail
+        iconsOnly
+        agentsActive={agentsActive}
+        onShowAgents={onShowAgents}
+        onShowChat={onShowChat}
+      />
 
       <div className="my-1 w-8 border-t border-txt/[0.06]" />
 

@@ -137,4 +137,48 @@ describe("CompanionChat · shell", () => {
       ).toBeInTheDocument();
     }
   });
+
+  it("shows the five detection agents in the main panel when the sidebar option is pressed", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    const trigger = screen.getByRole("button", { name: /^agen/i });
+    const sidebar = trigger.closest("aside");
+    expect(sidebar).not.toBeNull();
+    if (!sidebar) return;
+
+    // The sidebar stays navigation: pressing the option must not unfold a list
+    // inside it, because the overview belongs to the center column.
+    const sidebarScope = within(sidebar as HTMLElement);
+    expect(sidebarScope.queryByText("Message Agent")).not.toBeInTheDocument();
+
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute("aria-current", "page");
+    expect(sidebarScope.queryByText("Message Agent")).not.toBeInTheDocument();
+
+    const view = screen
+      .getByRole("heading", { name: "Agen pemeriksa" })
+      .closest("section");
+    expect(view).not.toBeNull();
+    if (!view) return;
+
+    const viewScope = within(view as HTMLElement);
+    for (const agent of [
+      "Message Agent",
+      "Link Agent",
+      "Identity Agent",
+      "Conversation Agent",
+      "Evidence Agent",
+    ]) {
+      expect(viewScope.getByText(agent)).toBeInTheDocument();
+    }
+
+    await user.click(
+      viewScope.getByRole("button", { name: /kembali ke percakapan/i }),
+    );
+    expect(
+      screen.queryByRole("heading", { name: "Agen pemeriksa" }),
+    ).not.toBeInTheDocument();
+  });
 });

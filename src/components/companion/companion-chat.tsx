@@ -18,6 +18,7 @@ import Link from "next/link";
 import * as React from "react";
 import { AgentTraceCard } from "@/components/companion/agent-trace";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
+import { AgentsView } from "@/components/companion/agents-view";
 import {
   CompanionAuth,
   type CompanionSession,
@@ -152,9 +153,6 @@ interface Session {
   updatedAt?: number;
 }
 
-const GREETING =
-  "Halo. Tempel pesan, tautan, atau ceritakan telepon yang kamu terima. Saya akan tunjukkan kalimat mana yang berbahaya dan apa yang sebaiknya kamu lakukan.";
-
 /** One dot colour per band, reused by the header pill and the pipeline header. */
 const RISK_DOT: Record<NonNullable<Session["risk"]>, string> = {
   bersih: "bg-brand",
@@ -170,7 +168,7 @@ function newSession(): Session {
   return {
     id: id(),
     title: "Percakapan baru",
-    turns: [{ id: id(), role: "companion", text: GREETING }],
+    turns: [],
   };
 }
 
@@ -193,6 +191,8 @@ export function CompanionChat({
   const [busy, setBusy] = React.useState(false);
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
+  /** The center column's second view; the turns stay in state while it is away. */
+  const [showAgents, setShowAgents] = React.useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -274,7 +274,7 @@ export function CompanionChat({
   React.useEffect(() => {
     // `turns` is the trigger: this runs after every appended turn so the newest
     // one is anchored to the top of the log.
-    if (turns.length <= 1) return;
+    if (turns.length === 0) return;
     const log = scrollRef.current;
     if (!log) return;
     const nodes = log.querySelectorAll<HTMLElement>("[data-turn]");
@@ -758,6 +758,7 @@ export function CompanionChat({
     setSessions((prev) => [session, ...prev]);
     setSelectedId(session.id);
     setShowSessions(false);
+    setShowAgents(false);
   };
 
   /**
@@ -798,7 +799,7 @@ export function CompanionChat({
     }
   };
 
-  const empty = turns.length <= 1;
+  const empty = turns.length === 0;
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
@@ -809,11 +810,21 @@ export function CompanionChat({
           onSelect={(sessionId) => {
             setSelectedId(sessionId);
             setShowSessions(false);
+            setShowAgents(false);
           }}
           onNew={startNew}
           onClose={() => setShowSessions(false)}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          agentsActive={showAgents}
+          onShowAgents={() => {
+            setShowAgents(true);
+            setShowSessions(false);
+          }}
+          onShowChat={() => {
+            setShowAgents(false);
+            setShowSessions(false);
+          }}
           auth={(iconsOnly) => (
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
@@ -852,13 +863,19 @@ export function CompanionChat({
                   <Sparkles className="size-2 text-white" strokeWidth={2} />
                 </span>
                 <span className="truncate font-medium text-[12px] text-txt">
-                  {active?.title ?? "Percakapan baru"}
+                  {showAgents
+                    ? "Agen pemeriksa"
+                    : (active?.title ?? "Percakapan baru")}
                 </span>
                 <span
                   aria-hidden
                   className={cn(
                     "size-1.5 shrink-0 rounded-full",
-                    latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
+                    showAgents
+                      ? "hidden"
+                      : latestResult
+                        ? RISK_DOT[latestResult.risk]
+                        : "bg-dim/50",
                   )}
                 />
                 <DropdownMenu>
@@ -961,7 +978,9 @@ export function CompanionChat({
             </div>
           </header>
 
-          {empty ? (
+          {showAgents ? (
+            <AgentsView onBack={() => setShowAgents(false)} />
+          ) : empty ? (
             <>
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
                 <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
