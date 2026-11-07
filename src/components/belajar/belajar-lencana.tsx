@@ -94,7 +94,7 @@ export function BelajarLencana() {
                   className={cn(
                     "rounded-xl font-semibold text-xs",
                     earned
-                      ? "bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-ink-3)]"
+                      ? "border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-ink-3)]"
                       : "bg-panel-2 text-txt hover:bg-line",
                   )}
                 >

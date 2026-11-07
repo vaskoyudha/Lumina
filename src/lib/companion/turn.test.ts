@@ -206,6 +206,30 @@ describe("isQuestionAbout · narrow on purpose", () => {
   });
 });
 
+describe("isQuestionAbout · payment words do not turn a question into a check", () => {
+  it("guards a question about paying safely", () => {
+    // Measured defect: "Bagaimana cara bayar pakai QRIS yang aman?" hit the
+    // quishing rule at 0.7 and showed 70/tinggi about the person asking.
+    expect(isQuestionAbout("Bagaimana cara bayar pakai QRIS yang aman?")).toBe(
+      true,
+    );
+  });
+
+  it("still checks a QRIS sticker that asks the reader to pay", () => {
+    const text =
+      "Barang sudah dikemas, bayar sisa ongkir via QRIS pada stiker ini (nama penerima a.n. Hadi Wibowo).";
+    expect(isQuestionAbout(text)).toBe(false);
+    expect(
+      planTurn({
+        text,
+        result: scoreText({ text }),
+        lastResult: null,
+        lastExplanation: null,
+      }).lane,
+    ).toBe("periksa");
+  });
+});
+
 describe("turn · pinned lengths", () => {
   it("keeps the pasted-message threshold above every bench scam", () => {
     // If a future bench case is shorter than SHORTEST_SCAM the constant is a

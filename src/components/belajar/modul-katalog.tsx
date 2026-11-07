@@ -144,7 +144,7 @@ export function ModulKatalog({
               type="button"
               data-pressable
               onClick={resetFilters}
-              className="min-h-11 rounded-full bg-[var(--appnext-ink-2)] px-4 text-bg hover:bg-[var(--appnext-ink-3)]"
+              className="min-h-11 rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-4 text-bg hover:bg-[var(--appnext-ink-3)]"
             >
               <RotateCcw aria-hidden className="size-4" />
               Atur ulang saringan

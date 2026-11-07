@@ -160,7 +160,7 @@ export function CompanionEntry() {
 
         {result ? (
           <div className="mt-8">
-            <ScoreCard result={result} />
+            <ScoreCard result={result} trace={trace} />
           </div>
         ) : null}
       </div>

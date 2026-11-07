@@ -71,7 +71,7 @@ export function CompleteButton({ moduleNo }: { moduleNo: number }) {
         ) : (
           <Button
             type="button"
-            className="min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
+            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
             onClick={finish}
           >
             Tandai modul selesai

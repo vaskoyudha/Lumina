@@ -111,6 +111,12 @@ export function identitySignals(text: string): IdentityResult {
   const inspected = mobile.length + foreign.length + (shortcode ? 1 : 0);
   return {
     signals,
-    note: inspected === 0 ? "Tidak ada nomor untuk diperiksa." : undefined,
+    // A stage that found something cannot also explain why it inspected
+    // nothing. The note is the reason a stage is `dilewati`; emitting it
+    // beside a finding contradicts the finding.
+    note:
+      inspected === 0 && signals.length === 0
+        ? "Tidak ada nomor untuk diperiksa."
+        : undefined,
   };
 }

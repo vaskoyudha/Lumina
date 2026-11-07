@@ -19,6 +19,11 @@ export default function AppearAnimations({
       document.querySelectorAll<HTMLElement>("[data-framer-appear-id]"),
     );
     const observers: IntersectionObserver[] = [];
+    const pending = new Map<
+      HTMLElement,
+      { io: IntersectionObserver; run: () => void }
+    >();
+    let sweep = 0;
 
     for (const el of roots) {
       const id = el.getAttribute("data-framer-appear-id");
@@ -84,16 +89,45 @@ export default function AppearAnimations({
             if (entry.isIntersecting) {
               run();
               io.disconnect();
+              pending.delete(el);
             }
           }
         },
         { rootMargin: "0px 0px -10% 0px" },
       );
+      pending.set(el, { io, run });
       io.observe(el);
       observers.push(io);
     }
 
+    /*
+     * A fast scrollbar drag or instant jump can carry a target from below the
+     * viewport to above it without ever intersecting: IntersectionObserver
+     * only reports changes, so those nodes would keep the serialized hidden
+     * state forever. Release anything left above the viewport after a scroll.
+     */
+    const releasePassed = () => {
+      for (const [el, { io, run }] of pending) {
+        if (el.getBoundingClientRect().bottom <= 0) {
+          io.disconnect();
+          pending.delete(el);
+          run();
+        }
+      }
+    };
+
+    const onScroll = () => {
+      if (sweep) return;
+      sweep = requestAnimationFrame(() => {
+        sweep = 0;
+        releasePassed();
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
+      cancelAnimationFrame(sweep);
+      window.removeEventListener("scroll", onScroll);
       for (const io of observers) io.disconnect();
     };
   }, [config]);

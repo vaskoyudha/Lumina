@@ -42,6 +42,16 @@ describe("Identity Agent", () => {
     expect(forward?.weight).toBeLessThan(0.4);
   });
 
+  it("does not claim it had no number when it reported a forward finding", () => {
+    // The note is the reason a stage is marked `dilewati`. A stage that found
+    // something cannot also explain why it inspected nothing.
+    const result = identitySignals(
+      "Diteruskan banyak kali. Selamat, Anda menang.",
+    );
+    expect(result.signals.length).toBeGreaterThan(0);
+    expect(result.note).toBeUndefined();
+  });
+
   it("stays silent on a legitimate mobile number with no institution claim", () => {
     expect(
       labels("Kak, pesananmu sudah dikirim ya. Kurir: 0813-2222-3333."),

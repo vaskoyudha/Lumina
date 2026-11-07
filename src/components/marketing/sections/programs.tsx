@@ -22,6 +22,7 @@ export function Programs() {
     >
       <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-start gap-10 lg:grid-cols-12">
         <div
+          data-reveal
           id="section-steps"
           className="relative overflow-hidden rounded-3xl border border-ls-line-strong bg-ls-card-alt p-7 shadow-sm sm:p-10 lg:col-span-5"
         >
@@ -53,7 +54,10 @@ export function Programs() {
           </div>
         </div>
 
-        <div className="relative rounded-3xl border border-ls-line-strong bg-ls-card p-7 shadow-sm sm:p-10 lg:col-span-7">
+        <div
+          data-reveal
+          className="relative rounded-3xl border border-ls-line-strong bg-ls-card p-7 shadow-sm sm:p-10 lg:col-span-7"
+        >
           <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-ls-line-strong bg-ls-card-alt px-3 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
             <span>☺</span>
             <span>{programsCopy.badge}</span>
@@ -124,7 +128,7 @@ export function Programs() {
                     <Button
                       asChild
                       size="sm"
-                      className="shrink-0 rounded-full bg-ls-solid px-3.5 font-semibold text-ls-solid-ink transition-colors hover:bg-ls-solid-hover"
+                      className="shrink-0 rounded-full border-ls-solid-line bg-ls-solid px-3.5 font-semibold text-ls-solid-ink transition-colors hover:bg-ls-solid-hover"
                     >
                       <Link href="/companion">{programsCopy.cta} »</Link>
                     </Button>

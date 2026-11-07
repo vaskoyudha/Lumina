@@ -3,6 +3,7 @@ import {
   isGreeting,
   suggestedActions,
 } from "@/lib/companion/reply";
+import type { ScoreResult } from "@/lib/contracts/score";
 import { scoreText } from "@/lib/scoring/score";
 
 const APK =
@@ -114,6 +115,39 @@ describe("suggestedActions", () => {
 
   it("returns nothing when there is no result", () => {
     expect(suggestedActions(null)).toEqual([]);
+  });
+
+  it("offers nothing when no detector produced a weighted signal", () => {
+    // `relatedModule` is data, not proof. A card that says "nothing matched"
+    // must not sit above a button inviting the reader to study the scheme it
+    // just failed to match.
+    const empty: ScoreResult = {
+      score: 0,
+      risk: "bersih",
+      signals: [
+        {
+          label: "Tidak ada pola penipuan yang dikenali pada teks ini",
+          weight: 0,
+          evidence: "",
+          agent: "scoring",
+        },
+      ],
+      modus: "tidak-dikenali",
+      advice: [],
+      relatedModule: 10,
+      hardOverride: false,
+    };
+
+    expect(suggestedActions(empty)).toEqual([]);
+  });
+
+  it("offers nothing on a clean engine result", () => {
+    const result = scoreText({
+      text: "Aku sudah transfer uang kas kelas kemarin sore, tolong dicatat ya.",
+    });
+
+    expect(result.relatedModule).toBeNull();
+    expect(suggestedActions(result)).toEqual([]);
   });
 });
 

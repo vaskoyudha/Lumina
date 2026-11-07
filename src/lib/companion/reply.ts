@@ -173,6 +173,9 @@ export function composeReply(
 /** Suggested next actions, rendered as buttons under the reply. */
 export function suggestedActions(result: ScoreResult | null) {
   if (!result) return [];
+  // A weight-0 signal is the engine saying it recognised nothing. Offering
+  // "study this pattern" under that verdict is a claim the engine did not make.
+  if (!result.signals.some((signal) => signal.weight > 0)) return [];
   const actions: { label: string; href: string }[] = [];
 
   if (result.relatedModule !== null) {

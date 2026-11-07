@@ -64,7 +64,7 @@ export function AdminNav() {
 
         <Button
           asChild
-          className="ml-auto h-11 shrink-0 rounded-full bg-[var(--appnext-ink-2)] px-4.5 text-bg hover:bg-[var(--appnext-accent-deep)]"
+          className="ml-auto h-11 shrink-0 rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-4.5 text-bg hover:bg-[var(--appnext-accent-deep)]"
         >
           <Link href="/" data-pressable>
             <ArrowUpRight aria-hidden />

@@ -272,7 +272,13 @@ function finalize(
   // Hard indicator: a request for OTP/PIN/password forces the top band.
   if (hardHit) score = Math.max(score, 70);
 
-  const modus = classifyModus(trimmed, sorted);
+  /*
+   * A verdict with no weighted finding has no scheme to name. Classifying
+   * from raw keywords anyway let a clean transfer confirmation print a scam
+   * modus and a module CTA directly under a 0/100 "Bersih" score.
+   */
+  const modus =
+    sorted.length > 0 ? classifyModus(trimmed, sorted) : UNRECOGNIZED_ID;
   const modusEntry = MODUS_BY_ID.get(modus);
   const relatedModule = modusEntry ? modusEntry.no : null;
 

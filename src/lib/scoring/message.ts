@@ -21,7 +21,21 @@ interface Rule {
    */
   weightWithAction?: number;
   labelWithAction?: string;
+  /**
+   * Context requirement: a match is only a finding when this returns true.
+   * The quishing rule uses it to require an actual payment instruction near
+   * the QR token — mentioning QRIS while explaining how it works is not an
+   * attempt to make the reader scan anything.
+   */
+  gate?: (text: string, match: RegExpMatchArray) => boolean;
 }
+
+/**
+ * What a real QRIS scam asks the reader to do. `transfer` is deliberately
+ * absent: telling someone to scan a sticker is the vector, moving money
+ * between accounts is a different one.
+ */
+const QR_ACTION = /\b(?:scan|pindai|bayar|bayarkan|stiker|kirim|setor)\b/i;
 
 export const MESSAGE_RULES: readonly Rule[] = [
   {
@@ -107,8 +121,13 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 0.7,
     label:
       "Meminta pembayaran lewat QRIS yang dikirim lewat chat — selalu periksa nama penerima di layar sebelum scan",
-    pattern:
-      /\b(?:qris|qr\s*code|scan\s+qr|a\.n\.?\s?\w+|atas\s+nama\s+\w+)\b/i,
+    pattern: /\b(?:qris|qr\s*code|scan\s+qr|stiker\s+qr)\b/i,
+    gate: (text, match) => {
+      if (match.index === undefined) return false;
+      const start = Math.max(0, match.index - 80);
+      const end = Math.min(text.length, match.index + match[0].length + 80);
+      return QR_ACTION.test(text.slice(start, end));
+    },
   },
   {
     id: "prize",
@@ -122,7 +141,7 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 0.8,
     label: "Meminta biaya admin/pajak/bea sebelum hadiah atau dana dikirim",
     pattern:
-      /\b(?:biaya\s+admin|biaya\s+aktivasi|pajak\s+hadiah|bea\s+masuk|biaya\s+kirim\s+hadiah|uang\s+administrasi)\b/i,
+      /\b(?:biaya\s+admin(?:istrasi)?|biaya\s+aktivasi|pajak\s+hadiah|bea\s+masuk|biaya\s+kirim\s+hadiah|uang\s+administrasi)\b/i,
   },
   {
     id: "topup-loop",
@@ -144,7 +163,7 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 0.55,
     label: "Mengajak transaksi di luar marketplace, ke rekening pribadi",
     pattern:
-      /\b(?:transfer\s+(?:langsung|ke\s+rekening)|rekening\s+pribadi|via\s+wa\s+saja|chat\s+pribadi|dp\s+dulu|uang\s+muka)\b/i,
+      /\b(?:rekening\s+pribadi|via\s+wa\s+saja|chat\s+pribadi|dp\s+dulu|uang\s+muka)\b/i,
   },
   {
     id: "guaranteed-return",
@@ -171,8 +190,15 @@ export const MESSAGE_RULES: readonly Rule[] = [
 const ACTION_CONTEXT =
   /\b(?:bayar|bayarkan|transfer|kirim(?:kan)?\s+(?:uang|ke\s+rekening)|setor|top\s*up|topup|biaya|denda|bea\s+masuk|konfirmasi|tautan|link|klik|buka|isi\s+formulir|masukkan|share)\b/i;
 
-/** Which rule ids are hard indicators: they force `risk: "tinggi"`. */
-export const HARD_RULES: ReadonlySet<string> = new Set(["otp-request", "apk"]);
+/**
+ * Which rule ids are hard indicators: they force `risk: "tinggi"`.
+ *
+ * The APK extension is deliberately not here. A file extension is a shape,
+ * not a request, and the rule that catches it is already weighted high
+ * enough to reach the top band on its own. Only an explicit request for a
+ * secret can override whatever else the message scored.
+ */
+export const HARD_RULES: ReadonlySet<string> = new Set(["otp-request"]);
 
 export interface RuleHit {
   rule: Rule;
@@ -184,24 +210,72 @@ export interface RuleHit {
 }
 
 /**
+ * The sentence containing a match, used for warnings that live next to the
+ * token rather than immediately before it ("Jangan buka file … .apk").
+ */
+function sentenceAround(text: string, match: RegExpMatchArray): string {
+  const index = match.index ?? 0;
+  const before = text.slice(0, index);
+  const start =
+    Math.max(
+      before.lastIndexOf("."),
+      before.lastIndexOf("!"),
+      before.lastIndexOf("?"),
+    ) + 1;
+  const after = text.slice(index + match[0].length);
+  const boundary = after.search(/[.!?]/);
+  const end =
+    boundary === -1 ? text.length : index + match[0].length + boundary;
+  return text.slice(start, end);
+}
+
+/**
+ * "Jangan buka file undangan.apk" is the opposite of asking someone to open
+ * it. The verb list is what makes the sentence a warning rather than a
+ * request, and "jangan lupa" is excluded because it is an instruction *to*
+ * do the thing ("jangan lupa buka ya").
+ */
+const APK_WARNING =
+  /\bjangan\b(?!\s+lupa\b)[^.!?]{0,40}\b(?:buka|dibuka|instal|install|unduh|pasang|klik|jalankan)\b/i;
+
+/**
  * A warning ("jangan bagikan kode OTP") is the opposite of a request. The
- * otp-request pattern matches the warning shape too, so veto a hit whose
- * request verb is immediately preceded by "jangan".
+ * otp-request pattern matches the warning shape too, so a hit whose request
+ * verb is immediately preceded by "jangan" is vetoed — and the scan keeps
+ * looking, because one warning sentence must not hide a request later in the
+ * same message.
  */
 function isWarning(rule: Rule, text: string, match: RegExpMatchArray): boolean {
-  if (rule.id !== "otp-request" || match.index === undefined) return false;
-  const before = text.slice(Math.max(0, match.index - 20), match.index);
-  return /\bjangan\s+(?:pernah\s+)?$/i.test(before);
+  if (match.index === undefined) return false;
+  if (rule.id === "otp-request") {
+    const before = text.slice(Math.max(0, match.index - 24), match.index);
+    return /\bjangan\s+(?:pernah\s+)?$/i.test(before);
+  }
+  if (rule.id === "apk") {
+    return APK_WARNING.test(sentenceAround(text, match));
+  }
+  return false;
+}
+
+/** A global twin of a rule pattern, so every occurrence can be inspected. */
+function globalCopy(pattern: RegExp): RegExp {
+  return new RegExp(
+    pattern.source,
+    pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`,
+  );
 }
 
 export function detectMessage(text: string): RuleHit[] {
-  const matches = MESSAGE_RULES.map((rule) => ({
-    rule,
-    match: text.match(rule.pattern),
-  })).filter(
-    (m): m is { rule: Rule; match: RegExpMatchArray } =>
-      m.match !== null && !isWarning(m.rule, text, m.match),
-  );
+  const matches: { rule: Rule; match: RegExpMatchArray }[] = [];
+
+  for (const rule of MESSAGE_RULES) {
+    const found = Array.from(text.matchAll(globalCopy(rule.pattern))).find(
+      (match) =>
+        !isWarning(rule, text, match) &&
+        (rule.gate ? rule.gate(text, match) : true),
+    );
+    if (found) matches.push({ rule, match: found });
+  }
 
   // "Authority + a request" is the scam vector. An OTP request is itself
   // action context (the request verbs live in that rule), so it escalates

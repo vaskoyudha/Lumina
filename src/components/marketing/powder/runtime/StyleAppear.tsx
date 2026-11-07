@@ -69,9 +69,17 @@ function inViewRatio(entry: IntersectionObserverEntry) {
 
 export default function StyleAppear() {
   useEffect(() => {
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     const processed: HTMLElement[] = [];
     const observers: IntersectionObserver[] = [];
+    const pending = new Map<
+      HTMLElement,
+      { io: IntersectionObserver; run: () => void }
+    >();
     const cleanups: Array<() => void> = [];
+    let sweep = 0;
 
     const nodes = document.querySelectorAll<HTMLElement>(
       ".framer-site [style]",
@@ -91,6 +99,17 @@ export default function StyleAppear() {
         : opacityTarget;
 
       const base = baseTransform(el.style.transform);
+
+      /*
+       * Reduced motion means no reveal choreography: clear the serialized
+       * hidden state outright so no target can be left waiting for a scroll.
+       */
+      if (reduce) {
+        el.style.transform =
+          `${base} translateX(0px) translateY(0px) scale(1)`.trim();
+        el.style.opacity = String(opacityTarget);
+        continue;
+      }
 
       const opacity = new MotionValue<number>(startOpacity);
       const x = new MotionValue<number>(spec.x);
@@ -137,16 +156,45 @@ export default function StyleAppear() {
             if (!entry.isIntersecting) continue;
             if (inViewRatio(entry) < spec.threshold) continue;
             io.disconnect();
+            pending.delete(el);
             run();
           }
         },
         { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
       );
+      pending.set(el, { io, run });
       io.observe(el);
       observers.push(io);
     }
 
+    /*
+     * A fast scrollbar drag or instant jump can carry a target from below the
+     * viewport to above it without ever intersecting: IntersectionObserver
+     * only reports changes, so those nodes would keep the serialized hidden
+     * state forever. Release anything left above the viewport after a scroll.
+     */
+    const releasePassed = () => {
+      for (const [el, { io, run }] of pending) {
+        if (el.getBoundingClientRect().bottom <= 0) {
+          io.disconnect();
+          pending.delete(el);
+          run();
+        }
+      }
+    };
+
+    const onScroll = () => {
+      if (sweep) return;
+      sweep = requestAnimationFrame(() => {
+        sweep = 0;
+        releasePassed();
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
+      cancelAnimationFrame(sweep);
+      window.removeEventListener("scroll", onScroll);
       observers.forEach((io) => {
         io.disconnect();
       });
