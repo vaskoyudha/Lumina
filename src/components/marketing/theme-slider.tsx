@@ -17,13 +17,10 @@ function isTheme(value: string | null): value is ThemeId {
   return value === "warm" || value === "black" || value === "cream";
 }
 
-const TOP_TONE = "border-white/25 bg-black/25 text-amberwarm-100/70";
-const SCROLLED_TONE = "border-ls-line bg-ls-card/70 text-ls-ink-3";
+const TONE = "border-ls-line bg-ls-card/70 text-ls-ink-3";
+const ACTIVE = "bg-ls-solid text-ls-solid-ink";
 
-const TOP_ACTIVE = "bg-amberwarm-50 text-espresso-950";
-const SCROLLED_ACTIVE = "bg-ls-solid text-ls-solid-ink";
-
-export function ThemeSlider({ scrolled = false }: { scrolled?: boolean }) {
+export function ThemeSlider() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<ThemeId>("warm");
 
@@ -80,15 +77,11 @@ export function ThemeSlider({ scrolled = false }: { scrolled?: boolean }) {
       role="toolbar"
       aria-label="Tema tampilan"
       data-pressable
-      className={`relative flex items-center rounded-full border p-1 backdrop-blur-md transition-colors duration-300 ${
-        scrolled ? SCROLLED_TONE : TOP_TONE
-      }`}
+      className={`relative flex items-center rounded-full border p-1 backdrop-blur-md transition-colors duration-300 ${TONE}`}
     >
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute top-1 left-1 h-11 w-11 rounded-full shadow-sm transition-[transform,background-color,color] duration-300 ease-out ${
-          scrolled ? SCROLLED_ACTIVE : TOP_ACTIVE
-        }`}
+        className={`pointer-events-none absolute top-1 left-1 h-11 w-11 rounded-full shadow-sm transition-[transform,background-color,color] duration-300 ease-out ${ACTIVE}`}
         style={{ transform: `translateX(${activeIndex * 2.75}rem)` }}
       />
       {THEMES.map(({ id, label, Icon }) => {

@@ -59,9 +59,7 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const linkTone = scrolled
-    ? "text-ls-ink hover:text-ls-ink-2"
-    : "text-amberwarm-100/90 hover:text-white";
+  const linkTone = "text-ls-ink hover:text-ls-ink-2";
 
   return (
     <div className="fixed inset-x-0 top-0 z-40">
@@ -111,9 +109,7 @@ export function SiteHeader() {
             type="button"
             onClick={() => scrollToId("section-home")}
             aria-label={`${brand.name} — kembali ke atas`}
-            className={`group relative flex items-center gap-2 font-semibold text-lg tracking-tight transition-colors duration-300 sm:text-xl ${
-              scrolled ? "text-ls-ink" : "text-white"
-            }`}
+            className="group relative flex items-center gap-2 font-semibold text-lg tracking-tight text-ls-ink transition-colors duration-300 sm:text-xl"
           >
             <span
               className="flex shrink-0 items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5"
@@ -124,29 +120,21 @@ export function SiteHeader() {
                   "width 300ms ease-out, height 300ms ease-out, transform 200ms ease-out",
               }}
             >
-              <RoughBird
-                className={`h-full w-full transition-colors duration-300 ease-out ${
-                  scrolled ? "text-ls-accent-text" : "text-amberwarm-300"
-                }`}
-              />
+              <RoughBird className="h-full w-full text-ls-accent-text transition-colors duration-300 ease-out" />
             </span>
             <span className="font-display">{brand.name}</span>
           </button>
 
           <div className="relative flex items-center gap-1.5 sm:gap-2.5">
             <div className="hidden lg:block">
-              <ThemeSlider scrolled={scrolled} />
+              <ThemeSlider />
             </div>
-            <MarketingAuth scrolled={scrolled} />
+            <MarketingAuth />
             <Link
               href="/companion"
               data-pressable
               aria-label={brand.navCta}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-md transition-[background-color,color,transform] duration-200 ease-out active:scale-[0.97] sm:hidden ${
-                scrolled
-                  ? "bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover"
-                  : "bg-amberwarm-50 text-espresso-950 hover:bg-amberwarm-100"
-              }`}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ls-solid text-ls-solid-ink shadow-md transition-[background-color,color,transform] duration-200 ease-out hover:bg-ls-solid-hover active:scale-[0.97] sm:hidden"
             >
               <svg
                 className="h-4 w-4"
@@ -164,21 +152,11 @@ export function SiteHeader() {
             </Link>
             <Button
               asChild
-              className={`hidden h-auto gap-3 rounded-xl py-1.5 pr-1.5 pl-5 font-semibold text-xs shadow-md transition-[background-color,color,transform] duration-300 ease-out active:scale-[0.97] sm:inline-flex sm:text-sm ${
-                scrolled
-                  ? "bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover"
-                  : "bg-amberwarm-50 text-espresso-950 hover:bg-amberwarm-100"
-              }`}
+              className="hidden h-auto gap-3 rounded-xl bg-ls-solid py-1.5 pr-1.5 pl-5 font-semibold text-ls-solid-ink text-xs shadow-md transition-[background-color,color,transform] duration-300 ease-out hover:bg-ls-solid-hover active:scale-[0.97] sm:inline-flex sm:text-sm"
             >
               <Link href="/companion">
                 <span>{brand.navCta}</span>
-                <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-300 ease-out ${
-                    scrolled
-                      ? "bg-ls-card text-ls-ink"
-                      : "bg-espresso-800 text-amberwarm-100"
-                  }`}
-                >
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ls-card text-ls-ink transition-colors duration-300 ease-out">
                   <svg
                     className="h-3.5 w-3.5"
                     viewBox="0 0 24 24"
@@ -199,11 +177,7 @@ export function SiteHeader() {
               type="button"
               aria-label="Buka menu navigasi cepat"
               onClick={openDrawer}
-              className={`flex h-11 w-11 items-center justify-center rounded-xl shadow-md transition-[background-color,color,transform] duration-200 ease-out active:scale-[0.97] ${
-                scrolled
-                  ? "bg-ls-card-alt text-ls-ink hover:bg-ls-card"
-                  : "bg-amberwarm-50 text-espresso-900 hover:bg-amberwarm-100"
-              }`}
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-ls-card-alt text-ls-ink shadow-md transition-[background-color,color,transform] duration-200 ease-out hover:bg-ls-card active:scale-[0.97]"
             >
               <svg
                 className="h-5 w-5"
@@ -220,7 +194,7 @@ export function SiteHeader() {
           </div>
         </div>
         <div className="mt-2 flex justify-end px-1 lg:hidden">
-          <ThemeSlider scrolled={scrolled} />
+          <ThemeSlider />
         </div>
       </nav>
     </div>

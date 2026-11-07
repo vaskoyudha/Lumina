@@ -64,15 +64,4 @@ describe("MarketingAuth", () => {
 
     expect(screen.getByLabelText(/^nama$/i)).toBeInTheDocument();
   });
-
-  it("keeps the same entries when the header is scrolled", () => {
-    render(<MarketingAuth scrolled />);
-
-    expect(
-      screen.getByRole("button", { name: /^masuk$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^daftar$/i }),
-    ).toBeInTheDocument();
-  });
 });
