@@ -1,10 +1,10 @@
 /*
-  Landing surface — the warm editorial system, scoped to `.landing`.
+  Landing surface — the editorial system, scoped to `.landing`.
 
   This is a deliberate departure from the AppNext product tokens: the landing
-  page keeps the cream/espresso palette and the photographic hero, while the
-  product surfaces stay neutral. Nothing here is applied outside `.landing`
-  except the colour tokens, which are namespaced by their own names.
+  page keeps its own paper/cream/black palettes while the product surfaces stay
+  neutral. Nothing here is applied outside `.landing` except the colour tokens,
+  which are namespaced by their own names.
 */
 
 @theme {
@@ -89,28 +89,32 @@
     --font-landing-display:
       var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, sans-serif;
 
-    /* Warm is the default so the page still themes correctly without JS. */
-    --ls-surface: #f3ead9;
-    --ls-surface-alt: #eee1cb;
-    --ls-card: #fffaf0;
-    --ls-card-alt: #f7efdf;
-    --ls-ink: #2b1a10;
-    --ls-ink-2: #5c4a3c;
-    --ls-ink-3: #8a7666;
-    --ls-line: rgb(43 26 16 / 0.14);
-    --ls-line-strong: rgb(43 26 16 / 0.24);
-    --ls-accent: #e5c88e;
-    --ls-accent-strong: #d9b775;
-    --ls-accent-soft: #f9f3e5;
-    --ls-accent-ink: #2b1a10;
+    /*
+      Paper is the default light palette, lifted from the original Powder
+      clone: plain white surfaces with the cool #eff3f6 wash. Cream remains a
+      separate opt-in theme on the slider.
+    */
+    --ls-surface: #ffffff;
+    --ls-surface-alt: #eff3f6;
+    --ls-card: #ffffff;
+    --ls-card-alt: #f7fafc;
+    --ls-ink: #1b2228;
+    --ls-ink-2: #4b575f;
+    --ls-ink-3: #77848c;
+    --ls-line: rgb(27 34 40 / 0.12);
+    --ls-line-strong: rgb(27 34 40 / 0.22);
+    --ls-accent: #d8e6ee;
+    --ls-accent-strong: #c4d9e4;
+    --ls-accent-soft: #f3f8fb;
+    --ls-accent-ink: #1b2228;
     --ls-accent-text: #9a5a22;
-    --ls-solid: #491e0b;
-    --ls-solid-hover: #5c2810;
-    --ls-solid-ink: #fffaf0;
-    --ls-dark: #1c0b04;
-    --ls-dark-panel: #2f1307;
-    --ls-on-dark: #fff7ee;
-    --ls-on-dark-dim: #e5c88e;
+    --ls-solid: #1b2228;
+    --ls-solid-hover: #2c363e;
+    --ls-solid-ink: #ffffff;
+    --ls-dark: #161d22;
+    --ls-dark-panel: #232c33;
+    --ls-on-dark: #f4f8fa;
+    --ls-on-dark-dim: #b9c6cd;
 
     background-color: var(--ls-surface);
     color: var(--ls-ink);

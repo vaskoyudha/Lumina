@@ -34,7 +34,7 @@ export default function MarketingLayout({
         // biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-paint theme initialiser, no user input
         dangerouslySetInnerHTML={{
           __html:
-            'try{var t=localStorage.getItem("lumina-theme");var e=document.currentScript&&document.currentScript.parentElement;if(e&&(t==="warm"||t==="black"||t==="cream"))e.setAttribute("data-theme",t)}catch(_){}',
+            'try{var t=localStorage.getItem("lumina-theme");if(t==="warm")t="paper";var e=document.currentScript&&document.currentScript.parentElement;if(e&&(t==="paper"||t==="black"||t==="cream"))e.setAttribute("data-theme",t)}catch(_){}',
         }}
       />
       <SiteProvider>

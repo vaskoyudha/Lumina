@@ -4,7 +4,7 @@ import { Coffee, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const THEMES = [
-  { id: "warm", label: "Hangat", Icon: Sun },
+  { id: "paper", label: "Terang", Icon: Sun },
   { id: "black", label: "Gelap", Icon: Moon },
   { id: "cream", label: "Krem", Icon: Coffee },
 ] as const;
@@ -13,8 +13,13 @@ type ThemeId = (typeof THEMES)[number]["id"];
 
 const STORAGE_KEY = "lumina-theme";
 
-function isTheme(value: string | null): value is ThemeId {
-  return value === "warm" || value === "black" || value === "cream";
+function normalize(value: string | null): ThemeId | null {
+  if (value === "paper" || value === "black" || value === "cream") {
+    return value;
+  }
+  /* Pre-paper builds stored the light theme as "warm". */
+  if (value === "warm") return "paper";
+  return null;
 }
 
 const TONE = "border-ls-line bg-ls-card/70 text-ls-ink-3";
@@ -22,23 +27,26 @@ const ACTIVE = "bg-ls-solid text-ls-solid-ink";
 
 export function ThemeSlider() {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState<ThemeId>("warm");
+  const [theme, setTheme] = useState<ThemeId>("paper");
 
   useEffect(() => {
     const landing = rootRef.current?.closest(".landing");
-    const current = landing?.getAttribute("data-theme") ?? null;
-    if (isTheme(current)) {
+    const current = normalize(landing?.getAttribute("data-theme") ?? null);
+    if (current) {
+      if (landing?.getAttribute("data-theme") !== current) {
+        landing?.setAttribute("data-theme", current);
+      }
       setTheme(current);
       return;
     }
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (isTheme(saved)) {
+      const saved = normalize(window.localStorage.getItem(STORAGE_KEY));
+      if (saved) {
         landing?.setAttribute("data-theme", saved);
         setTheme(saved);
       }
     } catch {
-      // Private mode: keep the default warm theme.
+      // Private mode: keep the default paper theme.
     }
   }, []);
 
@@ -46,8 +54,8 @@ export function ThemeSlider() {
     const landing = rootRef.current?.closest(".landing");
     if (!landing) return;
     const observer = new MutationObserver(() => {
-      const next = landing.getAttribute("data-theme");
-      if (isTheme(next)) setTheme(next);
+      const next = normalize(landing.getAttribute("data-theme"));
+      if (next) setTheme(next);
     });
     observer.observe(landing, {
       attributes: true,
