@@ -1,0 +1,756 @@
+/* Self-hosted Framer font faces (extracted) */
+
+@font-face {
+  font-family: 'Fragment Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/4iCr6K5wfMRRjxp0DA6-2CLnB45HhrUI.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: 'Fragment Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/4iCr6K5wfMRRjxp0DA6-2CLnB41HhrUI.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Fragment Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/4iCr6K5wfMRRjxp0DA6-2CLnB4NHhg.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/mYcqTSergLb16PdbJJQMl9ebYm4.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/ZRl8AlxwsX1m7xS1eJCiSPbztg.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/nhSQpBRqFmXNUBY2p5SENQ8NplQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/DYHjxG0qXjopUuruoacfl5SA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/s7NH6sl7w4NU984r5hcmo1tPSYo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/7lw0VWkeXrGYJT05oB3DsFy8BaY.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/wx5nfqEgOXnxuFaxB0Mn9OhmcZA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/5vvr9Vy74if2I6bQbJvbw7SY1pQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/EOr0mi4hNtlgWNn9if640EZzXCo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Y9k9QrlZAqio88Klkmbd8VoMQc.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/OYrD2tBIBPvoJXiIHnLoOXnY9M.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/JeYwfuaPfZHQhEG8U5gtPDZ7WQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/GrgcKwrN6d3Uz8EwcLHZxwEfC4.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/b6Y37FthZeALduNqHicBT6FutY.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/DpPBYI0sL4fYLgAkX8KXOPVt7c.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/4RAEQdEOrcnDkhHiiCbJOw92Lk.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/1K3W8DizY3v4emK8Mb08YHxTbs.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/tUSCtfYVM1I1IchuyCwz9gDdQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/VgYFWiwsAC5OYxAycRXXvhze58.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/syRNPWzAMIrcJ3wIlPIP43KjQs.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/GIryZETIX4IFypco5pYZONKhJIo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/MVhJhYeDWxeyqT939zMNyw9p8.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/WXQXYfAQJIi2pCJACAfWWXfIDqI.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/RJeJJARdrtNUtic58kOz7hIgBuE.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/4hBRAuM02i3fsxYDzyNvt5Az2so.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/fz1JbBffNGgK7BNUI1mmbFBlgA8.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Z4sGWU2OKBoXPWulb5P25vULA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/eIZyQwIlHYR0mnMSneEDMtqBPgw.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/5A3Ce6C9YYmCjpQx9M4inSaKU.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Qx95Xyt0Ka3SGhinnbXIGpEIyP4.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/6mJuEAguuIuMog10gGvH5d3cl8.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/xYYWaj7wCU5zSQH0eXvSaS19wo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/otTaNuNpVK4RbdlT7zDDdKvQBA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/UjlFhCnUjxhNfep4oYBPqnEssyo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/DolVirEGb34pEXEp8t8FQBSK4.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/H89BbHkbHDzlxZzxi8uPzTsp90.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/u6gJwDuwB143kpNK1T1MDKDWkMc.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/43sJ6MfOPh1LCJt46OvyDuSbA6o.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/wccHG0r4gBDAIRhfHiOlq6oEkqw.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/WZ367JPwf9bRW6LdTHN8rXgSjw.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/ia3uin3hQWqDrVloC1zEtYHWw.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/2A4Xx7CngadFGlVV4xrO06OBHY.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/CfMzU8w2e7tHgF4T4rATMPuWosA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/867QObYax8ANsfX4TGEVU9YiCM.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Oyn2ZbENFdnW7mt2Lzjk1h9Zb9k.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/cdAe8hgZ1cMyLu9g005pAW3xMo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/DOfvtmE1UplCq161m6Hj8CSQYg.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/pKRFNWFoZl77qYCAIp84lN1h944.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/tKtBcDnBMevsEEJKdNGhhkLzYo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/khkJkwSL66WFg8SX6Wa726c.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/0E7IMbDzcGABpBwwqNEt60wU0w.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/NTJ0nQgIF0gcDelS14zQ9NR9Q.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/QrcNhgEPfRl0LS8qz5Ln8olanl8.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/JEXmejW8mXOYMtt0hyRg811kHac.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Bo5CNzBv77CafbxOtKIkpw9egw.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/uy9s0iWuxiNnVt8EpTI3gzohpwo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/hyOgCu0Xnghbimh0pE8QTvtt2AU.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/NeGmSOXrPBfEFIy5YZeHq17LEDA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/oYaAX5himiTPYuN8vLWnqBbfD2s.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/lEJLP4R0yuCaMCjSXYHtJw72M.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/cRJyLNuTJR5jbyKzGi33wU9cqIQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/yDtI2UI8XcEg1W2je9XPN3Noo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/A0Wcc7NgXMjUuFdquHDrIZpzZw0.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/vxBnBhH8768IFAXAb4Qf6wQHKs.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/zSsEuoJdh8mcFVk976C05ZfQr8.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/b8ezwLrN7h2AUoPEENcsTMVJ0.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/mvNEIBLyHbscgHtwfsByjXUz3XY.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/6FI2EneKzM3qBy5foOZXey7coCA.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/fuyXZpVvOjq8NesCOfgirHCWyg.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/NHHeAKJVP0ZWHk5YZnQQChIsBM.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/2uIBiALfCHVpWbHqRMZutfT7giU.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Zwfz6xbVe5pmcWRJRgBDHnMkOkI.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/U9LaDDmbRhzX3sB8g8glTy5feTE.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/tVew2LzXJ1t7QfxP1gdTIdj2o0g.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/DF7bjCRmStYPqSb945lAlMfCCVQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/bHYNJqzTyl2lqvmMiRRS6Y16Es.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/vebZUMjGyKkYsfcY73iwWTzLNag.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/ePuN3mCjzajIHnyCdvKBFiZkyY0.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/V3j1L0o5vPFKe26Sw4HcpXCfHo.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/F3kdpd2N0cToWV5huaZjjgM.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/0iDmxkizU9goZoclqIqsV5rvETU.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/r0mv3NegmA0akcQsNFotG32Las.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/iwWTDc49ENF2tCHbqlNARXw6Ug.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/Ii21jnSJkulBKsHHXKlapi7fv9w.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/A5P4nkYCJlLQxGxaS1lzG8PNSc.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/vuPfygr1n1zYxscvWgGI8hRf3LE.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/jplzYzqFHXreyADwk9yrkQlWQ.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/sSIKP2TfVPvfK7YVENPE5H87A.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/gawbeo7iEJSRZ4kcrh6YRrU8o.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/RkMAGv2iAm3rw7tZzs7FaZf0rM.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/sites/powder-framer-website-4824bd20/root-8a5edab2/8E92vrr3j1gDqzepmeSbD2u0JxA.woff2') format('woff2');
+}

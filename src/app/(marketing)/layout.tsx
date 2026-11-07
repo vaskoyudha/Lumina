@@ -5,6 +5,9 @@ import { Footer } from "@/components/marketing/sections/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteProvider } from "@/components/marketing/site-provider";
 import { Toaster } from "@/components/ui/sonner";
+import "@/styles/powder-fonts.css";
+import "@/styles/powder-framer.css";
+import "@/styles/powder-theme.css";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -22,7 +25,18 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`landing ${jakarta.variable} min-h-dvh overflow-x-clip`}>
+    <div
+      suppressHydrationWarning
+      className={`landing ${jakarta.variable} min-h-dvh overflow-x-clip`}
+    >
+      <script
+        suppressHydrationWarning
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-paint theme initialiser, no user input
+        dangerouslySetInnerHTML={{
+          __html:
+            'try{var t=localStorage.getItem("lumina-theme");var e=document.currentScript&&document.currentScript.parentElement;if(e&&(t==="warm"||t==="black"||t==="cream"))e.setAttribute("data-theme",t)}catch(_){}',
+        }}
+      />
       <SiteProvider>
         <SiteHeader />
         <main>{children}</main>

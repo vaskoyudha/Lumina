@@ -31,6 +31,11 @@
   --color-sand-400: #fcf5e5;
   --color-sand-500: #b8a99a;
 
+  /* Powder layer rhythm: fixed section backgrounds for the merged landing. */
+  --color-cream: #f7f1e8;
+  --color-paper: #eff3f6;
+  --color-powder: #0f0f0f;
+
   --color-moss-900: #293529;
 
   --color-flame-300: #ffb066;
@@ -53,15 +58,116 @@
   --font-landing-body: var(--font-sans), "Inter", ui-sans-serif, sans-serif;
 }
 
+@theme inline {
+  /* Landing theme roles. Every light-surface marketing block reads these, so
+     changing `.landing[data-theme]` recolors the whole page at once. */
+  --color-ls-surface: var(--ls-surface);
+  --color-ls-surface-alt: var(--ls-surface-alt);
+  --color-ls-card: var(--ls-card);
+  --color-ls-card-alt: var(--ls-card-alt);
+  --color-ls-ink: var(--ls-ink);
+  --color-ls-ink-2: var(--ls-ink-2);
+  --color-ls-ink-3: var(--ls-ink-3);
+  --color-ls-line: var(--ls-line);
+  --color-ls-line-strong: var(--ls-line-strong);
+  --color-ls-accent: var(--ls-accent);
+  --color-ls-accent-strong: var(--ls-accent-strong);
+  --color-ls-accent-soft: var(--ls-accent-soft);
+  --color-ls-accent-ink: var(--ls-accent-ink);
+  --color-ls-accent-text: var(--ls-accent-text);
+  --color-ls-solid: var(--ls-solid);
+  --color-ls-solid-hover: var(--ls-solid-hover);
+  --color-ls-solid-ink: var(--ls-solid-ink);
+  --color-ls-dark: var(--ls-dark);
+  --color-ls-dark-panel: var(--ls-dark-panel);
+  --color-ls-on-dark: var(--ls-on-dark);
+  --color-ls-on-dark-dim: var(--ls-on-dark-dim);
+}
+
 @layer components {
   .landing {
     --font-landing-display:
       var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, sans-serif;
-    background-color: var(--color-amberwarm-50);
-    color: var(--color-espresso-950);
+
+    /* Warm is the default so the page still themes correctly without JS. */
+    --ls-surface: #f3ead9;
+    --ls-surface-alt: #eee1cb;
+    --ls-card: #fffaf0;
+    --ls-card-alt: #f7efdf;
+    --ls-ink: #2b1a10;
+    --ls-ink-2: #5c4a3c;
+    --ls-ink-3: #8a7666;
+    --ls-line: rgb(43 26 16 / 0.14);
+    --ls-line-strong: rgb(43 26 16 / 0.24);
+    --ls-accent: #e5c88e;
+    --ls-accent-strong: #d9b775;
+    --ls-accent-soft: #f9f3e5;
+    --ls-accent-ink: #2b1a10;
+    --ls-accent-text: #9a5a22;
+    --ls-solid: #491e0b;
+    --ls-solid-hover: #5c2810;
+    --ls-solid-ink: #fffaf0;
+    --ls-dark: #1c0b04;
+    --ls-dark-panel: #2f1307;
+    --ls-on-dark: #fff7ee;
+    --ls-on-dark-dim: #e5c88e;
+
+    background-color: var(--ls-surface);
+    color: var(--ls-ink);
     font-family: var(--font-landing-body);
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+  }
+
+  .landing[data-theme="cream"] {
+    --ls-surface: #f7f1e8;
+    --ls-surface-alt: #f1ebe1;
+    --ls-card: #fffdf9;
+    --ls-card-alt: #f5eee3;
+    --ls-ink: #241c17;
+    --ls-ink-2: #5f554c;
+    --ls-ink-3: #8c8177;
+    --ls-line: rgb(36 28 23 / 0.12);
+    --ls-line-strong: rgb(36 28 23 / 0.2);
+    --ls-accent: #efe1c8;
+    --ls-accent-strong: #e4d3b4;
+    --ls-accent-soft: #faf5ec;
+    --ls-accent-ink: #241c17;
+    --ls-accent-text: #8a5a2a;
+    --ls-solid: #241c17;
+    --ls-solid-hover: #3a2e26;
+    --ls-solid-ink: #fffdf9;
+    --ls-dark: #211a15;
+    --ls-dark-panel: #2e251e;
+    --ls-on-dark: #fffaf2;
+    --ls-on-dark-dim: #ead9c2;
+  }
+
+  .landing[data-theme="black"] {
+    --ls-surface: #0f0f0f;
+    --ls-surface-alt: #141414;
+    --ls-card: #191919;
+    --ls-card-alt: #202020;
+    --ls-ink: #f7f3ee;
+    --ls-ink-2: #c9c3bc;
+    --ls-ink-3: #8f8880;
+    --ls-line: rgb(255 255 255 / 0.12);
+    --ls-line-strong: rgb(255 255 255 / 0.22);
+    --ls-accent: #ff9a3d;
+    --ls-accent-strong: #ffb066;
+    --ls-accent-soft: rgb(255 154 61 / 0.16);
+    --ls-accent-ink: #1a0d04;
+    --ls-accent-text: #ffb066;
+    --ls-solid: #f7f3ee;
+    --ls-solid-hover: #ffffff;
+    --ls-solid-ink: #121212;
+    --ls-dark: #080808;
+    --ls-dark-panel: #141414;
+    --ls-on-dark: #fff7ee;
+    --ls-on-dark-dim: #cfc7bd;
+
+    color-scheme: dark;
   }
 
   .landing :is(h1, h2, h3, h4),
@@ -72,7 +178,7 @@
   }
 
   .landing :focus-visible {
-    outline: 2px solid var(--color-espresso-700);
+    outline: 2px solid var(--ls-ink);
     outline-offset: 2px;
   }
 
@@ -156,13 +262,13 @@
   .nav-glass-light {
     background: linear-gradient(
       180deg,
-      rgba(255, 252, 246, 0.88) 0%,
-      rgba(250, 244, 233, 0.68) 100%
+      color-mix(in srgb, var(--ls-surface) 90%, transparent) 0%,
+      color-mix(in srgb, var(--ls-surface) 72%, transparent) 100%
     );
     box-shadow:
-      inset 0 0 0 1px rgba(28, 11, 4, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      0 12px 32px -18px rgba(28, 11, 4, 0.45);
+      inset 0 0 0 1px var(--ls-line),
+      inset 0 1px 0 color-mix(in srgb, var(--ls-card) 95%, transparent),
+      0 12px 32px -18px rgb(0 0 0 / 0.45);
   }
 
   .transformation-bg {
@@ -245,6 +351,94 @@
   #section-contact,
   #section-faq {
     scroll-margin-top: 6.5rem;
+  }
+
+  /*
+    Dark islands keep their depth but drop the espresso cast when the page is
+    in the neutral black theme, so the whole landing reads as one palette.
+  */
+  .landing[data-theme="black"] .hero-bg {
+    background-color: #0a0a0a;
+    background-image:
+      linear-gradient(
+        90deg,
+        rgb(8 8 8 / 0.97) 0%,
+        rgb(14 14 14 / 0.9) 38%,
+        rgb(24 24 24 / 0.58) 68%,
+        rgb(40 40 40 / 0.32) 100%
+      ),
+      url("/images/hero.jpg");
+    background-size: cover;
+    background-position: center right;
+  }
+
+  .landing[data-theme="black"] .transformation-bg {
+    background:
+      radial-gradient(
+        circle at 50% 52%,
+        rgb(255 154 61 / 0.2) 0%,
+        rgb(30 30 30 / 0.72) 36%,
+        rgb(5 5 5 / 0.98) 78%
+      ),
+      linear-gradient(
+        90deg,
+        #0a0a0a 0%,
+        #131313 49.8%,
+        #1b1b1b 50.2%,
+        #090909 100%
+      );
+  }
+
+  .landing[data-theme="black"] .cta-dark-bg {
+    background: #050505;
+  }
+
+  .contact-band {
+    background-color: var(--color-espresso-800);
+  }
+
+  .landing[data-theme="black"] .contact-band {
+    background-color: #121212;
+  }
+
+  .landing[data-theme="black"] .footer-gradient {
+    background:
+      radial-gradient(
+        circle at 55% 95%,
+        rgb(255 154 61 / 0.42) 0%,
+        rgb(94 56 24 / 0.5) 38%,
+        rgb(10 10 10 / 0.98) 78%
+      ),
+      linear-gradient(180deg, #0d0d0d 0%, #151515 60%, #2b1b0e 100%);
+  }
+
+  @media (max-width: 767px) {
+    .landing[data-theme="black"] .hero-bg {
+      background-image:
+        linear-gradient(
+          180deg,
+          rgb(8 8 8 / 0.72) 0%,
+          rgb(12 12 12 / 0.4) 34%,
+          rgb(10 10 10 / 0.92) 64%,
+          #080808 86%
+        ),
+        linear-gradient(
+          90deg,
+          rgb(6 6 6 / 0.94) 0%,
+          rgb(14 14 14 / 0.66) 62%,
+          rgb(28 28 28 / 0.34) 100%
+        ),
+        url("/images/hero.jpg");
+      background-size:
+        100% 100%,
+        100% 100%,
+        auto 560px;
+      background-position:
+        center,
+        center,
+        70% -16px;
+      background-repeat: no-repeat;
+    }
   }
 }
 

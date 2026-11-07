@@ -531,6 +531,7 @@ function NeuformIsolatedEffect({
         border: 0,
         background,
         filter,
+        colorScheme: "light",
         ...style,
       }}
     />

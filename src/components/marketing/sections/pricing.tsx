@@ -50,17 +50,17 @@ export function Pricing() {
   return (
     <section
       id="section-pricing"
-      className="border-hairline border-t bg-sand-100 px-4 pt-28 pb-24 sm:px-8"
+      className="border-ls-line border-t bg-ls-surface px-4 pt-28 pb-24 sm:px-8"
     >
       <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-stretch gap-10 lg:grid-cols-12">
         <div className="flex flex-col lg:col-span-7">
           <div className="mb-8 text-center sm:text-left">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-hairline-strong bg-white px-3.5 py-1 font-semibold text-[11px] text-espresso-900 uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-ls-line-strong bg-ls-card px-3.5 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
                 <span>☺</span>
                 <span>{pricingCopy.badge}</span>
               </div>
-              <Label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-hairline-strong bg-white px-3 py-1.5 font-medium text-espresso-800 text-xs shadow-sm">
+              <Label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-ls-line-strong bg-ls-card px-3 py-1.5 font-medium text-ls-ink-2 text-xs shadow-sm">
                 <Checkbox
                   id="pricing-promo-toggle"
                   checked={promo}
@@ -70,10 +70,10 @@ export function Pricing() {
               </Label>
             </div>
 
-            <h2 className="mt-3 font-semibold text-3xl text-espresso-950 sm:text-4xl">
+            <h2 className="mt-3 font-semibold text-3xl text-ls-ink sm:text-4xl">
               {pricingCopy.title}
             </h2>
-            <p className="mt-1.5 text-ink-body text-xs sm:text-sm">
+            <p className="mt-1.5 text-ls-ink-2 text-xs sm:text-sm">
               {pricingCopy.body}
             </p>
           </div>
@@ -84,7 +84,7 @@ export function Pricing() {
               return (
                 <div
                   key={plan.id}
-                  className="flex flex-col justify-between overflow-hidden rounded-3xl border border-hairline-strong bg-white shadow-md"
+                  className="flex flex-col justify-between overflow-hidden rounded-3xl border border-ls-line-strong bg-ls-card shadow-md"
                 >
                   <div>
                     <div
@@ -100,20 +100,20 @@ export function Pricing() {
                           {plan.icon}
                         </span>
                         <div>
-                          <h3 className="font-bold text-espresso-950 text-lg">
+                          <h3 className="font-bold text-ls-ink text-lg">
                             {plan.name}
                           </h3>
-                          <p className="mt-0.5 text-ink-soft text-xs leading-snug">
+                          <p className="mt-0.5 text-ls-ink-3 text-xs leading-snug">
                             {plan.desc}
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-5 border-hairline border-t pt-4">
-                        <div className="mb-3 font-bold text-[10px] text-ink-faint uppercase tracking-wider">
+                      <div className="mt-5 border-ls-line border-t pt-4">
+                        <div className="mb-3 font-bold text-[10px] text-ls-ink-3 uppercase tracking-wider">
                           YANG KAMU DAPAT:
                         </div>
-                        <ul className="space-y-2.5 text-espresso-900 text-xs">
+                        <ul className="space-y-2.5 text-ls-ink-2 text-xs">
                           {plan.features.map((feature) => (
                             <li
                               key={feature}
@@ -129,10 +129,10 @@ export function Pricing() {
                   </div>
 
                   <div className="p-6 pt-0">
-                    <div className="mb-4 flex items-baseline gap-1.5 border-hairline border-dashed border-t pt-4">
+                    <div className="mb-4 flex items-baseline gap-1.5 border-ls-line border-dashed border-t pt-4">
                       <span
                         id={`price-${plan.id}`}
-                        className="font-bold font-display text-3xl text-espresso-950"
+                        className="font-bold font-display text-3xl text-ls-ink"
                       >
                         {display.price}
                       </span>
@@ -140,21 +140,21 @@ export function Pricing() {
                         id={`price-${plan.id}-old`}
                         className={
                           display.oldPrice
-                            ? "text-ink-faint text-sm line-through"
-                            : "hidden text-ink-faint text-sm line-through"
+                            ? "text-ls-ink-3 text-sm line-through"
+                            : "hidden text-ls-ink-3 text-sm line-through"
                         }
                       >
                         {display.oldPrice || plan.price}
                       </span>
-                      <span className="text-[11px] text-ink-soft">
+                      <span className="text-[11px] text-ls-ink-3">
                         {plan.suffix}
                       </span>
                     </div>
                     <Button
                       className={
                         plan.id === "gratis"
-                          ? "h-auto w-full justify-between rounded-full bg-espresso-800 py-2 pr-2 pl-5 font-semibold text-white text-xs shadow transition-all hover:bg-espresso-700 active:scale-[0.98]"
-                          : "h-auto w-full justify-between rounded-full bg-amberwarm-200 py-2 pr-2 pl-5 font-semibold text-espresso-950 text-xs shadow-sm transition-all hover:bg-amberwarm-300 active:scale-[0.98]"
+                          ? "h-auto w-full justify-between rounded-full bg-ls-solid py-2 pr-2 pl-5 font-semibold text-ls-solid-ink text-xs shadow transition-all hover:bg-ls-solid-hover active:scale-[0.98]"
+                          : "h-auto w-full justify-between rounded-full bg-ls-accent py-2 pr-2 pl-5 font-semibold text-ls-accent-ink text-xs shadow-sm transition-all hover:bg-ls-accent-strong active:scale-[0.98]"
                       }
                       onClick={() => {
                         if (plan.action === "scroll") {
@@ -168,8 +168,8 @@ export function Pricing() {
                       <span
                         className={
                           plan.id === "gratis"
-                            ? "flex h-6 w-6 items-center justify-center rounded-full bg-white font-bold text-[11px] text-espresso-900"
-                            : "flex h-6 w-6 items-center justify-center rounded-full bg-espresso-800 font-bold text-[11px] text-white"
+                            ? "flex h-6 w-6 items-center justify-center rounded-full bg-ls-card font-bold text-[11px] text-ls-ink-2"
+                            : "flex h-6 w-6 items-center justify-center rounded-full bg-ls-solid font-bold text-[11px] text-ls-solid-ink"
                         }
                       >
                         »
@@ -182,18 +182,18 @@ export function Pricing() {
           </div>
         </div>
 
-        <div className="flex flex-col justify-between rounded-3xl border border-hairline-strong bg-white p-6 shadow-sm sm:p-8 lg:col-span-5">
+        <div className="flex flex-col justify-between rounded-3xl border border-ls-line-strong bg-ls-card p-6 shadow-sm sm:p-8 lg:col-span-5">
           <div>
             <div className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="font-semibold text-2xl text-espresso-950 leading-tight sm:text-3xl">
+              <h2 className="font-semibold text-2xl text-ls-ink leading-tight sm:text-3xl">
                 {testimonialCopy.title}
               </h2>
             </div>
 
-            <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-hairline">
+            <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-ls-line">
               <div
                 id="testimonial-progress"
-                className="h-full bg-espresso-800 transition-all duration-300"
+                className="h-full bg-ls-solid transition-all duration-300"
                 style={{ width: active.progress }}
               />
             </div>

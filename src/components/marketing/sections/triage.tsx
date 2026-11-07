@@ -17,7 +17,7 @@ export function Triage() {
     <section
       id="section-triage"
       aria-labelledby="triage-cards-title"
-      className="bg-sand-100 pb-24"
+      className="bg-ls-surface pb-24"
     >
       <h2 id="triage-cards-title" className="sr-only">
         Tiga langkah memeriksa pesan

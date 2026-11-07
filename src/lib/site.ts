@@ -160,10 +160,10 @@ export const plans = [
   {
     id: "gratis",
     ribbon: "COCOK UNTUK MULAI",
-    ribbonClass: "bg-espresso-800 text-amberwarm-100",
+    ribbonClass: "bg-ls-solid text-ls-solid-ink",
     icon: "✦",
-    iconClass: "bg-espresso-800 text-amberwarm-200",
-    bulletClass: "text-espresso-700",
+    iconClass: "bg-ls-solid text-ls-solid-ink",
+    bulletClass: "text-ls-ink-2",
     name: "Gratis",
     desc: "Semua yang dibutuhkan untuk memeriksa satu pesan hari ini.",
     features: [
@@ -184,10 +184,10 @@ export const plans = [
   {
     id: "pendukung",
     ribbon: "RENCANA — BELUM TERSEDIA",
-    ribbonClass: "bg-moss-900 text-amberwarm-100",
+    ribbonClass: "bg-ls-accent text-ls-accent-ink",
     icon: "★",
-    iconClass: "bg-moss-900 text-amberwarm-200",
-    bulletClass: "text-moss-900",
+    iconClass: "bg-ls-accent text-ls-accent-ink",
+    bulletClass: "text-ls-accent-text",
     name: "Pendukung",
     desc: "Untuk yang ingin modul belajar lengkap dan simulasi.",
     features: [

@@ -7,7 +7,17 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!dist",
+      "!build",
+      "!src/components/marketing/powder/sections",
+      "!src/styles/powder-framer.css",
+      "!src/styles/powder-fonts.css",
+      "!src/data/powder"
+    ]
   },
   "formatter": {
     "enabled": true,
