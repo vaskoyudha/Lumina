@@ -17,8 +17,8 @@ function normalize(value: string | null): ThemeId | null {
   if (value === "paper" || value === "black" || value === "cream") {
     return value;
   }
-  /* Pre-paper builds stored the light theme as "warm". */
-  if (value === "warm") return "paper";
+  /* Pre-cream builds stored the default light theme as "warm". */
+  if (value === "warm") return "cream";
   return null;
 }
 
@@ -27,7 +27,7 @@ const ACTIVE = "bg-ls-solid text-ls-solid-ink";
 
 export function ThemeSlider() {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState<ThemeId>("paper");
+  const [theme, setTheme] = useState<ThemeId>("cream");
 
   useEffect(() => {
     const landing = rootRef.current?.closest(".landing");
@@ -46,7 +46,7 @@ export function ThemeSlider() {
         setTheme(saved);
       }
     } catch {
-      // Private mode: keep the default paper theme.
+      // Private mode: keep the default cream theme.
     }
   }, []);
 
@@ -85,7 +85,7 @@ export function ThemeSlider() {
       role="toolbar"
       aria-label="Tema tampilan"
       data-pressable
-      className={`relative flex items-center rounded-full border p-1 backdrop-blur-md transition-colors duration-300 ${TONE}`}
+      className={`relative flex items-center rounded-full border p-1 shadow-lg backdrop-blur-md transition-colors duration-300 ${TONE}`}
     >
       <span
         aria-hidden="true"
