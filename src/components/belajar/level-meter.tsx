@@ -24,7 +24,7 @@ export function LevelMeter({
             className={cn(
               "w-1 rounded-full",
               height,
-              i < level ? "bg-[var(--appnext-accent-deep)]" : "bg-line",
+              i < level ? "bg-brand" : "bg-line",
             )}
           />
         ))}
