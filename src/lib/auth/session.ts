@@ -13,6 +13,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const SESSION_COOKIE = "lumina_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24;
+/** "Ingat saya" keeps the facade for a month instead of one day. */
+export const SESSION_REMEMBER_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 export interface SessionPayload {
   email: string;
@@ -79,11 +81,15 @@ export function verifyPayload(
   }
 }
 
-export function newPayload(email: string, nama: string): SessionPayload {
+export function newPayload(
+  email: string,
+  nama: string,
+  ttlSeconds: number = SESSION_TTL_SECONDS,
+): SessionPayload {
   return {
     email,
     nama,
-    exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+    exp: Math.floor(Date.now() / 1000) + ttlSeconds,
   };
 }
 

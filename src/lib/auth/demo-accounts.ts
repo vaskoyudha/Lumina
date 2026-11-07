@@ -37,8 +37,8 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
     email: "budi@lumina.id",
     password: "demo1234",
     nama: "Budi",
-    summary: "Sudah 3 modul, punya 1 badge",
-    seed: { completedModules: [10, 1, 2], badges: ["Penjaga OTP"] },
+    summary: "Modul 10 selesai, punya 1 lencana",
+    seed: { completedModules: [10], badges: ["penjaga-apk"] },
   },
 ] as const;
 

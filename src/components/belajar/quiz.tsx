@@ -56,7 +56,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
   // when the question or the screen changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: deliberate re-focus
   useEffect(() => {
-    promptRef.current?.focus();
+    promptRef.current?.focus({ preventScroll: true });
   }, [index, finished]);
 
   const total = questions.length;

@@ -152,7 +152,9 @@ describe("CompanionChat · the language layer is actually called", () => {
     await sendScam();
 
     await waitFor(() => {
-      expect(screen.getByText(/Model terlalu lambat/i)).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/Model terlalu lambat/i).length,
+      ).toBeGreaterThan(0);
     });
     expect(screen.queryByText(/tidak dikonfigurasi/i)).not.toBeInTheDocument();
   });

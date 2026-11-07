@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
  *
  * Shell extracted from `ToolRunSummary.vue`: the outer element is only
  * `width: 520px / max-width: 100% / min-width: 0`; the border, background and
- * radius belong to the *header pill* (min-height 30px, 4px/8px padding, 1px at
- * 9% ink, 8px radius, 11px text, 7px gap). The expanded body sits below the
- * pill without a shared border, which is why the section has none either.
+ * radius belong to the *header pill* (min-height 32px, 12px/8px padding, 1px
+ * `--lumina-line`, full radius to match the chat's own pill header, 11px text,
+ * 7px gap). The expanded body sits below the pill without a shared border,
+ * which is why the section has none either.
  * The chevron is 11px and rotates 90° over 150ms; the icon is 13px.
  *
  * The body reveals with `grid-template-rows: 0fr → 1fr` over 220ms on
@@ -25,7 +26,7 @@ import { cn } from "@/lib/utils";
  *
  * Two deliberate divergences, both recorded in the design spec:
  *
- * a. The source paints its icon and hover state with `--accent-primary`. In
+ * a. The source paints its icon and hover state with `--brand-primary`. In
  *    this palette colour only ever means risk, so a hover tint would read as a
  *    verdict on a neutral control. Ink instead.
  * b. Each stage prints its measured milliseconds. The detectors genuinely
@@ -41,7 +42,7 @@ const MS = new Intl.NumberFormat("id-ID", {
 function Glyph({ status }: { status: AgentStage["status"] }) {
   if (status === "temuan" || status === "selesai") {
     return (
-      <Check aria-hidden strokeWidth={2.2} className="size-3.5 text-safe" />
+      <Check aria-hidden strokeWidth={2.2} className="size-3.5 text-brand" />
     );
   }
   if (status === "dilewati") {
@@ -87,7 +88,7 @@ export function AgentTraceCard({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-label={open ? "Sembunyikan tahapan" : "Lihat tahapan"}
-        className="flex min-h-[30px] w-full min-w-0 items-center gap-[7px] rounded-[8px] border border-txt/9 bg-panel-2/70 px-2 py-1 text-left text-[11px] text-dim transition-colors duration-150 hover:bg-txt/6 focus-visible:border-txt/25 focus-visible:outline-none"
+        className="flex min-h-[32px] w-full min-w-0 items-center gap-[7px] rounded-full border border-line bg-panel px-3 py-1 text-left text-[11px] text-dim transition-colors duration-150 hover:bg-txt/6 focus-visible:border-txt/25 focus-visible:outline-none"
       >
         <ChevronRight
           aria-hidden
@@ -116,7 +117,7 @@ export function AgentTraceCard({
           <Check
             aria-hidden
             strokeWidth={2.2}
-            className="ms-auto size-3.5 shrink-0 text-safe"
+            className="ms-auto size-3.5 shrink-0 text-brand"
           />
         )}
         <span className="tabular shrink-0 text-txt/55">
@@ -133,12 +134,12 @@ export function AgentTraceCard({
         }}
       >
         <div className="min-h-0 overflow-hidden">
-          <ul className="flex flex-col gap-1 px-2 pt-1.5 pb-2">
+          <ul className="mt-1.5 flex flex-col gap-1 rounded-[10px] border border-line bg-panel px-2 py-1.5">
             {trace.stages.map((stage) => (
               <li
                 key={stage.id}
                 aria-busy={stage.status === "berjalan" ? true : undefined}
-                className="flex items-start gap-2 rounded-[5px] py-1"
+                className="flex items-start gap-2 rounded-[7px] py-1"
               >
                 <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
                   <Glyph status={stage.status} />

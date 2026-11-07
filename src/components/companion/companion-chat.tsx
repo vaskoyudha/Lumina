@@ -1,10 +1,27 @@
 "use client";
 
-import { History, PanelRight, Paperclip } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Download,
+  History,
+  Link2,
+  PanelRightClose,
+  PanelRightOpen,
+  Paperclip,
+  Sparkles,
+  SquarePen,
+  Workflow,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { AgentTraceCard } from "@/components/companion/agent-trace";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
+import {
+  CompanionAuth,
+  type CompanionSession,
+} from "@/components/companion/companion-auth";
 import {
   type Attachment,
   Composer,
@@ -13,7 +30,6 @@ import {
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
 import { ExplanationCard } from "@/components/companion/explanation-card";
-import { NavRail } from "@/components/companion/nav-rail";
 import { ScenarioCards } from "@/components/companion/scenario-cards";
 import type { Scenario } from "@/components/companion/scenarios";
 import { ScoreCard } from "@/components/companion/score-card";
@@ -26,6 +42,20 @@ import {
 } from "@/components/companion/voice-client";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   buildAnswerRequest,
   requestAnswer,
 } from "@/lib/companion/answer-client";
@@ -36,6 +66,7 @@ import {
   suggestedActions,
 } from "@/lib/companion/reply";
 import { isQuestionAbout, type Lane, planTurn } from "@/lib/companion/turn";
+import { transcribeImages } from "@/lib/companion/vision-client";
 import {
   type AgentStage,
   type AgentTrace,
@@ -50,27 +81,33 @@ import { scoreWithTrace } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
 
 /**
- * Companion — the full chat workspace. No site nav: navigation is the rail.
+ * Companion — the full chat workspace. No site nav: navigation lives in the
+ * sidebar.
  *
- * Layout from the reference chat UI (`ChatPanel.vue`):
+ * Layout is a 1:1 clone of the Cortex reference (`cortex_ui.tsx`):
  *
- *   ┌────┬──────────┬───────────────────────────────┬────────────┐
- *   │ 64 │ sessions │  slim header (title · actions) │ evidence   │
- *   │ rail│ (240px) │  ───────────────────────────── │ (336px)    │
- *   │    │          │  centred column, scrolls       │            │
- *   │    │          │  ───────────────────────────── │            │
- *   │    │          │  composer, pinned              │            │
- *   └────┴──────────┴───────────────────────────────┴────────────┘
+ *   ┌──────────┬────────────────────────────────┬──────────────┐
+ *   │ 220px    │  pill header (orb · title · ⋯)  │ agent        │
+ *   │ brand    │  ─────────────────────────────  │ pipeline     │
+ *   │ new chat │  orb hero + lavender composer   │ graph        │
+ *   │ search   │  ─────────────────────────────  │ (376/396px)  │
+ *   │ nav      │  suggestion card grid           │              │
+ *   │ history  │                                 │              │
+ *   └──────────┴────────────────────────────────┴──────────────┘
  *
- * The main panel is a raised card with a 14px radius sitting 10px inside the
- * shell, exactly as the reference does — that inset is what makes the chat
- * read as a workspace rather than a page.
+ * The shell is full-bleed: sidebar, conversation, and evidence panel are three
+ * edge-to-edge columns of one white workspace (no floating card, no lavender
+ * background) on the plain `bg-bg` surface. Accents are the documented
+ * `--lumina-brand*` tokens added for this surface; every
+ * reference hex lives in `globals.css`, no component holds a literal colour.
  *
- * Two product decisions that override the reference:
+ * Three product decisions that override the reference:
  *   a. History is React state only. The privacy promise (§11.6) says closing
  *      the tab loses the conversation, so there is no storage call here.
  *   b. The evidence panel is a real column on desktop, not a drawer, because
  *      the agent-by-agent evidence IS the argument the product makes.
+ *   c. The sidebar second row is the manipulated risk band, not a timestamp —
+ *      a judge scanning threads needs the verdict before opening one.
  */
 
 interface Turn {
@@ -109,10 +146,20 @@ interface Session {
   risk?: "bersih" | "rendah" | "mencurigakan" | "tinggi";
   /** Short clock time, printed on the title row like the reference does. */
   time?: string;
+  /** Epoch ms of the last turn, used to bucket the thread under Hari ini/Kemarin. */
+  updatedAt?: number;
 }
 
 const GREETING =
   "Halo. Tempel pesan, tautan, atau ceritakan telepon yang kamu terima. Saya akan tunjukkan kalimat mana yang berbahaya dan apa yang sebaiknya kamu lakukan.";
+
+/** One dot colour per band, reused by the header pill and the pipeline header. */
+const RISK_DOT: Record<NonNullable<Session["risk"]>, string> = {
+  bersih: "bg-brand",
+  rendah: "bg-brand",
+  mencurigakan: "bg-warn",
+  tinggi: "bg-danger",
+};
 
 let nextId = 1;
 const id = () => nextId++;
@@ -131,7 +178,11 @@ function titleFor(text: string, attachments: readonly Attachment[]): string {
   return base.length > 42 ? `${base.slice(0, 42).trimEnd()}…` : base;
 }
 
-export function CompanionChat() {
+export function CompanionChat({
+  session = null,
+}: {
+  session?: CompanionSession | null;
+}) {
   const [sessions, setSessions] = React.useState<Session[]>(() => [
     newSession(),
   ]);
@@ -140,19 +191,61 @@ export function CompanionChat() {
   const [busy, setBusy] = React.useState(false);
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
+  const [copiedThread, setCopiedThread] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
 
-  const latestResult = React.useMemo(() => {
+  /**
+   * The panel describes one verdict, never the whole session. Bundling every
+   * scored turn put artifacts from an older, cleaner message under the newest
+   * score, so a panel reading 97/100 could cite proof that did not produce it.
+   * Everything the panel renders is scoped to the latest scored turn.
+   */
+  const latestCheck = React.useMemo(() => {
     for (let i = turns.length - 1; i >= 0; i--) {
-      const hit = turns[i]?.result;
-      if (hit) return hit;
+      const turn = turns[i];
+      if (turn?.result) {
+        return {
+          result: turn.result,
+          trace: turn.trace ?? null,
+          source: turn.source ?? "",
+          at: turn.at,
+        };
+      }
     }
     return null;
   }, [turns]);
+
+  const latestResult = latestCheck?.result ?? null;
+  const latestTrace = latestCheck?.trace ?? null;
+
+  /**
+   * The panel goes live while the language stage is streaming. The open turn
+   * already carries the detector's `result` and an `AgentTrace` whose voice
+   * stage is `berjalan`, so the graph can light the one stage that is actually
+   * running instead of waiting for the whole answer to finish.
+   */
+  const liveCheck = React.useMemo(() => {
+    for (let i = turns.length - 1; i >= 0; i--) {
+      const turn = turns[i];
+      if (turn?.streaming && turn.trace) {
+        return {
+          result: turn.result ?? null,
+          trace: turn.trace,
+        };
+      }
+    }
+    return null;
+  }, [turns]);
+
+  const panelResult = liveCheck?.result ?? latestResult;
+  const panelTrace = liveCheck?.trace ?? latestTrace;
+  const running = liveCheck != null;
 
   const latestExplanation = React.useMemo(() => {
     for (let i = turns.length - 1; i >= 0; i--) {
@@ -164,14 +257,16 @@ export function CompanionChat() {
 
   const evidence = React.useMemo(
     () =>
-      buildEvidenceBundle(
-        turns.flatMap((turn) =>
-          turn.result && turn.source
-            ? [{ text: turn.source, at: turn.at, result: turn.result }]
-            : [],
-        ),
-      ),
-    [turns],
+      latestCheck?.source
+        ? buildEvidenceBundle([
+            {
+              text: latestCheck.source,
+              at: latestCheck.at,
+              result: latestCheck.result,
+            },
+          ])
+        : null,
+    [latestCheck],
   );
 
   React.useEffect(() => {
@@ -194,11 +289,6 @@ export function CompanionChat() {
       const text = raw.trim();
       if ((!text && attachments.length === 0) || busy) return;
 
-      // Attachment filenames are part of what the user received, so they are
-      // part of what the engine reads: `undangan-nikah.apk` is the strongest
-      // signal in the APK family and it is not prose anyone types.
-      const scored = scoringTextWithAttachments(text, attachments);
-
       // Stamped here, never during render: Next 16 fails the prerender of a
       // client component that reads the clock while rendering.
       const stamp = new Date().toISOString();
@@ -207,14 +297,66 @@ export function CompanionChat() {
       if (target === undefined) return;
 
       /*
+       * An image is evidence, not a concept question, so a turn with one is a
+       * check even when the typed words look like a question. The lane is
+       * therefore known before the pixels are read, which lets the user's
+       * message appear immediately instead of after the transcription.
+       */
+      const hasImages = attachments.some(isImageAttachment);
+
+      const userTurn: Turn = {
+        id: id(),
+        role: "user",
+        text,
+        attachments,
+        at: stamp,
+        lane: hasImages ? "periksa" : undefined,
+      };
+
+      if (hasImages) {
+        setBusy(true);
+        setSessions((prev) =>
+          prev.map((session) =>
+            session.id === target
+              ? {
+                  ...session,
+                  title:
+                    session.turns.length <= 1
+                      ? titleFor(text, attachments)
+                      : session.title,
+                  time: stamp.slice(11, 16),
+                  updatedAt: new Date(stamp).getTime(),
+                  turns: [...session.turns, userTurn],
+                }
+              : session,
+          ),
+        );
+      }
+
+      /*
+       * The model reads pixels; it does not judge. The transcription joins the
+       * filenames and typed words as input to the deterministic engine, so a
+       * failed read degrades to the filename-only check rather than inventing
+       * a verdict.
+       */
+      const transcription = await transcribeImages(attachments);
+      const scored = [
+        transcription.text,
+        scoringTextWithAttachments(text, attachments),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      /*
        * The question guard runs BEFORE scoring. Asking what a scam is must not
        * produce a red card about the person asking: measured, "apa itu pinjol?"
        * scored 70/tinggi and named the pinjol scheme. A question is not a
        * message someone received, so the detectors never see it.
        */
-      const asked = options.force
-        ? false
-        : isQuestionAbout(scored, { hasPriorVerdict: latestResult !== null });
+      const asked =
+        options.force || hasImages
+          ? false
+          : isQuestionAbout(scored, { hasPriorVerdict: latestResult !== null });
 
       /*
        * Prior *checked* user turns go to the Conversation Agent so escalation
@@ -260,14 +402,7 @@ export function CompanionChat() {
        * unless it is set here — otherwise history would contain companion
        * answers with no questions in between.
        */
-      const userTurn: Turn = {
-        id: id(),
-        role: "user",
-        text,
-        attachments,
-        at: stamp,
-        lane,
-      };
+      const stampedTurn: Turn = { ...userTurn, lane };
 
       const evidenceStarted = performance.now();
       const evidenceBundle = checked
@@ -333,10 +468,11 @@ export function CompanionChat() {
                     ? titleFor(text, attachments)
                     : session.title,
                 time: stamp.slice(11, 16),
+                updatedAt: new Date(stamp).getTime(),
                 risk: checked ? (result?.risk ?? session.risk) : session.risk,
                 turns: [
                   ...session.turns,
-                  userTurn,
+                  ...(hasImages ? [] : [stampedTurn]),
                   {
                     id: companionId,
                     role: "companion",
@@ -344,6 +480,8 @@ export function CompanionChat() {
                     at: stamp,
                     streaming: true,
                     voiceStartedAt,
+                    result: checked ? (result ?? undefined) : undefined,
+                    source: checked ? scored : undefined,
                     trace: openTrace ?? undefined,
                   },
                 ],
@@ -483,12 +621,13 @@ export function CompanionChat() {
         }));
 
       /*
-       * 15 s, above the route's 13 s so the server is always the one that gives
-       * up first. Before this the call passed no signal at all: a wedged socket
-       * left `busy` true and the composer disabled with no way back.
+       * 23 s, above the route's 20 s so the server is always the one that
+       * gives up first. Before this the call passed no signal at all: a
+       * wedged socket left `busy` true and the composer disabled with no way
+       * back.
        */
       const controller = new AbortController();
-      const abortTimer = setTimeout(() => controller.abort(), 15000);
+      const abortTimer = setTimeout(() => controller.abort(), 23000);
 
       // Defensive: nothing below may leave `busy` stuck.
       try {
@@ -584,259 +723,505 @@ export function CompanionChat() {
     setShowSessions(false);
   };
 
+  /**
+   * The header's "Ekspor percakapan" is the reference's Export chat, wired to
+   * the only export that is honest here: the thread the reader can already see,
+   * as a plain download. History never leaves the tab (§11.6) — the file is
+   * built from the same state that renders the transcript, no network call.
+   */
+  const exportThread = () => {
+    const lines = turns.map((turn) => {
+      const who = turn.role === "user" ? "Kamu" : "Lumina";
+      const verdict = turn.result
+        ? `\n[skor ${turn.result.score}/100 · ${turn.result.risk}]`
+        : "";
+      return `${who}${turn.at ? ` · ${turn.at}` : ""}\n${turn.text}${verdict}`;
+    });
+    const blob = new Blob(
+      [
+        `${active?.title ?? "Percakapan"}\n${"=".repeat(40)}\n\n${lines.join("\n\n")}\n`,
+      ],
+      { type: "text/plain;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${(active?.title ?? "percakapan").replace(/[^\w\s-]/g, "").trim() || "percakapan"}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyThreadLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopiedThread(true);
+      window.setTimeout(() => setCopiedThread(false), 1600);
+    } catch {
+      // No clipboard permission — the reader still has the address bar.
+    }
+  };
+
   const empty = turns.length <= 1;
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
-      <NavRail />
+    <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
+      <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-0 overflow-hidden md:flex-row">
+        <SessionSidebar
+          sessions={sessions}
+          activeId={activeId}
+          onSelect={(sessionId) => {
+            setSelectedId(sessionId);
+            setShowSessions(false);
+          }}
+          onNew={startNew}
+          onClose={() => setShowSessions(false)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          auth={(iconsOnly) => (
+            <CompanionAuth session={session} iconsOnly={iconsOnly} />
+          )}
+          className={cn(
+            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:border-line max-md:border-r md:border-line md:border-r",
+            showSessions ? "max-md:flex" : "max-md:hidden",
+          )}
+        />
 
-      <SessionSidebar
-        sessions={sessions}
-        activeId={activeId}
-        onSelect={(sessionId) => {
-          setSelectedId(sessionId);
-          setShowSessions(false);
-        }}
-        onNew={startNew}
-        onClose={() => setShowSessions(false)}
-        className={cn(
-          "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:w-64 max-md:border-line max-md:border-r max-md:bg-bg",
-          showSessions ? "max-md:flex" : "max-md:hidden",
-        )}
-      />
+        {/* Main panel: the white conversation column of the frame. */}
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-panel">
+          <header className="relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSessions((v) => !v)}
+                aria-label="Riwayat percakapan"
+                aria-expanded={showSessions}
+                className="size-8 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink md:hidden"
+              >
+                <History aria-hidden strokeWidth={1.6} className="size-4" />
+              </Button>
 
-      {/* Main panel: a raised card inset 10px inside the shell. */}
-      <section className="m-2.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-line bg-panel shadow-rest max-md:m-0 max-md:rounded-none max-md:border-0 max-md:shadow-none">
-        <header className="flex h-11 shrink-0 items-center gap-2 border-line border-b px-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSessions((v) => !v)}
-            aria-label="Riwayat percakapan"
-            aria-expanded={showSessions}
-            className="size-8 text-dim md:hidden"
-          >
-            <History aria-hidden strokeWidth={1.6} className="size-4" />
-          </Button>
+              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-edge bg-panel px-2.5 shadow-rest lg:pl-1">
+                <span
+                  aria-hidden
+                  className="relative hidden size-[22px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong lg:grid"
+                >
+                  <Sparkles className="size-2.5 text-white" strokeWidth={2} />
+                </span>
+                <span
+                  aria-hidden
+                  className="relative grid size-4 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 to-brand-strong lg:hidden"
+                >
+                  <Sparkles className="size-2 text-white" strokeWidth={2} />
+                </span>
+                <span className="truncate font-medium text-[12px] text-txt">
+                  {active?.title ?? "Percakapan baru"}
+                </span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
+                  )}
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Opsi percakapan"
+                      className="-mr-1 grid size-[22px] shrink-0 place-items-center rounded-full text-ink-faint outline-none transition-colors hover:bg-chip hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-glow"
+                    >
+                      <ChevronDown
+                        aria-hidden
+                        strokeWidth={1.9}
+                        className="size-3"
+                      />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuLabel className="truncate font-medium text-[11px] text-ink-faint">
+                      {active?.title ?? "Percakapan baru"}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={startNew}>
+                      <SquarePen aria-hidden strokeWidth={1.7} />
+                      Percakapan baru
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={exportThread}>
+                      <Download aria-hidden strokeWidth={1.7} />
+                      Ekspor percakapan
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="lg:hidden"
+                      onSelect={() => setShowEvidence(true)}
+                    >
+                      <Workflow aria-hidden strokeWidth={1.7} />
+                      Buka panel bukti
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem disabled>
+                      <History aria-hidden strokeWidth={1.7} />
+                      Riwayat hanya di tab ini
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
 
-          <span className="truncate font-semibold text-[15px] text-txt">
-            {active?.title ?? "Percakapan baru"}
-          </span>
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={copiedThread ? "Tautan disalin" : "Salin tautan"}
+                onClick={copyThreadLink}
+                className="hidden size-[32px] rounded-full bg-chip text-ink-soft hover:bg-chip-hover hover:text-ink lg:grid"
+              >
+                {copiedThread ? (
+                  <Check aria-hidden strokeWidth={1.8} className="size-4" />
+                ) : (
+                  <Link2 aria-hidden strokeWidth={1.7} className="size-4" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exportThread}
+                className="hidden h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink lg:flex"
+              >
+                <Download aria-hidden strokeWidth={1.7} className="size-3.5" />
+                Ekspor percakapan
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={startNew}
+                aria-label="Percakapan baru"
+                className="h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-8 max-md:px-0 lg:hidden"
+              >
+                <SquarePen aria-hidden strokeWidth={1.6} className="size-3.5" />
+                <span className="max-md:sr-only">Percakapan baru</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowEvidence((v) => !v)}
+                aria-label="Panel bukti"
+                aria-expanded={showEvidence}
+                className="h-[32px] gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong lg:hidden"
+              >
+                <Workflow aria-hidden strokeWidth={1.6} className="size-3.5" />
+                <span aria-hidden className="hidden sm:inline">
+                  Agen
+                </span>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="hidden h-[32px] rounded-full bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
+              >
+                <Link href="/darurat">Mode darurat</Link>
+              </Button>
+            </div>
+          </header>
 
-          <div className="ml-auto flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={startNew}
-              className="h-7 text-dim text-xs hover:text-txt"
-            >
-              Percakapan baru
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowEvidence((v) => !v)}
-              aria-label="Panel bukti"
-              aria-expanded={showEvidence}
-              className="size-8 text-dim xl:hidden"
-            >
-              <PanelRight aria-hidden strokeWidth={1.6} className="size-4" />
-            </Button>
-          </div>
-        </header>
+          {empty ? (
+            <>
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
+                <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
+                  <div className="mb-2 flex items-center justify-center">
+                    {/* biome-ignore lint/performance/noImgElement: a fixed 104x94 PNG with transparency; next/image adds no value here */}
+                    <img
+                      src="/images/companion-orb.png"
+                      alt="Orb Lumina"
+                      width={104}
+                      height={94}
+                      className="pointer-events-none h-[94px] w-[104px] object-contain select-none [filter:hue-rotate(132deg)_saturate(1.45)]"
+                    />
+                  </div>
 
-        {empty ? (
-          <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto px-4 py-6">
-            <div className="mx-auto w-full max-w-[760px]">
-              <div className="mb-6 text-center">
-                <h1 className="font-semibold text-[clamp(19px,2.4vw,30px)] leading-tight tracking-[-0.6px]">
-                  Periksa sebelum kamu percaya.
-                </h1>
-                <p className="mt-2 text-dim text-[13px]">
-                  Pilih contoh di bawah, atau tempel pesan yang kamu terima.
+                  <h1 className="text-center font-semibold text-[24px] leading-[1.2] tracking-[-0.025em] sm:text-[26px]">
+                    <span className="bg-[linear-gradient(90deg,var(--lumina-brand-glow)_0%,var(--lumina-brand-ink-soft)_50%,var(--lumina-brand-glow)_100%)] bg-clip-text text-transparent">
+                      Periksa sebelum
+                    </span>
+                  </h1>
+                  <h2 className="mt-0.5 text-center font-semibold text-[24px] leading-[1.22] tracking-[-0.025em] text-ink sm:text-[26px]">
+                    kamu percaya.
+                  </h2>
+
+                  <div className="mt-5 w-full">
+                    <Composer
+                      onSubmit={(text, attachments) => send(text, attachments)}
+                      busy={busy}
+                      autoFocus
+                      placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
+                    />
+                  </div>
+
+                  <div className="mt-3.5 w-full">
+                    <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative flex shrink-0 items-center justify-center bg-panel px-5 pt-2 pb-3.5 md:bg-transparent">
+                <p className="text-center text-[11px] text-ink-faint leading-[1.45]">
+                  Lumina membaca pesan, bukan mengadili orang.{" "}
+                  <Link
+                    className="font-medium text-brand-chip-ink underline underline-offset-2 hover:text-brand-strong"
+                    data-pressable
+                    href="/belajar"
+                  >
+                    Pelajari cara kerjanya
+                  </Link>
+                  .
                 </p>
               </div>
+            </>
+          ) : (
+            <>
+              <div
+                ref={scrollRef}
+                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 sm:px-6"
+                role="log"
+                aria-live="polite"
+                aria-label="Percakapan"
+              >
+                {turns.map((turn) =>
+                  turn.role === "user" ? (
+                    <div
+                      key={turn.id}
+                      data-turn
+                      className="mx-auto w-full max-w-[820px]"
+                    >
+                      <div className="flex flex-col items-end gap-1.5">
+                        {turn.text ? (
+                          <p className="max-w-[85%] whitespace-pre-wrap rounded-[14px] bg-panel-2 px-4 py-2.5 text-[13px] text-txt leading-relaxed">
+                            {turn.text}
+                          </p>
+                        ) : null}
 
-              <div className="mb-5">
-                <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
-              </div>
+                        {turn.attachments?.length ? (
+                          <ul className="flex flex-wrap justify-end gap-1.5">
+                            {turn.attachments.map((attachment) => (
+                              <li
+                                key={attachment.id}
+                                className="overflow-hidden rounded-sm border border-line bg-panel-2"
+                              >
+                                {isImageAttachment(attachment) ? (
+                                  <span className="block size-20">
+                                    {/* biome-ignore lint/performance/noImgElement: a blob: URL from a local File cannot go through next/image */}
+                                    <img
+                                      src={attachment.url}
+                                      alt={attachment.name}
+                                      className="size-full object-contain"
+                                    />
+                                  </span>
+                                ) : (
+                                  <span className="flex max-w-[10rem] items-center gap-1.5 px-2 py-1.5">
+                                    <Paperclip
+                                      aria-hidden
+                                      strokeWidth={1.5}
+                                      className="size-3 shrink-0 text-dim"
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block truncate text-[0.7rem] text-txt">
+                                        {attachment.name}
+                                      </span>
+                                      <span className="tabular block text-[0.6rem] text-dim">
+                                        {formatAttachmentSize(attachment.size)}
+                                      </span>
+                                    </span>
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      key={turn.id}
+                      data-turn
+                      className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
+                    >
+                      {turn.trace ? (
+                        <AgentTraceCard trace={turn.trace} />
+                      ) : null}
 
-              <Composer
-                onSubmit={(text, attachments) => send(text, attachments)}
-                busy={busy}
-                autoFocus
-                placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
-              />
-            </div>
-          </div>
-        ) : (
-          <>
-            <div
-              ref={scrollRef}
-              className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-5"
-              role="log"
-              aria-live="polite"
-              aria-label="Percakapan"
-            >
-              {turns.map((turn) =>
-                turn.role === "user" ? (
-                  <div
-                    key={turn.id}
-                    data-turn
-                    className="mx-auto w-full max-w-[820px]"
-                  >
-                    <div className="flex flex-col items-end gap-1.5">
-                      {turn.text ? (
-                        <p className="max-w-[85%] whitespace-pre-wrap rounded-[10px] bg-panel-2 px-3.5 py-2.5 text-base text-txt">
+                      {turn.streaming && turn.text.length === 0 ? (
+                        <ThinkingRow
+                          label="Menyusun jawaban"
+                          startedAt={turn.voiceStartedAt ?? null}
+                        />
+                      ) : null}
+
+                      {turn.text.length > 0 ? (
+                        <p className="max-w-[92%] whitespace-pre-wrap text-[13px] text-txt leading-relaxed">
                           {turn.text}
+                          {turn.streaming ? (
+                            <span
+                              aria-hidden
+                              className="ms-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-dim align-baseline"
+                            />
+                          ) : null}
                         </p>
                       ) : null}
 
-                      {turn.attachments?.length ? (
-                        <ul className="flex flex-wrap justify-end gap-1.5">
-                          {turn.attachments.map((attachment) => (
-                            <li
-                              key={attachment.id}
-                              className="overflow-hidden rounded-sm border border-line bg-panel-2"
-                            >
-                              {isImageAttachment(attachment) ? (
-                                <span className="block size-20">
-                                  {/* biome-ignore lint/performance/noImgElement: a blob: URL from a local File cannot go through next/image */}
-                                  <img
-                                    src={attachment.url}
-                                    alt={attachment.name}
-                                    className="size-full object-contain"
-                                  />
-                                </span>
-                              ) : (
-                                <span className="flex max-w-[10rem] items-center gap-1.5 px-2 py-1.5">
-                                  <Paperclip
-                                    aria-hidden
-                                    strokeWidth={1.5}
-                                    className="size-3 shrink-0 text-dim"
-                                  />
-                                  <span className="min-w-0">
-                                    <span className="block truncate text-[0.7rem] text-txt">
-                                      {attachment.name}
-                                    </span>
-                                    <span className="tabular block text-[0.6rem] text-dim">
-                                      {formatAttachmentSize(attachment.size)}
-                                    </span>
-                                  </span>
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
+                      {turn.lane === "tanya" && turn.laneSource ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-dim text-[0.7rem]">
+                            Dijawab sebagai pertanyaan
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-dim text-xs hover:text-txt"
+                            onClick={() =>
+                              send(turn.laneSource ?? "", [], {
+                                force: "periksa",
+                              })
+                            }
+                          >
+                            Periksa sebagai pesan
+                          </Button>
+                        </div>
+                      ) : null}
+
+                      {turn.result && !turn.streaming ? (
+                        <>
+                          <ScoreCard
+                            result={turn.result}
+                            showEscalation={false}
+                            showLinks={false}
+                          />
+                          {turn.explanation ? (
+                            <ExplanationCard
+                              explanation={turn.explanation}
+                              schemeName={
+                                modusFor(turn.result.relatedModule)?.nama ??
+                                null
+                              }
+                            />
+                          ) : null}
+                          <ActionRow result={turn.result} />
+                        </>
                       ) : null}
                     </div>
-                  </div>
-                ) : (
-                  <div
-                    key={turn.id}
-                    data-turn
-                    className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
-                  >
-                    {turn.trace ? <AgentTraceCard trace={turn.trace} /> : null}
-
-                    {turn.streaming && turn.text.length === 0 ? (
-                      <ThinkingRow
-                        label="Menyusun jawaban"
-                        startedAt={turn.voiceStartedAt ?? null}
-                      />
-                    ) : null}
-
-                    {turn.text.length > 0 ? (
-                      <p className="max-w-[92%] whitespace-pre-wrap rounded-[10px] bg-panel-2 px-3.5 py-2.5 text-base text-txt">
-                        {turn.text}
-                        {turn.streaming ? (
-                          <span
-                            aria-hidden
-                            className="ms-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-dim align-baseline"
-                          />
-                        ) : null}
-                      </p>
-                    ) : null}
-
-                    {turn.lane === "tanya" && turn.laneSource ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-dim text-[0.7rem]">
-                          Dijawab sebagai pertanyaan
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-dim text-xs hover:text-txt"
-                          onClick={() =>
-                            send(turn.laneSource ?? "", [], {
-                              force: "periksa",
-                            })
-                          }
-                        >
-                          Periksa sebagai pesan
-                        </Button>
-                      </div>
-                    ) : null}
-
-                    {turn.result && !turn.streaming ? (
-                      <>
-                        <ScoreCard
-                          result={turn.result}
-                          showEscalation={false}
-                          showLinks={false}
-                        />
-                        {turn.explanation ? (
-                          <ExplanationCard
-                            explanation={turn.explanation}
-                            schemeName={
-                              modusFor(turn.result.relatedModule)?.nama ?? null
-                            }
-                          />
-                        ) : null}
-                        <ActionRow result={turn.result} />
-                      </>
-                    ) : null}
-                  </div>
-                ),
-              )}
-            </div>
-
-            <div className="shrink-0 border-line border-t px-4 py-3">
-              <div className="mx-auto w-full max-w-[760px]">
-                <Composer
-                  onSubmit={(text, attachments) => send(text, attachments)}
-                  busy={busy}
-                  placeholder="Tempel pesan berikutnya…"
-                />
+                  ),
+                )}
               </div>
-            </div>
-          </>
-        )}
-      </section>
 
-      <aside
-        className={cn(
-          "w-[21rem] shrink-0 overflow-y-auto p-2.5 xl:block",
-          "max-xl:absolute max-xl:inset-y-0 max-xl:right-0 max-xl:z-30 max-xl:w-[20rem] max-xl:border-line max-xl:border-l max-xl:bg-bg",
-          showEvidence ? "max-xl:block" : "max-xl:hidden",
-        )}
-      >
-        <div className="mb-2 flex justify-end xl:hidden">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowEvidence(false)}
-            className="h-7 text-dim text-xs"
+              <div className="shrink-0 px-4 pt-1 pb-3 sm:px-6">
+                <div className="mx-auto w-full max-w-[640px]">
+                  <Composer
+                    onSubmit={(text, attachments) => send(text, attachments)}
+                    busy={busy}
+                    placeholder="Tempel pesan berikutnya…"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        <aside
+          className={cn(
+            "cortex-dots hidden shrink-0 overflow-hidden border-hairline border-l bg-bg lg:block",
+            evidenceCollapsed ? "w-[48px]" : "w-[376px] xl:w-[396px]",
+          )}
+        >
+          {evidenceCollapsed ? (
+            <div className="flex h-full flex-col items-center gap-2 py-2.5">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Buka panel bukti"
+                aria-expanded={false}
+                onClick={() => setEvidenceCollapsed(false)}
+                className="size-6 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink"
+              >
+                <PanelRightOpen
+                  aria-hidden
+                  strokeWidth={1.7}
+                  className="size-4"
+                />
+              </Button>
+              <span
+                aria-hidden
+                className={cn(
+                  "size-1.5 shrink-0 rounded-full",
+                  latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
+                )}
+              />
+              <span className="mt-1 font-medium text-[10.5px] text-ink-faint [writing-mode:vertical-rl]">
+                Panel bukti
+              </span>
+            </div>
+          ) : (
+            <SignalPanel
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Ciutkan panel bukti"
+                  aria-expanded
+                  onClick={() => setEvidenceCollapsed(true)}
+                  className="size-6 rounded-full text-dim hover:text-txt"
+                >
+                  <PanelRightClose
+                    aria-hidden
+                    strokeWidth={1.6}
+                    className="size-3.5"
+                  />
+                </Button>
+              }
+              evidence={evidence}
+              result={panelResult}
+              sequence={AGENT_SEQUENCE}
+              titleId="panel-bukti-title"
+              trace={panelTrace}
+              running={running}
+            />
+          )}
+        </aside>
+
+        {/*
+         * Below `lg` the panel is a drawer, not a squeezed column. A 19rem column
+         * at 1024px leaves the conversation unusable, and the panel is the thing
+         * that must stay readable on a projector.
+         */}
+        <Sheet onOpenChange={setShowEvidence} open={showEvidence}>
+          <SheetContent
+            className="flex flex-col gap-0 overflow-hidden bg-bg p-0"
+            showCloseButton={false}
+            side="right"
           >
-            Tutup
-          </Button>
-        </div>
-        <SignalPanel
-          result={latestResult}
-          sequence={AGENT_SEQUENCE}
-          evidence={evidence}
-        />
-      </aside>
+            <SheetTitle className="sr-only">Panel bukti</SheetTitle>
+            <SignalPanel
+              action={
+                <SheetClose asChild>
+                  <Button
+                    aria-label="Tutup panel bukti"
+                    className="size-6 rounded-full text-dim hover:text-txt"
+                    size="icon-xs"
+                    variant="ghost"
+                  >
+                    <X />
+                  </Button>
+                </SheetClose>
+              }
+              className="rounded-none border-0"
+              evidence={evidence}
+              result={panelResult}
+              sequence={AGENT_SEQUENCE}
+              titleId="panel-bukti-title-sheet"
+              trace={panelTrace}
+              running={running}
+            />
+          </SheetContent>
+        </Sheet>
+      </div>
     </div>
   );
 }

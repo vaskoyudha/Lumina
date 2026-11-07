@@ -1,0 +1,309 @@
+.triage-stage {
+  padding: 40px 0 8px;
+}
+
+.triage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 56px 28px;
+  justify-items: center;
+}
+
+@media (min-width: 720px) {
+  .triage-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 56px 20px;
+  }
+}
+
+.triage-card {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 370px;
+  flex: none;
+  cursor: pointer;
+  background-color: #000;
+  border-bottom-right-radius: 32px;
+  border-top-left-radius: 32px;
+}
+
+.triage-fgTop {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  z-index: 1;
+  width: 224px;
+  height: 44px;
+  overflow: hidden;
+  background-color: #000;
+  -webkit-mask:
+    url("/images/triage/fg-top-mask.svg") alpha no-repeat center / cover add;
+  mask:
+    url("/images/triage/fg-top-mask.svg") alpha no-repeat center / cover add;
+}
+
+.triage-labelBox {
+  position: absolute;
+  top: 18px;
+  right: 19px;
+  display: flex;
+  white-space: pre;
+}
+
+.triage-label {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  font-family: var(--font-landing-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2em;
+  letter-spacing: -0.04em;
+  text-align: end;
+  color: #fff;
+}
+
+.triage-fgBottom {
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  z-index: 1;
+  width: 154px;
+  height: 44px;
+  overflow: hidden;
+  background-color: #000;
+  -webkit-mask:
+    url("/images/triage/fg-bottom-mask.svg") alpha no-repeat center / cover add;
+  mask:
+    url("/images/triage/fg-bottom-mask.svg") alpha no-repeat center / cover add;
+}
+
+.triage-dots {
+  position: absolute;
+  top: 6px;
+  right: 76px;
+  bottom: 26px;
+  left: 30px;
+  display: flex;
+  flex-flow: row;
+  place-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.triage-dot {
+  position: relative;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 60px;
+}
+
+.triage-headingBox {
+  position: absolute;
+  right: 30px;
+  bottom: 20px;
+  left: 30px;
+  display: flex;
+  white-space: pre-wrap;
+}
+
+.triage-heading {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  font-family: var(--font-landing-display);
+  font-size: 52px;
+  font-weight: 300;
+  line-height: 1.1em;
+  letter-spacing: -0.075em;
+  color: #fff;
+}
+
+@media (max-width: 420px) {
+  .triage-heading {
+    font-size: 44px;
+  }
+}
+
+.triage-pic {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  left: 20px;
+  height: 54%;
+  overflow: clip;
+  border-radius: 12px;
+  background-color: #000;
+}
+
+.triage-picInner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  transition:
+    transform 1.2s cubic-bezier(0.2, 0, 0, 1),
+    opacity 1.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.triage-picImageWrap {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.triage-picImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  object-position: center;
+}
+
+.triage-picTint {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+
+.triage-captionBox {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  padding: 44px 20px 16px;
+  white-space: pre-wrap;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.55) 42%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+}
+
+.triage-caption {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  font-family: var(--font-landing-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3em;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.triage-shadow {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 4;
+  height: 191px;
+  overflow: hidden;
+  border-bottom-right-radius: 32px;
+  transition: opacity 1.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.triage-shadowInner {
+  position: absolute;
+  right: 0;
+  bottom: -40px;
+  left: 0;
+  height: 100px;
+  overflow: hidden;
+  background-color: #000;
+  filter: blur(50px);
+}
+
+.triage-light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  mix-blend-mode: hard-light;
+  border-bottom-right-radius: 32px;
+  border-top-left-radius: 32px;
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.triage-lightBarTop {
+  position: absolute;
+  right: -353px;
+  bottom: -498px;
+  width: 122px;
+  height: 775px;
+  overflow: hidden;
+  opacity: 0.5;
+  filter: blur(60px);
+  transform: rotate(-60deg);
+}
+
+.triage-lightBarBottom {
+  position: absolute;
+  top: -427px;
+  bottom: 22px;
+  left: -254px;
+  width: 75px;
+  overflow: hidden;
+  filter: blur(60px);
+  transform: rotate(-60deg);
+}
+
+.triage-card:hover .triage-light,
+.triage-card:focus-visible .triage-light {
+  opacity: 1;
+}
+
+.triage-card:hover .triage-shadow,
+.triage-card:focus-visible .triage-shadow {
+  opacity: 0;
+}
+
+.triage-card:hover .triage-lightBarTop,
+.triage-card:focus-visible .triage-lightBarTop {
+  right: -273px;
+  bottom: -478px;
+}
+
+.triage-card:hover .triage-lightBarBottom,
+.triage-card:focus-visible .triage-lightBarBottom {
+  top: -357px;
+  bottom: -28px;
+  left: -174px;
+}
+
+.triage-card:hover .triage-picInner,
+.triage-card:focus-visible .triage-picInner {
+  opacity: 0.4;
+  transform: scale(1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .triage-picInner,
+  .triage-shadow,
+  .triage-light,
+  .triage-lightBarTop,
+  .triage-lightBarBottom {
+    transition: none;
+  }
+}

@@ -19,8 +19,8 @@ import {
  * rejects `export const runtime` / `export const dynamic`.
  */
 
-/** Shared ceiling. Must stay below the client's 15 s abort. */
-const DEADLINE_MS = 13000;
+/** Shared ceiling. Must stay below the client's 23 s abort. */
+const DEADLINE_MS = 20000;
 
 const MAX_TOKENS = 800;
 
@@ -106,6 +106,11 @@ export async function POST(request: Request) {
           model,
           stream: false,
           temperature: 0.4,
+          /*
+           * Same model and same minimum-thinking floor as the voice route:
+           * measured 6.6-10.2 s per turn on the fastest Antigravity account.
+           */
+          reasoning_effort: "none",
           max_tokens: MAX_TOKENS,
           messages: [
             { role: "system", content: SYSTEM[parsed.data.lane] },

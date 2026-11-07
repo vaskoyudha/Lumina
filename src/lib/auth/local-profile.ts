@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * Local profile — the only place user state exists.
+ * Local profile — the only place the display name/email record exists.
  *
- * Mirrors the shape Stream B needs for `progress.ts` (plan §5-B):
- * `{ completedModules, badges, missedPatterns }`. Kept in one module so B can
- * reuse it rather than inventing a second storage key.
- *
- * Nothing here ever leaves the browser.
+ * Progress lives in `@/lib/progress` (one versioned key, one schema); this
+ * module owns only the profile record. Nothing here ever leaves the browser.
  */
 
+import { STORAGE_KEY as PROGRESS_KEY } from "@/lib/progress";
+
 const PROFILE_KEY = "lumina.profile";
-const PROGRESS_KEY = "lumina.progress";
 
 export interface LocalProfile {
   email: string;
@@ -19,18 +17,6 @@ export interface LocalProfile {
   /** ISO 8601 */
   createdAt: string;
 }
-
-export interface LocalProgress {
-  completedModules: number[];
-  badges: string[];
-  missedPatterns: string[];
-}
-
-export const EMPTY_PROGRESS: LocalProgress = {
-  completedModules: [],
-  badges: [],
-  missedPatterns: [],
-};
 
 function read<T>(key: string): T | null {
   if (typeof window === "undefined") return null;
@@ -58,18 +44,6 @@ export function loadProfile(): LocalProfile | null {
 
 export function saveProfile(profile: LocalProfile): void {
   write(PROFILE_KEY, profile);
-}
-
-export function loadProgress(): LocalProgress {
-  return read<LocalProgress>(PROGRESS_KEY) ?? EMPTY_PROGRESS;
-}
-
-export function saveProgress(progress: LocalProgress): void {
-  write(PROGRESS_KEY, progress);
-}
-
-export function seedProgress(progress: LocalProgress): void {
-  write(PROGRESS_KEY, progress);
 }
 
 export function clearLocalState(): void {

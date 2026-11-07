@@ -124,8 +124,8 @@ export function ExplanationCard({
   return (
     <div className={cn("flex w-full max-w-[92%] flex-col gap-2", className)}>
       {tactics.length > 0 ? (
-        <Card className="gap-0 border border-line bg-panel py-0">
-          <CardHeader className="py-3">
+        <Card className="gap-0 overflow-hidden rounded-[12px] border border-line bg-panel py-0 ring-0">
+          <CardHeader className="border-line border-b bg-panel-2/60 py-3">
             <CardTitle className="flex items-center justify-between gap-2 font-medium text-sm text-txt">
               <span>Kenapa ini mencurigakan?</span>
               <Badge variant="secondary" className="tabular text-xs">
@@ -144,8 +144,8 @@ export function ExplanationCard({
       ) : null}
 
       {anatomy.length > 0 ? (
-        <Card className="gap-0 border border-line bg-panel py-0">
-          <CardHeader className="py-3">
+        <Card className="gap-0 overflow-hidden rounded-[12px] border border-line bg-panel py-0 ring-0">
+          <CardHeader className="border-line border-b bg-panel-2/60 py-3">
             <CardTitle className="font-medium text-sm text-txt">
               {schemeName ? `Pola: ${schemeName}` : "Pola yang cocok"}
             </CardTitle>
@@ -158,7 +158,7 @@ export function ExplanationCard({
                     <Check
                       aria-hidden
                       strokeWidth={2.2}
-                      className="mt-0.5 size-3.5 shrink-0 text-safe"
+                      className="mt-0.5 size-3.5 shrink-0 text-brand"
                     />
                   ) : (
                     <Circle
@@ -188,8 +188,8 @@ export function ExplanationCard({
       ) : null}
 
       {verify.length > 0 ? (
-        <Card className="gap-0 border border-line bg-panel py-0">
-          <CardHeader className="py-3">
+        <Card className="gap-0 overflow-hidden rounded-[12px] border border-line bg-panel py-0 ring-0">
+          <CardHeader className="border-line border-b bg-panel-2/60 py-3">
             <CardTitle className="font-medium text-sm text-txt">
               Periksa sendiri
             </CardTitle>
@@ -217,8 +217,8 @@ export function ExplanationCard({
       ) : null}
 
       {report.length > 0 ? (
-        <Card className="gap-0 border border-line bg-panel py-0">
-          <CardHeader className="py-3">
+        <Card className="gap-0 overflow-hidden rounded-[12px] border border-line bg-panel py-0 ring-0">
+          <CardHeader className="border-line border-b bg-panel-2/60 py-3">
             <CardTitle className="font-medium text-sm text-txt">
               Kalau sudah terlanjur
             </CardTitle>

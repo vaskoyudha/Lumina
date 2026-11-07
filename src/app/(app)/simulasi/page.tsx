@@ -9,6 +9,7 @@ import {
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MODUS } from "@/lib/modus";
 import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
@@ -23,142 +24,160 @@ export const metadata: Metadata = {
 const PLANNED = MODUS.filter(
   (modus) => modus.scenarioId === null && modus.scenarioPlanned !== null,
 );
-const incomingMessage = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).find(
-  (node) => node.type === "message" && node.attachment,
-);
-const endingCount = SCENARIO_CATALOG.flatMap(({ nodes }) => nodes).filter(
-  (node) => node.type === "ending",
-).length;
+
+const incomingMessage = SCENARIO_CATALOG.flatMap(
+  (scenario) => scenario.nodes,
+).find((node) => node.type === "message" && node.attachment);
+
+const endingCount = SCENARIO_CATALOG.flatMap(
+  (scenario) => scenario.nodes,
+).filter((node) => node.type === "ending").length;
 
 export default function SimulasiPage() {
   return (
-    <div className="sim-landing mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <section aria-labelledby="mission-title" className="sim-hero">
-        <div className="sim-hero-copy">
-          <p className="sim-eyebrow">
-            <Gamepad2 aria-hidden="true" /> Misi interaktif · Level 1
+    <div className="appnext-container min-w-0 py-8 sm:py-10">
+      <section
+        aria-labelledby="mission-title"
+        className="grid gap-9 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center"
+      >
+        <div className="min-w-0">
+          <p className="appnext-caption flex items-center gap-2">
+            <Gamepad2 aria-hidden className="size-3.5" />
+            Misi interaktif · Level 1
           </p>
-          <h1 className="sim-hero-title" id="mission-title">
-            <span>Paket sebelum</span> <span>pulang</span>
+          <h1 id="mission-title" className="mt-3">
+            Paket sebelum pulang
           </h1>
-          <p className="sim-hero-description">
+          <p className="appnext-lead mt-4 max-w-xl">
             <strong>Satu chat. Banyak jebakan.</strong> {MISSION.context}
           </p>
-          <p className="sim-hero-objective">
+          <p className="mt-3 max-w-xl">
             {MISSION.role}. {MISSION.objective}
           </p>
 
-          <div className="sim-hero-actions">
+          <ul
+            aria-label="Ringkasan misi"
+            className="appnext-caption mt-6 flex flex-wrap gap-x-6 gap-y-2"
+          >
+            <li className="flex items-center gap-1.5">
+              <Clock3 aria-hidden className="size-3.5" />
+              Perkiraan {MISSION.duration}
+            </li>
+            <li className="flex items-center gap-1.5">
+              <Package aria-hidden className="size-3.5" />
+              {MISSION.chapters.length} babak
+            </li>
+            <li className="flex items-center gap-1.5">
+              <ShieldCheck aria-hidden className="size-3.5" />
+              {endingCount} kemungkinan akhir
+            </li>
+          </ul>
+
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <Button
               asChild
+              className="min-h-11 rounded-full bg-[var(--appnext-accent-deep)] px-5 text-base text-white hover:bg-[var(--appnext-ink-2)]"
               data-pressable
-              className="sim-primary-button min-h-12 text-base"
               size="lg"
             >
               <Link href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}>
-                Mulai misi <ArrowUpRight aria-hidden="true" />
+                Mulai misi
+                <ArrowUpRight aria-hidden />
               </Link>
             </Button>
             <Button
               asChild
+              className="min-h-11 rounded-full px-5 text-base"
               data-pressable
-              className="sim-secondary-button min-h-11 text-base"
-              variant="outline"
               size="lg"
+              variant="outline"
             >
               <Link href="/belajar/10">
-                Pelajari pola APK <ArrowRight aria-hidden="true" />
+                Pelajari pola APK
+                <ArrowRight aria-hidden />
               </Link>
             </Button>
-            <Link className="sim-emergency-link" href="/darurat">
+            <Link
+              className="appnext-link text-dim text-sm underline-offset-4 hover:text-txt hover:underline"
+              href="/darurat"
+            >
               Perlu bantuan sekarang?
             </Link>
           </div>
-
-          <ul className="sim-mission-meta" aria-label="Ringkasan misi">
-            <li>
-              <Clock3 aria-hidden="true" /> Perkiraan {MISSION.duration}
-            </li>
-            <li>
-              <Package aria-hidden="true" /> {MISSION.chapters.length} babak
-            </li>
-            <li>
-              <ShieldCheck aria-hidden="true" /> {endingCount} kemungkinan akhir
-            </li>
-          </ul>
         </div>
 
-        <figure className="sim-hero-art">
-          <div className="sim-hero-art-frame">
+        <figure className="m-0 min-w-0">
+          <div className="overflow-hidden rounded-[var(--appnext-r-card)] bg-panel-2 shadow-[var(--appnext-shadow-ambient)]">
             <Image
-              src="/simulasi/parcel-playground.png"
               alt=""
               aria-hidden="true"
-              className="sim-hero-illustration"
-              width={1024}
+              className="h-auto w-full"
               height={1024}
               priority
               sizes="(min-width: 1024px) 46vw, 100vw"
+              src="/simulasi/parcel-playground.png"
+              width={1024}
             />
-            <span className="sim-sticker" data-color="mint">
-              CERITA FIKTIF
-            </span>
-            <span className="sim-sticker" data-color="yellow">
-              Hadiah buat Ibu!
-            </span>
-            <span className="sim-sticker" data-color="coral">
-              Plot twist ↓
-            </span>
           </div>
-          <figcaption className="sim-hero-caption">
+          <figcaption className="appnext-caption mt-3">
             Ada paket. Ada plot twist.
             {incomingMessage?.type === "message" &&
-              incomingMessage.attachment && (
-                <span> · {incomingMessage.attachment.name}</span>
-              )}
+            incomingMessage.attachment ? (
+              <span className="tabular">
+                {" "}
+                · {incomingMessage.attachment.name}
+              </span>
+            ) : null}
           </figcaption>
         </figure>
       </section>
 
-      <section
-        aria-labelledby="chapters-heading"
-        className="sim-stage-road mt-8"
-      >
-        <div className="sim-stage-header">
-          <div>
-            <p className="sim-eyebrow">
-              Misi singkat, pilihanmu yang menentukan
-            </p>
-            <h2 id="chapters-heading">Alur misi</h2>
-          </div>
-          <span className="sim-stage-time">
+      <section aria-labelledby="chapters-heading" className="mt-12">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 id="chapters-heading">Alur misi</h2>
+          <p className="appnext-caption tabular">
             Tiga babak · sekitar {MISSION.duration}
-          </span>
+          </p>
         </div>
-        <ol className="sim-stage-list">
+        <ol className="mt-5 grid gap-3">
           {MISSION.chapters.map((chapter, index) => (
-            <li className="sim-stage-stop" key={chapter}>
-              <span className="sim-stage-number">0{index + 1}</span>
-              <span className="sim-stage-copy">{chapter}</span>
-              <ArrowRight aria-hidden="true" />
+            <li
+              className="flex min-w-0 items-center gap-4 rounded-[var(--appnext-r-md)] bg-panel-2 px-4 py-4"
+              key={chapter}
+            >
+              <span className="tabular appnext-caption shrink-0">
+                0{index + 1}
+              </span>
+              <span className="min-w-0 flex-1 text-base text-txt">
+                {chapter}
+              </span>
             </li>
           ))}
         </ol>
       </section>
 
-      <section aria-labelledby="planned-heading" className="sim-planned mt-9">
-        <header className="sim-page-header">
+      <section aria-labelledby="planned-heading" className="mt-12">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 id="planned-heading">Level lain</h2>
-          <p>Masih direncanakan, belum bisa dimainkan.</p>
-        </header>
-        <ul className="sim-planned-list">
+          <p className="appnext-caption">
+            Masih direncanakan, belum bisa dimainkan.
+          </p>
+        </div>
+        <ul className="mt-5 grid gap-3 sm:grid-cols-2">
           {PLANNED.map((modus) => (
-            <li key={modus.id}>
-              <span className="sim-planned-chip">
-                <span>{modus.scenarioPlanned}</span>
-                <span>{modus.nama}</span>
-                <span>Rencana</span>
+            <li
+              className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--appnext-r-md)] bg-panel-2 px-4 py-4"
+              key={modus.id}
+            >
+              <span className="tabular appnext-caption shrink-0">
+                {modus.scenarioPlanned}
               </span>
+              <span className="min-w-0 flex-1 text-base text-txt">
+                {modus.nama}
+              </span>
+              <Badge className="shrink-0" variant="outline">
+                Rencana
+              </Badge>
             </li>
           ))}
         </ul>

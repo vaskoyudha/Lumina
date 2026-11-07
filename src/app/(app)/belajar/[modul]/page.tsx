@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BelajarShell } from "@/components/belajar/belajar-shell";
 import { ModulBody } from "@/components/belajar/modul-body";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,10 @@ import { formattedLaporan, MODUS, MODUS_BY_NO } from "@/lib/modus";
  * example, checklist, quiz, reporting steps); the other eleven say "segera"
  * honestly instead of rendering fake lesson text (§5, §9d). AppNext light:
  * white cards, `#EEEEEE` dividers, pill actions.
+ *
+ * The frame is the same `BelajarShell` the catalog uses, so the rail does not
+ * jump between the two pages. `ModulBody` already brings its own table of
+ * contents at `lg`, so this page passes no aside.
  */
 
 export const metadata: Metadata = { title: "Modul" };
@@ -49,11 +54,11 @@ export default async function ModulPage({
   const next = sorted[(idx + 1) % sorted.length];
 
   return (
-    <div className="appnext-container py-10 sm:py-12">
+    <BelajarShell>
       <Link
         href="/belajar"
         data-pressable
-        className="inline-flex items-center gap-1 text-dim text-sm hover:text-txt"
+        className="appnext-link text-dim text-sm hover:text-txt"
       >
         <ArrowLeft aria-hidden className="size-3.5" />
         Semua modul
@@ -74,12 +79,14 @@ export default async function ModulPage({
           >
             {ready ? "Lengkap" : "Segera"}
           </span>
+          <span aria-hidden>·</span>
+          <span className="tabular">Level {entry.level}</span>
         </p>
         <h1 className="mt-2">{entry.nama}</h1>
         <p className="mt-2">{entry.ciri.join(" · ")}</p>
       </header>
 
-      <dl className="mt-7 grid gap-4 sm:grid-cols-2">
+      <dl className="mt-7 grid max-w-prose gap-3 sm:grid-cols-2">
         <Card className="gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]">
           <CardContent className="py-4">
             <dt className="appnext-caption">Laporan IASC</dt>
@@ -155,6 +162,6 @@ export default async function ModulPage({
           </Card>
         </nav>
       ) : null}
-    </div>
+    </BelajarShell>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,8 @@ import { logout } from "@/lib/auth/actions";
 
 /**
  * Logged-in affordance in the app nav. Demo-scope: shows the name from the
- * signed cookie and a way out. No settings, no profile page, no avatar upload —
- * there is nothing stored to edit.
+ * signed cookie and the way to `/profil`, the device-only profile summary.
+ * There are still no settings and no avatar upload — nothing to edit.
  */
 export function UserMenu({ nama, email }: { nama: string; email: string }) {
   const initial = nama.trim().charAt(0).toUpperCase() || "?";
@@ -48,11 +48,13 @@ export function UserMenu({ nama, email }: { nama: string; email: string }) {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <User aria-hidden />
-          Akun demo — tanpa penyimpanan
+        <DropdownMenuItem asChild>
+          <Link href="/profil" className="flex items-center gap-2">
+            <UserRound aria-hidden className="size-4" />
+            Profil
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/masuk" className="flex items-center gap-2">
             Ganti akun demo
           </Link>
