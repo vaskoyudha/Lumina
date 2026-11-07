@@ -223,6 +223,83 @@
     background: var(--appnext-surface);
   }
 
+  /* ---- Course art ---------------------------------------------------------
+     The reference dashboard opens each card with a painted thumbnail. Lumina
+     ships no stock photography, so the same slot is filled with token-drawn
+     art: a warm wash, two radial lights and the module number. A muted variant
+     keeps "segera" modules visually distinct without inventing a cover. */
+  .appnext-cover {
+    background-color: var(--lumina-brand-soft);
+    background-image:
+      radial-gradient(
+        circle at 82% 16%,
+        color-mix(in oklab, var(--lumina-brand-glow) 60%, transparent) 0%,
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at 12% 92%,
+        color-mix(in oklab, var(--lumina-brand-line) 90%, transparent) 0%,
+        transparent 55%
+      ),
+      linear-gradient(
+        135deg,
+        var(--lumina-brand-tint) 0%,
+        var(--lumina-brand-soft) 55%,
+        var(--lumina-brand-soft-2) 100%
+      );
+  }
+
+  .appnext-cover--muted {
+    background-color: var(--lumina-brand-tint);
+    background-image:
+      radial-gradient(
+        circle at 82% 16%,
+        color-mix(in oklab, var(--lumina-brand-glow) 38%, transparent) 0%,
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 12% 92%,
+        color-mix(in oklab, var(--lumina-brand-line) 50%, transparent) 0%,
+        transparent 55%
+      ),
+      linear-gradient(
+        135deg,
+        var(--appnext-white) 0%,
+        var(--lumina-brand-tint) 60%,
+        var(--lumina-brand-soft) 100%
+      );
+  }
+
+  /* Campaign band for the catalog hero and the profile-card header. The base
+     ground is the deep brand stop so white copy stays legible; the radial is
+     decoration only. */
+  .appnext-campaign {
+    background-color: var(--lumina-brand-strong);
+    background-image:
+      radial-gradient(
+        circle at 86% 8%,
+        color-mix(in oklab, var(--lumina-brand-glow) 55%, transparent) 0%,
+        transparent 45%
+      ),
+      linear-gradient(
+        120deg,
+        var(--lumina-brand-strong) 0%,
+        var(--lumina-brand) 58%,
+        var(--lumina-brand-strong) 100%
+      );
+  }
+
+  /* Readability scrim for a painted cover that carries white overlay copy.
+     Kept in the token file so no rgb/hex literal lives in a component. */
+  .appnext-cover-scrim {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--appnext-ink-2) 32%, transparent) 0%,
+      transparent 42%,
+      color-mix(in oklab, var(--appnext-ink-2) 26%, transparent) 100%
+    );
+  }
+
   /* ---- Course catalog & player (from reference platforms) -----------------
      Coursera/Udemy catalog cards, Duolingo-ish learning path, Khan-style
      visible momentum. All of it stays inside AppNext tokens. */
@@ -250,7 +327,7 @@
   }
 
   .appnext-ring-fill {
-    stroke: var(--appnext-accent);
+    stroke: var(--lumina-brand);
     transition: stroke-dashoffset 240ms ease-out;
   }
 

@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 /**
  * `(chat)` shell — no site nav, no footer.
  *
- * The companion is a workspace, not a page in a document. A global nav bar
- * above a chat is one permanent row of chrome the user never needs while
- * typing, and it costs vertical space on the exact screen that needs it most.
- * Navigation lives in the rail inside the chat shell instead.
+ * Workspace routes are not pages in a document: the companion and the learning
+ * dashboard both own their left sidebar, internal scroll regions and bottom
+ * privacy note. A global nav bar above them would be one permanent row of
+ * chrome the user never needs, and it costs vertical space on the exact
+ * screens that need it most.
  *
- * Route group only: the URL stays `/companion`. `/darurat` keeps its own
- * nav-bearing shell in `(app)` and is never gated (AGENTS.md §8).
+ * Route group only: the URLs stay `/companion` and `/belajar`. `/darurat` keeps
+ * its own nav-bearing shell in `(app)` and is never gated (AGENTS.md §8).
  */
 export default function ChatLayout({ children }: { children: ReactNode }) {
   return <div className="h-dvh overflow-hidden bg-bg text-txt">{children}</div>;

@@ -33,23 +33,36 @@ export function CompleteButton({ moduleNo }: { moduleNo: number }) {
   return (
     <Card
       aria-label="Selesaikan modul"
-      className="gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]"
+      className="gap-0 rounded-[22px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
     >
-      <CardContent className="flex flex-col gap-3 py-4">
+      <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink"
+          >
+            <GraduationCap className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-medium text-txt">
+              {done ? "Modul selesai" : "Tandai modul selesai"}
+            </p>
+            <p className="appnext-caption">
+              {done
+                ? "Progres dan lencanamu tersimpan di perangkat ini."
+                : "Kuis lulus. Tandai modul untuk menyimpan progres dan membuka lencana."}
+            </p>
+          </div>
+        </div>
+
         {done ? (
           <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="secondary"
-              className="text-[color:var(--appnext-accent-deep)]"
-            >
+            <Badge variant="secondary" className="bg-brand-soft text-brand-ink">
               <CheckCircle2 aria-hidden />
               Modul selesai
             </Badge>
             {earned && badgeId ? (
-              <Badge
-                variant="outline"
-                className="text-[color:var(--appnext-warn-deep)]"
-              >
+              <Badge variant="secondary" className="bg-panel-2 text-brand-ink">
                 <GraduationCap aria-hidden />
                 {BADGE_LABEL[badgeId] ?? badgeId}
               </Badge>
@@ -58,7 +71,7 @@ export function CompleteButton({ moduleNo }: { moduleNo: number }) {
         ) : (
           <Button
             type="button"
-            className="min-h-11 w-fit rounded-full bg-[var(--appnext-accent-deep)] text-bg hover:bg-[var(--appnext-ink-2)]"
+            className="min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
             onClick={finish}
           >
             Tandai modul selesai
