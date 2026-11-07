@@ -3,7 +3,7 @@
 import { LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserMenu } from "@/components/auth/user-menu";
+import { AuthNav } from "@/components/shell/auth-nav";
 import { cn } from "@/lib/utils";
 
 /**
@@ -83,17 +83,7 @@ export function SiteNav({
           Darurat
         </Link>
 
-        {session ? (
-          <UserMenu nama={session.nama} email={session.email} />
-        ) : (
-          <Link
-            href="/masuk"
-            data-pressable
-            className="shrink-0 rounded-md px-3 py-1.5 text-dim text-sm hover:bg-panel-2 hover:text-txt"
-          >
-            Masuk
-          </Link>
-        )}
+        <AuthNav session={session ?? null} />
       </div>
     </header>
   );

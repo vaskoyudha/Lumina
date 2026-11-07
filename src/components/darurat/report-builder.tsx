@@ -216,7 +216,7 @@ export function ReportBuilder({ modus }: { modus: string }) {
               <div className="flex flex-wrap items-center gap-3">
                 <Button
                   type="button"
-                  className="h-11 bg-safe px-4 text-bg hover:bg-safe/90"
+                  className="h-11 bg-brand px-4 text-bg hover:bg-brand/90"
                   disabled={missing.length > 0 || status === "loading"}
                   onClick={handleDownload}
                 >

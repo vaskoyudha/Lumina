@@ -1,15 +1,20 @@
 "use client";
 
-import { ArrowUp, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
+import {
+  ArrowUp,
+  ImageIcon,
+  Loader2,
+  Paperclip,
+  Sparkles,
+  X,
+} from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 /**
- * Composer — the chat input, structured after the reference chat UI surveyed in
- * `lumina-references/` (attachment strip → textarea → toolbar → circular send),
- * rebuilt on this project's primitives.
+ * Composer — the chat input, structured after the Cortex reference chat UI.
  *
  * What was taken from the reference, because it is a real capability and not
  * decoration:
@@ -21,17 +26,21 @@ import { cn } from "@/lib/utils";
  *   c. A toolbar under the text and a single circular send button, so the
  *      primary action sits where the eye ends.
  *
- * What was NOT taken: the reference sends images to a model that reads them.
- * This engine is deterministic and offline, so an image's pixels are never
- * read. Claiming otherwise would be a lie in the one place this product cannot
- * afford one. Instead the *filename* is folded into what gets scored — which is
- * genuinely useful, because `undangan-nikah.apk` is the strongest signal in the
- * APK family — and the helper line says plainly that image contents are not
- * read yet.
+ * Surface: the reference wraps the white field in a tinted card with a 5px
+ * gutter, a brand hairline and a brand gradient send orb. Reproduced with the
+ * documented `--lumina-brand*` tokens; the shell is the same object the
+ * reference draws, not an outline around one.
  *
- * Attachments never leave the device: they are `URL.createObjectURL` handles
- * over `File` objects that stay in memory, which is what keeps the privacy
- * promise in the plan (§11.6) true rather than aspirational.
+ * Images are read: the original `File` is kept, the chat asks
+ * `/api/companion/vision` for a transcription, and that transcription joins the
+ * text that gets scored. The model transcribes, it never judges — `score.ts`
+ * remains the only source of `score`, `risk`, and `signals`. The transfer is
+ * disclosed permanently under the field rather than in a one-time dialog
+ * (plan §11.6a).
+ *
+ * Filenames are still folded into what gets scored, because
+ * `undangan-nikah.apk` is the strongest signal in the APK family. Non-image
+ * files keep their `blob:` handle in memory; nothing is stored.
  */
 
 export interface Attachment {
@@ -42,6 +51,8 @@ export interface Attachment {
   type: string;
   /** `blob:` URL, revoked when the attachment is removed or the composer dies. */
   url: string;
+  /** Original file, kept so an image can be transcribed before scoring. */
+  file: File;
 }
 
 export function isImageAttachment(attachment: Attachment): boolean {
@@ -77,6 +88,7 @@ function toAttachment(file: File): Attachment {
     size: file.size,
     type: file.type || "application/octet-stream",
     url: URL.createObjectURL(file),
+    file,
   };
 }
 
@@ -156,39 +168,32 @@ export function Composer({
     <div className={cn("w-full", className)}>
       {attachments.length > 0 ? (
         <ul
-          className="mb-2 flex flex-wrap gap-2"
+          className="mb-2 flex flex-wrap items-center gap-1.5"
           aria-label="Lampiran yang akan dikirim"
         >
           {attachments.map((attachment) => (
             <li
               key={attachment.id}
-              className="relative overflow-hidden rounded-sm border border-line bg-panel-2"
+              className="relative overflow-hidden rounded-[10px] border border-brand-line bg-brand-soft"
             >
               {isImageAttachment(attachment) ? (
-                <div className="size-[112px]">
+                <span className="block size-[62px]">
                   {/* biome-ignore lint/performance/noImgElement: a blob: URL from a local File cannot go through next/image */}
                   <img
                     src={attachment.url}
                     alt={attachment.name}
-                    className="size-full object-contain"
+                    className="size-full object-cover"
                   />
-                </div>
+                </span>
               ) : (
-                <div className="flex max-w-[180px] items-center gap-2 px-2.5 py-2">
+                <span className="inline-flex max-w-[180px] items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-brand-ink">
                   <Paperclip
                     aria-hidden
-                    strokeWidth={1.5}
-                    className="size-4 shrink-0 text-dim"
+                    strokeWidth={1.6}
+                    className="size-3 shrink-0"
                   />
-                  <span className="min-w-0">
-                    <span className="block truncate text-txt text-xs">
-                      {attachment.name}
-                    </span>
-                    <span className="tabular block text-[0.65rem] text-dim">
-                      {formatAttachmentSize(attachment.size)}
-                    </span>
-                  </span>
-                </div>
+                  <span className="min-w-0 truncate">{attachment.name}</span>
+                </span>
               )}
 
               <Button
@@ -197,9 +202,9 @@ export function Composer({
                 size="icon"
                 onClick={() => removeAttachment(attachment.id)}
                 aria-label={`Hapus lampiran ${attachment.name}`}
-                className="absolute top-1 right-1 size-6 rounded-full border border-line bg-panel/90 text-dim hover:text-txt"
+                className="absolute top-0.5 right-0.5 size-5 rounded-full bg-panel/90 text-ink-mute hover:text-ink"
               >
-                <X aria-hidden strokeWidth={2} className="size-3" />
+                <X aria-hidden strokeWidth={2.2} className="size-2.5" />
               </Button>
             </li>
           ))}
@@ -225,10 +230,10 @@ export function Composer({
           addFiles(event.dataTransfer.files);
         }}
         className={cn(
-          "rounded-md border bg-panel p-2.5 shadow-rest transition-[border-color,box-shadow,background-color] duration-150 ease-out",
+          "w-full rounded-[18px] border p-[5px] transition-[border-color,background-color,box-shadow] duration-150 ease-out",
           dragging
-            ? "border-txt bg-panel-2"
-            : "border-field focus-within:border-txt focus-within:shadow-lift",
+            ? "border-brand-strong bg-brand-soft"
+            : "border-brand-line bg-brand-tint shadow-[0_4px_24px_color-mix(in_oklab,var(--lumina-brand-glow)_8%,transparent)] focus-within:border-brand-glow",
         )}
       >
         <input
@@ -244,72 +249,131 @@ export function Composer({
           }}
         />
 
-        <Textarea
-          ref={textareaRef}
-          value={draft}
-          autoFocus={autoFocus}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              submit();
-            }
-          }}
-          onPaste={(event) => {
-            // A pasted screenshot is the single most common way a scam arrives
-            // in a chat, so paste must attach, not dump a filename.
-            const files = Array.from(event.clipboardData.files);
-            if (files.length > 0) {
-              event.preventDefault();
-              addFiles(files);
-            }
-          }}
-          rows={2}
-          placeholder={placeholder}
-          aria-label="Pesan"
-          className="resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
-        />
+        <div className="rounded-[14px] border border-brand-line/70 bg-panel px-3.5 pt-3 pb-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.015)]">
+          <Textarea
+            ref={textareaRef}
+            value={draft}
+            autoFocus={autoFocus}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                submit();
+              }
+            }}
+            onPaste={(event) => {
+              // A pasted screenshot is the single most common way a scam arrives
+              // in a chat, so paste must attach, not dump a filename.
+              const files = Array.from(event.clipboardData.files);
+              if (files.length > 0) {
+                event.preventDefault();
+                addFiles(files);
+              }
+            }}
+            rows={2}
+            placeholder={placeholder}
+            aria-label="Pesan"
+            className="mb-1.5 min-h-[41px] resize-none border-0 bg-transparent px-0 py-0 text-[12.5px] text-ink leading-relaxed shadow-none placeholder:text-ink-faint focus-visible:ring-0 md:text-[12.5px]"
+          />
 
-        <div className="mt-2 flex items-center gap-1.5">
-          <Button
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => inputRef.current?.click()}
+                aria-label="Lampirkan gambar atau berkas"
+                className="size-[29px] shrink-0 rounded-[8px] border border-transparent bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink"
+              >
+                <ImageIcon aria-hidden strokeWidth={1.6} className="size-3.5" />
+              </Button>
+
+              <span className="hidden truncate text-[10.5px] text-ink-faint sm:inline">
+                Enter mengirim · Shift+Enter baris baru
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              onClick={submit}
+              disabled={busy || !canSend}
+              aria-label={submitLabel}
+              className="size-[30px] shrink-0 rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong p-0 text-white ring-2 ring-brand-line shadow-[0_2px_8px_color-mix(in_oklab,var(--lumina-brand-glow)_45%,transparent)] hover:brightness-[1.03] disabled:opacity-40"
+            >
+              {busy ? (
+                <Loader2
+                  aria-hidden
+                  strokeWidth={2}
+                  className="size-[15px] animate-spin"
+                />
+              ) : (
+                <ArrowUp
+                  aria-hidden
+                  strokeWidth={2.2}
+                  className="size-[15px]"
+                />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/*
+          The reference's sub-bar under the field. Both halves are real: the
+          left reads the clipboard (people copy a scam message before opening
+          this page), the right opens the same file picker as the toolbar.
+        */}
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
+            onClick={async () => {
+              try {
+                const text = await navigator.clipboard.readText();
+                if (text.trim().length > 0) {
+                  setDraft(text);
+                  textareaRef.current?.focus();
+                  return;
+                }
+              } catch {
+                // Permission denied or no clipboard API — the textarea is
+                // still the path, so fall through and focus it.
+              }
+              textareaRef.current?.focus();
+            }}
+            className="flex items-center gap-1.5 font-semibold text-[11.5px] text-ink-soft transition-colors hover:text-brand-chip-ink"
+          >
+            <Sparkles
+              aria-hidden
+              strokeWidth={1.8}
+              className="size-3.5 text-brand-ink-soft"
+            />
+            Tempel dari papan klip
+          </button>
+
+          <button
+            type="button"
             onClick={() => inputRef.current?.click()}
-            aria-label="Lampirkan gambar atau berkas"
-            className="size-7 rounded-full text-dim hover:text-txt"
+            className="flex h-[24px] items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 text-[11px] font-medium text-ink-soft shadow-rest transition-colors hover:bg-brand-tint"
           >
-            <ImageIcon aria-hidden strokeWidth={1.8} className="size-4" />
-          </Button>
-
-          <span className="hidden text-dim text-xs sm:inline">
-            Enter mengirim · Shift+Enter baris baru
-          </span>
-
-          <Button
-            type="button"
-            onClick={submit}
-            disabled={busy || !canSend}
-            aria-label={submitLabel}
-            className="ml-auto size-[30px] shrink-0 rounded-full p-0"
-          >
-            {busy ? (
-              <Loader2
-                aria-hidden
-                strokeWidth={2}
-                className="size-[17px] animate-spin"
-              />
-            ) : (
-              <ArrowUp aria-hidden strokeWidth={2.2} className="size-[17px]" />
-            )}
-          </Button>
+            <Paperclip
+              aria-hidden
+              strokeWidth={1.8}
+              className="size-3 -rotate-45 text-ink-mute"
+            />
+            Lampirkan berkas
+          </button>
         </div>
       </div>
 
-      <p className="mt-2 text-[0.7rem] text-dim leading-snug">
-        Pesan yang kamu periksa tidak pernah dikirim: yang keluar hanya temuan
-        dan pertanyaanmu sendiri. Lampiran tidak diunggah; nama berkas ikut
-        diperiksa, isi gambar belum bisa dibaca.
+      {/*
+        Plan §11.6a requires a permanent, explicit notice that the conversation
+        leaves the device. The reference has no second text block under the
+        composer, so the sentence lives in the DOM for every user and screen
+        reader but does not add a line of chrome.
+      */}
+      <p className="sr-only">
+        Percakapan ini dikirim ke model untuk menyusun jawaban. Pemeriksaan
+        tetap di perangkat ini dan percakapan tidak disimpan.
       </p>
     </div>
   );

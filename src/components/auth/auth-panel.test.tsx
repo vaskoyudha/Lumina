@@ -74,4 +74,16 @@ describe("AuthPanel", () => {
       screen.getByRole("button", { name: /buat akun demo/i }),
     ).toBeInTheDocument();
   });
+
+  it("carries the picked demo account into the register form", async () => {
+    const user = userEvent.setup();
+    render(<AuthPanel defaultTab="daftar" />);
+
+    const fillButtons = screen.getAllByRole("button", {
+      name: /isi otomatis/i,
+    });
+    await user.click(fillButtons[1] as HTMLElement);
+
+    expect(screen.getByLabelText(/^email$/i)).toHaveValue("budi@lumina.id");
+  });
 });

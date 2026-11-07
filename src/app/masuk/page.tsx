@@ -2,6 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthPanel } from "@/components/auth/auth-panel";
+import { SignInPage } from "@/components/auth/sign-in-page";
 import { BackButton } from "@/components/shell/back-button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -41,29 +42,26 @@ export default function MasukPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-10 sm:py-14">
-      <BackButton href="/" />
-
-      <header>
-        <h1 className="font-semibold text-2xl tracking-tight">Masuk</h1>
-        <p className="mt-1.5 text-dim text-sm">
-          Lumina bisa dipakai tanpa akun. Akun demo di bawah hanya untuk
-          memperlihatkan alur yang sudah selesai.
-        </p>
-      </header>
-
-      <Suspense fallback={<AuthSkeleton />}>
-        <TabbedAuth searchParams={searchParams} />
-      </Suspense>
-
-      <p className="flex items-start gap-1.5 text-dim text-xs leading-relaxed">
-        <ShieldCheck
-          aria-hidden
-          className="mt-0.5 size-3.5 shrink-0 text-safe"
-        />
-        Sesi ini hanya cookie bertanda tangan di perangkat ini. Tidak ada
-        database, tidak ada unggahan, tidak ada reset password.
-      </p>
-    </div>
+    <main className="h-dvh bg-background">
+      <SignInPage
+        title={<span className="font-light">Selamat datang</span>}
+        description="Masuk untuk menyimpan progres belajar dan melanjutkan percakapan. Lumina tetap bisa dipakai tanpa akun."
+        topSlot={<BackButton href="/" />}
+        footerSlot={
+          <p className="flex items-start gap-1.5 text-dim text-xs leading-relaxed">
+            <ShieldCheck
+              aria-hidden
+              className="mt-0.5 size-3.5 shrink-0 text-brand"
+            />
+            Sesi ini hanya cookie bertanda tangan di perangkat ini. Tidak ada
+            database, tidak ada unggahan, tidak ada reset password.
+          </p>
+        }
+      >
+        <Suspense fallback={<AuthSkeleton />}>
+          <TabbedAuth searchParams={searchParams} />
+        </Suspense>
+      </SignInPage>
+    </main>
   );
 }

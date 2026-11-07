@@ -22,7 +22,7 @@ jest.mock("next/link", () => {
 });
 
 describe("CompanionChat · evidence panel", () => {
-  it("shows the extracted file and stops calling the Evidence Agent inactive", async () => {
+  it("shows the extracted artifact without faking a detector", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
@@ -35,39 +35,13 @@ describe("CompanionChat · evidence panel", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/bukti tercatat/i)).toBeInTheDocument();
 
-    // The trace card in the transcript also names every agent, so the panel's
-    // rows are addressed by their own list rather than by the label alone.
-    const panel = within(
-      screen.getByRole("list", { name: /agent pada panel bukti/i }),
-    );
-    const evidenceRow = panel.getByText("Evidence Agent").closest("li");
-    expect(evidenceRow).not.toBeNull();
-    if (evidenceRow) {
-      expect(
-        within(evidenceRow as HTMLElement).queryByText(/belum aktif/i),
-      ).not.toBeInTheDocument();
-    }
-
-    // The one agent we have not built stays labelled as such. Identity Agent
-    // is listed last for exactly this reason: a panel of green ticks would be
-    // claiming a detector we do not have.
-    const identityRow = panel.getByText("Identity Agent").closest("li");
-    expect(identityRow).not.toBeNull();
-    if (identityRow) {
-      expect(
-        within(identityRow as HTMLElement).getByText(/belum aktif/i),
-      ).toBeInTheDocument();
-    }
-
-    // And the Conversation Agent, which used to say "belum aktif", now runs:
-    // it is the combination pass that pairs a deadline with a demand.
-    const conversationRow = panel.getByText("Conversation Agent").closest("li");
-    expect(conversationRow).not.toBeNull();
-    if (conversationRow) {
-      expect(
-        within(conversationRow as HTMLElement).queryByText(/belum aktif/i),
-      ).not.toBeInTheDocument();
-    }
+    // Every agent in the panel now runs, so the old "belum aktif" label must be
+    // gone. Honesty moved to the coverage line: a stage with nothing to inspect
+    // is named as skipped, with the reason, rather than wearing a green tick.
+    expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/\d+ dari 5 agen memeriksa pesan ini/i),
+    ).toBeInTheDocument();
   });
 
   it("surfaces the combination finding when two vectors agree", async () => {
@@ -80,21 +54,20 @@ describe("CompanionChat · evidence panel", () => {
     );
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
-    // The finding itself, in the result card the user reads.
+    // The finding itself, on the result card and again in the panel.
     expect(
-      await screen.findByText(/hadiah tetapi meminta pembayaran lebih dulu/i),
-    ).toBeInTheDocument();
+      (
+        await screen.findAllByText(
+          /hadiah tetapi meminta pembayaran lebih dulu/i,
+        )
+      ).length,
+    ).toBeGreaterThan(0);
 
-    // And the panel credits it to a real agent, with a count beside the name.
-    const row = within(
-      screen.getByRole("list", { name: /agent pada panel bukti/i }),
-    )
-      .getByText("Conversation Agent")
-      .closest("li");
-    expect(row).not.toBeNull();
-    if (row) {
-      expect(within(row as HTMLElement).getByText(/^1$/)).toBeInTheDocument();
-    }
+    // And the panel credits it to a real agent.
+    const findings = within(
+      screen.getByRole("list", { name: /temuan terdeteksi/i }),
+    );
+    expect(findings.getByText("Conversation Agent")).toBeInTheDocument();
   });
 
   it("names the modus instead of printing its internal id", async () => {
@@ -103,9 +76,11 @@ describe("CompanionChat · evidence panel", () => {
 
     await user.click(screen.getByRole("button", { name: /apk undangan/i }));
 
+    // The score card names it and the panel repeats it, on purpose: the panel
+    // is read on its own when the transcript has scrolled away.
     expect(
-      await screen.findByText("File APK via WhatsApp"),
-    ).toBeInTheDocument();
+      (await screen.findAllByText("File APK via WhatsApp")).length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText("apk-whatsapp")).not.toBeInTheDocument();
   });
 
@@ -120,9 +95,9 @@ describe("CompanionChat · evidence panel", () => {
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     expect(
-      await screen.findByText(/nama penerima yang disebut/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Hadi Wibowo")).toBeInTheDocument();
+      (await screen.findAllByText(/nama penerima yang disebut/i)).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Hadi Wibowo").length).toBeGreaterThan(0);
   });
 });
 
@@ -147,10 +122,17 @@ describe("CompanionChat · an honest zero", () => {
     await user.type(screen.getByLabelText(/pesan/i), BENIGN_PASTE);
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
-    const panel = screen.getByRole("list", { name: /agent pada panel bukti/i });
+    const panel = await screen.findByRole("list", {
+      name: /temuan terdeteksi/i,
+    });
     const card = panel.closest("[data-slot='card']") ?? document.body;
 
-    expect(await screen.findByText(/0\/100/)).toBeInTheDocument();
+    // The verdict is rendered as a number and a unit in separate text nodes,
+    // so assert each half inside the panel rather than the joined string.
+    expect(
+      within(card as HTMLElement).getByText("0", { selector: "p" }),
+    ).toBeInTheDocument();
+    expect(within(card as HTMLElement).getByText("/100")).toBeInTheDocument();
     expect(
       within(card as HTMLElement).getByText(/^0 temuan$/),
     ).toBeInTheDocument();
@@ -252,7 +234,7 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
 
     // The result card is the signal that the check finished and `busy` is back
     // to false, so the follow-up can be sent.
-    await screen.findByText("File APK via WhatsApp");
+    await screen.findAllByText("File APK via WhatsApp");
 
     await user.type(screen.getByLabelText(/pesan/i), "kenapa berbahaya?");
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));

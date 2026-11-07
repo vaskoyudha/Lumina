@@ -24,6 +24,7 @@ import {
   TACTICS,
   type TacticId,
 } from "@/lib/simulasi/scenario";
+import { cn } from "@/lib/utils";
 
 type Message = Extract<ScenarioNode, { type: "message" }>;
 type Ending = Extract<ScenarioNode, { type: "ending" }>;
@@ -31,7 +32,9 @@ type Mode = "santai" | "tantangan";
 type TranscriptEntry =
   | { kind: "message"; node: Message }
   | { kind: "reply"; id: string; text: string };
-const button = "min-h-11 h-auto whitespace-normal text-base";
+const button = "h-auto min-h-11 whitespace-normal rounded-xl px-4 text-base";
+const card =
+  "rounded-[var(--appnext-r-card)] shadow-[var(--appnext-shadow-ambient)]";
 const defaultEnding = scenario.nodes.find(
   (node): node is Ending => node.type === "ending",
 ) as Ending;
@@ -48,7 +51,7 @@ function Meter({
   danger?: boolean;
 }) {
   return (
-    <div className="sim-meter" data-tone={danger ? "danger" : "warn"}>
+    <div className="grid min-w-0 gap-2">
       <div className="flex justify-between gap-2 text-base">
         <span>{label}</span>
         <strong className="tabular">
@@ -62,7 +65,12 @@ function Meter({
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={Math.round(value)}
-        className={`h-4 bg-panel-2 ${danger ? "[&_[data-slot=progress-indicator]]:bg-danger" : "[&_[data-slot=progress-indicator]]:bg-warn"}`}
+        className={cn(
+          "h-4 bg-panel-2",
+          danger
+            ? "[&_[data-slot=progress-indicator]]:bg-danger"
+            : "[&_[data-slot=progress-indicator]]:bg-warn",
+        )}
       />
     </div>
   );
@@ -259,11 +267,11 @@ export function Runner() {
     ? TACTICS.filter((tactic) => tactics.includes(tactic.id))
     : [];
   const collection = (
-    <section className="sim-side-panel grid gap-3">
+    <section aria-label="Koleksi taktik" className="grid gap-3">
       <Button
         data-pressable
         variant="outline"
-        className={`${button} sim-tactics-toggle justify-between`}
+        className={cn(button, "justify-between")}
         aria-expanded={collectionOpen}
         onClick={() => setCollectionOpen(!collectionOpen)}
       >
@@ -273,7 +281,7 @@ export function Runner() {
       {collectionOpen &&
         (tacticCards.length ? (
           tacticCards.map((tactic) => (
-            <Card key={tactic.id} className="sim-tactic-card">
+            <Card key={tactic.id} className={cn(card, "gap-2 py-4")}>
               <CardHeader>
                 <CardTitle role="heading" aria-level={3} className="text-base">
                   {tactic.name}
@@ -295,62 +303,72 @@ export function Runner() {
 
   if (!started)
     return (
-      <section className="sim-briefing">
-        <div className="sim-briefing-intro">
-          <div className="sim-parcel-art" aria-hidden="true">
-            <Package size={82} strokeWidth={1.5} />
-            <span>✦</span>
+      <Card className={card}>
+        <CardContent className="grid gap-8 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] lg:gap-10">
+          <div className="grid min-w-0 content-start gap-4">
+            <p className="appnext-caption">
+              <span>Briefing misi</span> · {MISSION.duration}
+            </p>
+            <h2 className="max-w-prose">Siap jadi pemeran utama?</h2>
+            <div className="grid max-w-prose gap-3">
+              <p>
+                {MISSION.role} · {MISSION.context}
+              </p>
+              <p>
+                <strong className="font-medium text-txt">Tujuan:</strong>{" "}
+                {MISSION.objective}
+              </p>
+              <p className="text-dim">
+                Semua pesan dan alat di sini fiktif. Latihan tidak mengubah
+                perangkat atau mengirim laporan.
+              </p>
+            </div>
           </div>
-          <p className="sim-briefing-label">
-            <span>Briefing misi</span> · {MISSION.duration}
-          </p>
-          <h2>Siap jadi pemeran utama?</h2>
-          <p>
-            {MISSION.role} · {MISSION.context}
-          </p>
-          <p>
-            <strong>Tujuan:</strong> {MISSION.objective}
-          </p>
-          <p>
-            Semua pesan dan alat di sini fiktif. Latihan tidak mengubah
-            perangkat atau mengirim laporan.
-          </p>
-        </div>
-        <div className="sim-briefing-choices">
-          <h2>Pilih cara bermain</h2>
-          <Button
-            data-pressable
-            variant="outline"
-            aria-pressed={mode === "santai"}
-            data-selected={mode === "santai"}
-            data-mode="santai"
-            className={`${button} sim-mode-ticket`}
-            onClick={() => setMode("santai")}
-          >
-            <Coffee aria-hidden="true" />
-            <span>Santai · tanpa tekanan waktu otomatis</span>
-          </Button>
-          <Button
-            data-pressable
-            variant="outline"
-            aria-pressed={mode === "tantangan"}
-            data-selected={mode === "tantangan"}
-            data-mode="tantangan"
-            className={`${button} sim-mode-ticket`}
-            onClick={() => setMode("tantangan")}
-          >
-            <Zap aria-hidden="true" />
-            <span>Tantangan · tekanan naik jika akses aplikasi terbuka</span>
-          </Button>
-          <Button
-            data-pressable
-            className={`${button} sim-start-button`}
-            onClick={() => setStarted(true)}
-          >
-            Mulai misi <ArrowRight aria-hidden="true" />
-          </Button>
-        </div>
-      </section>
+          <div className="grid min-w-0 content-start gap-3 rounded-[var(--appnext-r-md)] bg-panel-2 p-4">
+            <h2>Pilih cara bermain</h2>
+            <Button
+              data-pressable
+              variant="outline"
+              aria-pressed={mode === "santai"}
+              data-selected={mode === "santai"}
+              data-mode="santai"
+              className={cn(
+                button,
+                "justify-start gap-3 rounded-[var(--appnext-r-md)] bg-panel px-4 py-3 text-left aria-pressed:border-transparent aria-pressed:bg-[var(--appnext-ink-2)] aria-pressed:text-white",
+              )}
+              onClick={() => setMode("santai")}
+            >
+              <Coffee aria-hidden="true" className="shrink-0" />
+              <span>Santai · tanpa tekanan waktu otomatis</span>
+            </Button>
+            <Button
+              data-pressable
+              variant="outline"
+              aria-pressed={mode === "tantangan"}
+              data-selected={mode === "tantangan"}
+              data-mode="tantangan"
+              className={cn(
+                button,
+                "justify-start gap-3 rounded-[var(--appnext-r-md)] bg-panel px-4 py-3 text-left aria-pressed:border-transparent aria-pressed:bg-[var(--appnext-ink-2)] aria-pressed:text-white",
+              )}
+              onClick={() => setMode("tantangan")}
+            >
+              <Zap aria-hidden="true" className="shrink-0" />
+              <span>Tantangan · tekanan naik jika akses aplikasi terbuka</span>
+            </Button>
+            <Button
+              data-pressable
+              className={cn(
+                button,
+                "mt-1 gap-2 rounded-full bg-[var(--appnext-accent-deep)] px-5 text-white hover:bg-[var(--appnext-ink-2)]",
+              )}
+              onClick={() => setStarted(true)}
+            >
+              Mulai misi <ArrowRight aria-hidden="true" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   if (!active)
     return (
@@ -363,10 +381,10 @@ export function Runner() {
     const emergency = Boolean(failure) || ending.variant === "compromised";
     return (
       <div
-        className="sim-ending"
+        className="grid max-w-3xl gap-4"
         data-outcome={failure ? "failure" : ending.variant}
       >
-        <Card>
+        <Card className={card}>
           <CardHeader>
             <Badge
               variant={failure ? "destructive" : "secondary"}
@@ -380,15 +398,15 @@ export function Runner() {
               tabIndex={-1}
               role="heading"
               aria-level={2}
-              className="text-2xl outline-none"
+              className="mt-1 text-2xl outline-none"
             >
               {failure ? "Berhenti dan ambil langkah aman" : ending.title}
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="max-w-prose text-base leading-relaxed">
               {failure ?? ending.text}
             </CardDescription>
           </CardHeader>
-          <CardContent className="sim-ending-content grid gap-5">
+          <CardContent className="grid gap-6">
             {failure && latest?.rationale && (
               <Alert
                 role="status"
@@ -401,8 +419,8 @@ export function Runner() {
                 </AlertDescription>
               </Alert>
             )}
-            <section>
-              <h2 className="font-semibold text-lg">Empat hal untuk diingat</h2>
+            <section className="grid gap-2">
+              <h2 className="text-lg font-medium">Empat hal untuk diingat</h2>
               <ol className="grid list-decimal gap-2 pl-5 text-base">
                 {ending.debrief.map((line) => (
                   <li key={line}>{line}</li>
@@ -410,14 +428,14 @@ export function Runner() {
               </ol>
             </section>
             <section className="grid gap-2">
-              <h2 className="font-semibold text-lg">Jejak keputusan</h2>
+              <h2 className="text-lg font-medium">Jejak keputusan</h2>
               {decisions.map((choice, index) => (
                 <div
                   key={`${index}-${choice.label}`}
-                  className="sim-decision-entry grid gap-1"
+                  className="grid gap-1 border-line border-t pt-2 first:border-t-0 first:pt-0"
                 >
                   <p className="text-base">
-                    <strong>
+                    <strong className="font-medium">
                       {choice.verdict === "benar"
                         ? "Langkah aman"
                         : "Langkah berisiko"}
@@ -433,8 +451,8 @@ export function Runner() {
               )}
             </section>
             {proof.length > 0 && (
-              <section>
-                <h2 className="font-semibold text-lg">
+              <section className="grid gap-2">
+                <h2 className="text-lg font-medium">
                   Bukti latihan yang dipilih
                 </h2>
                 <ul className="list-disc pl-5 text-base">
@@ -447,11 +465,11 @@ export function Runner() {
               </section>
             )}
             {collection}
-            <div className="sim-end-actions flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button
                 data-pressable
                 variant={emergency ? "outline" : "default"}
-                className={button}
+                className={cn(button, "rounded-full px-5")}
                 onClick={reset}
               >
                 Coba jalur lain
@@ -460,7 +478,7 @@ export function Runner() {
                 asChild
                 data-pressable
                 variant="outline"
-                className={button}
+                className={cn(button, "rounded-full px-5")}
               >
                 <Link href="/belajar/10">Pelajari pola ini</Link>
               </Button>
@@ -468,7 +486,11 @@ export function Runner() {
                 asChild
                 data-pressable
                 variant={emergency ? "default" : "outline"}
-                className={`${button} ${emergency ? "order-first" : ""}`}
+                className={cn(
+                  button,
+                  "rounded-full px-5",
+                  emergency && "order-first",
+                )}
               >
                 <Link href="/darurat">Buka mode darurat</Link>
               </Button>
@@ -476,7 +498,7 @@ export function Runner() {
                 asChild
                 data-pressable
                 variant="outline"
-                className={button}
+                className={cn(button, "rounded-full px-5")}
               >
                 <Link href="/simulasi">Semua simulasi</Link>
               </Button>
@@ -488,7 +510,7 @@ export function Runner() {
   }
   const task = active.type === "tool_task" ? active : null;
   const tool = task && (
-    <Card className="sim-tool-panel min-w-0">
+    <Card className={cn(card, "min-w-0")}>
       <CardHeader>
         <CardTitle
           ref={promptRef}
@@ -527,7 +549,7 @@ export function Runner() {
                   variant={
                     revoked.includes(permission.id) ? "secondary" : "outline"
                   }
-                  className={`${button} sim-tool-option`}
+                  className={cn(button, "justify-start text-left")}
                   disabled={paused}
                   aria-pressed={revoked.includes(permission.id)}
                   onClick={() => setRevoked(toggle(revoked, permission.id))}
@@ -558,7 +580,7 @@ export function Runner() {
                 key={item.id}
                 data-pressable
                 variant={proof.includes(item.id) ? "secondary" : "outline"}
-                className={`${button} sim-tool-option justify-start`}
+                className={cn(button, "justify-start text-left")}
                 aria-pressed={proof.includes(item.id)}
                 disabled={paused}
                 onClick={() => {
@@ -598,13 +620,14 @@ export function Runner() {
   );
   return (
     <div className="grid min-w-0 gap-4">
-      <Card className="sim-hud">
-        <CardContent className="grid gap-4 pt-4">
-          <div className="sim-hud-header flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-semibold text-base">{MISSION.title}</p>
+      <Card className={card}>
+        <CardContent className="grid gap-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="grid gap-0.5">
+              <p className="font-medium text-base text-txt">
+                Mode {mode === "santai" ? "santai" : "tantangan"}
+              </p>
               <p className="text-base text-dim">
-                {mode === "santai" ? "Santai" : "Tantangan"} ·{" "}
                 {paused ? "Dijeda" : "Sedang berlangsung"}
               </p>
             </div>
@@ -620,7 +643,7 @@ export function Runner() {
               {paused ? "Lanjutkan misi" : "Jeda"}
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <Meter
               label="Panik"
               value={panic}
@@ -633,44 +656,66 @@ export function Runner() {
               max={scenario.hud.intrusion.max}
             />
           </div>
-          <p className="text-base text-dim">
-            {!compromised
-              ? "Belum ada akses"
-              : isolated
-                ? "Terputus"
-                : "Akses aplikasi terbuka"}{" "}
-            {mode === "santai" ? " · tekanan waktu mati" : " · mode Tantangan"}
-          </p>
-          <Button
-            data-pressable
-            variant="outline"
-            className={`${button} sim-mission-controls w-fit`}
-            disabled={paused || breathingUsed}
-            onClick={() => {
-              setPanic(Math.max(0, panic - 15));
-              setBreathingUsed(true);
-            }}
-          >
-            Tarik napas{" "}
-            {breathingUsed ? "· sudah digunakan" : "· kurangi panik 15"}
-          </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-base text-dim">
+              {!compromised
+                ? "Belum ada akses"
+                : isolated
+                  ? "Terputus"
+                  : "Akses aplikasi terbuka"}{" "}
+              {mode === "santai"
+                ? " · tekanan waktu mati"
+                : " · mode Tantangan"}
+            </p>
+            <Button
+              data-pressable
+              variant="outline"
+              className={cn(button, "w-fit")}
+              disabled={paused || breathingUsed}
+              onClick={() => {
+                setPanic(Math.max(0, panic - 15));
+                setBreathingUsed(true);
+              }}
+            >
+              Tarik napas{" "}
+              {breathingUsed ? "· sudah digunakan" : "· kurangi panik 15"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
-      <section
-        className="sim-chapters flex flex-wrap gap-2"
-        aria-label="Bab misi"
-      >
-        {MISSION.chapters.map((chapter, index) => (
-          <Badge
-            key={chapter}
-            variant={active.chapter === index + 1 ? "secondary" : "outline"}
-            className="sim-chapter text-base"
-            data-active={active.chapter === index + 1}
-            aria-current={active.chapter === index + 1 ? "step" : undefined}
-          >
-            {index + 1}. {chapter}
-          </Badge>
-        ))}
+      <section aria-label="Bab misi" className="grid gap-2">
+        <p className="appnext-caption">
+          Tahap {active.chapter ?? 1} dari {MISSION.chapters.length}
+        </p>
+        <ol className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {MISSION.chapters.map((chapter, index) => {
+            const step = index + 1;
+            const current = (active.chapter ?? 1) === step;
+            const done = step < (active.chapter ?? 1);
+            return (
+              <li
+                key={chapter}
+                aria-current={current ? "step" : undefined}
+                className="flex min-w-0 items-center gap-2 text-base"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "size-2.5 shrink-0 rounded-full",
+                    done
+                      ? "bg-brand"
+                      : current
+                        ? "bg-txt"
+                        : "bg-panel-2 ring-1 ring-line",
+                  )}
+                />
+                <span className={current ? "font-medium text-txt" : "text-dim"}>
+                  {chapter}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
       </section>
       {paused && (
         <Alert role="status">
@@ -680,21 +725,24 @@ export function Runner() {
           </AlertDescription>
         </Alert>
       )}
-      <div className="sim-play-grid grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] lg:items-start">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] lg:items-start">
         <div className="grid min-w-0 gap-4">
-          <Card className="sim-phone min-w-0">
-            <CardHeader className="sim-phone-header">
-              <span className="sim-phone-avatar" aria-hidden="true">
-                <Package />
+          <Card className={cn(card, "min-w-0")}>
+            <CardHeader className="flex flex-row items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-panel-2 text-dim"
+              >
+                <Package className="size-5" />
               </span>
-              <div>
+              <div className="grid min-w-0 gap-0.5">
                 <CardTitle role="heading" aria-level={2} className="text-lg">
                   {MISSION.contact}
                 </CardTitle>
                 <CardDescription className="text-base">
                   {MISSION.contactDetail}
                 </CardDescription>
-                <span className="sim-phone-status">Percakapan latihan</span>
+                <span className="appnext-caption">Percakapan latihan</span>
               </div>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -704,75 +752,68 @@ export function Runner() {
                 aria-label="Percakapan latihan"
                 // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus and scroll the transcript.
                 tabIndex={0}
-                className="sim-transcript flex max-h-96 flex-col gap-3 overflow-y-auto p-1 pr-2"
+                className="flex max-h-96 flex-col gap-3 overflow-y-auto rounded-[var(--appnext-r-md)] bg-panel-2 p-3"
               >
                 {transcript.map((entry) =>
                   entry.kind === "reply" ? (
-                    <Card
+                    <div
                       key={`reply-${entry.id}`}
-                      className="sim-bubble ml-auto w-fit max-w-[90%] shrink-0"
+                      className="mr-0 ml-auto grid w-fit max-w-[90%] shrink-0 gap-1 rounded-[18px_18px_6px_18px] bg-[var(--appnext-accent-wash)] px-3.5 py-2.5"
                       data-kind="reply"
                     >
-                      <CardContent className="grid gap-1 p-3">
-                        <p className="font-semibold text-base">Raka · Kamu</p>
-                        <p className="text-base">{entry.text}</p>
-                      </CardContent>
-                    </Card>
+                      <p className="font-medium text-base">Raka · Kamu</p>
+                      <p className="text-base">{entry.text}</p>
+                    </div>
                   ) : (
-                    <Card
+                    <div
                       key={entry.node.id}
-                      className="sim-bubble w-fit max-w-[90%] shrink-0"
+                      className="grid w-fit max-w-[90%] shrink-0 gap-2 rounded-[18px_18px_18px_6px] bg-panel px-3.5 py-2.5 ring-1 ring-line"
                       data-kind={
                         entry.node.speaker === MISSION.contact
                           ? "incoming"
                           : "system"
                       }
                     >
-                      <CardContent className="grid gap-2 p-3">
-                        <p className="font-semibold text-base">
-                          {entry.node.speaker}
-                        </p>
-                        <p className="text-base">{entry.node.text}</p>
-                        {entry.node.attachment && (
-                          <>
-                            <Button
-                              data-pressable
-                              variant="outline"
-                              className={`${button} sim-attachment w-fit`}
-                              disabled={paused}
-                              aria-expanded={attachmentOpen.includes(
-                                entry.node.id,
-                              )}
-                              onClick={() =>
-                                setAttachmentOpen(
-                                  toggle(attachmentOpen, entry.node.id),
-                                )
-                              }
-                            >
-                              Periksa lampiran · {entry.node.attachment.name}
-                            </Button>
-                            {attachmentOpen.includes(entry.node.id) && (
-                              <Alert>
-                                <AlertTitle>
-                                  {entry.node.attachment.name}
-                                </AlertTitle>
-                                <AlertDescription className="text-base">
-                                  {entry.node.attachment.detail}. Ini contoh,
-                                  tidak ada unduhan.
-                                </AlertDescription>
-                              </Alert>
+                      <p className="font-medium text-base">
+                        {entry.node.speaker}
+                      </p>
+                      <p className="text-base">{entry.node.text}</p>
+                      {entry.node.attachment && (
+                        <>
+                          <Button
+                            data-pressable
+                            variant="outline"
+                            className={cn(button, "w-fit")}
+                            disabled={paused}
+                            aria-expanded={attachmentOpen.includes(
+                              entry.node.id,
                             )}
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
+                            onClick={() =>
+                              setAttachmentOpen(
+                                toggle(attachmentOpen, entry.node.id),
+                              )
+                            }
+                          >
+                            Periksa lampiran · {entry.node.attachment.name}
+                          </Button>
+                          {attachmentOpen.includes(entry.node.id) && (
+                            <div className="grid gap-1 rounded-[var(--appnext-r-xs)] bg-panel-2 p-3">
+                              <p className="font-medium text-base">
+                                {entry.node.attachment.name}
+                              </p>
+                              <p className="text-base text-dim">
+                                {entry.node.attachment.detail}. Ini contoh,
+                                tidak ada unduhan.
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   ),
                 )}
                 {active.type === "message" && !paused && (
-                  <p
-                    className="sim-typing text-base text-dim"
-                    aria-hidden="true"
-                  >
+                  <p aria-hidden="true" className="text-base text-dim">
                     {active.speaker === MISSION.contact
                       ? "Pengirim sedang mengetik…"
                       : "Catatan latihan sedang disiapkan…"}
@@ -784,7 +825,7 @@ export function Runner() {
                   data-pressable
                   variant="outline"
                   disabled={paused}
-                  className={`${button} w-fit`}
+                  className={cn(button, "w-fit")}
                   onClick={() => reveal(active)}
                 >
                   Tampilkan pesan sekarang
@@ -793,7 +834,6 @@ export function Runner() {
               {latest?.rationale && (
                 <Alert
                   role="status"
-                  className="sim-feedback"
                   data-tone={latest.verdict === "salah" ? "danger" : "safe"}
                   variant={
                     latest.verdict === "salah" ? "destructive" : "default"
@@ -810,11 +850,11 @@ export function Runner() {
                 </Alert>
               )}
               {active.type === "choice" && (
-                <div className="sim-choice-panel grid gap-3">
+                <div className="grid gap-3">
                   <h2
                     ref={promptRef}
                     tabIndex={-1}
-                    className="font-semibold text-lg outline-none"
+                    className="text-lg font-medium outline-none"
                   >
                     {active.prompt}
                   </h2>
@@ -824,10 +864,16 @@ export function Runner() {
                       data-pressable
                       variant="outline"
                       disabled={paused}
-                      className={`${button} sim-choice-button justify-start text-left`}
+                      className={cn(
+                        button,
+                        "justify-start gap-3 rounded-[var(--appnext-r-md)] px-4 text-left",
+                      )}
                       onClick={() => choose(choice)}
                     >
-                      <span aria-hidden="true">
+                      <span
+                        aria-hidden="true"
+                        className="grid size-6 shrink-0 place-items-center rounded-full bg-panel-2 text-xs"
+                      >
                         {String.fromCharCode(65 + index)}
                       </span>
                       {choice.label}
@@ -840,10 +886,15 @@ export function Runner() {
         </div>
         <aside className="grid min-w-0 gap-4">
           {tool}
-          <Card className="sim-side-panel">
+          <Card className={cn(card, "min-w-0")}>
             <CardHeader>
-              <CardTitle role="heading" aria-level={2} className="text-lg">
-                <Shield aria-hidden="true" /> Status perangkat latihan
+              <CardTitle
+                role="heading"
+                aria-level={2}
+                className="flex items-center gap-2 text-lg"
+              >
+                <Shield aria-hidden="true" className="size-4 text-dim" />
+                Status perangkat latihan
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2 text-base">

@@ -71,7 +71,7 @@ export function TriageChecklist({
                       target="_blank"
                       rel="noopener noreferrer"
                       data-pressable
-                      className="mt-2 inline-flex min-h-11 items-center gap-1 text-safe underline-offset-4 hover:underline"
+                      className="mt-2 inline-flex min-h-11 items-center gap-1 text-brand-strong underline-offset-4 hover:underline"
                     >
                       {step.hrefLabel}
                       <ExternalLink aria-hidden className="size-4" />

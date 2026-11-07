@@ -15,10 +15,47 @@ import { DEMO_ACCOUNTS } from "@/lib/auth/demo-accounts";
  */
 export function DemoAccountPicker({
   onFill,
+  variant = "card",
 }: {
   onFill: (email: string, password: string) => void;
+  variant?: "card" | "inline";
 }) {
   const [copied, setCopied] = useState<string | null>(null);
+
+  if (variant === "inline") {
+    return (
+      <section aria-label="Akun demo" className="flex flex-col gap-3">
+        <div className="relative flex items-center justify-center">
+          <span aria-hidden className="w-full border-border border-t" />
+          <span className="absolute bg-background px-3 text-muted-foreground text-xs">
+            atau pakai akun demo
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {DEMO_ACCOUNTS.map((account) => (
+            <Button
+              key={account.email}
+              type="button"
+              variant="outline"
+              className="h-12 rounded-2xl border-border bg-transparent font-medium text-sm hover:bg-secondary"
+              onClick={() => {
+                onFill(account.email, account.password);
+                setCopied(account.email);
+              }}
+            >
+              {copied === account.email ? "Terisi" : account.nama}
+            </Button>
+          ))}
+        </div>
+
+        <p className="text-center text-muted-foreground text-xs leading-relaxed">
+          Saat masuk, hanya kredensial demo yang dikirim. Tidak ada profil atau
+          progres yang disimpan di server.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-lg border border-line bg-panel p-4">

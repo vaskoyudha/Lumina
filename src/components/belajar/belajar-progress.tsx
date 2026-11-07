@@ -5,15 +5,13 @@ import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { MODUS } from "@/lib/modus";
 import {
+  BADGE_LABEL,
   loadProgress,
   PROGRESS_EVENT,
   type Progress as StoredProgress,
 } from "@/lib/progress";
 
-/** Badge id → display label. Add a row here when a new module earns a badge. */
-export const BADGE_LABEL: Record<string, string> = {
-  "penjaga-apk": "Penjaga APK",
-};
+export { BADGE_LABEL };
 
 /**
  * Progress is per-device localStorage, so every read happens after mount.

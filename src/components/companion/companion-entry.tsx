@@ -9,9 +9,10 @@ import { SignalPanel } from "@/components/companion/signal-panel";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import type { AgentTrace } from "@/lib/contracts/agent-run";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
-import { scoreText } from "@/lib/scoring/score";
+import { scoreWithTrace } from "@/lib/scoring/score";
 
 /**
  * Stream A · Day-1 thin slice (§7 Hari 1): paste text -> deterministic
@@ -40,6 +41,7 @@ const EXAMPLES = [
 export function CompanionEntry() {
   const [text, setText] = React.useState("");
   const [result, setResult] = React.useState<ScoreResult | null>(null);
+  const [trace, setTrace] = React.useState<AgentTrace | null>(null);
   /**
    * The exact text that produced `result`. The textarea stays editable after
    * "Periksa", and a bundle must never describe text that was not scored.
@@ -53,7 +55,9 @@ export function CompanionEntry() {
     if (!trimmed) return;
     setCheckedText(trimmed);
     setCheckedAt(new Date().toISOString());
-    setResult(scoreText({ text: trimmed }));
+    const scored = scoreWithTrace({ text: trimmed });
+    setResult(scored.result);
+    setTrace(scored.trace);
   }, []);
 
   const evidence = React.useMemo(
@@ -119,6 +123,7 @@ export function CompanionEntry() {
                 onClick={() => {
                   setText("");
                   setResult(null);
+                  setTrace(null);
                   setCheckedText("");
                   setCheckedAt("");
                 }}
@@ -161,9 +166,10 @@ export function CompanionEntry() {
       </div>
 
       <SignalPanel
+        evidence={evidence}
         result={result}
         sequence={AGENT_SEQUENCE}
-        evidence={evidence}
+        trace={trace}
       />
 
       <p className="text-dim text-xs lg:col-span-2">

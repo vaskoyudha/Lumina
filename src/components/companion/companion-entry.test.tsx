@@ -95,8 +95,12 @@ describe("CompanionEntry", () => {
       const findings = within(panel as HTMLElement).getAllByText(/\d+ temuan/i);
       expect(findings.length).toBeGreaterThan(0);
     }
-    // Unbuilt agents are labelled honestly rather than faked.
-    expect(screen.getAllByText(/belum aktif/i).length).toBeGreaterThan(0);
+    // No agent is faked: the old "belum aktif" label is gone, and the coverage
+    // line reports how many real detectors inspected this message.
+    expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/\d+ dari 5 agen memeriksa pesan ini/i),
+    ).toBeInTheDocument();
   });
 
   it("clears the result when the input is reset", async () => {
