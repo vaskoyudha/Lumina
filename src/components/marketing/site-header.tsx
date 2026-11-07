@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ThemedLuminaLogo } from "@/components/brand/lumina-logo";
 import { MarketingAuth } from "@/components/marketing/marketing-auth";
-import { useSite } from "@/components/marketing/site-provider";
 import { Button } from "@/components/ui/button";
 import { scrollToId } from "@/lib/scroll";
 import { brand, navLinks } from "@/lib/site";
@@ -12,7 +11,6 @@ import { brand, navLinks } from "@/lib/site";
 const SCROLL_THRESHOLD = 16;
 
 export function SiteHeader() {
-  const { openDrawer } = useSite();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -96,7 +94,7 @@ export function SiteHeader() {
               href="/companion"
               data-pressable
               aria-label={brand.navCta}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ls-solid text-ls-solid-ink shadow-md transition-[background-color,color,transform] duration-200 ease-out hover:bg-ls-solid-hover active:scale-[0.97] sm:hidden"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-flame-500 text-espresso-950 shadow-md transition-[background-color,color,transform] duration-200 ease-out hover:bg-flame-600 active:scale-[0.97] sm:hidden"
             >
               <svg
                 className="h-4 w-4"
@@ -114,7 +112,7 @@ export function SiteHeader() {
             </Link>
             <Button
               asChild
-              className="hidden h-auto gap-3 rounded-xl bg-ls-solid py-1.5 pr-1.5 pl-5 font-semibold text-ls-solid-ink text-xs shadow-md transition-[background-color,color,transform] duration-300 ease-out hover:bg-ls-solid-hover active:scale-[0.97] sm:inline-flex sm:text-sm"
+              className="hidden h-auto gap-3 rounded-xl bg-flame-500 py-1.5 pr-1.5 pl-5 font-semibold text-espresso-950 text-xs shadow-md transition-[background-color,color,transform] duration-300 ease-out hover:bg-flame-600 active:scale-[0.97] sm:inline-flex sm:text-sm"
             >
               <Link href="/companion">
                 <span>{brand.navCta}</span>
@@ -135,24 +133,6 @@ export function SiteHeader() {
                 </span>
               </Link>
             </Button>
-            <button
-              type="button"
-              aria-label="Buka menu navigasi cepat"
-              onClick={openDrawer}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-ls-card-alt text-ls-ink shadow-md transition-[background-color,color,transform] duration-200 ease-out hover:bg-ls-card active:scale-[0.97]"
-            >
-              <svg
-                className="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <circle cx="8.5" cy="8.5" r="2" />
-                <circle cx="15.5" cy="8.5" r="2" />
-                <circle cx="8.5" cy="15.5" r="2" />
-                <circle cx="15.5" cy="15.5" r="2" />
-              </svg>
-            </button>
           </div>
         </div>
       </nav>

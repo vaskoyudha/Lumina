@@ -1,0 +1,32 @@
+/*
+ * The Why carousel is a pinned horizontal scroll: on carousel breakpoints the
+ * runway grows tall enough to hold the row's travel, the section sticks while
+ * that travel is spent, and the row advances left so cards 4-5 come into view.
+ *
+ * Phones show a single full-width card, so there is no pin and no travel. The
+ * wrapper must still be full width there: it is a flex item, so without this
+ * it shrink-wraps around the card row and collapses the section.
+ */
+.pw-why-runway {
+  width: 100%;
+}
+
+@media (min-width: 810px) {
+  .pw-why-runway {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+  }
+
+  .pw-why-runway[data-pw-pinned="true"] > section.framer-2ckbn {
+    position: sticky;
+    top: var(--pw-why-top, 0px);
+  }
+
+  .framer-site .framer-2ckbn .pw-why-row {
+    translate: var(--pw-drift, 0px) 0;
+    will-change: translate;
+  }
+}

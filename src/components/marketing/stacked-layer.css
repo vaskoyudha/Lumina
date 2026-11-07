@@ -1,0 +1,49 @@
+/*
+  Overlapping hero.
+
+  `.overlap-stack` pairs the section above the hero with the hero panel. The
+  section above sticks to the top of the viewport while the hero scrolls up over
+  it, so the hero's rounded top edge and shadow read as the panel sliding in.
+  With reduced motion the pins are dropped and both sections scroll normally.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  .overlap-stack {
+    position: relative;
+  }
+
+  .overlap-stack > :first-child {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+}
+
+/*
+  Only the hero panel gets this treatment: its rounded top edge and upward
+  shadow are painted on the section's own box, so none of the panel content is
+  clipped.
+*/
+.stacked-layer {
+  position: relative;
+  isolation: isolate;
+}
+
+.stacked-layer > :is(header, section) {
+  border-top-left-radius: 2rem;
+  border-top-right-radius: 2rem;
+  box-shadow:
+    0 -1px 0 0 var(--ls-line-strong),
+    0 -2rem 4rem -2.5rem rgb(28 11 4 / 0.55);
+}
+
+.stacked-layer[data-stacked="false"] > :is(header, section) {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (min-width: 640px) {
+  .stacked-layer > :is(header, section) {
+    border-top-left-radius: 2.75rem;
+    border-top-right-radius: 2.75rem;
+  }
+}

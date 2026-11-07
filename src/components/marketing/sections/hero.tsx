@@ -51,7 +51,7 @@ export function Hero() {
 
   return (
     <header id="section-home" className="hero-bg relative text-white">
-      <div className="mx-auto max-w-[1680px] px-5 pt-28 pb-12 sm:px-8 sm:pt-32 lg:pt-36 lg:pb-14">
+      <div className="mx-auto max-w-[1680px] px-5 pt-28 pb-16 sm:px-8 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24">
         <div className="grid grid-cols-1 items-end gap-8 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-amberwarm-300/25 bg-espresso-950/75 px-3.5 py-1.5 font-semibold text-[11px] text-amberwarm-200 uppercase tracking-[0.14em]">

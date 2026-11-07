@@ -54,7 +54,7 @@ export function Pricing() {
     >
       <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-stretch gap-10 lg:grid-cols-12">
         <div className="flex flex-col lg:col-span-7">
-          <div className="mb-8 text-center sm:text-left">
+          <div data-reveal className="mb-8 text-center sm:text-left">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="inline-flex items-center gap-1.5 rounded-full border border-ls-line-strong bg-ls-card px-3.5 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
                 <span>☺</span>
@@ -84,6 +84,7 @@ export function Pricing() {
               return (
                 <div
                   key={plan.id}
+                  data-reveal
                   className="flex flex-col justify-between overflow-hidden rounded-3xl border border-ls-line-strong bg-ls-card shadow-md"
                 >
                   <div>
@@ -153,7 +154,7 @@ export function Pricing() {
                     <Button
                       className={
                         plan.id === "gratis"
-                          ? "h-auto w-full justify-between rounded-full bg-ls-solid py-2 pr-2 pl-5 font-semibold text-ls-solid-ink text-xs shadow transition-all hover:bg-ls-solid-hover active:scale-[0.98]"
+                          ? "h-auto w-full justify-between rounded-full border-ls-solid-line bg-ls-solid py-2 pr-2 pl-5 font-semibold text-ls-solid-ink text-xs shadow transition-all hover:bg-ls-solid-hover active:scale-[0.98]"
                           : "h-auto w-full justify-between rounded-full bg-ls-accent py-2 pr-2 pl-5 font-semibold text-ls-accent-ink text-xs shadow-sm transition-all hover:bg-ls-accent-strong active:scale-[0.98]"
                       }
                       onClick={() => {
@@ -182,7 +183,10 @@ export function Pricing() {
           </div>
         </div>
 
-        <div className="flex flex-col justify-between rounded-3xl border border-ls-line-strong bg-ls-card p-6 shadow-sm sm:p-8 lg:col-span-5">
+        <div
+          data-reveal
+          className="flex flex-col justify-between rounded-3xl border border-ls-line-strong bg-ls-card p-6 shadow-sm sm:p-8 lg:col-span-5"
+        >
           <div>
             <div className="mb-4 flex items-center justify-between gap-2">
               <h2 className="font-semibold text-2xl text-ls-ink leading-tight sm:text-3xl">

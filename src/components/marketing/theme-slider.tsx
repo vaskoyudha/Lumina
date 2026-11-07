@@ -23,7 +23,7 @@ function normalize(value: string | null): ThemeId | null {
 }
 
 const TONE = "border-ls-line bg-ls-card/70 text-ls-ink-3";
-const ACTIVE = "bg-ls-solid text-ls-solid-ink";
+const ACTIVE = "border border-ls-solid-line bg-ls-solid text-ls-solid-ink";
 
 export function ThemeSlider() {
   const rootRef = useRef<HTMLDivElement>(null);

@@ -55,7 +55,10 @@ export function About() {
       className="relative overflow-hidden bg-ls-surface px-4 pt-28 pb-24 sm:px-8"
     >
       <div className="mx-auto max-w-[1440px]">
-        <div className="relative flex min-h-[210px] items-end justify-center gap-3 pt-4 pb-6 sm:min-h-[260px] sm:gap-6 md:gap-8">
+        <div
+          data-reveal
+          className="relative flex min-h-[210px] items-end justify-center gap-3 pt-4 pb-6 sm:min-h-[260px] sm:gap-6 md:gap-8"
+        >
           {portraits.map((portrait, index) => (
             <div
               key={portrait.key}
@@ -93,7 +96,7 @@ export function About() {
             </svg>
           </div>
 
-          <div className="relative z-10">
+          <div data-reveal className="relative z-10">
             <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-ls-line-strong bg-ls-card-alt px-3.5 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
               <span>☺</span>
               <span>{aboutCopy.badge}</span>
@@ -135,7 +138,10 @@ export function About() {
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-6 border-ls-line border-t pt-8 text-center sm:grid-cols-4">
+        <div
+          data-reveal
+          className="mt-10 grid grid-cols-2 gap-6 border-ls-line border-t pt-8 text-center sm:grid-cols-4"
+        >
           {aboutStats.map((stat, index) => (
             <div
               key={stat.label}
