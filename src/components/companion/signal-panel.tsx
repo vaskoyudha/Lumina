@@ -156,6 +156,22 @@ type GraphWire = {
   muted: boolean;
 };
 
+function sameWires(a: GraphWire[], b: GraphWire[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((wire, index) => {
+      const other = b[index];
+      return (
+        other != null &&
+        wire.key === other.key &&
+        wire.d === other.d &&
+        wire.active === other.active &&
+        wire.muted === other.muted
+      );
+    })
+  );
+}
+
 /**
  * Every wire is measured from the ports the nodes actually render. The overlay
  * takes the canvas's own layout size as its viewBox, so the zoom transform moves
@@ -173,22 +189,26 @@ function useGraphWires(canvasRef: RefObject<HTMLDivElement | null>) {
     const height = canvas.offsetHeight;
     if (width <= 0 || height <= 0) return;
 
+    /*
+     * Rects, not `offsetLeft`: every port carries its own `-translate-x-1/2`
+     * (a 5px shift offsets cannot see), and the canvas itself is scaled by the
+     * zoom control. Dividing by the measured scale converts screen pixels back
+     * into the canvas's layout space, which is the SVG's viewBox.
+     */
+    const canvasRect = canvas.getBoundingClientRect();
+    if (canvasRect.width <= 0 || canvasRect.height <= 0) return;
+    const scaleX = canvasRect.width / width;
+    const scaleY = canvasRect.height / height;
+
     const ports = new Map<string, PortPoint>();
     for (const element of canvas.querySelectorAll<HTMLElement>("[data-port]")) {
       const node = element.dataset.node;
       const port = element.dataset.port;
       if (!node || !port) continue;
 
-      // Layout offsets, not `getBoundingClientRect`: the ancestor `scale()`
-      // must not leak into the coordinate space the wires are drawn in.
-      let x = element.offsetLeft + element.offsetWidth / 2;
-      let y = element.offsetTop + element.offsetHeight / 2;
-      let parent = element.offsetParent as HTMLElement | null;
-      while (parent && parent !== canvas) {
-        x += parent.offsetLeft;
-        y += parent.offsetTop;
-        parent = parent.offsetParent as HTMLElement | null;
-      }
+      const rect = element.getBoundingClientRect();
+      const x = (rect.left + rect.width / 2 - canvasRect.left) / scaleX;
+      const y = (rect.top + rect.height / 2 - canvasRect.top) / scaleY;
 
       ports.set(`${node}:${port}`, {
         x,
@@ -249,27 +269,41 @@ function useGraphWires(canvasRef: RefObject<HTMLDivElement | null>) {
       });
     }
 
-    setSize({ width, height });
-    setWires(next);
+    setSize((prev) =>
+      prev.width === width && prev.height === height ? prev : { width, height },
+    );
+    setWires((prev) => (sameWires(prev, next) ? prev : next));
   }, [canvasRef]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    measure();
-    const observer = new ResizeObserver(() => measure());
-    observer.observe(canvas);
-    for (const port of canvas.querySelectorAll("[data-port]")) {
-      observer.observe(port);
-    }
-    window.addEventListener("resize", measure);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [canvasRef, measure]);
+  /*
+   * A callback ref, not a dependency array on an effect: `SignalPanel` swaps
+   * from the empty canvas to the result canvas when the first verdict arrives,
+   * and the observer has to follow the new DOM node. React calls this only when
+   * a canvas actually mounts, so there is no render loop to guard against.
+   */
+  const attachCanvas = useCallback(
+    (node: HTMLDivElement | null) => {
+      canvasRef.current = node;
+      if (!node) return;
 
-  return { ...size, wires };
+      const observer = new ResizeObserver(() => measure());
+      observer.observe(node);
+      for (const port of node.querySelectorAll("[data-port]")) {
+        observer.observe(port);
+      }
+      measure();
+
+      return () => observer.disconnect();
+    },
+    [canvasRef, measure],
+  );
+
+  useEffect(() => {
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
+
+  return { attachCanvas, ...size, wires };
 }
 
 function GraphWires({
@@ -626,7 +660,7 @@ export function SignalPanel({
 }) {
   const [zoom, setZoom] = useState(100);
   const canvasRef = useRef<HTMLDivElement | null>(null);
-  const { height, width, wires } = useGraphWires(canvasRef);
+  const { attachCanvas, height, width, wires } = useGraphWires(canvasRef);
 
   const header = (
     <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
@@ -722,7 +756,7 @@ export function SignalPanel({
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-16">
             <div
               className="relative origin-top transition-transform duration-150"
-              ref={canvasRef}
+              ref={attachCanvas}
               style={{ transform: `scale(${zoom / 100})` }}
             >
               <GraphWires height={height} width={width} wires={wires} />
@@ -922,7 +956,7 @@ export function SignalPanel({
         <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-16">
           <div
             className="relative origin-top transition-transform duration-150"
-            ref={canvasRef}
+            ref={attachCanvas}
             style={{ transform: `scale(${zoom / 100})` }}
           >
             <GraphWires height={height} width={width} wires={wires} />
