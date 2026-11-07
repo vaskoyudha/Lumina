@@ -169,7 +169,12 @@ export function conversationSignals({
   if (turns.length === 0) {
     return {
       signals,
-      note: "Butuh pesan kedua untuk menilai tahapan.",
+      // Only a stage with nothing to report may explain why. A combo finding
+      // is already the answer to "what do several vectors mean together".
+      note:
+        signals.length === 0
+          ? "Butuh pesan kedua untuk menilai tahapan."
+          : undefined,
     };
   }
 

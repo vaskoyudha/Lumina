@@ -5,6 +5,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
+/**
+ * This suite renders the whole conversation client and drives a stubbed
+ * language route. The full run executes it beside ~60 other suites on 12
+ * cores, where Jest's 5 s default measures the scheduler rather than the
+ * component; 15 s still fails a genuine hang.
+ */
+jest.setTimeout(15_000);
+
 jest.mock("next/link", () => {
   const MockLink = ({
     href,
@@ -71,7 +79,14 @@ afterEach(() => {
 async function sendScam() {
   const user = userEvent.setup();
   render(<CompanionChat />);
-  await user.type(screen.getByLabelText(/pesan/i), SCAM);
+  /*
+   * Paste, not type: this suite proves which route the turn calls and which
+   * words reach the screen. Simulating ~100 individual keystrokes adds seconds
+   * of wall clock that the assertions never look at, and under the full
+   * parallel test run that cost pushed the test past its timeout.
+   */
+  await user.click(screen.getByLabelText(/pesan/i));
+  await user.paste(SCAM);
   await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 }
 

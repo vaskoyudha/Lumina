@@ -68,17 +68,18 @@ Contoh kasus 2 ("tugas like & top-up") diukur **85/100** oleh engine saat ini,
 sedangkan proposal menyebut 88/100. Klaim di presentasi mengikuti hasil ukur
 (§11.8). Selisih ini dicatat juga di `src/lib/scoring/score.test.ts`.
 
-### Akurasi terukur — 5 November 2026
+### Akurasi terukur — 8 November 2026
 
-Korpus 43 pesan (20 scam lintas 12 modus + 23 pesan sah yang sengaja memuat
-jebakan false-positive klasik). Dijalankan oleh `score.bench.test.ts`, jadi
-angka ini bisa diverifikasi ulang oleh siapa pun, kapan pun.
+Korpus 45 pesan (20 scam lintas 12 modus + 25 pesan sah yang sengaja memuat
+jebakan false-positive klasik). Dijalankan oleh `score.bench.test.ts`, dan
+angkanya kini juga lahir dari satu fungsi, `runEval()` di `eval.ts`, sehingga
+klaim di pitch adalah keluaran mesin, bukan salinan terminal.
 
 | Ukuran | Sebelum perbaikan | Sesudah | Target |
 |---|---|---|---|
 | Scam tertangkap (`mencurigakan`/`tinggi`) | 19/20 | **20/20** | ≥ 0.95 |
 | Scam langsung `tinggi` | 17/20 | **18/20** | ≥ 0.80 |
-| False positive pada pesan sah | 2/20 (10%) | **0/23** | < 5% |
+| False positive pada pesan sah | 2/20 (10%) | **0/25** | < 5% |
 
 Tiga defect yang diukur dan diperbaiki di commit `6e70f5e`:
 
@@ -90,6 +91,11 @@ b. Pesan kurir sah berbobot 70/tinggi karena menyebut institusi saja. Otoritas
    pembayaran/konfirmasi/klik/berbagi.
 c. Scam stiker QRIS tidak tertangkap sama sekali (0/bersih). Sekarang 70/tinggi
    dan terklasifikasi `quishing-qris`.
+
+d. Dua jebakan baru ditambahkan 8 November 2026: nasihat mencocokkan nama
+   penerima (l24) dan peringatan agar tidak membuka file APK (l25). Keduanya
+   dulu dituduh (quishing `a.n.`, APK 95/`tinggi` hard); sekarang keduanya
+   0/`bersih` tanpa melemahkan scam-nya, dan false positive tetap 0/25.
 
 Batas yang diakui: dua scam (love scam, jual-beli di luar marketplace) berhenti
 di `mencurigakan`, bukan `tinggi`; dan merek tiga huruf hanya tertangkap bila
