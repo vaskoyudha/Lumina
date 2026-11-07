@@ -14,9 +14,6 @@ type SiteContextValue = {
   showToast: (message: string) => void;
   openBooking: (program?: string) => void;
   bookingProgram: string | null;
-  drawerOpen: boolean;
-  openDrawer: () => void;
-  closeDrawer: () => void;
 };
 
 const SiteContext = createContext<SiteContextValue | null>(null);
@@ -29,7 +26,6 @@ export function useSite() {
 
 export function SiteProvider({ children }: { children: React.ReactNode }) {
   const [bookingProgram, setBookingProgram] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const showToast = useCallback((message: string) => {
     toast.custom(
@@ -54,26 +50,14 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const closeBooking = useCallback(() => setBookingProgram(null), []);
-  const openDrawer = useCallback(() => setDrawerOpen(true), []);
-  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   const value = useMemo(
     () => ({
       showToast,
       openBooking,
       bookingProgram,
-      drawerOpen,
-      openDrawer,
-      closeDrawer,
     }),
-    [
-      showToast,
-      openBooking,
-      bookingProgram,
-      drawerOpen,
-      openDrawer,
-      closeDrawer,
-    ],
+    [showToast, openBooking, bookingProgram],
   );
 
   return (

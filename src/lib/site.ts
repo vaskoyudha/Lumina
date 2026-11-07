@@ -8,17 +8,6 @@ export const navLinks: NavLink[] = [
   { label: "Kontak", id: "section-contact" },
 ];
 
-export const drawerLinks: NavLink[] = [
-  { label: "Beranda", id: "section-home" },
-  { label: "Tentang Lumina", id: "section-about" },
-  { label: "Tiga langkah", id: "section-steps" },
-  { label: "Dua belas modus (01–06)", id: "section-programs" },
-  { label: "Peta perubahan", id: "section-transformation" },
-  { label: "Akses & harga", id: "section-pricing" },
-  { label: "Kontak", id: "section-contact" },
-  { label: "Pertanyaan umum", id: "section-faq" },
-];
-
 export const brand = {
   name: "lumina",
   navCta: "Periksa pesan",

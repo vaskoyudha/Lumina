@@ -146,7 +146,7 @@ export function BookingModal({
 
           <Button
             type="submit"
-            className="group h-auto w-full justify-between rounded-full bg-ls-solid px-5 py-2.5 text-xs font-semibold text-ls-solid-ink shadow-md transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-ls-solid-hover active:scale-[0.98]"
+            className="group h-auto w-full justify-between rounded-full border-ls-solid-line bg-ls-solid px-5 py-2.5 text-xs font-semibold text-ls-solid-ink shadow-md transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-ls-solid-hover active:scale-[0.98]"
           >
             <span>{bookingCopy.submit}</span>
             <span className="flex size-6 items-center justify-center rounded-full bg-ls-card text-xs font-bold text-ls-ink-2">

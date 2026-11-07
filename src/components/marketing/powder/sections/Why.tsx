@@ -5,7 +5,8 @@ const SPARKLINES = sparklines as string[];
 
 export default function Why() {
   return (
-    <section className="framer-2ckbn" data-border="true" data-framer-name="Why">
+    <div className="pw-why-runway" data-pw-why-runway>
+    <section className="framer-2ckbn" data-border="true" data-framer-name="Why" data-pw-drift="why">
       <div className="framer-jwv5bm" data-framer-name="Clip Container">
         <div className="framer-7ln9og" data-framer-name="content">
           <div className="framer-1n1ykuh">
@@ -40,7 +41,7 @@ export default function Why() {
               <div className="framer-1mgirvw-container" style={{willChange: "transform", opacity: "0", transform: "translateX(96px)"}}>
                 <div className="ssr-variant hidden-3job37 hidden-nzvz5l">
                   <div style={{width: "100%", height: "100%", overflow: "visible", position: "relative"}}>
-                    <div style={{display: "flex", gap: "24px", height: "100%", cursor: "grab", transform: "none"}}>
+                    <div className="pw-why-row" style={{display: "flex", gap: "24px", height: "100%", cursor: "grab", transform: "none"}}>
                       <div style={{flexShrink: "0"}}>
                         <div className="framer-19dfbl0-container">
                           <div className="framer-hqPCb framer-gF1Dm framer-knjRQ framer-uillyc framer-v-uillyc" data-framer-name="Variant 1" style={{backgroundColor: "var(--token-9a0a5818-786e-4389-a1ff-e52b77b8236e, rgba(23, 23, 23, 0.85))", width: "100%"}}>
@@ -196,7 +197,7 @@ export default function Why() {
                 </div>
                 <div className="ssr-variant hidden-kj696b hidden-nzvz5l">
                   <div style={{width: "100%", height: "100%", overflow: "visible", position: "relative"}}>
-                    <div style={{display: "flex", gap: "24px", height: "100%", cursor: "grab", transform: "none"}}>
+                    <div className="pw-why-row" style={{display: "flex", gap: "24px", height: "100%", cursor: "grab", transform: "none"}}>
                       <div style={{flexShrink: "0"}}>
                         <div className="framer-19dfbl0-container">
                           <div className="framer-hqPCb framer-gF1Dm framer-knjRQ framer-uillyc framer-v-uillyc" data-framer-name="Variant 1" style={{backgroundColor: "var(--token-9a0a5818-786e-4389-a1ff-e52b77b8236e, rgba(23, 23, 23, 0.85))", width: "100%"}}>
@@ -352,7 +353,7 @@ export default function Why() {
                 </div>
                 <div className="ssr-variant hidden-3job37 hidden-kj696b">
                   <div style={{width: "100%", height: "100%", overflow: "visible", position: "relative"}}>
-                    <div style={{display: "flex", gap: "24px", height: "100%", cursor: "grab", transform: "none"}}>
+                    <div className="pw-why-row" style={{display: "flex", gap: "24px", height: "100%", cursor: "grab", transform: "none"}}>
                       <div style={{flexShrink: "0", width: "100%"}}>
                         <div className="framer-19dfbl0-container" style={{width: "100%"}}>
                           <div className="framer-hqPCb framer-gF1Dm framer-knjRQ framer-uillyc framer-v-uillyc" data-framer-name="Variant 1" style={{backgroundColor: "var(--token-9a0a5818-786e-4389-a1ff-e52b77b8236e, rgba(23, 23, 23, 0.85))", width: "100%"}}>
@@ -542,5 +543,6 @@ export default function Why() {
         </div>
       </div>
     </section>
+    </div>
   );
 }

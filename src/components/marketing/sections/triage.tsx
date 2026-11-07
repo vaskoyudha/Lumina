@@ -27,7 +27,7 @@ export function Triage() {
           {stepsCopy.steps.map((step, index) => {
             const art = cardArt[index] ?? cardArt[0];
             return (
-              <article key={step.no} className="triage-card">
+              <article key={step.no} data-reveal className="triage-card">
                 <div className="triage-fgTop">
                   <div className="triage-labelBox">
                     <p className="triage-label">{`— ${step.no}®`}</p>

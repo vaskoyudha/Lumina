@@ -61,7 +61,7 @@ export function Contact() {
     <section id="section-contact" className="border-ls-line border-t">
       <div className="contact-band px-4 pt-20 pb-16 text-white sm:px-8 sm:pt-24 sm:pb-20">
         <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-center gap-8 lg:grid-cols-12">
-          <div className="space-y-4 lg:col-span-6">
+          <div data-reveal className="space-y-4 lg:col-span-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-amberwarm-300/25 bg-espresso-950/80 px-3.5 py-1 font-semibold text-[11px] text-amberwarm-200 uppercase tracking-widest">
               <span>☺</span>
               <span>{contactCopy.headerBadge}</span>
@@ -74,7 +74,7 @@ export function Contact() {
             </p>
           </div>
 
-          <div className="space-y-3.5 lg:col-span-6">
+          <div data-reveal className="space-y-3.5 lg:col-span-6">
             {contactEmails.map((email) => (
               <div
                 key={email.value}
@@ -100,7 +100,7 @@ export function Contact() {
 
       <div className="bg-ls-surface-alt px-4 pt-28 pb-24 sm:px-8">
         <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-center gap-10 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-5">
+          <div data-reveal className="space-y-6 lg:col-span-5">
             <div>
               <span className="mb-3 inline-block rounded-full border border-ls-line-strong bg-ls-card px-3.5 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
                 {contactCopy.formBadge}
@@ -133,7 +133,7 @@ export function Contact() {
             </div>
           </div>
 
-          <div className="lg:col-span-7">
+          <div data-reveal className="lg:col-span-7">
             <div className="contact-bg-card rounded-3xl p-3 shadow-lg sm:p-5">
               <form
                 id="contact-form"
