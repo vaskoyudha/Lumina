@@ -1,0 +1,30 @@
+{
+	# Reverse-proxy error logs can otherwise contain OAuth callback queries.
+	log default {
+		format filter {
+			wrap json
+			fields {
+				request>uri delete
+				request>headers delete
+			}
+		}
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Caddy is the only public ingress. Replace client supplied forwarding data
+	# with values observed at this hop; app trusts X-Lumina-Client-IP only.
+	reverse_proxy app:3000 {
+		flush_interval -1
+		header_up X-Lumina-Client-IP {remote_ip}
+		header_up X-Forwarded-For {remote_ip}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+		header_up Host {host}
+		transport http {
+			response_header_timeout 25s
+		}
+	}
+}

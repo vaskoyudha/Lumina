@@ -1,4 +1,10 @@
 import { VisionRequestSchema } from "@/lib/contracts/vision";
+import {
+  BodyTooLarge,
+  limitAI,
+  readJson,
+  upstreamAbort,
+} from "@/lib/server/request";
 
 /**
  * Image transcription — the only route that receives pixels.
@@ -48,7 +54,12 @@ function textFromContent(content: unknown): string {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  let body: unknown;
+  try {
+    body = await readJson(request, 8100000);
+  } catch (error) {
+    return fail(error instanceof BodyTooLarge ? 413 : 400, "invalid-request");
+  }
   const parsed = VisionRequestSchema.safeParse(body);
   if (!parsed.success) return fail(400, "invalid-image");
 
@@ -57,15 +68,16 @@ export async function POST(request: Request) {
   if (!base || !model) return fail(503, "not-configured");
 
   const { mediaType, data } = parsed.data.image;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const limited = await limitAI(request, "vision");
+  if (limited) return limited;
+  const upstreamControl = upstreamAbort(request, TIMEOUT_MS);
 
   try {
     const upstream = await fetch(
       `${base.replace(/\/+$/, "")}/chat/completions`,
       {
         method: "POST",
-        signal: controller.signal,
+        signal: upstreamControl.signal,
         headers: {
           "content-type": "application/json",
           ...(process.env.LUMINA_LLM_KEY
@@ -107,6 +119,6 @@ export async function POST(request: Request) {
   } catch {
     return fail(503, "upstream-unreachable");
   } finally {
-    clearTimeout(timer);
+    upstreamControl.cleanup();
   }
 }

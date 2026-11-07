@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type AuthResult, register } from "@/lib/auth/actions";
-import { saveProfile } from "@/lib/auth/local-profile";
-import { seedProgress } from "@/lib/progress";
 
 const fieldShell =
   "rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-brand/70 focus-within:bg-brand-soft/40";
@@ -35,17 +33,8 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
 
   useEffect(() => {
     if (!state?.ok || !state.account) return;
-    saveProfile({
-      email: state.account.email,
-      nama: state.account.nama,
-      createdAt: new Date().toISOString(),
-    });
-    seedProgress({
-      completedModules: state.account.seed.completedModules,
-      badges: state.account.seed.badges,
-      missedPatterns: [],
-    });
     router.push("/companion");
+    router.refresh();
   }, [state, router]);
 
   return (
@@ -61,6 +50,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
               name="nama"
               autoComplete="name"
               required
+              maxLength={80}
               placeholder="Nama panggilan"
               className="h-12 rounded-2xl border-0 bg-transparent px-4 text-base focus-visible:ring-0"
             />
@@ -78,6 +68,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
               type="email"
               autoComplete="email"
               required
+              maxLength={254}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="nama@contoh.id"
@@ -98,6 +89,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
               autoComplete="new-password"
               required
               minLength={8}
+              maxLength={128}
               placeholder="minimal 8 karakter"
               className="h-12 rounded-2xl border-0 bg-transparent px-4 pr-12 text-base focus-visible:ring-0"
             />
@@ -110,28 +102,27 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
               }
               aria-pressed={showPassword}
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-xl text-muted-foreground hover:bg-transparent hover:text-foreground"
+              className="absolute top-1/2 right-1 size-11 -translate-y-1/2 rounded-full text-muted-foreground hover:bg-transparent hover:text-foreground"
             >
               {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
             </Button>
           </div>
           <FieldDescription>
-            Tidak ada email verifikasi. Tidak ada reset password.
+            Gunakan 8–128 karakter. Verifikasi email dan pemulihan password
+            belum tersedia.
           </FieldDescription>
         </Field>
 
         <Field orientation="horizontal" className="items-start">
-          <Checkbox id="consent" name="consent" className="mt-0.5" />
+          <Checkbox id="consent" name="consent" required className="mt-0.5" />
           <FieldLabel htmlFor="consent" className="font-normal leading-snug">
-            Saya paham profil dan progres hanya tersimpan di perangkat ini. Saat
-            mendaftar, yang dikirim ke server hanya sesi masuk demo. Pertanyaan
-            di companion dikirim ke model untuk dijawab; pesan yang saya periksa
-            tidak pernah ikut.
+            Saya setuju nama, email, dan password yang di-hash disimpan untuk
+            akun. Progres belajar tetap di perangkat ini.
           </FieldLabel>
         </Field>
 
         {state?.error ? (
-          <Alert variant="destructive">
+          <Alert role="alert" variant="destructive">
             <AlertDescription>{state.error}</AlertDescription>
           </Alert>
         ) : null}
@@ -139,7 +130,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
         <Button
           type="submit"
           disabled={pending}
-          className="h-12 w-full rounded-2xl bg-brand font-medium text-bg transition-colors hover:bg-brand/90"
+          className="h-12 w-full rounded-full bg-brand font-medium text-bg transition-colors hover:bg-brand/90"
         >
           {pending ? (
             <Loader2
@@ -150,7 +141,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
           ) : (
             <UserPlus data-icon="inline-start" aria-hidden />
           )}
-          {pending ? "Membuat profil…" : "Buat akun demo"}
+          {pending ? "Membuat akun…" : "Buat akun"}
         </Button>
       </FieldGroup>
     </form>
