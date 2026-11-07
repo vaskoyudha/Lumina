@@ -3,6 +3,7 @@
 import { LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LuminaLogo } from "@/components/brand/lumina-logo";
 import { AuthNav } from "@/components/shell/auth-nav";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +33,10 @@ export function SiteNav({
         <Link
           href="/"
           data-pressable
-          className="inline-flex min-h-11 items-center font-semibold text-txt text-lg tracking-tight"
+          aria-label="Lumina — beranda"
+          className="inline-flex min-h-11 items-center"
         >
-          Lumina
+          <LuminaLogo className="h-[30px] w-auto" />
         </Link>
 
         <nav

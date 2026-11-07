@@ -125,12 +125,47 @@
 }
 
 /*
+  Brand lockup swap. The marketing header renders the colour wordmark and the
+  cream one; only the one that matches the active landing theme is shown.
+*/
+.brand-logo-on-dark {
+  display: none;
+}
+
+.landing[data-theme="black"] .brand-logo-color {
+  display: none;
+}
+
+.landing[data-theme="black"] .brand-logo-on-dark {
+  display: block;
+}
+
+/*
   Full-width hero. Framer caps the content column at 1080px and the chat card
   at 960px (720px on tablet); Lumina runs both to the section's 24px gutters.
 */
 .framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk,
 .framer-site .framer-oJiFP .framer-x2ps8j .framer-dqdt72 {
   max-width: none;
+}
+
+/*
+  Above 1600px Framer centers the hero at its 1600px cap, which leaves bare
+  landing background down both sides of the sky and hills. Let the section run
+  edge to edge and keep the content column at its former width so nothing
+  inside shifts.
+*/
+@media (min-width: 1600px) {
+  .framer-site .framer-oJiFP .framer-x2ps8j {
+    max-width: none;
+    /* The section's hairline now sits against the window, not in the gutter. */
+    --border-left-width: 0px;
+    --border-right-width: 0px;
+  }
+
+  .framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk {
+    max-width: calc(1600px - 48px);
+  }
 }
 
 /* Explicit dark island for any Powder block that must stay dark. */
@@ -196,16 +231,4 @@
     color-mix(in srgb, var(--pw-bg) 82%, transparent) 38%,
     transparent 100%
   ) !important;
-}
-
-/*
-  Below lg the theme slider moves to a second header row, so the hero needs
-  extra top padding to clear the fixed header. Framer's stylesheet is
-  unlayered, which beats the layered rule in landing-tokens.css; the
-  id-qualified selector wins it back without !important.
-*/
-@media (max-width: 1023.98px) {
-  .landing #hero.framer-x2ps8j {
-    padding-top: 3.5rem;
-  }
 }

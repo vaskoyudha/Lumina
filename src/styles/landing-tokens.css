@@ -90,41 +90,9 @@
       var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, sans-serif;
 
     /*
-      Paper is the default light palette, lifted from the original Powder
-      clone: plain white surfaces with the cool #eff3f6 wash. Cream remains a
-      separate opt-in theme on the slider.
+      Cream is the default light palette: warm paper surfaces with the amber
+      sky. Paper remains the cooler, whiter opt-in on the slider.
     */
-    --ls-surface: #ffffff;
-    --ls-surface-alt: #eff3f6;
-    --ls-card: #ffffff;
-    --ls-card-alt: #f7fafc;
-    --ls-ink: #1b2228;
-    --ls-ink-2: #4b575f;
-    --ls-ink-3: #77848c;
-    --ls-line: rgb(27 34 40 / 0.12);
-    --ls-line-strong: rgb(27 34 40 / 0.22);
-    --ls-accent: #d8e6ee;
-    --ls-accent-strong: #c4d9e4;
-    --ls-accent-soft: #f3f8fb;
-    --ls-accent-ink: #1b2228;
-    --ls-accent-text: #9a5a22;
-    --ls-solid: #1b2228;
-    --ls-solid-hover: #2c363e;
-    --ls-solid-ink: #ffffff;
-    --ls-dark: #161d22;
-    --ls-dark-panel: #232c33;
-    --ls-on-dark: #f4f8fa;
-    --ls-on-dark-dim: #b9c6cd;
-
-    background-color: var(--ls-surface);
-    color: var(--ls-ink);
-    font-family: var(--font-landing-body);
-    -webkit-font-smoothing: antialiased;
-    -webkit-text-size-adjust: 100%;
-    color-scheme: light;
-  }
-
-  .landing[data-theme="cream"] {
     --ls-surface: #f7f1e8;
     --ls-surface-alt: #f1ebe1;
     --ls-card: #fffdf9;
@@ -146,6 +114,37 @@
     --ls-dark-panel: #2e251e;
     --ls-on-dark: #fffaf2;
     --ls-on-dark-dim: #ead9c2;
+
+    background-color: var(--ls-surface);
+    color: var(--ls-ink);
+    font-family: var(--font-landing-body);
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+  }
+
+  .landing[data-theme="paper"] {
+    --ls-surface: #ffffff;
+    --ls-surface-alt: #eff3f6;
+    --ls-card: #ffffff;
+    --ls-card-alt: #f7fafc;
+    --ls-ink: #1b2228;
+    --ls-ink-2: #4b575f;
+    --ls-ink-3: #77848c;
+    --ls-line: rgb(27 34 40 / 0.12);
+    --ls-line-strong: rgb(27 34 40 / 0.22);
+    --ls-accent: #d8e6ee;
+    --ls-accent-strong: #c4d9e4;
+    --ls-accent-soft: #f3f8fb;
+    --ls-accent-ink: #1b2228;
+    --ls-accent-text: #9a5a22;
+    --ls-solid: #1b2228;
+    --ls-solid-hover: #2c363e;
+    --ls-solid-ink: #ffffff;
+    --ls-dark: #161d22;
+    --ls-dark-panel: #232c33;
+    --ls-on-dark: #f4f8fa;
+    --ls-on-dark-dim: #b9c6cd;
   }
 
   .landing[data-theme="black"] {
