@@ -2,46 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ThemedLuminaLogo } from "@/components/brand/lumina-logo";
 import { MarketingAuth } from "@/components/marketing/marketing-auth";
 import { useSite } from "@/components/marketing/site-provider";
-import { ThemeSlider } from "@/components/marketing/theme-slider";
 import { Button } from "@/components/ui/button";
 import { scrollToId } from "@/lib/scroll";
 import { brand, navLinks } from "@/lib/site";
 
 const SCROLL_THRESHOLD = 16;
-
-function RoughBird({ className }: { className?: string }) {
-  return (
-    <svg
-      className={`bird-float ${className ?? ""}`}
-      viewBox="0 0 40 30"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M3.4 18.8C6.6 13.9 10.2 12.5 13.6 14.8c1.3.9 2.4 2.1 3.4 3.7"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.9"
-      />
-      <path
-        d="M17 18.5c2.3-4.2 5.2-6.2 8.7-6.3 2.3-.1 4.2 1 5.9 3"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.9"
-      />
-      <path
-        d="M31.6 15.2 36 13.4l-2.7 3"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-      <circle cx="28.1" cy="12.6" r="0.95" fill="currentColor" />
-    </svg>
-  );
-}
 
 export function SiteHeader() {
   const { openDrawer } = useSite();
@@ -109,26 +77,20 @@ export function SiteHeader() {
             type="button"
             onClick={() => scrollToId("section-home")}
             aria-label={`${brand.name} — kembali ke atas`}
-            className="group relative flex items-center gap-2 font-semibold text-lg tracking-tight text-ls-ink transition-colors duration-300 sm:text-xl"
+            className="group relative flex items-center transition-transform duration-200 ease-out hover:-translate-y-0.5"
           >
+            {/* The wordmark is the widest thing in the bar; below `sm` the
+                auth cluster leaves ~94px for it, so the height steps down. */}
             <span
-              className="flex shrink-0 items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5"
-              style={{
-                width: scrolled ? 24 : 44,
-                height: scrolled ? 20 : 36,
-                transition:
-                  "width 300ms ease-out, height 300ms ease-out, transform 200ms ease-out",
-              }}
+              className={`flex shrink-0 items-center justify-center transition-[height] duration-300 ease-out ${
+                scrolled ? "h-6 sm:h-8" : "h-7 sm:h-[42px]"
+              }`}
             >
-              <RoughBird className="h-full w-full text-ls-accent-text transition-colors duration-300 ease-out" />
+              <ThemedLuminaLogo className="h-full w-auto" priority />
             </span>
-            <span className="font-display">{brand.name}</span>
           </button>
 
           <div className="relative flex items-center gap-1.5 sm:gap-2.5">
-            <div className="hidden lg:block">
-              <ThemeSlider />
-            </div>
             <MarketingAuth />
             <Link
               href="/companion"
@@ -192,9 +154,6 @@ export function SiteHeader() {
               </svg>
             </button>
           </div>
-        </div>
-        <div className="mt-2 flex justify-end px-1 lg:hidden">
-          <ThemeSlider />
         </div>
       </nav>
     </div>

@@ -3,6 +3,7 @@
 import { ArrowUpRight, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LuminaLogo } from "@/components/brand/lumina-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,12 +27,8 @@ export function AdminNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-panel">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-        <Link
-          href="/admin"
-          data-pressable
-          className="flex items-center gap-2 font-semibold text-lg text-txt tracking-tight"
-        >
-          Lumina
+        <Link href="/admin" data-pressable className="flex items-center gap-2">
+          <LuminaLogo className="h-[28px] w-auto" />
           <Badge variant="secondary" className="gap-1">
             <LayoutDashboard aria-hidden />
             Admin

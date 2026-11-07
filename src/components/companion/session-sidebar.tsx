@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { LuminaLogo } from "@/components/brand/lumina-logo";
 import { NavRail } from "@/components/companion/nav-rail";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 /**
  * Sidebar — the left column of the chat shell, with two states.
  *
- * Chrome is a 1:1 clone of the Cortex reference: brand sparkle squircle and
+ * Chrome is a 1:1 clone of the Cortex reference: brand mascot mark and
  * wordmark, a full-width black "Percakapan baru", a white search field with a
  * shortcut chip, destination rows, thread rows, and a footer card.
  *
@@ -238,16 +239,9 @@ export function SessionSidebar({
       href="/"
       data-pressable
       aria-label="Lumina — beranda"
-      className="grid size-[26px] shrink-0 place-items-center rounded-[7px] bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong shadow-[0_2px_6px_color-mix(in_oklab,var(--lumina-brand-glow)_35%,transparent)]"
+      className="grid size-[26px] shrink-0 place-items-center"
     >
-      <svg
-        role="presentation"
-        viewBox="0 0 24 24"
-        className="size-4 text-white"
-        fill="currentColor"
-      >
-        <path d="M10 3.2c.45 0 .82.34.88.78l.27 2.02a2.7 2.7 0 0 0 2.31 2.31l2.02.27a.89.89 0 0 1 0 1.76l-2.02.27a2.7 2.7 0 0 0-2.31 2.31l-.27 2.02a.89.89 0 0 1-1.76 0l-.27-2.02a2.7 2.7 0 0 0-2.31-2.31l-2.02-.27a.89.89 0 0 1 0-1.76l2.02-.27a2.7 2.7 0 0 0 2.31-2.31l.27-2.02c.06-.44.43-.78.88-.78Z" />
-      </svg>
+      <LuminaLogo variant="mark" className="h-[26px] w-auto" />
     </Link>
   );
 
@@ -281,10 +275,14 @@ export function SessionSidebar({
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Brand row — the squircle is the app mark, not a decorative topper. */}
         <div className="mb-3.5 flex items-center gap-1.5 px-1.5">
-          {brandMark}
-          <span className="min-w-0 flex-1 truncate font-semibold text-[16.5px] text-ink tracking-[-0.02em]">
-            Lumina
-          </span>
+          <Link
+            href="/"
+            data-pressable
+            aria-label="Lumina — beranda"
+            className="min-w-0 flex-1"
+          >
+            <LuminaLogo className="h-[24px] w-auto" />
+          </Link>
           {onClose ? (
             <Button
               variant="ghost"

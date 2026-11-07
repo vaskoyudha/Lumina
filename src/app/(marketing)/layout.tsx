@@ -4,6 +4,7 @@ import { QuickDrawer } from "@/components/marketing/quick-drawer";
 import { Footer } from "@/components/marketing/sections/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteProvider } from "@/components/marketing/site-provider";
+import { ThemeSlider } from "@/components/marketing/theme-slider";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/powder-fonts.css";
 import "@/styles/powder-framer.css";
@@ -27,6 +28,7 @@ export default function MarketingLayout({
   return (
     <div
       suppressHydrationWarning
+      data-theme="cream"
       className={`landing ${jakarta.variable} min-h-dvh overflow-x-clip`}
     >
       <script
@@ -34,7 +36,7 @@ export default function MarketingLayout({
         // biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-paint theme initialiser, no user input
         dangerouslySetInnerHTML={{
           __html:
-            'try{var t=localStorage.getItem("lumina-theme");if(t==="warm")t="paper";var e=document.currentScript&&document.currentScript.parentElement;if(e&&(t==="paper"||t==="black"||t==="cream"))e.setAttribute("data-theme",t)}catch(_){}',
+            'try{var t=localStorage.getItem("lumina-theme");if(t==="warm")t="cream";var e=document.currentScript&&document.currentScript.parentElement;if(e&&(t==="paper"||t==="black"||t==="cream"))e.setAttribute("data-theme",t)}catch(_){}',
         }}
       />
       <SiteProvider>
@@ -43,7 +45,14 @@ export default function MarketingLayout({
         <Footer />
         <QuickDrawer />
       </SiteProvider>
-      <Toaster />
+      {/* Theme control floats clear of the nav, bottom-right of the viewport. */}
+      <div className="fixed right-4 bottom-4 z-30 sm:right-6 sm:bottom-6">
+        <ThemeSlider />
+      </div>
+      <Toaster
+        offset={{ bottom: 84, right: 20 }}
+        mobileOffset={{ bottom: 84, right: 16 }}
+      />
     </div>
   );
 }
