@@ -63,10 +63,50 @@
 }
 
 .landing[data-theme="black"] .pw-surface {
+  /* Input wells and icon discs sit on a dark card, not on photography. */
+  --token-3fab9d78-ec3a-44ec-ad62-b2eca6daf4a5: rgb(255 255 255 / 0.07);
   color-scheme: dark;
 }
 
-/* Dark island: hero and closing CTA stay dark in every theme. */
+/*
+  The hero sky is the one hardcoded Framer gradient left in the Powder layer.
+  Recolor it per theme so the hero follows the slider like every other block;
+  the grass-hill PNGs stay as transparent overlays.
+*/
+.framer-site.pw-surface .framer-oJiFP .framer-1ed9fxm {
+  background: radial-gradient(
+    200% 83% at 50% 0,
+    #f9f3e5 0%,
+    #f3e3be 42%,
+    #d9a87e 100%
+  );
+}
+
+.landing[data-theme="cream"]
+  .framer-site.pw-surface
+  .framer-oJiFP
+  .framer-1ed9fxm {
+  background: radial-gradient(
+    200% 83% at 50% 0,
+    #fffdf9 0%,
+    #f1e8da 42%,
+    #d8c4ae 100%
+  );
+}
+
+.landing[data-theme="black"]
+  .framer-site.pw-surface
+  .framer-oJiFP
+  .framer-1ed9fxm {
+  background: radial-gradient(
+    200% 83% at 50% 0,
+    #0a0a0a 0%,
+    #161616 42%,
+    #2a2a2a 100%
+  );
+}
+
+/* Explicit dark island for any Powder block that must stay dark. */
 .pw-on-dark {
   --token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a: #000;
   --token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187: #fff3f0;

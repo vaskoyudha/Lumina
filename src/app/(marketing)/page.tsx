@@ -29,7 +29,7 @@ import appearConfig from "@/data/powder/appear.json";
 export default function LandingPage() {
   return (
     <>
-      <PowderLayer surface="dark">
+      <PowderLayer>
         <PowderHero />
       </PowderLayer>
       <PowderLayer>
@@ -67,7 +67,7 @@ export default function LandingPage() {
         <PowderBlog />
       </PowderLayer>
       <Contact />
-      <PowderLayer surface="dark">
+      <PowderLayer>
         <PowderCTA />
       </PowderLayer>
       <SvgSprite />
