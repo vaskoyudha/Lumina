@@ -344,7 +344,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         {modul.scenarioId ? (
           <Button
             asChild
-            className="min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
+            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
           >
             <Link href={`/simulasi/${modul.scenarioId}`} data-pressable>
               Latih pola ini di simulasi

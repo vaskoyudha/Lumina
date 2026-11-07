@@ -5,6 +5,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
+/**
+ * This suite renders the whole conversation client and drives the vision route
+ * plus the deterministic pipeline. The full run executes it beside ~60 other
+ * suites on 12 cores, where Jest's 5 s default measures the scheduler rather
+ * than the component; 15 s still fails a genuine hang.
+ */
+jest.setTimeout(15_000);
+
 jest.mock("next/link", () => {
   const MockLink = ({
     href,
@@ -88,7 +96,9 @@ describe("CompanionChat · images are read, then scored locally", () => {
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("File APK via WhatsApp")).toBeInTheDocument();
+      expect(
+        screen.getAllByText("File APK via WhatsApp").length,
+      ).toBeGreaterThan(0);
     });
 
     const visionCall = fetchMock.mock.calls.find(
@@ -106,5 +116,39 @@ describe("CompanionChat · images are read, then scored locally", () => {
     );
     expect(voiceCall).toBeDefined();
     expect(String(voiceCall?.[1]?.body)).not.toContain("Undangan pernikahan");
+  });
+
+  it("surfaces a failed image read instead of pretending it was checked", async () => {
+    // A 503 on the vision route used to be invisible: the turn fell back to the
+    // filename, and the reader was never told the pixels were never read.
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url) === "/api/companion/vision") {
+        return {
+          ok: false,
+          status: 503,
+          json: async () => ({ error: "not-configured" }),
+        };
+      }
+      return {
+        ok: false,
+        status: 503,
+        body: null,
+        json: async () => ({ error: "not-configured" }),
+      };
+    });
+
+    const user = userEvent.setup();
+    const { container } = render(<CompanionChat />);
+
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    if (!input) return;
+
+    await user.upload(input, uploadedImage());
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    expect(await screen.findByText(/gagal dibaca/i)).toBeInTheDocument();
   });
 });

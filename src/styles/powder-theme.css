@@ -168,6 +168,19 @@
   }
 }
 
+/*
+  The CTA band gets the same treatment: above 1600px Framer caps it and leaves
+  bare landing background down both sides, so let the gradient and dunes meet
+  the window. The 1080px content column stays centred and unchanged.
+*/
+@media (min-width: 1600px) {
+  .framer-site .framer-oJiFP .framer-aofqy9 {
+    max-width: none;
+    --border-left-width: 0px;
+    --border-right-width: 0px;
+  }
+}
+
 /* Explicit dark island for any Powder block that must stay dark. */
 .pw-on-dark {
   --token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a: #000;
@@ -231,4 +244,19 @@
     color-mix(in srgb, var(--pw-bg) 82%, transparent) 38%,
     transparent 100%
   ) !important;
+}
+
+/*
+  Framer "L Primary" button draws its edge through ::after and its inline
+  --border-color is the same ink as the fill, so the border disappears. Set the
+  pseudo-element's border directly (inline custom properties do not reach it)
+  to the section surface at low opacity: a dim edge on every theme and dark
+  island, where the surface token is the natural opposite of the ink fill.
+*/
+.framer-site .framer-FkYLp.framer-v-efr9v5[data-border="true"]::after {
+  border-color: color-mix(
+    in srgb,
+    var(--token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a, #fff) 40%,
+    transparent
+  );
 }

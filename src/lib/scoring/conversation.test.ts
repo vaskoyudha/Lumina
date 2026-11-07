@@ -46,6 +46,15 @@ describe("Conversation Agent — escalation", () => {
     expect(result.note).toMatch(/pesan kedua/i);
   });
 
+  it("does not ask for a second message when the first already combined", () => {
+    const result = conversationSignals({
+      turns: [],
+      text: "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.",
+    });
+    expect(result.signals.length).toBeGreaterThan(0);
+    expect(result.note).toBeUndefined();
+  });
+
   it("cannot call a single message an escalation, even a bad one", () => {
     // The in-message combination pass may still fire here — that is a different
     // mechanism and it is allowed. What must not appear is the escalation

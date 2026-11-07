@@ -41,7 +41,7 @@ export function SignInPage({
 }) {
   return (
     <div className="grid h-full min-h-0 w-full grid-cols-1 md:grid-cols-2">
-      <section className="flex min-h-0 justify-center overflow-y-auto p-6 sm:p-10">
+      <section className="flex min-h-0 justify-center overflow-y-auto p-6 sm:p-8">
         <div className="my-auto flex w-full max-w-md flex-col gap-6">
           {topSlot}
 
@@ -60,8 +60,11 @@ export function SignInPage({
 
       <section className="relative hidden p-3 md:block">
         <div
-          className="absolute inset-3 rounded-3xl bg-cover bg-center"
-          style={{ backgroundImage: `url(${HERO_SRC})` }}
+          className="absolute inset-3 rounded-3xl bg-cover"
+          style={{
+            backgroundImage: `url(${HERO_SRC})`,
+            backgroundPosition: "82% center",
+          }}
         />
         <div className="absolute inset-3 rounded-3xl bg-gradient-to-t from-foreground/45 via-foreground/5 to-transparent" />
 

@@ -1,6 +1,6 @@
 /**
- * Bench corpus — 40 messages that span the 12 modus families (20 scams)
- * plus 20 messages an Indonesian phone user legitimately receives,
+ * Bench corpus — 45 messages that span the 12 modus families (20 scams)
+ * plus 25 messages an Indonesian phone user legitimately receives,
  * chosen so the FALSE-POSITIVE traps sit where they really hide:
  * an OTP the user's own bank sent, a verification reminder from a
  * legitimate product, a flash sale with real urgency.
@@ -269,5 +269,20 @@ export const LEGIT_CASES: BenchCase[] = [
     id: "l23",
     tag: "kredit bank resmi",
     text: "Kredit tanpa jaminan dari bank resmi, bunga 1,2% per bulan. Ajukan di kantor cabang.",
+  },
+  {
+    // A defensive instruction: naming a recipient ("a.n.") is how every
+    // honest transfer screen asks the payer to double-check, not a scheme.
+    id: "l24",
+    tag: "nasihat cocokkan nama penerima",
+    text: "Sebelum menekan bayar, cocokkan nama penerima di layar aplikasi pembayaran. Kalau a.n. tidak cocok, batalkan transaksi.",
+  },
+  {
+    // A warning *about* an APK is the opposite of an APK delivery. The APK
+    // rule must read the whole sentence before treating the extension as a
+    // request to install anything.
+    id: "l25",
+    tag: "peringatan file APK",
+    text: "Jangan buka file undangan.apk dari pengirim yang tidak dikenal, langsung hapus.",
   },
 ];

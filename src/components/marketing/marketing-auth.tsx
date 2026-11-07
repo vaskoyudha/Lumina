@@ -5,7 +5,8 @@ import { AuthDialog, type AuthTab } from "@/components/auth/auth-dialog";
 
 const TONE = {
   masuk: "text-ls-ink hover:text-ls-ink-2",
-  daftar: "bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover",
+  daftar:
+    "border border-ls-solid-line bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover",
 };
 
 export function MarketingAuth() {

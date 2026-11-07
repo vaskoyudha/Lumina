@@ -161,7 +161,7 @@ export function BelajarDashboard({
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button
                   asChild
-                  className="min-h-10 rounded-xl bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
+                  className="min-h-10 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
                 >
                   <Link href={`/belajar/${featured.no}`} data-pressable>
                     Buka modul lengkap

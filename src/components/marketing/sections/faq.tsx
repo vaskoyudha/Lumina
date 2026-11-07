@@ -20,7 +20,7 @@ export function Faq() {
       className="border-ls-line border-t bg-ls-surface px-4 pt-28 pb-24 sm:px-8"
     >
       <div className="mx-auto max-w-[1200px]">
-        <div className="mb-8 text-center">
+        <div data-reveal className="mb-8 text-center">
           <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-ls-line-strong bg-ls-card-alt px-3.5 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
             <span>☺</span>
             <span>{faqCopy.badge}</span>
@@ -34,6 +34,7 @@ export function Faq() {
         </div>
 
         <Tabs
+          data-reveal
           value={category}
           onValueChange={(value) => {
             setCategory(value as FaqCategory);
@@ -49,7 +50,7 @@ export function Faq() {
               <TabsTrigger
                 key={item}
                 value={item}
-                className="h-auto rounded-full px-4 py-2 font-medium text-ls-ink-2 text-xs transition-all hover:bg-ls-card/60 [&[data-state=active]]:bg-ls-solid [&[data-state=active]]:font-semibold [&[data-state=active]]:text-ls-solid-ink [&[data-state=active]]:shadow-sm"
+                className="h-auto rounded-full px-4 py-2 font-medium text-ls-ink-2 text-xs transition-all hover:bg-ls-card/60 [&[data-state=active]]:border-ls-solid-line [&[data-state=active]]:bg-ls-solid [&[data-state=active]]:font-semibold [&[data-state=active]]:text-ls-solid-ink [&[data-state=active]]:shadow-sm"
               >
                 {index === 0 ? `☺ ${item}` : item}
               </TabsTrigger>

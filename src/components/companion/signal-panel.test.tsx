@@ -53,6 +53,12 @@ describe("SignalPanel", () => {
     expect(screen.getByText(String(result.score))).toBeInTheDocument();
     expect(screen.getByText(RISK_LABEL[result.risk])).toBeInTheDocument();
 
+    // The result screen displays the checked message, so the disclosure that
+    // only a lossy digest can leave the device belongs on this screen too.
+    expect(
+      screen.getByText(/pesan lengkap tetap di perangkat/i),
+    ).toBeInTheDocument();
+
     // Identity Agent is real now, so no stage may claim to be unbuilt.
     expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
 

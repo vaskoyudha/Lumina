@@ -122,7 +122,7 @@ export function CompanionAuth({
           aria-haspopup="dialog"
           onClick={() => setTab("daftar")}
           className={cn(
-            "flex min-h-9 items-center justify-center rounded-[8px] bg-ink font-medium text-[11.5px] text-bg",
+            "flex min-h-9 items-center justify-center rounded-[8px] border border-ink-line bg-ink font-medium text-[11.5px] text-bg",
             "transition-[background-color,color] duration-150 ease-out hover:bg-ink-hover",
           )}
         >

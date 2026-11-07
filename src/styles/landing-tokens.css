@@ -78,6 +78,7 @@
   --color-ls-solid: var(--ls-solid);
   --color-ls-solid-hover: var(--ls-solid-hover);
   --color-ls-solid-ink: var(--ls-solid-ink);
+  --color-ls-solid-line: var(--ls-solid-line);
   --color-ls-dark: var(--ls-dark);
   --color-ls-dark-panel: var(--ls-dark-panel);
   --color-ls-on-dark: var(--ls-on-dark);
@@ -110,6 +111,7 @@
     --ls-solid: #241c17;
     --ls-solid-hover: #3a2e26;
     --ls-solid-ink: #fffdf9;
+    --ls-solid-line: color-mix(in srgb, var(--ls-solid-ink) 40%, transparent);
     --ls-dark: #211a15;
     --ls-dark-panel: #2e251e;
     --ls-on-dark: #fffaf2;
@@ -141,6 +143,7 @@
     --ls-solid: #1b2228;
     --ls-solid-hover: #2c363e;
     --ls-solid-ink: #ffffff;
+    --ls-solid-line: color-mix(in srgb, var(--ls-solid-ink) 40%, transparent);
     --ls-dark: #161d22;
     --ls-dark-panel: #232c33;
     --ls-on-dark: #f4f8fa;
@@ -165,6 +168,7 @@
     --ls-solid: #f7f3ee;
     --ls-solid-hover: #ffffff;
     --ls-solid-ink: #121212;
+    --ls-solid-line: color-mix(in srgb, var(--ls-solid-ink) 40%, transparent);
     --ls-dark: #080808;
     --ls-dark-panel: #141414;
     --ls-on-dark: #fff7ee;

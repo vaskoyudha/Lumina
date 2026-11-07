@@ -17,7 +17,12 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { AgentTraceCard } from "@/components/companion/agent-trace";
-import { AGENT_SEQUENCE } from "@/components/companion/agents";
+import {
+  AGENT_SEQUENCE,
+  type DetectorAgent,
+} from "@/components/companion/agents";
+import { AgentsDetailPanel } from "@/components/companion/agents-detail-panel";
+import { AgentsView } from "@/components/companion/agents-view";
 import {
   CompanionAuth,
   type CompanionSession,
@@ -120,6 +125,8 @@ interface Turn {
   /** The text that produced `result`, including attachment filenames. */
   source?: string;
   attachments?: Attachment[];
+  /** Why an attached image could not be read; absent when every image was read. */
+  visionNote?: string;
   /** What the agents actually did for this turn, measured. */
   trace?: AgentTrace;
   /** The teaching layer: tactics, anatomy, checks, and where to report. */
@@ -150,9 +157,6 @@ interface Session {
   updatedAt?: number;
 }
 
-const GREETING =
-  "Halo. Tempel pesan, tautan, atau ceritakan telepon yang kamu terima. Saya akan tunjukkan kalimat mana yang berbahaya dan apa yang sebaiknya kamu lakukan.";
-
 /** One dot colour per band, reused by the header pill and the pipeline header. */
 const RISK_DOT: Record<NonNullable<Session["risk"]>, string> = {
   bersih: "bg-brand",
@@ -168,7 +172,7 @@ function newSession(): Session {
   return {
     id: id(),
     title: "Percakapan baru",
-    turns: [{ id: id(), role: "companion", text: GREETING }],
+    turns: [],
   };
 }
 
@@ -191,6 +195,11 @@ export function CompanionChat({
   const [busy, setBusy] = React.useState(false);
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
+  /** The center column's second view; the turns stay in state while it is away. */
+  const [showAgents, setShowAgents] = React.useState(false);
+  /** Which agent's brief the right pane highlights while the overview is open. */
+  const [selectedAgent, setSelectedAgent] =
+    React.useState<DetectorAgent | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -272,7 +281,7 @@ export function CompanionChat({
   React.useEffect(() => {
     // `turns` is the trigger: this runs after every appended turn so the newest
     // one is anchored to the top of the log.
-    if (turns.length <= 1) return;
+    if (turns.length === 0) return;
     const log = scrollRef.current;
     if (!log) return;
     const nodes = log.querySelectorAll<HTMLElement>("[data-turn]");
@@ -340,6 +349,35 @@ export function CompanionChat({
        * a verdict.
        */
       const transcription = await transcribeImages(attachments);
+
+      /*
+       * A failed pixel read is a receipt, not a silent fallback. Without it the
+       * turn still scores from the filename, and the reader would believe the
+       * screenshot itself was examined.
+       */
+      if (hasImages && transcription.failed > 0) {
+        setSessions((prev) =>
+          prev.map((session) =>
+            session.id === target
+              ? {
+                  ...session,
+                  turns: session.turns.map((turn) =>
+                    turn.id === userTurn.id
+                      ? {
+                          ...turn,
+                          visionNote:
+                            transcription.failed === transcription.attempted
+                              ? `${transcription.failed} gambar gagal dibaca; pemeriksaan hanya memakai nama berkas.`
+                              : `${transcription.failed} dari ${transcription.attempted} gambar gagal dibaca; sisanya diperiksa.`,
+                        }
+                      : turn,
+                  ),
+                }
+              : session,
+          ),
+        );
+      }
+
       const scored = [
         transcription.text,
         scoringTextWithAttachments(text, attachments),
@@ -416,7 +454,9 @@ export function CompanionChat({
           ? {
               id: "evidence",
               ...STAGE_LABEL.evidence,
-              status: "selesai",
+              // No artifact means the stage did not produce evidence. It must
+              // not wear a finished tick over a bundle it never filled.
+              status: artifacts > 0 ? "selesai" : "dilewati",
               findings: 0,
               ms: evidenceMs,
               note:
@@ -457,6 +497,19 @@ export function CompanionChat({
           }
         : null;
 
+      /*
+       * The teaching layer is a pure function of the verdict, so it is computed
+       * once here and reused when the turn seals. The card can then render the
+       * same explanation immediately, before the language layer has written a
+       * word — the verdict is not allowed to wait for the voice.
+       */
+      const explanation =
+        checked &&
+        result !== null &&
+        result.signals.some((signal) => signal.weight > 0)
+          ? explain(result, scored)
+          : undefined;
+
       setBusy(true);
       setSessions((prev) =>
         prev.map((session) =>
@@ -482,6 +535,7 @@ export function CompanionChat({
                     voiceStartedAt,
                     result: checked ? (result ?? undefined) : undefined,
                     source: checked ? scored : undefined,
+                    explanation,
                     trace: openTrace ?? undefined,
                   },
                 ],
@@ -551,17 +605,7 @@ export function CompanionChat({
           laneSource: lane === "tanya" ? text : undefined,
           result: checked ? (result ?? undefined) : undefined,
           source: checked ? scored : undefined,
-          /*
-           * Only teach when something was actually found. A clean message has
-           * no tactics and no scheme, and showing generic checks for "apa
-           * kabar?" would be noise dressed as diligence.
-           */
-          explanation:
-            checked &&
-            result !== null &&
-            result.signals.some((signal) => signal.weight > 0)
-              ? explain(result, scored)
-              : undefined,
+          explanation,
           trace: turn.trace
             ? {
                 // Replace the open `berjalan` stage rather than appending a
@@ -721,6 +765,8 @@ export function CompanionChat({
     setSessions((prev) => [session, ...prev]);
     setSelectedId(session.id);
     setShowSessions(false);
+    setShowAgents(false);
+    setSelectedAgent(null);
   };
 
   /**
@@ -761,7 +807,7 @@ export function CompanionChat({
     }
   };
 
-  const empty = turns.length <= 1;
+  const empty = turns.length === 0;
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
@@ -772,11 +818,23 @@ export function CompanionChat({
           onSelect={(sessionId) => {
             setSelectedId(sessionId);
             setShowSessions(false);
+            setShowAgents(false);
+            setSelectedAgent(null);
           }}
           onNew={startNew}
           onClose={() => setShowSessions(false)}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          agentsActive={showAgents}
+          onShowAgents={() => {
+            setShowAgents(true);
+            setSelectedAgent(null);
+            setShowSessions(false);
+          }}
+          onShowChat={() => {
+            setShowAgents(false);
+            setShowSessions(false);
+          }}
           auth={(iconsOnly) => (
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
@@ -815,13 +873,19 @@ export function CompanionChat({
                   <Sparkles className="size-2 text-white" strokeWidth={2} />
                 </span>
                 <span className="truncate font-medium text-[12px] text-txt">
-                  {active?.title ?? "Percakapan baru"}
+                  {showAgents
+                    ? "Agen pemeriksa"
+                    : (active?.title ?? "Percakapan baru")}
                 </span>
                 <span
                   aria-hidden
                   className={cn(
                     "size-1.5 shrink-0 rounded-full",
-                    latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
+                    showAgents
+                      ? "hidden"
+                      : latestResult
+                        ? RISK_DOT[latestResult.risk]
+                        : "bg-dim/50",
                   )}
                 />
                 <DropdownMenu>
@@ -905,7 +969,7 @@ export function CompanionChat({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowEvidence((v) => !v)}
-                aria-label="Panel bukti"
+                aria-label={showAgents ? "Detail agen" : "Panel bukti"}
                 aria-expanded={showEvidence}
                 className="h-[32px] gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong lg:hidden"
               >
@@ -924,7 +988,13 @@ export function CompanionChat({
             </div>
           </header>
 
-          {empty ? (
+          {showAgents ? (
+            <AgentsView
+              onBack={() => setShowAgents(false)}
+              onSelect={setSelectedAgent}
+              selected={selectedAgent}
+            />
+          ) : empty ? (
             <>
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
                 <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
@@ -1037,6 +1107,12 @@ export function CompanionChat({
                             ))}
                           </ul>
                         ) : null}
+
+                        {turn.visionNote ? (
+                          <p className="max-w-[85%] text-right text-[11px] text-danger leading-snug">
+                            {turn.visionNote}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   ) : (
@@ -1088,10 +1164,11 @@ export function CompanionChat({
                         </div>
                       ) : null}
 
-                      {turn.result && !turn.streaming ? (
+                      {turn.result ? (
                         <>
                           <ScoreCard
                             result={turn.result}
+                            trace={turn.trace}
                             showEscalation={false}
                             showLinks={false}
                           />
@@ -1136,7 +1213,9 @@ export function CompanionChat({
               <Button
                 variant="ghost"
                 size="icon-xs"
-                aria-label="Buka panel bukti"
+                aria-label={
+                  showAgents ? "Buka panel detail" : "Buka panel bukti"
+                }
                 aria-expanded={false}
                 onClick={() => setEvidenceCollapsed(false)}
                 className="size-6 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink"
@@ -1147,17 +1226,39 @@ export function CompanionChat({
                   className="size-4"
                 />
               </Button>
-              <span
-                aria-hidden
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
-                )}
-              />
+              {showAgents ? null : (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
+                  )}
+                />
+              )}
               <span className="mt-1 font-medium text-[10.5px] text-ink-faint [writing-mode:vertical-rl]">
-                Panel bukti
+                {showAgents ? "Detail agen" : "Panel bukti"}
               </span>
             </div>
+          ) : showAgents ? (
+            <AgentsDetailPanel
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Ciutkan panel detail"
+                  aria-expanded
+                  onClick={() => setEvidenceCollapsed(true)}
+                  className="size-6 rounded-full text-dim hover:text-txt"
+                >
+                  <PanelRightClose
+                    aria-hidden
+                    strokeWidth={1.6}
+                    className="size-3.5"
+                  />
+                </Button>
+              }
+              selected={selectedAgent}
+            />
           ) : (
             <SignalPanel
               action={
@@ -1197,28 +1298,49 @@ export function CompanionChat({
             showCloseButton={false}
             side="right"
           >
-            <SheetTitle className="sr-only">Panel bukti</SheetTitle>
-            <SignalPanel
-              action={
-                <SheetClose asChild>
-                  <Button
-                    aria-label="Tutup panel bukti"
-                    className="size-6 rounded-full text-dim hover:text-txt"
-                    size="icon-xs"
-                    variant="ghost"
-                  >
-                    <X />
-                  </Button>
-                </SheetClose>
-              }
-              className="rounded-none border-0"
-              evidence={evidence}
-              result={panelResult}
-              sequence={AGENT_SEQUENCE}
-              titleId="panel-bukti-title-sheet"
-              trace={panelTrace}
-              running={running}
-            />
+            <SheetTitle className="sr-only">
+              {showAgents ? "Detail agen" : "Panel bukti"}
+            </SheetTitle>
+            {showAgents ? (
+              <AgentsDetailPanel
+                action={
+                  <SheetClose asChild>
+                    <Button
+                      aria-label="Tutup detail agen"
+                      className="size-6 rounded-full text-dim hover:text-txt"
+                      size="icon-xs"
+                      variant="ghost"
+                    >
+                      <X />
+                    </Button>
+                  </SheetClose>
+                }
+                className="rounded-none border-0"
+                selected={selectedAgent}
+              />
+            ) : (
+              <SignalPanel
+                action={
+                  <SheetClose asChild>
+                    <Button
+                      aria-label="Tutup panel bukti"
+                      className="size-6 rounded-full text-dim hover:text-txt"
+                      size="icon-xs"
+                      variant="ghost"
+                    >
+                      <X />
+                    </Button>
+                  </SheetClose>
+                }
+                className="rounded-none border-0"
+                evidence={evidence}
+                result={panelResult}
+                sequence={AGENT_SEQUENCE}
+                titleId="panel-bukti-title-sheet"
+                trace={panelTrace}
+                running={running}
+              />
+            )}
           </SheetContent>
         </Sheet>
       </div>

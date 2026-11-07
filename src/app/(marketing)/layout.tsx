@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { QuickDrawer } from "@/components/marketing/quick-drawer";
 import { Footer } from "@/components/marketing/sections/footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteProvider } from "@/components/marketing/site-provider";
+import SmoothScroll from "@/components/marketing/smooth-scroll";
 import { ThemeSlider } from "@/components/marketing/theme-slider";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/powder-fonts.css";
@@ -43,8 +43,8 @@ export default function MarketingLayout({
         <SiteHeader />
         <main>{children}</main>
         <Footer />
-        <QuickDrawer />
       </SiteProvider>
+      <SmoothScroll />
       {/* Theme control floats clear of the nav, bottom-right of the viewport. */}
       <div className="fixed right-4 bottom-4 z-30 sm:right-6 sm:bottom-6">
         <ThemeSlider />

@@ -25,7 +25,10 @@ export function Transformation() {
       className="bg-ls-surface px-4 pt-24 pb-20 sm:px-8"
     >
       <div className="transformation-bg relative mx-auto flex max-w-[1680px] flex-col justify-center overflow-hidden rounded-3xl border border-amberwarm-400/20 p-6 text-white shadow-xl sm:p-12 lg:min-h-[880px] lg:py-20">
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
+        <div
+          data-reveal
+          className="relative z-10 mx-auto max-w-3xl text-center"
+        >
           <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-amberwarm-200/25 bg-black/35 px-3.5 py-1 font-semibold text-[12px] text-amberwarm-200 uppercase tracking-widest">
             <span>☺</span>
             <span>{transformationCopy.badge}</span>
@@ -40,7 +43,10 @@ export function Transformation() {
           </p>
         </div>
 
-        <div className="relative z-10 mt-12 grid grid-cols-1 items-center gap-8 md:grid-cols-11 lg:mt-16">
+        <div
+          data-reveal
+          className="relative z-10 mt-12 grid grid-cols-1 items-center gap-8 md:grid-cols-11 lg:mt-16"
+        >
           <div className="flex flex-col items-center space-y-5 md:col-span-5 md:items-end">
             <div className="mb-1 flex w-full items-center justify-between gap-4 md:justify-start">
               <span className="font-medium text-amberwarm-100/90 text-sm sm:text-base">
@@ -111,7 +117,7 @@ export function Transformation() {
           </div>
         </div>
 
-        <div className="relative z-10 mt-12 text-center lg:mt-16">
+        <div data-reveal className="relative z-10 mt-12 text-center lg:mt-16">
           <Button
             className="inline-flex h-auto items-center gap-3 rounded-full bg-amberwarm-50 py-2 pr-2 pl-6 font-semibold text-espresso-950 text-sm shadow-lg transition-all hover:bg-amberwarm-100 active:scale-[0.97] sm:text-base"
             onClick={() => scrollToId("section-programs")}

@@ -3,6 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
 /**
+ * This suite renders the whole conversation client and runs the full
+ * deterministic pipeline. The full run executes it beside ~60 other suites on
+ * 12 cores, where Jest's 5 s default measures the scheduler rather than the
+ * component; 15 s still fails a genuine hang.
+ */
+jest.setTimeout(15_000);
+
+/**
  * These render the real conversation component. The Evidence Agent is only
  * honest if the *rendered* panel shows the bundle it claims to have built, so
  * every assertion here is about something a judge can point at on screen.
@@ -20,6 +28,20 @@ jest.mock("next/link", () => {
   );
   return { __esModule: true, default: Link };
 });
+
+/**
+ * Paste, not type. Every test here asserts what the engine and the panel do
+ * with a message; simulating ~100 keystrokes adds seconds of wall clock that
+ * no assertion reads, and under the full parallel run that cost pushed this
+ * suite past its timeout. The controlled textarea receives the same event.
+ */
+async function enterMessage(
+  user: ReturnType<typeof userEvent.setup>,
+  text: string,
+) {
+  await user.click(screen.getByLabelText(/pesan/i));
+  await user.paste(text);
+}
 
 describe("CompanionChat · evidence panel", () => {
   it("shows the extracted artifact without faking a detector", async () => {
@@ -48,8 +70,8 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.type(
-      screen.getByLabelText(/pesan/i),
+    await enterMessage(
+      user,
       "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.",
     );
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
@@ -88,8 +110,8 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.type(
-      screen.getByLabelText(/pesan/i),
+    await enterMessage(
+      user,
       "Barang sudah dikemas, bayar sisa ongkir via QRIS pada stiker ini (nama penerima a.n. Hadi Wibowo).",
     );
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
@@ -119,7 +141,7 @@ describe("CompanionChat · an honest zero", () => {
       "aktif kuliah, lalu siangnya mampir ke perpustakaan mengembalikan buku " +
       "yang sudah lewat tenggat dua hari. setelah itu kita makan siang bareng ya";
 
-    await user.type(screen.getByLabelText(/pesan/i), BENIGN_PASTE);
+    await enterMessage(user, BENIGN_PASTE);
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     const panel = await screen.findByRole("list", {
@@ -147,7 +169,7 @@ describe("CompanionChat · a question is not a bad message", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.type(screen.getByLabelText(/pesan/i), "apa itu pinjol?");
+    await enterMessage(user, "apa itu pinjol?");
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     // The evidence panel always lists every agent by name, so the transcript is
@@ -170,7 +192,7 @@ describe("CompanionChat · a question is not a bad message", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.type(screen.getByLabelText(/pesan/i), "apa itu pinjol?");
+    await enterMessage(user, "apa itu pinjol?");
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     const retry = await screen.findByRole("button", {
@@ -181,7 +203,9 @@ describe("CompanionChat · a question is not a bad message", () => {
     // Forced lane: the engine runs and the trace appears in the transcript,
     // because the reader asked for a verdict rather than an explanation.
     const log = await screen.findByRole("log", { name: /percakapan/i });
-    expect(await within(log).findByText("Message Agent")).toBeInTheDocument();
+    expect(
+      (await within(log).findAllByText("Message Agent")).length,
+    ).toBeGreaterThan(0);
   });
 
   it("keeps the trace and the card on a message that is actually checked", async () => {
@@ -191,10 +215,52 @@ describe("CompanionChat · a question is not a bad message", () => {
     await user.click(screen.getByRole("button", { name: /apk undangan/i }));
 
     const log = await screen.findByRole("log", { name: /percakapan/i });
-    expect(await within(log).findByText("Message Agent")).toBeInTheDocument();
+    expect(
+      (await within(log).findAllByText("Message Agent")).length,
+    ).toBeGreaterThan(0);
     expect(
       within(log).queryByText(/Dijawab sebagai pertanyaan/i),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · verdict before voice", () => {
+  const originalFetch = global.fetch;
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    // The language layer never answers. The deterministic verdict must already
+    // be on screen; waiting for the model is a presentation bug, not a check.
+    fetchMock.mockImplementation(() => new Promise(() => undefined));
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("renders the score card while the model is still writing", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+    expect(
+      await within(log).findByText("File APK via WhatsApp"),
+    ).toBeInTheDocument();
+    expect(within(log).getByText(/menyusun jawaban/i)).toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · privacy copy matches the wire", () => {
+  it("says the full checked message stays on the device", () => {
+    render(<CompanionChat />);
+
+    expect(
+      screen.getByText(/isi pesan lengkap tidak dikirim/i),
+    ).toBeInTheDocument();
   });
 });
 
@@ -236,7 +302,7 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
     // to false, so the follow-up can be sent.
     await screen.findAllByText("File APK via WhatsApp");
 
-    await user.type(screen.getByLabelText(/pesan/i), "kenapa berbahaya?");
+    await enterMessage(user, "kenapa berbahaya?");
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     await waitFor(() => {
