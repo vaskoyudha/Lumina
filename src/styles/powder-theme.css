@@ -11,7 +11,7 @@
   background-color: var(--pw-bg);
 }
 
-/* Light surface: follows warm / cream / black. */
+/* Light surface: follows paper / cream / black. */
 .pw-surface {
   --pw-bg: var(--ls-surface);
   --token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a: var(--ls-surface);
@@ -29,8 +29,15 @@
   --token-259d8c78-fccd-4e6b-bbb0-32a9dcab750e: var(--ls-card);
   --token-47679c26-af3f-4cd0-91b2-530be918763e: transparent;
   --token-792af9ed-53d8-45b2-94fd-014e7edc8f44: var(--ls-ink);
-  /* White 60%: sits on top of photography, so it must stay white. */
-  --token-3fab9d78-ec3a-44ec-ad62-b2eca6daf4a5: rgb(255 255 255 / 0.6);
+  /*
+    Input wells and icon discs: a tinted pass so they read on a light card.
+    (The clone's white 60% only worked over its dark card.)
+  */
+  --token-3fab9d78-ec3a-44ec-ad62-b2eca6daf4a5: color-mix(
+    in srgb,
+    var(--ls-surface-alt) 85%,
+    transparent
+  );
   --token-33ef294f-bf95-4931-af4a-e98d2138d080: var(--ls-ink-3);
   --token-fa5efa90-02ea-4140-be93-9c156158d5ba: var(--ls-surface-alt);
   --token-3890c723-b81b-4cd9-8ee4-78ba3e4a048f: var(--ls-surface-alt);
@@ -76,9 +83,9 @@
 .framer-site.pw-surface .framer-oJiFP .framer-1ed9fxm {
   background: radial-gradient(
     200% 83% at 50% 0,
-    #f9f3e5 0%,
-    #f3e3be 42%,
-    #d9a87e 100%
+    #ffffff 0%,
+    #eff3f6 42%,
+    #d7e4ea 100%
   );
 }
 
