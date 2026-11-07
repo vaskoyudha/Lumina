@@ -1,14 +1,14 @@
+/** @jest-environment node */
 /**
  * @jest-environment node
  */
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from "@jest/globals";
+import { consumeAttempt } from "@/lib/auth/accounts";
+
+jest.mock("@/lib/auth/accounts", () => ({
+  consumeAttempt: jest.fn(),
+  AuthError: class AuthError extends Error {},
+}));
+
 import { POST } from "@/app/api/companion/voice/route";
 import type { VoiceDigest } from "@/lib/contracts/agent-run";
 
@@ -30,6 +30,7 @@ const MANAGED = [
 const original = new Map(MANAGED.map((key) => [key, process.env[key]]));
 
 beforeEach(() => {
+  jest.mocked(consumeAttempt).mockResolvedValue(undefined);
   process.env.LUMINA_LLM_URL = "http://127.0.0.1:9/v1";
   process.env.LUMINA_LLM_MODEL = "test-model";
   delete process.env.LUMINA_LLM_KEY;

@@ -37,16 +37,15 @@ function config() {
   };
 }
 
-export function beginGoogle(intent: "masuk" | "daftar") {
+export async function beginGoogle(intent: "masuk" | "daftar") {
   const { clientId, redirectUri } = config();
   const state = randomBytes(32).toString("base64url");
   const verifier = randomBytes(32).toString("base64url");
   const nonce = randomBytes(32).toString("base64url");
-  const db = authDatabase();
-  db.prepare("DELETE FROM oauth_states WHERE expires_at <= ?").run(Date.now());
-  db.prepare(
-    "INSERT INTO oauth_states (state_hash, verifier, nonce, intent, expires_at) VALUES (?, ?, ?, ?, ?)",
-  ).run(digest(state), verifier, nonce, intent, Date.now() + 600_000);
+  await authDatabase().query(
+    "INSERT INTO oauth_states (state_hash, verifier, nonce, intent, expires_at) VALUES ($1, $2, $3, $4, now() + interval '10 minutes')",
+    [digest(state), verifier, nonce, intent],
+  );
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.search = new URLSearchParams({
     client_id: clientId,
@@ -62,31 +61,31 @@ export function beginGoogle(intent: "masuk" | "daftar") {
   return { state, url: url.toString() };
 }
 
-export function consumeGoogleState(
+export async function consumeGoogleState(
   state: string | null,
   cookie: string | undefined,
 ) {
   if (
     !state ||
     !cookie ||
-    state.length !== 43 ||
-    cookie.length !== 43 ||
+    !/^[A-Za-z0-9_-]{43}$/.test(state) ||
+    !/^[A-Za-z0-9_-]{43}$/.test(cookie) ||
     !timingSafeEqual(Buffer.from(state), Buffer.from(cookie))
   ) {
     throw new AuthError("google-expired");
   }
   // Atomic delete prevents concurrent callbacks from replaying one transaction.
-  const row = authDatabase()
-    .prepare("DELETE FROM oauth_states WHERE state_hash = ? RETURNING *")
-    .get(digest(state)) as
-    | {
-        verifier: string;
-        nonce: string;
-        intent: "masuk" | "daftar";
-        expires_at: number;
-      }
-    | undefined;
-  if (!row || row.expires_at <= Date.now())
+  const row = (
+    await authDatabase().query<{
+      verifier: string;
+      nonce: string;
+      intent: "masuk" | "daftar";
+      expires_at: Date;
+    }>("DELETE FROM oauth_states WHERE state_hash = $1 RETURNING *", [
+      digest(state),
+    ])
+  ).rows[0];
+  if (!row || new Date(row.expires_at).getTime() <= Date.now())
     throw new AuthError("google-expired");
   return row;
 }

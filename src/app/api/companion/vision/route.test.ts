@@ -1,14 +1,14 @@
+/** @jest-environment node */
 /**
  * @jest-environment node
  */
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from "@jest/globals";
+import { consumeAttempt } from "@/lib/auth/accounts";
+
+jest.mock("@/lib/auth/accounts", () => ({
+  consumeAttempt: jest.fn(),
+  AuthError: class AuthError extends Error {},
+}));
+
 import { POST } from "@/app/api/companion/vision/route";
 
 const MANAGED = [
@@ -24,6 +24,7 @@ const IMAGE = {
 };
 
 beforeEach(() => {
+  jest.mocked(consumeAttempt).mockResolvedValue(undefined);
   process.env.LUMINA_LLM_URL = "http://127.0.0.1:9/v1";
   process.env.LUMINA_LLM_MODEL = "test-vision-model";
   delete process.env.LUMINA_LLM_KEY;

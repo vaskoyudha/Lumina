@@ -1,5 +1,15 @@
 # Status — per 5 November 2026
 
+**8 November 2026 — backend PostgreSQL dan paket VPS.** Akun, sesi, transaksi
+OAuth dan limit berpindah ke PostgreSQL dengan pool async, migrasi bernomor,
+impor SQLite read-only, serta cleanup expiry. Endpoint AI memiliki batas body
+dan kuota persisten; `/api/health` memeriksa DB dengan deadline dua detik.
+Dockerfile standalone non-root, Compose app/db/proxy dan Caddy tersedia.
+Progres tetap lokal dan `/darurat` tetap publik, termasuk saat DB gagal.
+Panduan deploy/backup/restore/rollback: `docs/deploy.md`. Bukti dan batas
+verifikasi: `docs/backend-validation.md`. Docker/VPS dan OAuth Google nyata
+masih memerlukan pengujian di lingkungan deployment.
+
 **7 November 2026 — autentikasi sungguhan (permintaan pemilik produk).**
 `/daftar` dan `/masuk` menjadi halaman terpisah. Akun email/password disimpan
 di SQLite dengan scrypt, sesi dapat dicabut, dan Google OAuth memakai state,

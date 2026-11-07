@@ -14,12 +14,15 @@ tekanan → **darurat** menyiapkan laporan untuk dibawa ke bank.
 ## Menjalankan
 
 ```bash
-npm install
+npm ci
+# Isi DATABASE_URL di .env.local; jalankan PostgreSQL terlebih dahulu.
+npm run db:migrate
 npm run dev        # http://localhost:3000
 ```
 
-Node.js minimal 22.13. Akun email/password menggunakan SQLite; Google OAuth
+Node.js 24. Akun email/password menggunakan PostgreSQL; Google OAuth
 memerlukan konfigurasi di `.env.local`. Panduan: [`docs/auth.md`](docs/auth.md).
+Paket VPS (Docker Compose, Caddy, backup/restore, rollback): [`docs/deploy.md`](docs/deploy.md).
 
 ## Perintah
 
@@ -78,7 +81,7 @@ src/
 `src/lib/scoring/score.ts`, deterministik dan tanpa jaringan. Kalau model bahasa
 mati di venue, deteksi tetap tampil.
 
-**Akun opsional.** Identitas akun dan sesi tersimpan di SQLite. Progres belajar
+**Akun opsional.** Identitas akun dan sesi tersimpan di PostgreSQL. Progres belajar
 tetap di localStorage; percakapan hilang saat tab ditutup. Darurat selalu
 terbuka tanpa akun.
 

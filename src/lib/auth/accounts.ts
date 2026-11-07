@@ -23,19 +23,21 @@ export function digest(value: string): string {
 }
 
 /** Shared by all workers using the same database; no plaintext emails in keys. */
-export function consumeAttempt(key: string, limit = 10): void {
-  const db = authDatabase();
-  const now = Date.now();
-  db.prepare("DELETE FROM auth_attempts WHERE expires_at <= ?").run(now);
-  const result = db
-    .prepare(`
-    INSERT INTO auth_attempts (key, count, expires_at) VALUES (?, 1, ?)
-    ON CONFLICT(key) DO UPDATE SET count = count + 1
-    RETURNING count
-  `)
-    .get(digest(key), now + 15 * 60 * 1000) as { count: number };
-  if (result.count > limit)
-    throw new AuthError("Terlalu banyak percobaan. Coba lagi dalam 15 menit.");
+export async function consumeAttempt(
+  key: string,
+  limit = 10,
+  windowMs = 900000,
+): Promise<void> {
+  const result = await authDatabase().query<{ count: number }>(
+    `
+    INSERT INTO auth_attempts (key, count, expires_at) VALUES ($1, 1, now() + $2 * interval '1 millisecond')
+    ON CONFLICT (key) DO UPDATE SET
+      count = CASE WHEN auth_attempts.expires_at <= now() THEN 1 ELSE auth_attempts.count + 1 END,
+      expires_at = CASE WHEN auth_attempts.expires_at <= now() THEN EXCLUDED.expires_at ELSE auth_attempts.expires_at END RETURNING count`,
+    [digest(key), windowMs],
+  );
+  if (result.rows[0].count > limit)
+    throw new AuthError("Terlalu banyak percobaan. Coba lagi nanti.");
 }
 
 const credentials = z.object({
@@ -61,7 +63,7 @@ export async function registerAccount(input: {
       "Isi nama (maks. 80 karakter), email yang valid, password 8–128 karakter, dan persetujuan.",
     );
   const { nama, email, password } = parsed.data;
-  consumeAttempt(`register:${email}`, 5);
+  await consumeAttempt(`register:${email}`, 5);
   const passwordHash = await hashPassword(password);
   const account = {
     id: randomUUID(),
@@ -69,13 +71,12 @@ export async function registerAccount(input: {
     email,
     created_at: new Date().toISOString(),
   };
-  const result = authDatabase()
-    .prepare(`
-    INSERT INTO users (id, nama, email, password_hash, created_at)
-    VALUES (?, ?, ?, ?, ?) ON CONFLICT(email) DO NOTHING
-  `)
-    .run(account.id, nama, email, passwordHash, account.created_at);
-  if (!result.changes)
+  const result = await authDatabase().query(
+    `INSERT INTO users (id, nama, email, password_hash, created_at)
+    VALUES ($1, $2, $3, $4, $5) ON CONFLICT(email) DO NOTHING`,
+    [account.id, nama, email, passwordHash, account.created_at],
+  );
+  if (!result.rowCount)
     throw new AuthError(
       "Email tidak dapat didaftarkan. Jika sudah punya akun, silakan masuk dengan metode sebelumnya.",
     );
@@ -88,10 +89,13 @@ export async function authenticatePassword(
 ): Promise<Account> {
   const parsed = credentials.safeParse({ email, password });
   if (!parsed.success) throw new AuthError("Email atau password salah.");
-  consumeAttempt(`login:${parsed.data.email}`);
-  const account = authDatabase()
-    .prepare("SELECT * FROM users WHERE email = ?")
-    .get(parsed.data.email) as AccountRecord | undefined;
+  await consumeAttempt(`login:${parsed.data.email}`);
+  const account = (
+    await authDatabase().query<AccountRecord>(
+      "SELECT * FROM users WHERE email = $1",
+      [parsed.data.email],
+    )
+  ).rows[0];
   const valid = await checkPassword(
     parsed.data.password,
     account?.password_hash,
@@ -100,50 +104,54 @@ export async function authenticatePassword(
     throw new AuthError(
       "Email atau password salah. Jika mendaftar lewat Google, gunakan tombol Google.",
     );
-  authDatabase()
-    .prepare("DELETE FROM auth_attempts WHERE key = ?")
-    .run(digest(`login:${parsed.data.email}`));
+  await authDatabase().query("DELETE FROM auth_attempts WHERE key = $1", [
+    digest(`login:${parsed.data.email}`),
+  ]);
   return {
     id: account.id,
     nama: account.nama,
     email: account.email,
-    created_at: account.created_at,
+    created_at: new Date(account.created_at).toISOString(),
   };
 }
 
 /** Only called with a Google ID token verified by google-auth-library. */
-export function googleAccount(
+export async function googleAccount(
   sub: string,
   email: string,
   nama: string,
-): Account {
+): Promise<Account> {
   const db = authDatabase();
-  const existing = db
-    .prepare(
-      "SELECT id, email, nama, created_at FROM users WHERE google_sub = ?",
-    )
-    .get(sub) as Account | undefined;
-  if (existing) return existing;
+  const find = async () =>
+    (
+      await db.query<Account>(
+        "SELECT id, email, nama, created_at FROM users WHERE google_sub = $1",
+        [sub],
+      )
+    ).rows[0];
+  const existing = await find();
+  if (existing)
+    return {
+      ...existing,
+      created_at: new Date(existing.created_at).toISOString(),
+    };
   const account = {
     id: randomUUID(),
     email: email.trim().toLowerCase(),
     nama: nama.slice(0, 80),
     created_at: new Date().toISOString(),
   };
-  const result = db
-    .prepare(`
-    INSERT INTO users (id, email, nama, google_sub, created_at)
-    VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING
-  `)
-    .run(account.id, account.email, account.nama, sub, account.created_at);
-  if (!result.changes) {
-    // Do not link a password account by email alone (account takeover risk).
-    const concurrent = db
-      .prepare(
-        "SELECT id, email, nama, created_at FROM users WHERE google_sub = ?",
-      )
-      .get(sub) as Account | undefined;
-    if (concurrent) return concurrent;
+  const result = await db.query(
+    "INSERT INTO users (id, email, nama, google_sub, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING",
+    [account.id, account.email, account.nama, sub, account.created_at],
+  );
+  if (!result.rowCount) {
+    const concurrent = await find();
+    if (concurrent)
+      return {
+        ...concurrent,
+        created_at: new Date(concurrent.created_at).toISOString(),
+      };
     throw new AuthError("google-link-required");
   }
   return account;

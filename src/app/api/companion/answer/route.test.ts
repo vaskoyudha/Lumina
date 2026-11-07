@@ -1,7 +1,14 @@
+/** @jest-environment node */
+jest.mock("@/lib/auth/accounts", () => ({
+  consumeAttempt: jest.fn().mockResolvedValue(undefined),
+  AuthError: class AuthError extends Error {},
+}));
+
+import { POST } from "@/app/api/companion/answer/route";
 /**
  * @jest-environment node
  */
-import { POST } from "@/app/api/companion/answer/route";
+import { consumeAttempt } from "@/lib/auth/accounts";
 import { AnswerRequestSchema } from "@/lib/contracts/answer";
 
 const QUESTION =
@@ -57,6 +64,7 @@ describe("POST /api/companion/answer", () => {
   const env = process.env;
 
   beforeEach(() => {
+    jest.mocked(consumeAttempt).mockResolvedValue(undefined);
     process.env = {
       ...env,
       LUMINA_LLM_URL: "http://llm.test/v1",
