@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { contactCopy, contactEmails } from "@/lib/site";
 
 const fieldClass =
-  "h-auto rounded-xl border-hairline-strong bg-sand-100 px-3.5 py-2.5 text-espresso-950 text-xs placeholder:text-ink-faint focus-visible:border-espresso-700 focus-visible:ring-0 sm:text-sm";
+  "h-auto rounded-xl border-ls-line-strong bg-ls-surface px-3.5 py-2.5 text-ls-ink text-xs placeholder:text-ls-ink-3 focus-visible:border-ls-accent-text focus-visible:ring-0 sm:text-sm";
 
 const copyIcon = (
   <svg
@@ -58,8 +58,8 @@ export function Contact() {
   }
 
   return (
-    <section id="section-contact" className="border-hairline border-t">
-      <div className="bg-espresso-800 px-4 pt-20 pb-16 text-white sm:px-8 sm:pt-24 sm:pb-20">
+    <section id="section-contact" className="border-ls-line border-t">
+      <div className="contact-band px-4 pt-20 pb-16 text-white sm:px-8 sm:pt-24 sm:pb-20">
         <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-center gap-8 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-amberwarm-300/25 bg-espresso-950/80 px-3.5 py-1 font-semibold text-[11px] text-amberwarm-200 uppercase tracking-widest">
@@ -98,34 +98,34 @@ export function Contact() {
         </div>
       </div>
 
-      <div className="bg-sand-200 px-4 pt-28 pb-24 sm:px-8">
+      <div className="bg-ls-surface-alt px-4 pt-28 pb-24 sm:px-8">
         <div className="mx-auto grid max-w-[1680px] grid-cols-1 items-center gap-10 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-5">
             <div>
-              <span className="mb-3 inline-block rounded-full border border-hairline-strong bg-white px-3.5 py-1 font-semibold text-[11px] text-espresso-900 uppercase tracking-wider">
+              <span className="mb-3 inline-block rounded-full border border-ls-line-strong bg-ls-card px-3.5 py-1 font-semibold text-[11px] text-ls-ink-2 uppercase tracking-wider">
                 {contactCopy.formBadge}
               </span>
-              <h3 className="font-semibold text-3xl text-espresso-950 leading-tight sm:text-4xl">
+              <h3 className="font-semibold text-3xl text-ls-ink leading-tight sm:text-4xl">
                 {contactCopy.formTitle}
               </h3>
-              <p className="mt-2.5 text-ink-body text-xs leading-relaxed sm:text-sm">
+              <p className="mt-2.5 text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
                 {contactCopy.formBody}
               </p>
             </div>
 
-            <div className="divide-y divide-dashed divide-hairline-strong pt-6 text-xs sm:pt-12 sm:text-sm">
+            <div className="divide-y divide-dashed divide-ls-line-strong pt-6 text-xs sm:pt-12 sm:text-sm">
               {contactCopy.info.map((row) => (
                 <div
                   key={row.label}
                   className="flex items-center justify-between gap-4 py-3.5"
                 >
-                  <span className="inline-flex items-center gap-2.5 text-ink-body">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-hairline bg-white text-espresso-800">
+                  <span className="inline-flex items-center gap-2.5 text-ls-ink-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-ls-line bg-ls-card text-ls-ink-2">
                       {row.icon}
                     </span>
                     <span>{row.label}</span>
                   </span>
-                  <span className="text-right font-semibold text-espresso-950">
+                  <span className="text-right font-semibold text-ls-ink">
                     {row.value}
                   </span>
                 </div>
@@ -138,13 +138,13 @@ export function Contact() {
               <form
                 id="contact-form"
                 onSubmit={handleSubmit}
-                className="space-y-4 rounded-2xl bg-white p-6 shadow-md sm:p-8"
+                className="space-y-4 rounded-2xl bg-ls-card p-6 shadow-md sm:p-8"
               >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label
                       htmlFor="contact-name"
-                      className="mb-1.5 gap-1 font-semibold text-espresso-950 text-xs"
+                      className="mb-1.5 gap-1 font-semibold text-ls-ink text-xs"
                     >
                       Nama lengkap <span className="text-danger">*</span>
                     </Label>
@@ -160,7 +160,7 @@ export function Contact() {
                   <div>
                     <Label
                       htmlFor="contact-company"
-                      className="mb-1.5 font-semibold text-espresso-950 text-xs"
+                      className="mb-1.5 font-semibold text-ls-ink text-xs"
                     >
                       Nama komunitas atau instansi
                     </Label>
@@ -177,7 +177,7 @@ export function Contact() {
                 <div>
                   <Label
                     htmlFor="contact-email"
-                    className="mb-1.5 gap-1 font-semibold text-espresso-950 text-xs"
+                    className="mb-1.5 gap-1 font-semibold text-ls-ink text-xs"
                   >
                     Email <span className="text-danger">*</span>
                   </Label>
@@ -194,7 +194,7 @@ export function Contact() {
                 <div>
                   <Label
                     htmlFor="contact-message"
-                    className="mb-1.5 font-semibold text-espresso-950 text-xs"
+                    className="mb-1.5 font-semibold text-ls-ink text-xs"
                   >
                     Apa yang bisa kami bantu?
                   </Label>
@@ -212,13 +212,13 @@ export function Contact() {
                   <Checkbox id="contact-privacy" defaultChecked required />
                   <Label
                     htmlFor="contact-privacy"
-                    className="block text-ink-body text-xs font-normal leading-snug"
+                    className="block text-ls-ink-2 text-xs font-normal leading-snug"
                   >
                     {contactCopy.consent.split("kebijakan privasi")[0]}
                     <button
                       type="button"
                       onClick={() => showToast(contactCopy.privacyToast)}
-                      className="font-medium text-espresso-900 underline"
+                      className="font-medium text-ls-ink underline"
                     >
                       kebijakan privasi
                     </button>
@@ -228,10 +228,10 @@ export function Contact() {
 
                 <Button
                   type="submit"
-                  className="h-auto w-full justify-between rounded-full bg-amberwarm-200 py-2.5 pr-2 pl-5 font-semibold text-espresso-950 text-xs shadow-sm transition-all hover:bg-amberwarm-300 active:scale-[0.99] sm:text-sm"
+                  className="h-auto w-full justify-between rounded-full bg-ls-accent py-2.5 pr-2 pl-5 font-semibold text-ls-accent-ink text-xs shadow-sm transition-all hover:bg-ls-accent-strong active:scale-[0.99] sm:text-sm"
                 >
                   <span>{contactCopy.submit}</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-espresso-800 text-white text-xs">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ls-solid text-ls-solid-ink text-xs">
                     »
                   </span>
                 </Button>
@@ -241,8 +241,8 @@ export function Contact() {
                   aria-live="polite"
                   className={
                     feedback
-                      ? "block rounded-xl border border-brand/40 bg-brand/10 p-3 font-medium text-brand-strong text-xs"
-                      : "hidden rounded-xl border border-brand/40 bg-brand/10 p-3 font-medium text-brand-strong text-xs"
+                      ? "block rounded-xl border border-ls-line-strong bg-ls-accent-soft p-3 font-medium text-ls-accent-text text-xs"
+                      : "hidden rounded-xl border border-ls-line-strong bg-ls-accent-soft p-3 font-medium text-ls-accent-text text-xs"
                   }
                 >
                   {feedback}

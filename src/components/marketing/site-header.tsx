@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MarketingAuth } from "@/components/marketing/marketing-auth";
 import { useSite } from "@/components/marketing/site-provider";
+import { ThemeSlider } from "@/components/marketing/theme-slider";
 import { Button } from "@/components/ui/button";
 import { scrollToId } from "@/lib/scroll";
 import { brand, navLinks } from "@/lib/site";
@@ -59,7 +60,7 @@ export function SiteHeader() {
   }, []);
 
   const linkTone = scrolled
-    ? "text-espresso-950 hover:text-espresso-700"
+    ? "text-ls-ink hover:text-ls-ink-2"
     : "text-amberwarm-100/90 hover:text-white";
 
   return (
@@ -83,7 +84,7 @@ export function SiteHeader() {
           />
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-0 rounded-[1.25rem] bg-white transition-opacity duration-500 ease-out ${
+            className={`pointer-events-none absolute inset-0 rounded-[1.25rem] bg-ls-surface transition-opacity duration-500 ease-out ${
               scrolled ? "opacity-[0.22]" : "opacity-0"
             }`}
           />
@@ -111,7 +112,7 @@ export function SiteHeader() {
             onClick={() => scrollToId("section-home")}
             aria-label={`${brand.name} — kembali ke atas`}
             className={`group relative flex items-center gap-2 font-semibold text-lg tracking-tight transition-colors duration-300 sm:text-xl ${
-              scrolled ? "text-espresso-950" : "text-white"
+              scrolled ? "text-ls-ink" : "text-white"
             }`}
           >
             <span
@@ -125,7 +126,7 @@ export function SiteHeader() {
             >
               <RoughBird
                 className={`h-full w-full transition-colors duration-300 ease-out ${
-                  scrolled ? "text-espresso-800" : "text-amberwarm-300"
+                  scrolled ? "text-ls-accent-text" : "text-amberwarm-300"
                 }`}
               />
             </span>
@@ -133,6 +134,9 @@ export function SiteHeader() {
           </button>
 
           <div className="relative flex items-center gap-1.5 sm:gap-2.5">
+            <div className="hidden lg:block">
+              <ThemeSlider scrolled={scrolled} />
+            </div>
             <MarketingAuth scrolled={scrolled} />
             <Link
               href="/companion"
@@ -140,7 +144,7 @@ export function SiteHeader() {
               aria-label={brand.navCta}
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-md transition-[background-color,color,transform] duration-200 ease-out active:scale-[0.97] sm:hidden ${
                 scrolled
-                  ? "bg-espresso-950 text-white hover:bg-espresso-800"
+                  ? "bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover"
                   : "bg-amberwarm-50 text-espresso-950 hover:bg-amberwarm-100"
               }`}
             >
@@ -162,7 +166,7 @@ export function SiteHeader() {
               asChild
               className={`hidden h-auto gap-3 rounded-xl py-1.5 pr-1.5 pl-5 font-semibold text-xs shadow-md transition-[background-color,color,transform] duration-300 ease-out active:scale-[0.97] sm:inline-flex sm:text-sm ${
                 scrolled
-                  ? "bg-espresso-950 text-white hover:bg-espresso-800"
+                  ? "bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover"
                   : "bg-amberwarm-50 text-espresso-950 hover:bg-amberwarm-100"
               }`}
             >
@@ -171,7 +175,7 @@ export function SiteHeader() {
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-300 ease-out ${
                     scrolled
-                      ? "bg-white text-espresso-950"
+                      ? "bg-ls-card text-ls-ink"
                       : "bg-espresso-800 text-amberwarm-100"
                   }`}
                 >
@@ -197,7 +201,7 @@ export function SiteHeader() {
               onClick={openDrawer}
               className={`flex h-11 w-11 items-center justify-center rounded-xl shadow-md transition-[background-color,color,transform] duration-200 ease-out active:scale-[0.97] ${
                 scrolled
-                  ? "bg-sand-300 text-espresso-950 hover:bg-sand-500/40"
+                  ? "bg-ls-card-alt text-ls-ink hover:bg-ls-card"
                   : "bg-amberwarm-50 text-espresso-900 hover:bg-amberwarm-100"
               }`}
             >
@@ -214,6 +218,9 @@ export function SiteHeader() {
               </svg>
             </button>
           </div>
+        </div>
+        <div className="mt-2 flex justify-end px-1 lg:hidden">
+          <ThemeSlider scrolled={scrolled} />
         </div>
       </nav>
     </div>

@@ -22,7 +22,7 @@ export function Transformation() {
   return (
     <section
       id="section-transformation"
-      className="bg-sand-100 px-4 pt-24 pb-20 sm:px-8"
+      className="bg-ls-surface px-4 pt-24 pb-20 sm:px-8"
     >
       <div className="transformation-bg relative mx-auto flex max-w-[1680px] flex-col justify-center overflow-hidden rounded-3xl border border-amberwarm-400/20 p-6 text-white shadow-xl sm:p-12 lg:min-h-[880px] lg:py-20">
         <div className="relative z-10 mx-auto max-w-3xl text-center">

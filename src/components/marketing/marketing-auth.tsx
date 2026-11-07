@@ -9,8 +9,8 @@ const SIGNED_OUT_TONE = {
 };
 
 const SCROLLED_TONE = {
-  masuk: "text-espresso-950 hover:text-espresso-700",
-  daftar: "bg-espresso-950 text-white hover:bg-espresso-800",
+  masuk: "text-ls-ink hover:text-ls-ink-2",
+  daftar: "bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover",
 };
 
 export function MarketingAuth({ scrolled = false }: { scrolled?: boolean }) {

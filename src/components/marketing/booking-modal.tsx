@@ -49,20 +49,20 @@ export function BookingModal({
       <DialogContent
         id="booking-modal"
         aria-labelledby="booking-modal-title"
-        className="max-w-md gap-0 overflow-hidden rounded-3xl border border-hairline bg-amberwarm-50 p-6 ring-0 sm:max-w-md sm:p-7"
+        className="max-w-md gap-0 overflow-hidden rounded-3xl border border-ls-line bg-ls-card p-6 ring-0 sm:max-w-md sm:p-7"
       >
-        <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-amberwarm-200 px-3 py-1 text-[10px] font-bold tracking-wider text-espresso-900 uppercase">
+        <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-ls-accent px-3 py-1 text-[10px] font-bold tracking-wider text-ls-accent-ink uppercase">
           <span aria-hidden="true">☺</span>
           <span>{bookingCopy.badge}</span>
         </div>
 
         <DialogTitle
           id="booking-modal-title"
-          className="font-display text-2xl font-semibold text-espresso-950"
+          className="font-display text-2xl font-semibold text-ls-ink"
         >
           {bookingCopy.title}
         </DialogTitle>
-        <DialogDescription className="mt-1 text-xs text-ink-body">
+        <DialogDescription className="mt-1 text-xs text-ls-ink-2">
           {bookingCopy.body}
         </DialogDescription>
 
@@ -70,7 +70,7 @@ export function BookingModal({
           <div className="space-y-1">
             <Label
               htmlFor="booking-program"
-              className="text-xs font-semibold text-espresso-900"
+              className="text-xs font-semibold text-ls-ink-2"
             >
               {bookingCopy.programLabel}
             </Label>
@@ -79,7 +79,7 @@ export function BookingModal({
               type="text"
               readOnly
               value={selected}
-              className="h-9 rounded-xl border-hairline-strong bg-white px-3.5 text-xs font-medium text-espresso-950"
+              className="h-9 rounded-xl border-ls-line-strong bg-ls-surface px-3.5 text-xs font-medium text-ls-ink"
             />
           </div>
 
@@ -87,7 +87,7 @@ export function BookingModal({
             <div className="space-y-1">
               <Label
                 htmlFor="booking-format"
-                className="text-xs font-semibold text-espresso-900"
+                className="text-xs font-semibold text-ls-ink-2"
               >
                 {bookingCopy.formatLabel}
               </Label>
@@ -95,7 +95,7 @@ export function BookingModal({
                 id="booking-format"
                 value={format}
                 onChange={(event) => setFormat(event.target.value)}
-                className="h-9 w-full rounded-xl border border-hairline-strong bg-white px-3 text-xs text-espresso-950"
+                className="h-9 w-full rounded-xl border border-ls-line-strong bg-ls-surface px-3 text-xs text-ls-ink"
               >
                 {bookingCopy.formats.map((option) => (
                   <option key={option} value={option}>
@@ -107,7 +107,7 @@ export function BookingModal({
             <div className="space-y-1">
               <Label
                 htmlFor="booking-date"
-                className="text-xs font-semibold text-espresso-900"
+                className="text-xs font-semibold text-ls-ink-2"
               >
                 {bookingCopy.dayLabel}
               </Label>
@@ -115,7 +115,7 @@ export function BookingModal({
                 id="booking-date"
                 value={day}
                 onChange={(event) => setDay(event.target.value)}
-                className="h-9 w-full rounded-xl border border-hairline-strong bg-white px-3 text-xs text-espresso-950"
+                className="h-9 w-full rounded-xl border border-ls-line-strong bg-ls-surface px-3 text-xs text-ls-ink"
               >
                 {bookingCopy.days.map((option) => (
                   <option key={option} value={option}>
@@ -129,7 +129,7 @@ export function BookingModal({
           <div className="space-y-1">
             <Label
               htmlFor="booking-email"
-              className="text-xs font-semibold text-espresso-900"
+              className="text-xs font-semibold text-ls-ink-2"
             >
               Email kamu <span className="text-danger">*</span>
             </Label>
@@ -140,22 +140,22 @@ export function BookingModal({
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="kamu@contoh.com"
-              className="h-9 rounded-xl border-hairline-strong bg-white px-3.5 text-xs text-espresso-950"
+              className="h-9 rounded-xl border-ls-line-strong bg-ls-surface px-3.5 text-xs text-ls-ink"
             />
           </div>
 
           <Button
             type="submit"
-            className="group h-auto w-full justify-between rounded-full bg-espresso-800 px-5 py-2.5 text-xs font-semibold text-white shadow-md transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-espresso-700 active:scale-[0.98]"
+            className="group h-auto w-full justify-between rounded-full bg-ls-solid px-5 py-2.5 text-xs font-semibold text-ls-solid-ink shadow-md transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-ls-solid-hover active:scale-[0.98]"
           >
             <span>{bookingCopy.submit}</span>
-            <span className="flex size-6 items-center justify-center rounded-full bg-white text-xs font-bold text-espresso-900">
+            <span className="flex size-6 items-center justify-center rounded-full bg-ls-card text-xs font-bold text-ls-ink-2">
               »
             </span>
           </Button>
 
           {confirmed ? (
-            <output className="block rounded-xl border border-brand/40 bg-brand/10 p-3 text-xs font-medium text-brand-strong">
+            <output className="block rounded-xl border border-ls-line-strong bg-ls-accent-soft p-3 text-xs font-medium text-ls-accent-text">
               {confirmed}
             </output>
           ) : null}
