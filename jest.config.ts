@@ -14,6 +14,9 @@ const createJestConfig = nextJest({ dir: "./" });
 
 const config: Config = {
   testEnvironment: "jsdom",
+  // Integration suites reset the same dedicated database. Keep their data isolated in time.
+  maxWorkers: process.env.TEST_DATABASE_URL ? 1 : "50%",
+  modulePathIgnorePatterns: ["<rootDir>/.cache/", "<rootDir>/.next/"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testMatch: ["<rootDir>/src/**/*.test.ts?(x)"],
   moduleDirectories: ["node_modules", "<rootDir>/"],

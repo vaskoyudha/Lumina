@@ -17,7 +17,11 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { AgentTraceCard } from "@/components/companion/agent-trace";
-import { AGENT_SEQUENCE } from "@/components/companion/agents";
+import {
+  AGENT_SEQUENCE,
+  type DetectorAgent,
+} from "@/components/companion/agents";
+import { AgentsDetailPanel } from "@/components/companion/agents-detail-panel";
 import { AgentsView } from "@/components/companion/agents-view";
 import {
   CompanionAuth,
@@ -193,6 +197,9 @@ export function CompanionChat({
   const [showSessions, setShowSessions] = React.useState(false);
   /** The center column's second view; the turns stay in state while it is away. */
   const [showAgents, setShowAgents] = React.useState(false);
+  /** Which agent's brief the right pane highlights while the overview is open. */
+  const [selectedAgent, setSelectedAgent] =
+    React.useState<DetectorAgent | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -759,6 +766,7 @@ export function CompanionChat({
     setSelectedId(session.id);
     setShowSessions(false);
     setShowAgents(false);
+    setSelectedAgent(null);
   };
 
   /**
@@ -811,6 +819,7 @@ export function CompanionChat({
             setSelectedId(sessionId);
             setShowSessions(false);
             setShowAgents(false);
+            setSelectedAgent(null);
           }}
           onNew={startNew}
           onClose={() => setShowSessions(false)}
@@ -819,6 +828,7 @@ export function CompanionChat({
           agentsActive={showAgents}
           onShowAgents={() => {
             setShowAgents(true);
+            setSelectedAgent(null);
             setShowSessions(false);
           }}
           onShowChat={() => {
@@ -959,7 +969,7 @@ export function CompanionChat({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowEvidence((v) => !v)}
-                aria-label="Panel bukti"
+                aria-label={showAgents ? "Detail agen" : "Panel bukti"}
                 aria-expanded={showEvidence}
                 className="h-[32px] gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong lg:hidden"
               >
@@ -979,7 +989,11 @@ export function CompanionChat({
           </header>
 
           {showAgents ? (
-            <AgentsView onBack={() => setShowAgents(false)} />
+            <AgentsView
+              onBack={() => setShowAgents(false)}
+              onSelect={setSelectedAgent}
+              selected={selectedAgent}
+            />
           ) : empty ? (
             <>
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
@@ -1199,7 +1213,9 @@ export function CompanionChat({
               <Button
                 variant="ghost"
                 size="icon-xs"
-                aria-label="Buka panel bukti"
+                aria-label={
+                  showAgents ? "Buka panel detail" : "Buka panel bukti"
+                }
                 aria-expanded={false}
                 onClick={() => setEvidenceCollapsed(false)}
                 className="size-6 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink"
@@ -1210,17 +1226,39 @@ export function CompanionChat({
                   className="size-4"
                 />
               </Button>
-              <span
-                aria-hidden
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
-                )}
-              />
+              {showAgents ? null : (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
+                  )}
+                />
+              )}
               <span className="mt-1 font-medium text-[10.5px] text-ink-faint [writing-mode:vertical-rl]">
-                Panel bukti
+                {showAgents ? "Detail agen" : "Panel bukti"}
               </span>
             </div>
+          ) : showAgents ? (
+            <AgentsDetailPanel
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Ciutkan panel detail"
+                  aria-expanded
+                  onClick={() => setEvidenceCollapsed(true)}
+                  className="size-6 rounded-full text-dim hover:text-txt"
+                >
+                  <PanelRightClose
+                    aria-hidden
+                    strokeWidth={1.6}
+                    className="size-3.5"
+                  />
+                </Button>
+              }
+              selected={selectedAgent}
+            />
           ) : (
             <SignalPanel
               action={
@@ -1260,28 +1298,49 @@ export function CompanionChat({
             showCloseButton={false}
             side="right"
           >
-            <SheetTitle className="sr-only">Panel bukti</SheetTitle>
-            <SignalPanel
-              action={
-                <SheetClose asChild>
-                  <Button
-                    aria-label="Tutup panel bukti"
-                    className="size-6 rounded-full text-dim hover:text-txt"
-                    size="icon-xs"
-                    variant="ghost"
-                  >
-                    <X />
-                  </Button>
-                </SheetClose>
-              }
-              className="rounded-none border-0"
-              evidence={evidence}
-              result={panelResult}
-              sequence={AGENT_SEQUENCE}
-              titleId="panel-bukti-title-sheet"
-              trace={panelTrace}
-              running={running}
-            />
+            <SheetTitle className="sr-only">
+              {showAgents ? "Detail agen" : "Panel bukti"}
+            </SheetTitle>
+            {showAgents ? (
+              <AgentsDetailPanel
+                action={
+                  <SheetClose asChild>
+                    <Button
+                      aria-label="Tutup detail agen"
+                      className="size-6 rounded-full text-dim hover:text-txt"
+                      size="icon-xs"
+                      variant="ghost"
+                    >
+                      <X />
+                    </Button>
+                  </SheetClose>
+                }
+                className="rounded-none border-0"
+                selected={selectedAgent}
+              />
+            ) : (
+              <SignalPanel
+                action={
+                  <SheetClose asChild>
+                    <Button
+                      aria-label="Tutup panel bukti"
+                      className="size-6 rounded-full text-dim hover:text-txt"
+                      size="icon-xs"
+                      variant="ghost"
+                    >
+                      <X />
+                    </Button>
+                  </SheetClose>
+                }
+                className="rounded-none border-0"
+                evidence={evidence}
+                result={panelResult}
+                sequence={AGENT_SEQUENCE}
+                titleId="panel-bukti-title-sheet"
+                trace={panelTrace}
+                running={running}
+              />
+            )}
           </SheetContent>
         </Sheet>
       </div>

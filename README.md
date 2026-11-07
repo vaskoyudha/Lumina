@@ -14,9 +14,15 @@ tekanan → **darurat** menyiapkan laporan untuk dibawa ke bank.
 ## Menjalankan
 
 ```bash
-npm install
+npm ci
+# Isi DATABASE_URL di .env.local; jalankan PostgreSQL terlebih dahulu.
+npm run db:migrate
 npm run dev        # http://localhost:3000
 ```
+
+Node.js 24. Akun email/password menggunakan PostgreSQL; Google OAuth
+memerlukan konfigurasi di `.env.local`. Panduan: [`docs/auth.md`](docs/auth.md).
+Paket VPS (Docker Compose, Caddy, backup/restore, rollback): [`docs/deploy.md`](docs/deploy.md).
 
 ## Perintah
 
@@ -75,8 +81,9 @@ src/
 `src/lib/scoring/score.ts`, deterministik dan tanpa jaringan. Kalau model bahasa
 mati di venue, deteksi tetap tampil.
 
-**Tanpa akun, tanpa simpan.** Progres belajar di localStorage. Percakapan hilang
-saat tab ditutup.
+**Akun opsional.** Identitas akun dan sesi tersimpan di PostgreSQL. Progres belajar
+tetap di localStorage; percakapan hilang saat tab ditutup. Darurat selalu
+terbuka tanpa akun.
 
 **Kejujuran di atas kelengkapan.** Modul yang belum ditulis berstatus `segera`,
 agent yang belum dibangun ditandai `belum aktif`, simulasi yang belum jadi

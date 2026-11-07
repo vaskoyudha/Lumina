@@ -18,13 +18,7 @@ import { useState } from "react";
 import { CompleteButton } from "@/components/belajar/complete-button";
 import { Quiz } from "@/components/belajar/quiz";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import type { ContohJenis, ModuleContent } from "@/data/modul-schema";
 import { loadProgress, recordMissed, saveProgress } from "@/lib/progress";
 
@@ -70,32 +64,46 @@ const CONTOH_SHAPE: Record<ContohJenis, ContohShape> = {
 };
 
 /**
- * One lesson block. Every section of the module is the same shape — heading,
- * one line of framing, content — so the player reads as a course, not a pile
- * of unrelated panels.
+ * One lesson block. Every section of the module is the same shape — numbered
+ * marker, heading, one line of framing, content — so the player reads as a
+ * course, not a pile of unrelated panels. The number is the same visual rhythm
+ * the reference dashboard uses on its course cards.
  */
 function LessonSection({
   id,
+  index,
   title,
   lede,
+  Icon,
   children,
 }: {
   id: string;
+  index: number;
   title: string;
   lede: string;
+  Icon: LucideIcon;
   children: ReactNode;
 }) {
   return (
-    <Card
-      aria-labelledby={id}
-      className="gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]"
-    >
-      <CardHeader className="gap-1 py-5 pb-0">
-        <CardTitle id={id} className="font-normal text-2xl text-txt">
-          {title}
-        </CardTitle>
-        <CardDescription className="text-dim">{lede}</CardDescription>
-      </CardHeader>
+    <Card className="gap-0 overflow-hidden rounded-[24px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
+      <div className="flex items-start gap-3 border-line border-b px-5 py-4">
+        <span
+          aria-hidden
+          className="tabular inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft font-semibold text-brand-ink text-sm"
+        >
+          {String(index).padStart(2, "0")}
+        </span>
+        <div className="min-w-0">
+          <h2
+            id={id}
+            className="flex items-center gap-2 font-medium text-xl text-txt leading-snug sm:text-2xl"
+          >
+            <Icon aria-hidden className="size-5 shrink-0 text-brand" />
+            {title}
+          </h2>
+          <p className="mt-1 text-dim text-sm leading-relaxed">{lede}</p>
+        </div>
+      </div>
       <CardContent className="py-5">{children}</CardContent>
     </Card>
   );
@@ -127,9 +135,9 @@ function ContohFrame({ modul }: { modul: ModuleContent }) {
     // Browser chrome, not a chat: the danger sits in the address bar, so the
     // address bar is what the frame puts in front of the learner.
     return (
-      <div className="appnext-band rounded-3xl p-4 sm:p-5">
-        <Card className="max-w-xl gap-0 overflow-hidden rounded-[18px] py-0 shadow-[var(--appnext-shadow-soft)]">
-          <div className="flex items-center gap-2 border-b border-line bg-panel-2 px-3 py-2">
+      <div className="rounded-[20px] bg-panel-2 p-3 sm:p-5">
+        <Card className="max-w-xl gap-0 overflow-hidden rounded-[18px] border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
+          <div className="flex items-center gap-2 border-line border-b bg-panel-2 px-3 py-2">
             <span className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-line bg-panel px-3 py-1.5 text-txt text-xs">
               <Icon aria-hidden className="size-3.5 shrink-0 text-dim" />
               <span className="truncate">{sumber}</span>
@@ -148,12 +156,12 @@ function ContohFrame({ modul }: { modul: ModuleContent }) {
 
   if (jenis === "pesan") {
     return (
-      <div className="appnext-band rounded-3xl p-4 sm:p-5">
+      <div className="rounded-[20px] bg-panel-2 p-3 sm:p-5">
         <div className="appnext-chat max-w-xl">
           <p className="appnext-chat-meta">
             <span
               aria-hidden
-              className="inline-flex size-7 items-center justify-center rounded-full bg-(--appnext-surface) font-semibold text-[color:var(--appnext-ink-2)] text-xs"
+              className="inline-flex size-7 items-center justify-center rounded-full bg-brand-soft font-semibold text-brand-ink text-xs"
             >
               +62
             </span>
@@ -174,13 +182,13 @@ function ContohFrame({ modul }: { modul: ModuleContent }) {
   // the advice underneath — a link and a call do not need different chrome,
   // they need different words.
   return (
-    <div className="appnext-band rounded-3xl p-4 sm:p-5">
-      <Card className="max-w-xl gap-0 rounded-[18px] py-0 shadow-[var(--appnext-shadow-soft)]">
+    <div className="rounded-[20px] bg-panel-2 p-3 sm:p-5">
+      <Card className="max-w-xl gap-0 rounded-[18px] border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
         <CardContent className="py-4">
           <p className="appnext-chat-meta">
             <span
               aria-hidden
-              className="inline-flex size-7 items-center justify-center rounded-full bg-(--appnext-surface) text-[color:var(--appnext-ink-2)]"
+              className="inline-flex size-7 items-center justify-center rounded-full bg-brand-soft text-brand-ink"
             >
               <Icon className="size-4" />
             </span>
@@ -213,13 +221,14 @@ function tocFor(jenis: ContohJenis) {
  * dangerous parts marked, a red-flag checklist, a 3–5 question quiz, then
  * ordered reporting steps. The example renders in the frame its course
  * declares (`contohJenis`) — message, link, site or call — because not every
- * scam arrives as a message. Layout follows course-player references: main
- * column + sticky curriculum sidebar, vertical learning path for the anatomy.
+ * scam arrives as a message. Layout follows the reference dashboard: a main
+ * column of rounded cards plus a sticky curriculum card on the right.
  * The quiz gates completion — the button only unlocks after a pass.
  */
 export function ModulBody({ modul }: { modul: ModuleContent }) {
   const [passed, setPassed] = useState(false);
-  const toc = tocFor(modul.contohJenis ?? "pesan");
+  const jenis = modul.contohJenis ?? "pesan";
+  const toc = tocFor(jenis);
 
   // A pass unlocks completion; the questions that were missed are recorded
   // honestly so the review surface (and Stream C later, §11.4) has real data
@@ -232,17 +241,22 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
   }
 
   return (
-    <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
       <div className="flex min-w-0 flex-col gap-5">
         <LessonSection
           id="anatomi"
+          index={1}
           title="Bagaimana penipuan ini bekerja"
           lede={`${modul.anatomi.length} langkah, selalu dengan urutan yang sama. Kenali langkah awalnya, dan rantai berikutnya tidak akan pernah terjadi.`}
+          Icon={BookOpen}
         >
           <ol className="appnext-path flex list-none flex-col gap-6 p-0">
             {modul.anatomi.map((step, i) => (
               <li key={step.judul} className="flex gap-4 pl-0">
-                <span aria-hidden className="appnext-step-dot relative z-10">
+                <span
+                  aria-hidden
+                  className="appnext-step-dot relative z-10 bg-brand-strong"
+                >
                   {i + 1}
                 </span>
                 <div className="min-w-0 pt-0.5">
@@ -256,8 +270,10 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
 
         <LessonSection
           id="contoh"
+          index={2}
           title={modul.contohJudul}
           lede="Contoh di bawah sengaja dibuat mirip kejadian aslinya. Bagian yang disorot merah adalah yang harus membuatmu berhenti."
+          Icon={CONTOH_SHAPE[jenis].Icon}
         >
           <ContohFrame modul={modul} />
 
@@ -269,8 +285,10 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
 
         <LessonSection
           id="checklist"
+          index={3}
           title="Checklist tanda bahaya"
           lede="Satu saja muncul, berhenti. Jangan dilanjutkan."
+          Icon={ClipboardCheck}
         >
           <ul className="flex list-none flex-col gap-3 p-0">
             {modul.checklist.map((item) => (
@@ -284,21 +302,27 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
 
         <LessonSection
           id="kuis"
+          index={4}
           title="Uji pemahamanmu"
           lede="Pilih apa yang kamu lakukan sekarang — bukan definisi. Lulus di 60% untuk menyelesaikan modul."
+          Icon={FileWarning}
         >
           <Quiz questions={modul.kuis} onDone={handleQuizDone} />
         </LessonSection>
 
         <LessonSection
           id="lapor"
+          index={5}
           title="Kalau ini sudah terlanjur terjadi"
           lede="Urutan ini penting — jangan dibalik."
+          Icon={Flag}
         >
           <ol className="flex list-none flex-col gap-3.5 p-0">
             {modul.lapor.map((step, i) => (
               <li key={step} className="flex gap-3">
-                <span className="appnext-step-dot tabular">{i + 1}</span>
+                <span className="appnext-step-dot tabular bg-brand-strong">
+                  {i + 1}
+                </span>
                 <span className="pt-0.5">{step}</span>
               </li>
             ))}
@@ -308,7 +332,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         {passed ? (
           <CompleteButton moduleNo={modul.no} />
         ) : (
-          <Card className="gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-soft)]">
+          <Card className="gap-0 rounded-[22px] border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
             <CardContent className="py-4 text-dim">
               Selesaikan kuis dengan skor minimal 60% untuk menandai modul ini
               selesai dan membuka lencana.
@@ -320,7 +344,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         {modul.scenarioId ? (
           <Button
             asChild
-            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
+            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
           >
             <Link href={`/simulasi/${modul.scenarioId}`} data-pressable>
               Latih pola ini di simulasi
@@ -330,7 +354,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
       </div>
 
       <aside className="appnext-toc hidden lg:block" aria-label="Isi modul">
-        <Card className="gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]">
+        <Card className="gap-0 rounded-[22px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
           <CardContent className="py-3">
             <p className="appnext-caption px-2 pt-1 font-medium tracking-wide uppercase">
               Isi modul
@@ -348,7 +372,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
                     {id === "kuis" && passed ? (
                       <CheckCircle2
                         aria-hidden
-                        className="size-4 shrink-0 text-[color:var(--appnext-accent-deep)]"
+                        className="size-4 shrink-0 text-brand-ink"
                       />
                     ) : null}
                   </a>

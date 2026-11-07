@@ -8,7 +8,7 @@ import { getSession } from "@/lib/auth/server-session";
 export const metadata: Metadata = {
   title: "Profil",
   description:
-    "Akun demo dan kemajuan belajar yang tersimpan di perangkat ini.",
+    "Akun Lumina dan kemajuan belajar yang tersimpan di perangkat ini.",
 };
 
 /**
@@ -18,7 +18,13 @@ export const metadata: Metadata = {
 async function ProfilSession() {
   const session = await getSession();
   if (!session) redirect("/masuk");
-  return <ProfilView nama={session.nama} email={session.email} />;
+  return (
+    <ProfilView
+      nama={session.nama}
+      email={session.email}
+      createdAt={session.created_at}
+    />
+  );
 }
 
 function ProfilSkeleton() {

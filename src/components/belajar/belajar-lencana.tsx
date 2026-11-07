@@ -1,19 +1,22 @@
 "use client";
 
 import { Award, Lock } from "lucide-react";
+import Link from "next/link";
 import {
   BADGE_LABEL,
   useStoredProgress,
 } from "@/components/belajar/belajar-progress";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MODUS_BY_NO } from "@/lib/modus";
 import { BADGE_FOR_MODULE } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
 /**
- * Badge strip for the catalog. A badge exists only when `progress.ts` awards
- * it on a real completion, so an unearned badge says what would earn it
- * instead of pretending to be a locked reward from a game economy.
+ * Badge strip for the catalog, shaped like the reference dashboard's
+ * "Best Instructors" pair. A badge exists only when `progress.ts` awards it on
+ * a real completion, so an unearned badge says what would earn it instead of
+ * pretending to be a locked reward from a game economy.
  *
  * This lives in the article, not the right rail, because the badges are also
  * the rail's third destination — the anchor has to exist at every width.
@@ -29,55 +32,81 @@ export function BelajarLencana() {
     <section
       id="lencana"
       aria-labelledby="lencana-judul"
-      className="mt-10 scroll-mt-24"
+      className="mt-auto scroll-mt-24 pt-2"
     >
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <h2 id="lencana-judul">Lencana</h2>
-        <p className="appnext-caption">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 id="lencana-judul" className="font-bold text-[18px] text-txt">
+          Lencana
+        </h3>
+        <p className="font-semibold text-[11px] text-dim">
           Satu lencana untuk tiap modul yang benar-benar selesai.
         </p>
       </div>
 
-      <Card className="mt-4 gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]">
-        <ul className="grid list-none gap-2 p-2 sm:grid-cols-2 lg:grid-cols-3">
-          {ENTRIES.map(([no, badgeId]) => {
-            const earned = badges.includes(badgeId);
-            const modul = MODUS_BY_NO.get(Number(no));
+      <div className="mt-3.5 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {ENTRIES.map(([no, badgeId]) => {
+          const earned = badges.includes(badgeId);
+          const modul = MODUS_BY_NO.get(Number(no));
 
-            return (
-              <li key={badgeId} className="flex items-center gap-3 p-2.5">
-                <span
-                  aria-hidden
+          return (
+            <Card
+              key={badgeId}
+              className={cn(
+                "gap-0 rounded-2xl border border-line bg-panel p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all hover:border-brand-line hover:shadow-md",
+                ENTRIES.length === 1 && "md:col-span-2",
+              )}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3.5">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "inline-flex size-11 shrink-0 items-center justify-center rounded-full",
+                      earned
+                        ? "bg-brand-soft text-brand-ink ring-1 ring-brand-line"
+                        : "bg-panel-2 text-dim",
+                    )}
+                  >
+                    {earned ? (
+                      <Award className="size-5" />
+                    ) : (
+                      <Lock className="size-4" />
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm text-txt">
+                      {BADGE_LABEL[badgeId] ?? badgeId}
+                    </h4>
+                    <p className="mt-0.5 font-medium text-[11px] text-dim">
+                      {!progress
+                        ? "Memuat progres di perangkat ini…"
+                        : earned
+                          ? "Sudah kamu dapatkan di perangkat ini."
+                          : `Selesaikan modul ${no}${
+                              modul ? ` — ${modul.nama}` : ""
+                            } untuk membukanya.`}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  asChild
                   className={cn(
-                    "inline-flex size-10 shrink-0 items-center justify-center rounded-full",
+                    "rounded-xl font-semibold text-xs",
                     earned
-                      ? "bg-[var(--appnext-accent-deep)] text-bg"
-                      : "bg-panel-2 text-dim",
+                      ? "border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-ink-3)]"
+                      : "bg-panel-2 text-txt hover:bg-line",
                   )}
                 >
-                  {earned ? (
-                    <Award className="size-4" />
-                  ) : (
-                    <Lock className="size-4" />
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-medium text-sm text-txt">
-                    {BADGE_LABEL[badgeId] ?? badgeId}
-                  </span>
-                  <span className="appnext-caption block">
-                    {!progress
-                      ? "Memuat progres di perangkat ini…"
-                      : earned
-                        ? "Sudah kamu dapatkan."
-                        : `Selesaikan modul ${no}${modul ? ` — ${modul.nama}` : ""}.`}
-                  </span>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
+                  <Link href={`/belajar/${no}`} data-pressable>
+                    Modul {no}
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
     </section>
   );
 }

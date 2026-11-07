@@ -420,6 +420,12 @@ submission.
 
 ## 8. Yang tidak dikerjakan siapa pun
 
+> **Pengecualian pemilik produk, 7 November 2026:** akun email/password sungguhan
+> dan Google OAuth diminta secara eksplisit. Butir (a) dan (b) diizinkan khusus
+> untuk identitas akun, hash password, sesi, batas percobaan dan transaksi OAuth.
+> Progres belajar tetap di localStorage; percakapan tidak masuk database akun.
+> Ini menggantikan pengecualian demo 5 November di bawah. Detail: `docs/auth.md`.
+
 Tulis di dinding. Kalau ada yang mulai membangun, hentikan.
 
 > **Pengecualian tercatat (5 November):** butir (a) sengaja dilanggar untuk akun

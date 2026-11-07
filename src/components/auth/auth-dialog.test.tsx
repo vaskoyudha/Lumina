@@ -55,7 +55,7 @@ describe("AuthDialog", () => {
 
     expect(screen.getByLabelText(/^nama$/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /buat akun demo/i }),
+      screen.getByRole("button", { name: /buat akun/i }),
     ).toBeInTheDocument();
   });
 
