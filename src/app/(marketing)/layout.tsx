@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
-import { MarketingFooter } from "@/components/marketing/marketing-footer";
-import { MarketingNav } from "@/components/marketing/marketing-nav";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import { QuickDrawer } from "@/components/marketing/quick-drawer";
+import { Footer } from "@/components/marketing/sections/footer";
+import { SiteHeader } from "@/components/marketing/site-header";
+import { SiteProvider } from "@/components/marketing/site-provider";
+import { Toaster } from "@/components/ui/sonner";
 
-/**
- * (marketing) shell — light AppNext tokens, scoped under `.appnext`.
- * Never merged into --lumina-*; both are light now, but the type
- * scale and accent intensity differ on purpose.
- */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Kenali penipuan sebelum uangnya hilang",
 };
@@ -17,10 +22,14 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="appnext min-h-dvh bg-white">
-      <MarketingNav />
-      <main>{children}</main>
-      <MarketingFooter />
+    <div className={`landing ${jakarta.variable} min-h-dvh overflow-x-clip`}>
+      <SiteProvider>
+        <SiteHeader />
+        <main>{children}</main>
+        <Footer />
+        <QuickDrawer />
+      </SiteProvider>
+      <Toaster />
     </div>
   );
 }

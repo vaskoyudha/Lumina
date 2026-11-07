@@ -27,14 +27,16 @@ import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
  */
 
 /**
- * 13s. Measured: 2.3-2.6 s typical, one successful call at 11.8 s.
+ * 20 s. Gemini 3.8 Flash is a thinking model: even at its lowest thinking
+ * level it spends ~600-950 `reasoning_tokens` before the first visible
+ * character. Measured 6.6-10.2 s per turn on the fastest Antigravity account,
+ * and 25-45 s on the accounts that used to be tried first.
  *
- * The old 20 s ceiling existed because the client passed no abort signal, so a
- * wedged socket left the composer disabled forever. The client now aborts at
- * 15 s, and the server must give up first — otherwise it streams into a turn
- * that has already been sealed and shown as a template.
+ * The client aborts at 23 s, above this, so the server is always the one that
+ * gives up first — otherwise it streams into a turn that has already been
+ * sealed and shown as a template.
  */
-const TIMEOUT_MS = 13000;
+const TIMEOUT_MS = 20000;
 
 const SYSTEM = [
   "Kamu adalah Lumina, pendamping yang membantu orang Indonesia memeriksa pesan yang mencurigakan.",
@@ -79,6 +81,13 @@ export async function POST(request: Request) {
           model,
           stream: true,
           temperature: 0.3,
+          /*
+           * Maps to the model's minimum thinking level. It cannot be turned
+           * off for Gemini 3.8 Flash: `reasoning_tokens` stay at 600-950
+           * whether this field is present or not, which is why the timeout,
+           * not the prompt, is what keeps a demo turn inside the deadline.
+           */
+          reasoning_effort: "none",
           /*
            * 800, measured. This model is a reasoning model and
            * `reasoning_tokens` are billed inside `completion_tokens`, so a 220

@@ -38,6 +38,11 @@ export const BADGE_FOR_MODULE: Record<number, string> = {
   10: "penjaga-apk",
 };
 
+/** Badge id → display label. Add a row here when a new module earns a badge. */
+export const BADGE_LABEL: Record<string, string> = {
+  "penjaga-apk": "Penjaga APK",
+};
+
 export function loadProgress(): Progress {
   if (typeof window === "undefined") return EMPTY_PROGRESS;
   try {
@@ -83,4 +88,38 @@ export function completeModule(prev: Progress, no: number): Progress {
       ? [...prev.badges, badge]
       : prev.badges;
   return { ...prev, completedModules, badges };
+}
+
+/**
+ * Demo accounts ship a preview of "already learned" state. Merge it into
+ * whatever is already on this device — a demo login must never delete work the
+ * learner did here. Written through `saveProgress`, so the schema stays valid,
+ * `updatedAt` moves and sibling islands re-read.
+ */
+export function seedProgress(seed: {
+  completedModules: number[];
+  badges: string[];
+  missedPatterns?: string[];
+}): Progress {
+  const prev = loadProgress();
+  const completedModules = [...prev.completedModules];
+  for (const no of seed.completedModules) {
+    if (!completedModules.includes(no)) completedModules.push(no);
+  }
+  const badges = [...prev.badges];
+  for (const badge of seed.badges) {
+    if (!badges.includes(badge)) badges.push(badge);
+  }
+  const missedPatterns = [...prev.missedPatterns];
+  for (const id of seed.missedPatterns ?? []) {
+    if (!missedPatterns.includes(id)) missedPatterns.push(id);
+  }
+  const next: Progress = {
+    ...prev,
+    completedModules,
+    badges,
+    missedPatterns,
+  };
+  saveProgress(next);
+  return next;
 }

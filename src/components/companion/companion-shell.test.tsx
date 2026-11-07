@@ -27,7 +27,10 @@ describe("CompanionChat · shell", () => {
     render(<CompanionChat />);
 
     expect(
-      screen.getByRole("heading", { name: /periksa sebelum kamu percaya/i }),
+      screen.getByRole("heading", { level: 1, name: /periksa sebelum/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: /kamu percaya/i }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/pesan/i)).toBeInTheDocument();
     expect(
@@ -66,7 +69,10 @@ describe("CompanionChat · shell", () => {
 
     // Back to the empty state, and the first session is still listed.
     expect(
-      screen.getByRole("heading", { name: /periksa sebelum kamu percaya/i }),
+      screen.getByRole("heading", { level: 1, name: /periksa sebelum/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: /kamu percaya/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/apk undangan/i)).toBeInTheDocument();
   });

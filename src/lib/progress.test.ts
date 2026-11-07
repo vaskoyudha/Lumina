@@ -1,5 +1,6 @@
 import {
   BADGE_FOR_MODULE,
+  BADGE_LABEL,
   completeModule,
   EMPTY_PROGRESS,
   loadProgress,
@@ -8,6 +9,7 @@ import {
   recordMissed,
   STORAGE_KEY,
   saveProgress,
+  seedProgress,
 } from "@/lib/progress";
 
 describe("progress", () => {
@@ -90,5 +92,38 @@ describe("progress", () => {
     expect(
       ProgressSchema.safeParse({ ...base, completedModules: [100] }).success,
     ).toBe(false);
+  });
+
+  it("labels every badge a module can hand out", () => {
+    for (const badge of Object.values(BADGE_FOR_MODULE)) {
+      expect(BADGE_LABEL[badge]).toBeTruthy();
+    }
+  });
+
+  it("merges a demo seed without deleting work done on this device", () => {
+    saveProgress(completeModule(loadProgress(), 3));
+
+    const seeded = seedProgress({
+      completedModules: [10],
+      badges: ["penjaga-apk"],
+    });
+
+    expect(seeded.completedModules.sort((a, b) => a - b)).toEqual([3, 10]);
+    expect(seeded.badges).toEqual(["penjaga-apk"]);
+    expect(loadProgress().completedModules.sort((a, b) => a - b)).toEqual([
+      3, 10,
+    ]);
+  });
+
+  it("merges a seed idempotently and keeps the stored key readable", () => {
+    seedProgress({ completedModules: [10], badges: ["penjaga-apk"] });
+    const again = seedProgress({
+      completedModules: [10],
+      badges: ["penjaga-apk"],
+    });
+
+    expect(again.completedModules.filter((n) => n === 10)).toHaveLength(1);
+    expect(again.badges.filter((b) => b === "penjaga-apk")).toHaveLength(1);
+    expect(loadProgress()).toMatchObject({ completedModules: [10] });
   });
 });

@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "../styles/appnext-tokens.css";
+@import "../styles/landing-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -15,7 +16,7 @@
   the plan names one token `--accent` (#37d6a0, safe). shadcn/ui already owns
   `--accent` as its neutral hover surface, so reusing that name would turn
   every component hover state green. The palette is therefore exposed under
-  `--lumina-*`, with Tailwind utilities (`bg-safe`, `text-danger`, ...). The
+  `--lumina-*`, with Tailwind utilities (`bg-brand`, `text-danger`, ...). The
   values are identical to the plan; only the namespacing differs.
 */
 
@@ -30,10 +31,53 @@
   --color-line: var(--lumina-line);
   --color-txt: var(--lumina-txt);
   --color-dim: var(--lumina-dim);
-  --color-safe: var(--lumina-safe);
   --color-danger: var(--lumina-danger);
   --color-warn: var(--lumina-warn);
   --color-field: var(--lumina-field);
+
+  /* Companion workspace accents (Cortex clone) -> utilities */
+  --color-brand: var(--lumina-brand);
+  --color-brand-strong: var(--lumina-brand-strong);
+  --color-brand-soft: var(--lumina-brand-soft);
+  --color-brand-tint: var(--lumina-brand-tint);
+  --color-brand-line: var(--lumina-brand-line);
+  --color-brand-glow: var(--lumina-brand-glow);
+  --color-amber-ink: var(--lumina-amber-ink);
+  --color-amber-soft: var(--lumina-amber-soft);
+  --color-page-1: var(--lumina-page-1);
+  --color-page-2: var(--lumina-page-2);
+  --color-page-3: var(--lumina-page-3);
+  --color-page-4: var(--lumina-page-4);
+  --color-frame: var(--lumina-frame);
+
+  /* Neutral chrome the reference draws in near-black and near-white. The
+     product palette only had two ink levels; the clone needs the full ramp
+     (button black, body black, icon grey, hairline) or the frame reads flat. */
+  --color-ink: var(--lumina-ink);
+  --color-ink-hover: var(--lumina-ink-hover);
+  --color-ink-soft: var(--lumina-ink-soft);
+  --color-ink-mute: var(--lumina-ink-mute);
+  --color-ink-faint: var(--lumina-ink-faint);
+  --color-chip: var(--lumina-chip);
+  --color-chip-hover: var(--lumina-chip-hover);
+  --color-edge: var(--lumina-edge);
+  --color-edge-soft: var(--lumina-edge-soft);
+  --color-hairline: var(--lumina-hairline);
+  --color-hairline-strong: var(--lumina-hairline-strong);
+  --color-dot: var(--lumina-dot);
+  --color-dot-soft: var(--lumina-dot-soft);
+
+  /* Companion brand ramp, two stops deeper than the structural brand orange. */
+  --color-brand-chip: var(--lumina-brand-chip);
+  --color-brand-chip-ink: var(--lumina-brand-chip-ink);
+  --color-brand-ink: var(--lumina-brand-ink);
+  --color-brand-ink-soft: var(--lumina-brand-ink-soft);
+  --color-brand-edge: var(--lumina-brand-edge);
+  --color-brand-edge-soft: var(--lumina-brand-edge-soft);
+  --color-brand-soft-2: var(--lumina-brand-soft-2);
+  --color-cloud-1: var(--lumina-cloud-1);
+  --color-cloud-2: var(--lumina-cloud-2);
+  --color-cloud-3: var(--lumina-cloud-3);
 
   /*
     Ambient elevation. The reference composer is a white card on a grey page
@@ -45,6 +89,12 @@
     color-mix(in oklab, var(--lumina-txt) 8%, transparent);
   --shadow-lift: 0 10px 32px
     color-mix(in oklab, var(--lumina-txt) 11%, transparent);
+  /* The floating frame on the lavender field. */
+  --shadow-frame:
+    0 24px 70px color-mix(in oklab, var(--lumina-page-3) 62%, transparent),
+    0 2px 10px rgb(0 0 0 / 0.05);
+  --shadow-orb: 0 2px 8px
+    color-mix(in oklab, var(--lumina-brand-glow) 45%, transparent);
 
   /* shadcn/ui surface mappings */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -113,6 +163,66 @@
   }
 }
 
+@keyframes auth-fade-slide-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-slide-right-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateX(24px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateX(0) scale(1);
+  }
+}
+
+.auth-animate {
+  animation: auth-fade-slide-in 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.auth-slide-right {
+  animation: auth-slide-right-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.auth-delay-1 {
+  animation-delay: 0.06s;
+}
+.auth-delay-2 {
+  animation-delay: 0.12s;
+}
+.auth-delay-3 {
+  animation-delay: 0.18s;
+}
+.auth-delay-4 {
+  animation-delay: 0.24s;
+}
+.auth-delay-5 {
+  animation-delay: 0.3s;
+}
+.auth-delay-6 {
+  animation-delay: 0.36s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-animate,
+  .auth-slide-right {
+    animation: none;
+  }
+}
+
 :root {
   /* --- Lumina palette: LIGHT mode, "Ink" ---
      Same token names, so no component needed rewriting.
@@ -129,7 +239,7 @@
        b. `--lumina-warn` keeps its dark amber. The reference's #f57f17 is
           2.6:1 on white and fails WCAG for text; #8a5300 is 5.5:1.
 
-     Contrast on white: txt 16.1:1, dim 5.7:1, safe 5.0:1, danger 6.5:1,
+     Contrast on white: txt 16.1:1, dim 5.7:1, danger 6.5:1,
      warn 5.5:1 — every one clears 4.5:1, and the meter fill stays solid at
      40px type so it reads from the back of the room. --- */
   --lumina-bg: #fafafa;
@@ -138,13 +248,67 @@
   --lumina-line: #e0e0e0;
   --lumina-txt: #1a1a1a;
   --lumina-dim: #666666;
-  --lumina-safe: #2e7d32;
   --lumina-danger: #c62828;
   --lumina-warn: #8a5300;
 
   /* Field border: a hairline that is visible but never reads as a box. */
   --lumina-field: #dadada;
   --lumina-field-hover: #bebebe;
+
+  /* --- Companion workspace accents ---
+     The companion surface is a literal clone of the Cortex reference the owner
+     supplied (`lumina-references/cortex_ui.tsx`). That design carried a violet
+     brand accent and a pink matching spine; both are retuned to the Lumina
+     orange brand here, and the product palette above has no
+     hue for chrome by design, so the reference values are absorbed here as
+     documented tokens instead of hex literals in JSX. They are used ONLY by the
+     companion workspace — never for risk bands, never for marketing. */
+  --lumina-brand: #ea580c; /* pipeline router, structural accent */
+  --lumina-brand-strong: #c2410c; /* accent text on brand-soft */
+  --lumina-brand-soft: #fff2e6; /* brand chip / toggle fill */
+  --lumina-brand-tint: #fff8f1; /* composer card shell */
+  --lumina-brand-line: #fde8d4; /* composer hairline */
+  --lumina-brand-glow: #fb9a4d; /* brand gradient midpoint */
+  --lumina-amber-ink: #9a6700; /* rule warning text */
+  --lumina-amber-soft: #fffdf7; /* rule warning strip */
+
+  /* Page field the frame floats on: the reference's lavender radial wash. */
+  --lumina-page-1: #e6dff5;
+  --lumina-page-2: #cfc3e4;
+  --lumina-page-3: #bfb1d6;
+  --lumina-page-4: #cbbde0;
+  /* Frame ground behind the three columns. */
+  --lumina-frame: #f3f3f3;
+
+  /* Neutral chrome ramp. Values are the reference's own greys, named so no
+     component carries a hex literal. */
+  --lumina-ink: #0d0d0d; /* primary action fill, headings */
+  --lumina-ink-hover: #1f1f1f;
+  --lumina-ink-soft: #262626; /* nav / thread body text */
+  --lumina-ink-mute: #525252; /* icon grey */
+  --lumina-ink-faint: #a3a3a3; /* captions, placeholders */
+  --lumina-chip: #f7f7f8; /* circular icon button fill */
+  --lumina-chip-hover: #f5f5f6;
+  --lumina-edge: #ebebeb; /* pill border */
+  --lumina-edge-soft: #efefef; /* dropdown border */
+  --lumina-hairline: rgb(0 0 0 / 0.03); /* white-card border on grey */
+  --lumina-hairline-strong: rgb(0 0 0 / 0.06);
+  --lumina-dot: #d4d4d8; /* dormant port / node ring */
+  --lumina-dot-soft: #e5e5e7; /* minimap bar, toolbar divider */
+
+  /* Companion brand ramp — deeper stops for chips, edges and icon inks. */
+  --lumina-brand-chip: #ffefe0;
+  --lumina-brand-chip-ink: #b45309;
+  --lumina-brand-ink: #9a4a08;
+  --lumina-brand-ink-soft: #d97706;
+  --lumina-brand-edge: #fbd7b4;
+  --lumina-brand-edge-soft: #fde3c9;
+  --lumina-brand-soft-2: #ffe5cc;
+
+  /* The lavender field, drawn as three overlapping clouds over the radial. */
+  --lumina-cloud-1: rgb(255 255 255 / 0.65);
+  --lumina-cloud-2: rgb(250 242 255 / 0.6);
+  --lumina-cloud-3: rgb(182 163 214 / 0.45);
 
   /* --- shadcn/ui surfaces, derived from the palette above --- */
   --background: var(--lumina-bg);
@@ -164,9 +328,9 @@
   --destructive: var(--lumina-danger);
   --border: var(--lumina-line);
   --input: var(--lumina-line);
-  --ring: var(--lumina-safe);
+  --ring: var(--lumina-brand);
 
-  --chart-1: var(--lumina-safe);
+  --chart-1: var(--lumina-brand);
   --chart-2: var(--lumina-warn);
   --chart-3: var(--lumina-danger);
   --chart-4: var(--lumina-dim);
@@ -176,12 +340,12 @@
 
   --sidebar: var(--lumina-panel);
   --sidebar-foreground: var(--lumina-txt);
-  --sidebar-primary: var(--lumina-safe);
+  --sidebar-primary: var(--lumina-brand);
   --sidebar-primary-foreground: var(--lumina-bg);
   --sidebar-accent: var(--lumina-panel-2);
   --sidebar-accent-foreground: var(--lumina-txt);
   --sidebar-border: var(--lumina-line);
-  --sidebar-ring: var(--lumina-safe);
+  --sidebar-ring: var(--lumina-brand);
 }
 
 @layer base {
@@ -235,7 +399,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--lumina-safe);
+    outline: 2px solid var(--lumina-brand);
     outline-offset: 2px;
   }
 
@@ -303,12 +467,12 @@
     colour, so selection stays readable on the dark app (light text) and on
     the light marketing page (dark text) at once.
   */
-  background: color-mix(in oklab, var(--lumina-safe) 32%, transparent);
+  background: color-mix(in oklab, var(--lumina-brand) 32%, transparent);
 }
 
 textarea,
 input {
-  caret-color: var(--lumina-safe);
+  caret-color: var(--lumina-brand);
 }
 
 a {
@@ -342,6 +506,60 @@ html {
 /* Tabular figures for scores, timers and meters: digits must not jitter. */
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/*
+  The companion workspace floats on a lavender field, not on the app ground.
+  Three layers: a radial wash, then two soft clouds lit from opposite corners.
+  Kept as one class because a multi-stop radial with percentages is unreadable
+  as an arbitrary Tailwind value and gets rebuilt on every rerender.
+*/
+.cortex-field {
+  background-color: var(--lumina-page-2);
+  background-image:
+    radial-gradient(
+      ellipse 55% 40% at 22% 8%,
+      var(--lumina-cloud-1) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 45% at 85% 88%,
+      var(--lumina-cloud-2) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 45% 35% at 78% 18%,
+      var(--lumina-cloud-3) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      circle at 18% 12%,
+      var(--lumina-page-1) 0%,
+      var(--lumina-page-2) 32%,
+      var(--lumina-page-3) 68%,
+      var(--lumina-page-4) 100%
+    );
+}
+
+/* A whisper of grain keeps the field from banding on a projector. */
+.cortex-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(var(--lumina-dot) 0.5px, transparent 0.5px);
+  background-size: 4px 4px;
+  mix-blend-mode: soft-light;
+}
+
+/* Dot-grid ground for the agent canvas. */
+.cortex-dots {
+  background-image: radial-gradient(
+    var(--lumina-dot) 1.15px,
+    transparent 1.15px
+  );
+  background-size: 14px 14px;
 }
 
 /*

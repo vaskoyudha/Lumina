@@ -1,15 +1,10 @@
-import {
-  FileWarning,
-  Gift,
-  MessageSquareWarning,
-  ShieldAlert,
-} from "lucide-react";
+import { FileWarning, MessageSquareWarning, ShieldAlert } from "lucide-react";
 
 /**
  * The starting points offered on an empty companion, and the cards the
  * carousel renders.
  *
- * These are the plan's §11.6 demo cases, word for word, because a judge will
+ * These are the plan's §11.5 demo cases, word for word, because a judge will
  * compare the score on screen with the number in the proposal. They are the
  * only three messages in the product that are allowed to be a fixed string:
  * everything else comes from what the user types.
@@ -50,12 +45,5 @@ export const SCENARIOS: readonly Scenario[] = [
     hint: "Tekanan waktu + tautan pendek",
     text: "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa agar akun tidak ditutup permanen.",
     icon: ShieldAlert,
-  },
-  {
-    id: "undian",
-    label: "Undian",
-    hint: "Hadiah yang meminta biaya",
-    text: "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.",
-    icon: Gift,
   },
 ] as const;

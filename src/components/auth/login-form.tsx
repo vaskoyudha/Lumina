@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type AuthResult, login } from "@/lib/auth/actions";
-import { seedProgress } from "@/lib/auth/local-profile";
+import { seedProgress } from "@/lib/progress";
+
+const fieldShell =
+  "rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-brand/70 focus-within:bg-brand-soft/40";
 
 export function LoginForm({
   initialEmail = "",
@@ -29,6 +32,7 @@ export function LoginForm({
   >(login, undefined);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setEmail(initialEmail);
@@ -47,33 +51,56 @@ export function LoginForm({
 
   return (
     <form action={formAction}>
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="nama@contoh.id"
-          />
+      <FieldGroup className="gap-4">
+        <Field className="gap-2">
+          <FieldLabel htmlFor="email" className="text-muted-foreground">
+            Email
+          </FieldLabel>
+          <div className={fieldShell}>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="nama@contoh.id"
+              className="h-12 rounded-2xl border-0 bg-transparent px-4 text-base focus-visible:ring-0"
+            />
+          </div>
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="minimal 8 karakter"
-          />
+        <Field className="gap-2">
+          <FieldLabel htmlFor="password" className="text-muted-foreground">
+            Password
+          </FieldLabel>
+          <div className={`relative ${fieldShell}`}>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="minimal 8 karakter"
+              className="h-12 rounded-2xl border-0 bg-transparent px-4 pr-12 text-base focus-visible:ring-0"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={
+                showPassword ? "Sembunyikan password" : "Tampilkan password"
+              }
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-xl text-muted-foreground hover:bg-transparent hover:text-foreground"
+            >
+              {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+            </Button>
+          </div>
           <FieldDescription>
             Akun demo memakai password <code>demo1234</code>.
           </FieldDescription>
@@ -88,7 +115,7 @@ export function LoginForm({
         <Button
           type="submit"
           disabled={pending}
-          className="h-11 w-full bg-safe text-bg hover:bg-safe/90"
+          className="h-12 w-full rounded-2xl bg-brand font-medium text-bg transition-colors hover:bg-brand/90"
         >
           {pending ? (
             <Loader2

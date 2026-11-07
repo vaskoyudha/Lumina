@@ -12,17 +12,20 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 /**
- * Navigation rail — the far-left column of the chat shell.
+ * Navigation — a stacked block inside the chat sidebar.
  *
- * Metrics copied from the reference (`StudioNavigationRail.vue`): a 64px
- * column, 12px/8px padding, 44x44 items on a 6px radius, 8px gap, icon in the
- * muted colour and the active item on a 12% tint of the accent. Below 768px
- * the rail collapses and navigation moves into the chat header.
+ * The shell follows the Cortex skeleton: one left column holding brand,
+ * new-chat action, search, destinations, and history. The destinations live
+ * here as labelled rows and fold to icon-only squares when the sidebar is
+ * collapsed, so the collapsed rail is the same navigation, not a second one.
  *
- * What changed, and why: the reference's rail holds product areas for a
- * desktop agent studio (connections, workflows, models, files, terminal). This
- * product has four destinations, so the rail holds those four and nothing else.
- * A rail with invented entries would be decoration pretending to be navigation.
+ * The rows stay one per line: two columns halved the usable width and clipped
+ * "Companion" at 11.5px, which reads as a broken label rather than a name.
+ *
+ * What did not change: this product has four destinations, so the block holds
+ * those four and nothing else. Invented entries would be decoration pretending
+ * to be navigation. `< 768px` the sidebar is a drawer and this block rides
+ * inside it.
  */
 
 const DESTINATIONS: {
@@ -44,71 +47,77 @@ function RailItem({
   icon: Icon,
   active,
   emergency = false,
+  iconsOnly = false,
 }: {
   href: string;
   label: string;
   icon: LucideIcon;
   active: boolean;
   emergency?: boolean;
+  iconsOnly?: boolean;
 }) {
   return (
     <Link
       href={href}
       data-pressable
       aria-label={label}
-      aria-current={active ? "page" : undefined}
       title={label}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "grid size-11 place-items-center rounded-md transition-[background-color,color] duration-150 ease-out",
+        "flex min-w-0 items-center rounded-[7px] transition-[background-color,color] duration-150 ease-out",
+        iconsOnly ? "size-9 justify-center" : "gap-2.5 px-2 py-[7px]",
         emergency
           ? active
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-txt/12 text-txt"
-            : "text-dim hover:bg-txt/6 hover:text-txt",
+            ? "bg-chip font-medium text-ink"
+            : "text-ink-soft hover:bg-txt/6 hover:text-ink",
       )}
     >
-      <Icon aria-hidden strokeWidth={1.6} className="size-[18px]" />
+      <Icon aria-hidden strokeWidth={1.75} className="size-[15px] shrink-0" />
+      <span
+        className={cn(
+          "truncate font-medium text-[12.5px] leading-[1.5]",
+          iconsOnly && "sr-only",
+        )}
+      >
+        {label}
+      </span>
     </Link>
   );
 }
 
-export function NavRail() {
+export function NavRail({
+  className,
+  iconsOnly = false,
+}: {
+  className?: string;
+  iconsOnly?: boolean;
+}) {
   // `usePathname()` is null outside a mounted router (and in tests); without a
   // fallback the `.startsWith` below throws and takes the whole shell with it.
   const pathname = usePathname() ?? "";
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
-  const regular = DESTINATIONS.filter((d) => !d.emergency);
-  const emergency = DESTINATIONS.find((d) => d.emergency);
-
   return (
     <nav
       aria-label="Navigasi utama"
-      className="flex w-16 shrink-0 flex-col items-center px-2 py-3 max-md:hidden"
+      className={cn(
+        "flex flex-col gap-0.5",
+        iconsOnly && "items-center",
+        className,
+      )}
     >
-      <Link
-        href="/"
-        data-pressable
-        aria-label="Lumina — beranda"
-        className="mb-3 grid size-9 place-items-center rounded-md bg-txt font-bold text-bg text-sm"
-      >
-        L
-      </Link>
-
-      <div className="flex w-full flex-1 flex-col items-center gap-2">
-        {regular.map((item) => (
-          <RailItem key={item.href} {...item} active={isActive(item.href)} />
-        ))}
-      </div>
-
-      {emergency ? (
-        <div className="flex w-full flex-col items-center gap-2 border-line border-t pt-3">
-          <RailItem {...emergency} active={isActive(emergency.href)} />
-        </div>
-      ) : null}
+      {DESTINATIONS.map((item) => (
+        <RailItem
+          key={item.href}
+          {...item}
+          active={isActive(item.href)}
+          iconsOnly={iconsOnly}
+        />
+      ))}
     </nav>
   );
 }

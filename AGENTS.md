@@ -1,8 +1,9 @@
 # AGENTS.md — Lumina
 
-Empat orang, enam hari, submission 10 November 2026. Aturan di file ini
-mengikat semua agent dan semua stream. Baca `docs/plan.md` sebelum menyentuh
-kode; file itu sumber kebenaran produk.
+Empat orang, submission 10 November 2026. Branch stream sudah di-merge ke
+`main`; `main` adalah cabang integrasi. Aturan di file ini mengikat semua agent.
+Baca `docs/plan.md` (sumber kebenaran produk) dan `STATUS.md` (status per stream)
+sebelum menyentuh kode.
 
 ## Aturan keras — palang pintu
 
@@ -32,15 +33,20 @@ yang dihasilkan** dan perbaiki (lihat skill `shadcn-ui`). Jangan pernah menjawab
 `render={<Link/>}` adalah API Base UI dan gagal di typecheck proyek ini.
 
 **3. Warna hanya dari token.** `--lumina-*` di `src/app/globals.css`. Hex
-literal, `bg-red-500`, `text-emerald-600` dilarang. Hijau aman bernama
-`--lumina-safe` / `bg-safe` — `--accent` adalah surface hover shadcn, bukan hijau.
+literal, `bg-red-500`, `text-emerald-600` dilarang. Aksen tunggal Lumina adalah
+jingga `--lumina-brand` / `bg-brand` — `--accent` adalah surface hover shadcn,
+bukan warna merek. Status memakai `bg-brand-soft` / `text-brand-ink`, bukan hijau.
 
 **4. Skor, `risk`, dan `signals` hanya lahir dari `src/lib/scoring/score.ts`.**
-LLM adalah suara, bukan hakim. Tidak ada satu pun jalur di `companion/` yang boleh
-menghitung atau menggeser skor.
+`scoreText()` adalah entrypoint; `scoreWithTrace()` menambahkan jejak agent. LLM
+adalah suara, bukan hakim. Routing giliran (`periksa`/`tanya`/`lanjutan`/`obrolan`)
+ada di `src/lib/companion/turn.ts` dan deterministik — model tidak boleh memutuskan
+apakah engine berjalan. Tidak ada jalur di `companion/` yang boleh menghitung atau
+menggeser skor.
 
-**5. Kontrak di `src/lib/contracts/` dibekukan.** Mengubah satu field berarti
-memberi tahu tiga orang lain **sebelum** commit, bukan sesudah (§9).
+**5. Kontrak di `src/lib/contracts/` dibekukan** (`score.ts`, `evidence.ts`,
+`answer.ts`, `vision.ts`, `agent-run.ts`). Mengubah satu field berarti memberi
+tahu tiga orang lain **sebelum** commit, bukan sesudah (§9).
 
 **6. Jangan memblokir menunggu stream lain.** Hardcode, tinggalkan
 `TODO(stream-X)`, lanjut.
@@ -52,10 +58,11 @@ akun, sekarang dan setelah perubahan akses apa pun. Kalau middleware ditambahkan
 nanti, pengecualian `/darurat` masuk di commit yang sama.
 
 **9. Auth di proyek ini adalah demo, bukan auth sungguhan.** `demo-accounts.ts`
-membandingkan password dengan tabel literal; tidak ada hash, tidak ada database,
-tidak ada penyimpanan server. Jangan menyalin pola ini ke aplikasi yang menyimpan
-pengguna nyata. Menambah penyimpanan berarti melanggar §8b plan dan janji privasi
-proposal.
+membandingkan password dengan tabel literal; sesi adalah cookie HMAC bertanda
+tangan (`src/lib/auth/session.ts`), tanpa hash, tanpa database, tanpa penyimpanan
+server. `AUTH_SECRET` (min. 16 karakter) wajib di production; dev memakai fallback
+tetap. Jangan menyalin pola ini ke aplikasi yang menyimpan pengguna nyata.
+Menambah penyimpanan berarti melanggar §8b plan dan janji privasi proposal.
 
 ## Stack — jangan diganti tanpa kesepakatan
 
@@ -81,15 +88,53 @@ Biome karena satu tool untuk format + lint, dan `next lint` sudah deprecated.
 ## Perintah
 
 ```bash
-npm run dev          # dev server
-npm run verify       # typecheck + lint + test + build — jalankan sebelum commit
-npm run test         # jest
-npm run typecheck    # tsc --noEmit
-npm run lint:fix     # biome, menulis
+npm run dev            # dev server (Turbopack)
+npm run verify         # typecheck + lint + test + build — gate sebelum commit
+npm run test           # jest, semua
+npm test -- src/lib/scoring/score.test.ts   # satu file
+npm test -- -t "nama test"                  # satu test
+npm run test:coverage  # jest --coverage
+npm run typecheck      # tsc --noEmit
+npm run lint:fix       # biome check --write (format + lint)
+npm run format         # biome format --write
 ```
 
 `npm run verify` harus lulus sebelum commit. Kalau gagal, perbaiki — jangan
 melewati gate.
+
+### Jebakan Next 16 di repo ini
+
+a. `cacheComponents` aktif, jadi `export const runtime` / `export const dynamic`
+   di route atau page ditolak. Halaman dinamis memakai `export const instant =
+   false` (lihat `src/app/(app)/belajar/[modul]/page.tsx`); route handler tanpa
+   segment config (lihat `src/app/api/companion/answer/route.ts`).
+b. Membaca cookie di layout membuat semua rute dinamis. Bungkus pembaca sesi
+   dalam `Suspense` seperti `NavWithSession`
+   (`src/components/shell/nav-with-session.tsx`).
+c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
+   Next yang kamu hafal dari versi lama (lihat blok di akhir file).
+
+## Env dan lapisan LLM
+
+`.env.example` adalah daftar variabel; `.env.local` tidak di-commit.
+
+- `AUTH_SECRET` — kunci cookie sesi, wajib ≥16 karakter di production.
+- `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
+  OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan
+  panggilan jaringan dan jatuh ke `src/lib/companion/reply.ts`; route
+  `/api/companion/{answer,vision,voice}` membalas 503 `not-configured`. Itu jalur
+  demo offline, bukan kerusakan.
+
+### Batas privasi yang tidak boleh digeser
+
+a. Pesan yang diperiksa tidak pernah meninggalkan perangkat. Yang dikirim ke
+   `/api/companion/answer` hanya pertanyaan/riwayat obrolan pengguna, digest
+   temuan lossy tanpa kutipan, dan fakta publik dari `modus.json`/`tactics.ts`.
+   Giliran yang pernah diperiksa difilter dari riwayat obrolan di klien.
+b. `/api/companion/vision` hanya menyalin teks dari gambar. Kontraknya tidak punya
+   field skor/risk/signal; hasilnya hanya boleh masuk kembali ke `scoreText()`.
+c. Model tidak pernah diminta memberi skor dan tidak boleh menambah atau
+   menurunkan `signals` (plan §3b, §11.6a).
 
 ## Skills
 
@@ -98,7 +143,6 @@ Claude Code, Codex, Hermes, dan harness lain. `.opencode/skills/<nama>` adalah
 symlink ke sana, bukan salinan.
 
 ```
-.agents/skills/lumina-ui/SKILL.md      aturan visual + token + batas demo
 .agents/skills/shadcn-ui/SKILL.md      konfigurasi shadcn proyek ini
 .agents/skills/appnext-design/SKILL.md sistem desain AppNext (light-first)
 ```
@@ -110,6 +154,10 @@ mengikuti yang pertama. Kalau menambah skill baru, buat di `.agents/skills/` lal
 ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
 ```
 
+Harness lain memakai symlink yang sama: `.claude/skills/<nama>`. Menghapus skill
+dari `.agents/` meninggalkan symlink rusak di `.opencode/` dan `.claude/`; hapus
+symlink-nya juga.
+
 Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
 dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 
@@ -117,68 +165,106 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 
 | Grup | Shell | Token | Isi |
 |---|---|---|---|
-| `(marketing)` | `MarketingNav` + footer | `--appnext-*`, terang | `/` landing |
-| `(app)` | `SiteNav` + footer | `--lumina-*`, gelap | companion, belajar, simulasi, darurat |
-| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*`, gelap | auth |
+| `(marketing)` | `SiteHeader` + `Footer` + `QuickDrawer` | `.landing` (cream/espresso) | `/` landing |
+| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | belajar, simulasi, darurat, profil |
+| `(chat)` | tanpa nav, rail sendiri | `--lumina-*` via `.appnext` | `/companion` |
+| `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
+| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth demo |
+| `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
 
 Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
 ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
 
-## Dua sistem desain, jangan dicampur
+`/admin` sengaja tidak ada di nav: itu workbench penulis kurikulum, bukan
+permukaan produk. Draf tinggal di perangkat; publikasi adalah ekspor + commit,
+bukan tombol. Jangan menambahkan tautan admin ke nav publik.
 
-| | Lumina (default) | AppNext |
+### Titik masuk auth
+
+Masuk dan daftar selalu lewat satu dialog kaca, bukan halaman baru:
+`AuthDialog` (`src/components/auth/auth-dialog.tsx`), trigger-less dan
+controlled, dengan tab Masuk/Daftar dari `AuthPanel`.
+
+| Permukaan | Komponen | Catatan |
 |---|---|---|
-| Ground | terang `#ffffff` | terang `#ffffff` |
-| Namespace | `--lumina-*` | `--appnext-*`, di bawah `.appnext` |
-| Dipakai di | semua permukaan produk | halaman marketing/template |
-| Catatan | light mode adalah keputusan pemilik 5 November; nama token tetap | |
-| Alasan | meter merah harus terbaca dari belakang ruangan | mengikuti template SaaS |
+| `SiteHeader` marketing | `MarketingAuth` | nada espresso/amberwarm, tetap tanpa sesi |
+| `SiteNav` `(app)` | `AuthNav` | masukan paling kanan setelah Darurat |
+| Rail + sidebar companion | `CompanionAuth` | `iconsOnly` memakai tombol ikon saja; nama aksesibel wajib |
 
-Permukaan produk (companion, belajar, simulasi, darurat) memakai token terang.
-AppNext hanya masuk lewat subtree ber-`className="appnext"`, tidak pernah ke
-`body` atau `@theme`. Detail: `docs/design-system/appnext.md`.
+Sesudah masuk, ketiganya menampilkan `UserMenu` (atau kartu profil) yang menuju
+`/profil`. `/masuk` dan `/daftar` tetap ada untuk tautan langsung; keduanya
+merender `AuthPanel` yang sama, jadi jangan menaruh logika sesi di sana.
+
+## Tiga lapisan token, jangan dicampur
+
+| Lapisan | Di mana | Dipakai untuk |
+|---|---|---|
+| `--lumina-*` | `src/app/globals.css` `:root` | nama kanonik; utility Tailwind `bg-brand`, `text-danger`, `border-line`, … |
+| `.appnext` | dipasang **sekali di `<body>`** (`src/app/layout.tsx`), definisi di `src/styles/appnext-tokens.css` | meremap `--lumina-*` ke palet terang AppNext, plus `--appnext-*` dan kelas `.appnext-*` |
+| `.landing` | `src/styles/landing-tokens.css` | landing marketing: cream/espresso/amberwarm |
+
+`.appnext` sudah ada di `body`, jadi jangan menambah wrapper `.appnext` kedua —
+ia menggandakan custom property dan membuat "pulau" warna sulit dilacak. Jangan
+menaruh hex di komponen; pakai utility yang dipetakan `@theme inline`. Detail:
+`docs/design-system/appnext.md`.
 
 ## Layout
 
 ```
 src/
-├── app/                  rute (5 permukaan + darurat)
-│   ├── companion/        A · percakapan + panel bukti
-│   ├── belajar/          B · daftar + [modul]
-│   ├── simulasi/         C · daftar + [id]
-│   └── darurat/          D · triage + PDF
+├── app/
+│   ├── (marketing)/          landing `/` — SiteHeader + Footer + QuickDrawer
+│   ├── (app)/                SiteNav + footer
+│   │   ├── belajar/          B · daftar + [modul]
+│   │   ├── simulasi/         C · daftar + [id] + layout runner
+│   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
+│   │   └── profil/           akun demo + kemajuan perangkat
+│   ├── (chat)/companion/     A · percakapan + panel bukti, tanpa nav
+│   ├── admin/                workbench kurikulum, AdminNav sendiri
+│   ├── api/companion/        answer, vision, voice (route handler)
+│   ├── masuk/ daftar/        auth demo, tanpa chrome
+│   └── layout.tsx            `body.appnext`, font, token ground
 ├── components/
-│   ├── ui/               shadcn — jangan diedit kecuali perbaikan registry
-│   ├── shell/            nav, layout
-│   ├── companion/        A
-│   └── darurat/          D
+│   ├── ui/                   shadcn — jangan diedit kecuali perbaikan registry
+│   ├── shell/                nav + AuthNav + pembaca sesi
+│   ├── auth/                 AuthDialog, AuthPanel, UserMenu
+│   ├── marketing/            sections landing
+│   ├── admin/                admin inventory/nav
+│   └── belajar/ companion/ darurat/ profil/
 ├── lib/
-│   ├── contracts/        BEKU — ScoreResult, EvidenceBundle
-│   ├── scoring/          A · agent deterministik
-│   └── modus.ts          pembaca modus.json, tervalidasi zod
-└── data/
-    ├── modus.json        12 modus (§11.2), milik A, dibaca B
-    ├── official-domains.json
-    └── triage.ts         D
+│   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run
+│   ├── scoring/              engine deterministik: score, message, link, identity, conversation
+│   ├── companion/            turn, reply, explain, answer-client, vision-client, voice-stream
+│   ├── auth/                 demo-accounts, session, server-session, actions
+│   ├── simulasi/             catalog, scenario, validate
+│   ├── darurat/              report, pdf
+│   ├── evidence/             bundle, extract, timeline, narrative
+│   ├── admin/                draft-store, export-course
+│   ├── progress.ts
+│   └── modus.ts              pembaca modus.json, tervalidasi zod
+├── data/                     modus.json, official-domains.json, kurikulum.ts, modul-10.ts, tactics.ts, triage.ts
+└── styles/                   appnext-tokens.css, landing-tokens.css
 ```
 
 ## Batas stream
 
-Jangan menyentuh milik orang lain tanpa memberi tahu. Kalau butuh sesuatu,
-minta bentuk datanya, bukan filenya.
+Branch stream sudah merge ke `main`; tabel ini soal kepemilikan kode, bukan
+branch. Jangan menyentuh milik stream lain tanpa memberi tahu. Kalau butuh
+sesuatu, minta bentuk datanya, bukan filenya.
 
 | Stream | Boleh | Jangan |
 |---|---|---|
-| A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `data/modus.json` | isi modul, runner, PDF |
-| B | `app/belajar/`, konten modul, `progress.ts` | engine skor, navigasi |
-| C | `app/simulasi/`, runner, `validate.ts` | konten modul, PDF |
-| D | `app/darurat/`, `components/darurat/`, `app/layout.tsx`, `globals.css`, `pdf.ts` | engine skor, konten modul |
+| A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner, PDF |
+| B | `app/(app)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
+| C | `app/(app)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
+| D | `app/(app)/darurat/`, `components/darurat/`, `lib/darurat/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
 
 ## Kejujuran yang diuji
 
-a. Agent yang belum dibangun mengembalikan `signals: []` yang jujur, bukan temuan
-   karangan. Panel bukti menandainya `belum aktif`.
-b. Modul yang belum ditulis berstatus `"segera"`, bukan stub kosong.
+a. Panel bukti hanya mencetak temuan engine, bukan temuan karangan. Setiap agent
+   dalam urutan panel benar-benar berjalan; label `belum aktif` sudah tidak ada,
+   dan Identity Agent memilih tidak melapor daripada mengarang.
+b. Modul yang belum ditulis berstatus "Segera", bukan stub kosong.
 c. Level simulasi yang belum jadi ditandai `Rencana`, tidak dimainkan seolah jadi.
 d. Klaim akurasi mengikuti hasil ukur, bukan angka di proposal (§11.8).
 
@@ -198,6 +284,11 @@ expect(screen.getByRole("link", { name: /pelajari pola ini/i }))
 Asersi berbasis teks yang muncul berkali-kali by design memakai
 `getAllByText(...).length` — bukan `getByText`, yang gagal karena "found multiple
 elements".
+
+Test tinggal di samping sumbernya (`src/**/*.test.ts?(x)`). `jest.setup.ts`
+sudah menambal gap jsdom yang dipakai app ini: `matchMedia`, `ResizeObserver`,
+`window.print`, dan object URL. Komponen yang memakai API browser baru butuh
+stub di sana sebelum test-nya bermakna.
 
 ## Aksesibilitas dan lebar
 
