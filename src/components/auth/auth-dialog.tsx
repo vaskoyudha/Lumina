@@ -31,12 +31,12 @@ export function AuthDialog({
       >
         <DialogTitle className="sr-only">Masuk ke Lumina</DialogTitle>
         <DialogDescription className="sr-only">
-          Periksa pesan dan simpan progres belajar di perangkat ini.
+          Daftar atau masuk dengan Google maupun email dan password.
         </DialogDescription>
 
         <SignInPage
           title={<span className="font-light">Selamat datang</span>}
-          description="Masuk untuk menyimpan progres belajar dan melanjutkan percakapan di perangkat ini."
+          description="Masuk dengan Google atau email. Progres belajar tetap tersimpan di perangkat ini."
         >
           <AuthPanel
             key={defaultTab}
