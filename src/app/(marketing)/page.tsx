@@ -1,6 +1,7 @@
 import { PowderLayer } from "@/components/marketing/powder/powder-layer";
 import AppearAnimations from "@/components/marketing/powder/runtime/AppearAnimations";
 import GlowRuntime from "@/components/marketing/powder/runtime/GlowRuntime";
+import HeroParallax from "@/components/marketing/powder/runtime/HeroParallax";
 import Loop from "@/components/marketing/powder/runtime/Loop";
 import Orbit from "@/components/marketing/powder/runtime/Orbit";
 import StyleAppear from "@/components/marketing/powder/runtime/StyleAppear";
@@ -74,6 +75,7 @@ export default function LandingPage() {
       <AppearAnimations config={appearConfig} />
       <StyleAppear />
       <GlowRuntime />
+      <HeroParallax />
       <Orbit />
       <Loop />
     </>

@@ -113,6 +113,26 @@
   );
 }
 
+/*
+  Scroll-linked hero parallax. The ratios are the published site's own
+  (0.31 / 0.17 / 0.20 of scrollY); the runtime writes --pw-parallax and the
+  translate longhand composes with the appear animation's transform.
+*/
+.framer-site .framer-oJiFP .framer-u991jm,
+.framer-site .framer-oJiFP .framer-f7ktf5,
+.framer-site .framer-oJiFP .framer-dqdt72 {
+  translate: 0 var(--pw-parallax, 0px);
+}
+
+/*
+  Full-width hero. Framer caps the content column at 1080px and the chat card
+  at 960px (720px on tablet); Lumina runs both to the section's 24px gutters.
+*/
+.framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk,
+.framer-site .framer-oJiFP .framer-x2ps8j .framer-dqdt72 {
+  max-width: none;
+}
+
 /* Explicit dark island for any Powder block that must stay dark. */
 .pw-on-dark {
   --token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a: #000;
