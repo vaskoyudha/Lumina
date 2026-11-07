@@ -1,5 +1,11 @@
 import { streamChatText } from "@/lib/companion/voice-stream";
 import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
+import {
+  BodyTooLarge,
+  limitAI,
+  readJson,
+  upstreamAbort,
+} from "@/lib/server/request";
 
 /**
  * The language layer.
@@ -54,7 +60,12 @@ function fail(status: number, error: string) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  let body: unknown;
+  try {
+    body = await readJson(request, 65536);
+  } catch (error) {
+    return fail(error instanceof BodyTooLarge ? 413 : 400, "invalid-request");
+  }
   const parsed = VoiceDigestSchema.safeParse(body);
   if (!parsed.success) return fail(400, "invalid-digest");
 
@@ -62,15 +73,16 @@ export async function POST(request: Request) {
   const model = process.env.LUMINA_LLM_MODEL?.trim();
   if (!base || !model) return fail(503, "not-configured");
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const limited = await limitAI(request, "text");
+  if (limited) return limited;
+  const upstreamControl = upstreamAbort(request, TIMEOUT_MS);
 
   try {
     const upstream = await fetch(
       `${base.replace(/\/+$/, "")}/chat/completions`,
       {
         method: "POST",
-        signal: controller.signal,
+        signal: upstreamControl.signal,
         headers: {
           "content-type": "application/json",
           ...(process.env.LUMINA_LLM_KEY
@@ -106,16 +118,25 @@ export async function POST(request: Request) {
       },
     );
 
-    if (!upstream.ok || !upstream.body) return fail(503, "upstream-failed");
+    if (!upstream.ok || !upstream.body) {
+      upstreamControl.cleanup();
+      return fail(503, "upstream-failed");
+    }
 
-    return new Response(streamChatText(upstream.body), {
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "no-store",
+    return new Response(
+      streamChatText(upstream.body, () => {
+        upstreamControl.abort();
+        upstreamControl.cleanup();
+      }),
+      {
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "cache-control": "no-store",
+        },
       },
-    });
+    );
   } catch (error) {
-    clearTimeout(timer);
+    upstreamControl.cleanup();
     /*
      * A timeout and an unreachable endpoint are different failures and must not
      * share a message. Reporting "not configured" for a slow model is what made
@@ -126,13 +147,4 @@ export async function POST(request: Request) {
       (error.name === "AbortError" || error.name === "TimeoutError");
     return fail(503, aborted ? "upstream-timeout" : "upstream-unreachable");
   }
-  /*
-   * Deliberately NOT clearing the timer on the success path.
-   *
-   * `streamChatText` keeps reading after this function returns, so clearing
-   * here would disarm the only guard the stream has: a stalled upstream would
-   * then stream forever. Letting the timer fire aborts a fetch that has already
-   * been consumed, which is a no-op, so the cost of leaving it armed is nil and
-   * the ceiling it provides is real.
-   */
 }

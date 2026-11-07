@@ -8,7 +8,6 @@ import {
 } from "@/lib/auth/google";
 import {
   createSession,
-  revokeSession,
   SESSION_COOKIE,
   sessionCookieOptions,
 } from "@/lib/auth/session";
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest) {
   let response: NextResponse;
   try {
     const params = request.nextUrl.searchParams;
-    const transaction = consumeGoogleState(
+    const transaction = await consumeGoogleState(
       params.get("state"),
       request.cookies.get(GOOGLE_STATE_COOKIE)?.value,
     );
@@ -27,9 +26,13 @@ export async function GET(request: NextRequest) {
     const code = params.get("code");
     if (!code || code.length > 4096) throw new AuthError("google-failed");
     const account = await finishGoogle(code, transaction);
-    const token = createSession(account.id);
-    revokeSession(request.cookies.get(SESSION_COOKIE)?.value);
-    response = NextResponse.redirect(new URL("/companion", request.url));
+    const token = await createSession(
+      account.id,
+      request.cookies.get(SESSION_COOKIE)?.value,
+    );
+    response = NextResponse.redirect(
+      new URL("/companion", process.env.AUTH_URL || request.url),
+    );
     response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
   } catch (error) {
     const allowed = [
@@ -43,7 +46,10 @@ export async function GET(request: NextRequest) {
         ? error.message
         : "google-failed";
     response = NextResponse.redirect(
-      new URL(`/${intent}?error=${reason}`, request.url),
+      new URL(
+        `/${intent}?error=${reason}`,
+        process.env.AUTH_URL || request.url,
+      ),
     );
   }
   response.cookies.set(GOOGLE_STATE_COOKIE, "", {

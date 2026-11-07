@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
       ? "daftar"
       : "masuk";
   try {
-    consumeAttempt("google:global", 200);
-    const flow = beginGoogle(intent);
+    await consumeAttempt("google:global", 200);
+    const flow = await beginGoogle(intent);
     const response = NextResponse.redirect(flow.url);
     response.cookies.set(GOOGLE_STATE_COOKIE, flow.state, googleCookieOptions);
     response.headers.set("Cache-Control", "no-store");
@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
     return response;
   } catch {
     return NextResponse.redirect(
-      new URL(`/${intent}?error=google-unavailable`, request.url),
+      new URL(
+        `/${intent}?error=google-unavailable`,
+        process.env.AUTH_URL || request.url,
+      ),
     );
   }
 }

@@ -18,40 +18,54 @@ export const sessionCookieOptions = {
   maxAge: SESSION_MAX_AGE,
 };
 
-export function createSession(userId: string): string {
+export async function createSession(
+  userId: string,
+  previous?: string,
+): Promise<string> {
   const token = randomBytes(32).toString("base64url");
-  const db = authDatabase();
-  db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(Date.now());
-  db.prepare(
-    "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)",
-  ).run(digest(token), userId, Date.now() + SESSION_MAX_AGE * 1000);
-  return token;
+  const client = await authDatabase().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '24 hours')",
+      [digest(token), userId],
+    );
+    if (previous)
+      await client.query("DELETE FROM sessions WHERE token_hash = $1", [
+        digest(previous),
+      ]);
+    await client.query("COMMIT");
+    return token;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
-
-export function readSession(token: string | undefined): SessionPayload | null {
+export async function readSession(
+  token: string | undefined,
+): Promise<SessionPayload | null> {
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
-  const row = authDatabase()
-    .prepare(`
-    SELECT users.id, users.email, users.nama, users.created_at, sessions.expires_at
-    FROM sessions JOIN users ON users.id = sessions.user_id
-    WHERE token_hash = ? AND expires_at > ?
-  `)
-    .get(digest(token), Date.now()) as
-    | (Account & { expires_at: number })
-    | undefined;
+  const row = (
+    await authDatabase().query<Account & { expires_at: Date }>(
+      `SELECT users.id, users.email, users.nama, users.created_at, sessions.expires_at
+    FROM sessions JOIN users ON users.id = sessions.user_id WHERE token_hash = $1 AND expires_at > now()`,
+      [digest(token)],
+    )
+  ).rows[0];
   if (!row) return null;
   return {
     id: row.id,
     email: row.email,
     nama: row.nama,
-    created_at: row.created_at,
-    exp: Math.floor(row.expires_at / 1000),
+    created_at: new Date(row.created_at).toISOString(),
+    exp: Math.floor(new Date(row.expires_at).getTime() / 1000),
   };
 }
-
-export function revokeSession(token: string | undefined): void {
+export async function revokeSession(token: string | undefined): Promise<void> {
   if (token)
-    authDatabase()
-      .prepare("DELETE FROM sessions WHERE token_hash = ?")
-      .run(digest(token));
+    await authDatabase().query("DELETE FROM sessions WHERE token_hash = $1", [
+      digest(token),
+    ]);
 }
