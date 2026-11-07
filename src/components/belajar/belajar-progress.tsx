@@ -65,7 +65,7 @@ export function BelajarProgress() {
     .map(([, label]) => label);
 
   return (
-    <output className="mt-5 block max-w-xl">
+    <output className="mt-5 block max-w-xl rounded-2xl border border-line bg-panel p-3 shadow-[var(--appnext-shadow-ambient)]">
       <span className="flex items-center gap-3">
         <ProgressRing pct={pct} />
         <span className="min-w-0">
@@ -83,7 +83,7 @@ export function BelajarProgress() {
         {done > 0 ? (
           <CheckCircle2
             aria-hidden
-            className="size-5 shrink-0 text-[color:var(--appnext-accent-deep)]"
+            className="size-5 shrink-0 text-brand-ink"
           />
         ) : null}
       </span>
@@ -93,7 +93,7 @@ export function BelajarProgress() {
         aria-valuemin={0}
         aria-valuemax={total}
         aria-valuenow={done}
-        className="mt-3 h-2.5 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-[var(--appnext-accent)]"
+        className="mt-3 h-2.5 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-brand"
       />
     </output>
   );
@@ -143,7 +143,7 @@ export function ProgressRing({
         y="50%"
         textAnchor="middle"
         dominantBaseline="central"
-        className="tabular rotate-90 fill-[var(--appnext-ink)] font-medium"
+        className="tabular fill-[var(--appnext-ink)] font-medium"
         fontSize={size * 0.26}
         transform={`rotate(90 ${size / 2} ${size / 2})`}
       >
