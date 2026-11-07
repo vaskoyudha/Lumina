@@ -1,6 +1,14 @@
 import type { AgentId } from "@/lib/contracts/score";
 
 /**
+ * The detectors that actually run; `scoring` aggregates them, it is not one.
+ *
+ * Typing this subset keeps the distinction checkable — the sidebar can map
+ * every detector to an icon without inventing a row for the orchestrator.
+ */
+export type DetectorAgent = Exclude<AgentId, "scoring">;
+
+/**
  * The agents the evidence panel walks through, in reading order.
  *
  * Shared by both companion surfaces on purpose: the panel is the product's
@@ -15,7 +23,7 @@ import type { AgentId } from "@/lib/contracts/score";
  * pasted message never has. It reports no finding rather than inventing one,
  * which is exactly the gap the panel is supposed to show.
  */
-export const AGENT_SEQUENCE: AgentId[] = [
+export const AGENT_SEQUENCE: DetectorAgent[] = [
   "message",
   "link",
   "identity",
