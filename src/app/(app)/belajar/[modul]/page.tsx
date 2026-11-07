@@ -125,7 +125,7 @@ export default async function ModulPage({
       {entry.scenarioId && isi ? (
         <Button
           asChild
-          className="mt-8 min-h-11 w-fit rounded-full bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
+          className="mt-8 min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] text-bg hover:bg-[var(--appnext-accent-deep)]"
         >
           <Link href={`/simulasi/${entry.scenarioId}`} data-pressable>
             Latih pola ini di simulasi

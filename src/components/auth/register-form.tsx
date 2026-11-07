@@ -139,7 +139,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
         <Button
           type="submit"
           disabled={pending}
-          className="h-12 w-full rounded-2xl bg-brand font-medium text-bg transition-colors hover:bg-brand/90"
+          className="h-12 w-full rounded-full border border-ink-line bg-foreground font-semibold text-background transition-colors hover:bg-foreground/90"
         >
           {pending ? (
             <Loader2

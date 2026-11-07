@@ -178,7 +178,7 @@ export function ModulKatalog({ items }: { items: KatalogItem[] }) {
                 setQuery("");
                 setLevel(null);
               }}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--appnext-ink-2)] px-4 text-bg text-sm"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-4 text-bg text-sm"
             >
               <RotateCcw aria-hidden className="size-4" />
               Atur ulang saringan
@@ -225,7 +225,7 @@ function FilterPill({
       className={cn(
         "inline-flex min-h-11 items-center rounded-full px-3.5 text-sm transition-colors duration-150 ease-out",
         active
-          ? "bg-[var(--appnext-ink-2)] font-medium text-bg"
+          ? "border border-ink-line bg-[var(--appnext-ink-2)] font-medium text-bg"
           : "text-dim hover:bg-panel-2 hover:text-txt",
       )}
     >
