@@ -34,6 +34,7 @@ function parseEvents(raw: string): string {
 
 export function streamChatText(
   upstream: ReadableStream<Uint8Array>,
+  cleanup: () => void = () => {},
 ): ReadableStream<Uint8Array> {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
@@ -42,35 +43,43 @@ export function streamChatText(
 
   return new ReadableStream({
     async pull(controller) {
-      for (;;) {
-        const { done, value } = await reader.read();
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
 
-        if (done) {
-          buffer += decoder.decode();
-          const tail = parseEvents(buffer);
-          buffer = "";
-          if (tail.length > 0) controller.enqueue(encoder.encode(tail));
-          controller.close();
-          return;
+          if (done) {
+            buffer += decoder.decode();
+            const tail = parseEvents(buffer);
+            buffer = "";
+            if (tail.length > 0) controller.enqueue(encoder.encode(tail));
+            cleanup();
+            controller.close();
+            return;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Events are separated by a blank line. Keep the trailing partial.
+          const boundary = buffer.lastIndexOf("\n\n");
+          if (boundary === -1) continue;
+
+          const events = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2);
+
+          const out = parseEvents(events);
+          if (out.length > 0) {
+            controller.enqueue(encoder.encode(out));
+            return;
+          }
         }
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // Events are separated by a blank line. Keep the trailing partial.
-        const boundary = buffer.lastIndexOf("\n\n");
-        if (boundary === -1) continue;
-
-        const events = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
-
-        const out = parseEvents(events);
-        if (out.length > 0) {
-          controller.enqueue(encoder.encode(out));
-          return;
-        }
+      } catch (error) {
+        cleanup();
+        void reader.cancel(error).catch(() => {});
+        controller.error(error);
       }
     },
     cancel(reason) {
+      cleanup();
       void reader.cancel(reason);
     },
   });

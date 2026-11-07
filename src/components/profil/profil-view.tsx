@@ -2,7 +2,6 @@
 
 import { LogOut, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { ProfilKemajuan } from "@/components/profil/profil-kemajuan";
 import { BackButton } from "@/components/shell/back-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,34 +15,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { logout } from "@/lib/auth/actions";
-import { loadProfile } from "@/lib/auth/local-profile";
 import { MODUS } from "@/lib/modus";
 
-/**
- * The profile is read from the signed session cookie on the server and handed
- * down as props; the local record (when this device registered) is read after
- * mount so the static shell never guesses at browser storage.
- */
-export function ProfilView({ nama, email }: { nama: string; email: string }) {
-  const [createdAt, setCreatedAt] = useState<string | null>(null);
-
-  useEffect(() => {
-    const profile = loadProfile();
-    if (profile?.email === email) setCreatedAt(profile.createdAt);
-  }, [email]);
-
+/** Identity comes from the server session; learning progress stays local. */
+export function ProfilView({
+  nama,
+  email,
+  createdAt,
+}: {
+  nama: string;
+  email: string;
+  createdAt?: string;
+}) {
   const initial = nama.trim().charAt(0).toUpperCase() || "?";
 
-  const createdLabel = useMemo(() => {
-    if (!createdAt) return "Tidak dicatat (akun demo)";
-    const date = new Date(createdAt);
-    if (Number.isNaN(date.getTime())) return "Tidak dicatat (akun demo)";
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(date);
-  }, [createdAt]);
+  const date = createdAt ? new Date(createdAt) : null;
+  const createdLabel =
+    date && !Number.isNaN(date.getTime())
+      ? new Intl.DateTimeFormat("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "Asia/Jakarta",
+        }).format(date)
+      : "Tidak tersedia";
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14">
@@ -62,7 +57,7 @@ export function ProfilView({ nama, email }: { nama: string; email: string }) {
             <h1 className="truncate font-semibold text-2xl tracking-tight">
               {nama}
             </h1>
-            <Badge variant="outline">Akun demo</Badge>
+            <Badge variant="outline">Akun Lumina</Badge>
           </div>
           <p className="truncate text-dim text-sm">{email}</p>
         </div>
@@ -93,8 +88,8 @@ export function ProfilView({ nama, email }: { nama: string; email: string }) {
             Akun dan privasi
           </h2>
           <p className="mt-1 text-dim text-sm">
-            Lumina tidak menyimpan percakapan, dan akun di sini hanya untuk
-            memperlihatkan alur yang sudah jadi.
+            Nama dan email tersimpan untuk akunmu. Percakapan tidak disimpan
+            dalam database akun; progres belajar tetap di perangkat ini.
           </p>
         </div>
 
@@ -110,7 +105,7 @@ export function ProfilView({ nama, email }: { nama: string; email: string }) {
           <div className="min-w-0">
             <dt className="text-dim text-xs">Jenis akun</dt>
             <dd className="mt-0.5 text-sm text-txt">
-              Demo — cookie bertanda tangan, berlaku 24 jam
+              Sesi akun, berlaku 24 jam
             </dd>
           </div>
           <div className="min-w-0">
@@ -124,15 +119,15 @@ export function ProfilView({ nama, email }: { nama: string; email: string }) {
             aria-hidden
             className="mt-0.5 size-3.5 shrink-0 text-brand"
           />
-          Tidak ada database, tidak ada unggahan, tidak ada reset password.
-          Keluar menghapus sesi di perangkat ini.
+          Keluar mencabut sesi ini di server. Verifikasi email dan pemulihan
+          password belum tersedia.
         </p>
 
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" className="h-11">
             <Link href="/masuk" data-pressable>
               <UserRound aria-hidden />
-              Ganti akun demo
+              Ganti akun
             </Link>
           </Button>
           <form action={logout}>
