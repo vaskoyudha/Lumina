@@ -362,6 +362,10 @@
   html {
     @apply font-sans;
     color-scheme: light;
+    /* Phones otherwise inflate small text on their own, so the same 13px chat
+       paragraph renders a different size per device. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {

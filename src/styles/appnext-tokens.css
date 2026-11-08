@@ -86,7 +86,7 @@
     --appnext-shadow-ring: 0 0 0 1px #000 inset;
 
     /* type */
-    --appnext-font: "Stack Sans Headline", "Inter", system-ui, sans-serif;
+    --appnext-font: var(--font-sans), "Inter", system-ui, sans-serif;
 
     color: var(--appnext-muted);
     background: var(--appnext-white);
