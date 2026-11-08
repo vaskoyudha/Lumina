@@ -17,7 +17,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { Mascot } from "@/components/brand/mascot";
-import { AgentTraceCard } from "@/components/companion/agent-trace";
+import { AgentRun } from "@/components/companion/agent-run";
 import {
   AGENT_SEQUENCE,
   type DetectorAgent,
@@ -1136,10 +1136,16 @@ export function CompanionChat({
                       className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
                     >
                       {turn.trace ? (
-                        <AgentTraceCard trace={turn.trace} />
+                        <AgentRun
+                          trace={turn.trace}
+                          result={turn.result}
+                          live={turn.streaming === true}
+                        />
                       ) : null}
 
-                      {turn.streaming && turn.text.length === 0 ? (
+                      {turn.streaming &&
+                      turn.text.length === 0 &&
+                      !turn.trace ? (
                         <ThinkingRow
                           label="Menyusun jawaban"
                           startedAt={turn.voiceStartedAt ?? null}
