@@ -25,7 +25,7 @@ export interface TurnPlan {
 /**
  * Above this, the text is a paste rather than a sentence.
  *
- * Measured: the shortest bench scam is 98 characters, the shortest bench legit
+ * Measured: the shortest bench scam is 84 characters, the shortest bench legit
  * case is 57. A length test near 57 therefore cannot separate the two, so 160
  * is used instead — safely above every scam, and still a real "this is a
  * pasted paragraph" signal. Anything shorter that is genuinely a check is
@@ -34,8 +34,8 @@ export interface TurnPlan {
  */
 export const PASTE_LENGTH = 160;
 
-/** Shortest scam in the bench corpus (98). `turn.test.ts` pins it. */
-export const SHORTEST_SCAM = 98;
+/** Shortest scam in the bench corpus (84). `turn.test.ts` pins it. */
+export const SHORTEST_SCAM = 84;
 
 const MONEY =
   /(transfer|rekening|bayar|pembayaran|top\s?up|dana|ovo|gopay|shopeepay|pulsa|qris|nominal|saldo)/i;
