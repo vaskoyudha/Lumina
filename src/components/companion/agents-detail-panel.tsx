@@ -45,10 +45,13 @@ export function AgentsDetailPanel({
   selected = null,
   className,
   action,
+  titleId = "panel-detail-title",
 }: {
   selected?: DetectorAgent | null;
   className?: string;
   action?: ReactNode;
+  /** Unique per surface: the chat renders this pane in a column and a sheet. */
+  titleId?: string;
 }) {
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -63,7 +66,7 @@ export function AgentsDetailPanel({
 
   return (
     <Card
-      aria-labelledby="panel-detail-title"
+      aria-labelledby={titleId}
       className={cn(
         "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-none bg-transparent py-0 ring-0",
         className,
@@ -71,21 +74,27 @@ export function AgentsDetailPanel({
     >
       <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <CardTitle>
-              <h2
-                className="font-semibold text-[12px] text-txt"
-                id="panel-detail-title"
-              >
-                Detail agen
-              </h2>
-            </CardTitle>
-            <p className="mt-0.5 truncate text-[10.5px] text-dim">
-              Lima pemeriksa di bawah satu orkestrator
-            </p>
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              aria-hidden
+              className="size-1.5 shrink-0 rounded-full bg-brand shadow-orb"
+            />
+            <div className="min-w-0">
+              <CardTitle>
+                <h2
+                  className="font-semibold text-[12.5px] text-txt"
+                  id={titleId}
+                >
+                  Detail agen
+                </h2>
+              </CardTitle>
+              <p className="mt-0.5 truncate text-[10.5px] text-dim">
+                Lima pemeriksa di bawah satu orkestrator
+              </p>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <span className="rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
+            <span className="rounded-full border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[9px] text-brand-ink uppercase tracking-[0.06em]">
               {AGENT_SEQUENCE.length} agen
             </span>
             {action}
@@ -93,7 +102,10 @@ export function AgentsDetailPanel({
         </div>
       </CardHeader>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3" ref={listRef}>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto bg-panel-2/60 px-3 py-3"
+        ref={listRef}
+      >
         <ul className="flex list-none flex-col gap-2">
           {AGENT_SEQUENCE.map((agent, index) => {
             const Icon = AGENT_ICON[agent];
@@ -107,32 +119,46 @@ export function AgentsDetailPanel({
                 data-active={active ? "true" : undefined}
                 key={agent}
                 className={cn(
-                  "rounded-[10px] border px-3 py-2.5 transition-[border-color,background-color] duration-200",
+                  "group/detail relative overflow-hidden rounded-[12px] bg-panel px-3 py-3 transition-[box-shadow,transform] duration-200",
                   active
-                    ? "border-brand-line bg-brand-soft/40"
-                    : "border-edge bg-panel",
+                    ? "shadow-lift ring-1 ring-brand/45"
+                    : "shadow-rest ring-1 ring-transparent hover:-translate-y-px hover:shadow-lift hover:ring-brand/20",
                 )}
               >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute inset-y-0 left-0 w-[3px] transition-colors duration-200",
+                    active ? "bg-brand" : "bg-transparent",
+                  )}
+                />
                 <div className="flex items-start gap-2.5">
                   <span
                     className={cn(
-                      "mt-px grid size-7 shrink-0 place-items-center rounded-[7px] transition-colors duration-200",
+                      "mt-px grid size-8 shrink-0 place-items-center rounded-[9px] transition-colors duration-200",
                       active
-                        ? "bg-brand text-white"
+                        ? "bg-brand text-panel shadow-orb"
                         : "bg-brand-soft text-brand-ink",
                     )}
                   >
-                    <Icon aria-hidden strokeWidth={1.8} className="size-3.5" />
+                    <Icon aria-hidden strokeWidth={1.8} className="size-4" />
                   </span>
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                      <p className="font-semibold text-[12px] text-ink leading-snug">
-                        {display}
-                      </p>
-                      <span className="font-mono text-[9px] text-ink-faint uppercase tracking-[0.08em]">
-                        {label}
-                      </span>
-                      <span className="font-mono text-[9px] text-ink-faint">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <p className="font-semibold text-[12.5px] text-ink leading-snug">
+                          {display}
+                        </p>
+                        <span className="font-mono text-[8.5px] text-ink-faint uppercase tracking-[0.08em]">
+                          {label}
+                        </span>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 font-mono text-[11px] leading-none tabular-nums transition-colors duration-200",
+                          active ? "text-brand" : "text-ink-faint/70",
+                        )}
+                      >
                         {String(index + 1).padStart(2, "0")}
                       </span>
                     </div>
@@ -146,8 +172,11 @@ export function AgentsDetailPanel({
           })}
         </ul>
 
-        <p className="mt-3 flex items-start gap-1.5 rounded-[10px] bg-txt/5 px-2.5 py-1.5 text-[10.5px] text-dim leading-snug">
-          <ShieldCheck aria-hidden className="mt-px size-3 shrink-0" />
+        <p className="mt-3 flex items-start gap-1.5 rounded-[10px] border border-edge bg-panel px-2.5 py-2 text-[10.5px] text-dim leading-snug">
+          <ShieldCheck
+            aria-hidden
+            className="mt-px size-3 shrink-0 text-brand"
+          />
           Agen berjalan lokal dan hanya melaporkan temuan; skor tetap dihitung
           satu engine.
         </p>
