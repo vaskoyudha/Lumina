@@ -46,7 +46,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Right-hand evidence panel (§3) — drawn as the agent graph from the Cortex
- * reference: one verdict node, five branch nodes, one synthesis node, joined by
+ * reference: one verdict node, one branch node per detector, one synthesis node, joined by
  * an orthogonal fan rail and return rail over a dotted canvas.
  *
  * The graph is the structure the reference asked for, but every wire is backed
@@ -111,6 +111,9 @@ const BRANCH_KIND: Record<AgentId, string> = {
   link: "Tautan",
   identity: "Identitas",
   conversation: "Eskalasi",
+  job: "Lowongan",
+  marketplace: "Jual-beli",
+  qris: "QRIS",
   evidence: "Bukti",
   scoring: "Sintesis",
 };
@@ -134,6 +137,9 @@ const BRANCH_CONDITION: Record<AgentId, string> = {
   link: "Ada tautan yang perlu dibuka",
   identity: "Ada klaim institusi atau nomor asing",
   conversation: "Ada pesan sebelumnya di percakapan",
+  job: "Ada tawaran kerja atau tugas berbayar",
+  marketplace: "Ada percakapan jual-beli",
+  qris: "Ada payload QRIS",
   evidence: "Ada temuan yang bisa dikutip",
   scoring: "Menggabungkan seluruh temuan",
 };
@@ -1034,7 +1040,7 @@ export function SignalPanel({
                 </p>
               }
             >
-              {/* 1 · Verdict. The only live region: five findings must not each announce. */}
+              {/* 1 · Verdict. The only live region: findings must not each announce. */}
               <output
                 aria-atomic="true"
                 aria-live="polite"

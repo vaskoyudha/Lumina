@@ -52,4 +52,17 @@ describe("BelajarWorkspace", () => {
 
     expect(push).toHaveBeenCalledWith("/companion");
   });
+
+  it("opens the agent overview in Companion, not in the learning page", async () => {
+    const user = userEvent.setup();
+    render(
+      <BelajarWorkspace session={null}>
+        <p>Katalog</p>
+      </BelajarWorkspace>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /agen pemeriksa/i }));
+
+    expect(push).toHaveBeenCalledWith("/companion?panel=agen");
+  });
 });

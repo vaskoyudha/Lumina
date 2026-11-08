@@ -1,4 +1,4 @@
-# Status — per 5 November 2026
+# Status — per 8 November 2026
 
 **8 November 2026 — backend PostgreSQL dan paket VPS.** Akun, sesi, transaksi
 OAuth dan limit berpindah ke PostgreSQL dengan pool async, migrasi bernomor,
@@ -38,14 +38,16 @@ b. Design tokens dari §4 hidup di `src/app/globals.css` sebagai `--lumina-*`.
 c. Semua rute render: `/`, `/companion`, `/belajar`, `/belajar/[modul]`,
    `/simulasi`, `/simulasi/[id]`, `/darurat`.
 d. `modus.json`: 12 modus tervalidasi zod, satu sumber kebenaran untuk A dan B.
-e. Engine skor deterministik: Message Agent, Link Agent, Scoring Orchestrator.
-f. Panel bukti per agent, dengan penandaan `belum aktif` yang jujur.
+e. Engine skor deterministik: delapan agen pemeriksa (Message, Link, Identity,
+   Conversation, Job, Marketplace, QRIS, Evidence) plus Scoring Orchestrator.
+f. Panel bukti dan bubble per agent; agen yang tidak melapor menyebut alasannya
+   (`dilewati`), tanpa label `belum aktif`.
 g. Tiga contoh §11.6 sebagai tombol di companion.
 h. Mode darurat: lima kasus, checklist bernomor, kanal resmi, cetak.
 i. Laporan darurat: pratinjau + `pdf.tsx` (`@react-pdf/renderer`) yang
    menghasilkan PDF nyata di perangkat, lengkap dengan kronologi, rekening
    pelaku, nominal, dan kolom tanda tangan.
-j. Korpus bench 43 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
+j. Korpus bench 57 pesan (`src/lib/scoring/bench-cases.ts`) sebagai instrumen
    di balik setiap klaim akurasi; angkanya diukur, bukan dikutip.
 k. `src/lib/evidence/`: producer `EvidenceBundle` pertama (artefak → timeline →
    narasi). Panel bukti menampilkan artefaknya; kode OTP sengaja **tidak**
@@ -86,16 +88,19 @@ sedangkan proposal menyebut 88/100. Klaim di presentasi mengikuti hasil ukur
 
 ### Akurasi terukur — 8 November 2026
 
-Korpus 45 pesan (20 scam lintas 12 modus + 25 pesan sah yang sengaja memuat
+Korpus 57 pesan (29 scam lintas 12 modus + 28 pesan sah yang sengaja memuat
 jebakan false-positive klasik). Dijalankan oleh `score.bench.test.ts`, dan
 angkanya kini juga lahir dari satu fungsi, `runEval()` di `eval.ts`, sehingga
-klaim di pitch adalah keluaran mesin, bukan salinan terminal.
+klaim di pitch adalah keluaran mesin, bukan salinan terminal. Penambahan
+terakhir: tiga detektor baru (Job, Marketplace, QRIS) beserta kasus bench-nya,
+lalu UI kru di thread (`AgentRun`) yang menampilkan orkestrator dan bubble
+persisten untuk setiap agen.
 
-| Ukuran | Sebelum perbaikan | Sesudah | Target |
+| Ukuran | Sebelum (korpus 45) | Sesudah (korpus 57) | Target |
 |---|---|---|---|
-| Scam tertangkap (`mencurigakan`/`tinggi`) | 19/20 | **20/20** | ≥ 0.95 |
-| Scam langsung `tinggi` | 17/20 | **18/20** | ≥ 0.80 |
-| False positive pada pesan sah | 2/20 (10%) | **0/25** | < 5% |
+| Scam tertangkap (`mencurigakan`/`tinggi`) | 19/20 | **29/29** | ≥ 0.95 |
+| Scam langsung `tinggi` | 17/20 | **25/29** (0.86) | ≥ 0.80 |
+| False positive pada pesan sah | 2/20 (10%) | **0/28** | < 5% |
 
 Tiga defect yang diukur dan diperbaiki di commit `6e70f5e`:
 
@@ -111,7 +116,8 @@ c. Scam stiker QRIS tidak tertangkap sama sekali (0/bersih). Sekarang 70/tinggi
 d. Dua jebakan baru ditambahkan 8 November 2026: nasihat mencocokkan nama
    penerima (l24) dan peringatan agar tidak membuka file APK (l25). Keduanya
    dulu dituduh (quishing `a.n.`, APK 95/`tinggi` hard); sekarang keduanya
-   0/`bersih` tanpa melemahkan scam-nya, dan false positive tetap 0/25.
+   0/`bersih` tanpa melemahkan scam-nya, dan false positive tetap 0 saat itu
+   (0/25).
 
 Batas yang diakui: dua scam (love scam, jual-beli di luar marketplace) berhenti
 di `mencurigakan`, bukan `tinggi`; dan merek tiga huruf hanya tertangkap bila
@@ -152,7 +158,8 @@ yang benar-benar menyebut permintaan (biaya admin, top-up berulang, transfer
 di luar marketplace, stiker QRIS). Tagihan sah tanpa satu pun aturan menyala
 karena itu tidak pernah bisa mencapai kombinasi.
 
-Angka bench tidak berubah oleh lintasan kombinasi itu sendiri: 20/20
-tertangkap, 17/20 langsung `tinggi`, 0/20 false positive. Perubahannya ada di
-kualitas penjelasan, bukan di volume deteksi — dan itu memang tujuannya.
-Perbaikan presisi di bagian berikutnya yang menggeser angkanya.
+Angka bench saat itu (korpus 45) tidak berubah oleh lintasan kombinasi itu
+sendiri: 20/20 tertangkap, 17/20 langsung `tinggi`, 0/20 false positive.
+Perubahannya ada di kualitas penjelasan, bukan di volume deteksi — dan itu
+memang tujuannya. Perbaikan presisi di bagian berikutnya yang menggeser
+angkanya.

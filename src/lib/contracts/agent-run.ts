@@ -60,6 +60,18 @@ export const STAGE_LABEL: Record<StageId, { label: string; task: string }> = {
     label: "Conversation Agent",
     task: "Vektor yang menumpuk dan tahapan eskalasi",
   },
+  job: {
+    label: "Lowongan Agent",
+    task: "Biaya pendaftaran, tugas berbayar, dan penempatan luar negeri",
+  },
+  marketplace: {
+    label: "Marketplace Agent",
+    task: "Pembayaran di luar platform, harga tidak wajar, dan resi palsu",
+  },
+  qris: {
+    label: "QRIS Agent",
+    task: "Payload EMVCo, CRC, dan nama merchant yang tidak cocok",
+  },
   evidence: {
     label: "Evidence Agent",
     task: "Menyusun kutipan, nominal, dan kontak untuk laporan",

@@ -19,7 +19,8 @@ import {
   Swords,
   Workflow,
 } from "lucide-react";
-import { LuminaLogo } from "@/components/brand/lumina-logo";
+import { ThemedLuminaLogo } from "@/components/brand/lumina-logo";
+import { Mascot } from "@/components/brand/mascot";
 import { SCENARIOS } from "@/components/companion/scenarios";
 
 /**
@@ -32,10 +33,17 @@ import { SCENARIOS } from "@/components/companion/scenarios";
  * controls are spans on purpose: the card is a screenshot, not a second
  * entrance to the app, and it must not add tab stops or focus rings to the
  * landing page.
+ *
+ * `lc-preview` is the one deliberate exception: it remaps the app's
+ * `--lumina-*` chrome to the active landing theme, so the print turns warm on
+ * cream, cool on paper and dark on black instead of staying a white island.
+ * The machine itself is untouched; the mapping lives in `landing-tokens.css`.
+ * The primary-fill text also uses `text-bg` instead of the live `text-white`,
+ * because that fill inverts to a light colour in the black theme.
  */
 export function CompanionPreview({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex h-full w-full select-none flex-col">
+    <div className="lc-preview flex h-full w-full select-none flex-col">
       <div className="-mx-2 -mt-2 -mb-2 flex min-h-0 w-[calc(100%+16px)] flex-1 overflow-hidden rounded-[20px] bg-panel p-2">
         <CompanionSidebarPreview />
 
@@ -86,14 +94,7 @@ export function CompanionPreview({ compact = false }: { compact?: boolean }) {
           <div className="flex min-h-0 flex-1 flex-col items-center justify-start py-4">
             <div className="flex w-full max-w-[520px] flex-col items-center">
               <div className="mb-2 flex items-center justify-center">
-                {/* biome-ignore lint/performance/noImgElement: a fixed 104x94 PNG with transparency; next/image adds no value here */}
-                <img
-                  src="/images/companion-orb.png"
-                  alt="Orb Lumina"
-                  width={104}
-                  height={94}
-                  className="pointer-events-none h-[94px] w-[104px] object-contain [filter:hue-rotate(132deg)_saturate(1.45)]"
-                />
+                <Mascot className="pointer-events-none h-[94px] w-[129px] select-none" />
               </div>
 
               <h3 className="text-center font-semibold text-[24px] leading-[1.2] tracking-[-0.025em] sm:text-[26px]">
@@ -189,20 +190,6 @@ export function CompanionPreview({ compact = false }: { compact?: boolean }) {
                   );
                 })}
               </ul>
-
-              <p
-                className={`mt-4 text-center text-[11px] text-ink-faint leading-[1.45] ${
-                  compact
-                    ? "hidden max-[809.98px]:block"
-                    : "hidden max-[809.98px]:block 2xl:block"
-                }`}
-              >
-                Lumina membaca pesan, bukan mengadili orang.{" "}
-                <span className="font-medium text-brand-chip-ink underline underline-offset-2">
-                  Pelajari cara kerjanya
-                </span>
-                .
-              </p>
             </div>
           </div>
         </div>
@@ -220,18 +207,18 @@ const SIDEBAR_DESTINATIONS = [
 
 function CompanionSidebarPreview() {
   return (
-    <div className="-ml-2 hidden w-[220px] shrink-0 flex-col justify-between border-line border-r bg-bg px-2 pt-2 pb-1 min-[1280px]:flex">
+    <div className="-mt-2 -ml-2 hidden w-[220px] shrink-0 flex-col justify-between border-line border-r bg-bg px-2 pt-2 pb-1 min-[1280px]:flex">
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="mb-3.5 flex items-center gap-1.5 px-1.5">
           <span className="min-w-0 flex-1">
-            <LuminaLogo className="h-[24px] w-auto" />
+            <ThemedLuminaLogo className="h-[24px] w-auto" />
           </span>
           <span className="grid size-6 shrink-0 place-items-center rounded-[6px] text-ink-faint">
             <PanelLeftClose aria-hidden strokeWidth={1.7} className="size-4" />
           </span>
         </div>
 
-        <span className="flex h-[38px] w-full items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-ink-line bg-ink font-medium text-[12.5px] text-white shadow-rest">
+        <span className="flex h-[38px] w-full items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-ink-line bg-ink font-medium text-[12.5px] text-bg shadow-rest">
           <Plus aria-hidden strokeWidth={2} className="size-4" />
           Percakapan baru
         </span>

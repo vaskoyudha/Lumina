@@ -30,6 +30,9 @@ export type AgentId =
   | "link"
   | "identity"
   | "conversation"
+  | "job"
+  | "marketplace"
+  | "qris"
   | "evidence"
   | "scoring";
 

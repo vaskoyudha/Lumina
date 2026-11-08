@@ -1,10 +1,14 @@
 /** @jest-environment node */
 
 import { cookies } from "next/headers";
-import { consumeAttempt } from "@/lib/auth/accounts";
-import { login, logout, register } from "@/lib/auth/actions";
+import {
+  authenticatePassword,
+  consumeAttempt,
+  ensureDemoAccount,
+} from "@/lib/auth/accounts";
+import { login, loginDemo, logout, register } from "@/lib/auth/actions";
 import { getSession } from "@/lib/auth/server-session";
-import { readSession, revokeSession } from "@/lib/auth/session";
+import { createSession, readSession, revokeSession } from "@/lib/auth/session";
 
 jest.mock("server-only", () => ({}), { virtual: true });
 jest.mock("next/headers", () => ({ cookies: jest.fn() }));
@@ -16,6 +20,7 @@ jest.mock("@/lib/auth/accounts", () => ({
   AuthError: class AuthError extends Error {},
   consumeAttempt: jest.fn(),
   authenticatePassword: jest.fn(),
+  ensureDemoAccount: jest.fn(),
   registerAccount: jest.fn(),
 }));
 jest.mock("@/lib/auth/session", () => ({
@@ -49,4 +54,50 @@ it("keeps the browser cookie when server revocation fails", async () => {
   jest.mocked(revokeSession).mockRejectedValue(new Error("database secret"));
   await expect(logout()).rejects.toThrow("Layanan akun sedang tidak tersedia");
   expect(remove).not.toHaveBeenCalled();
+});
+
+it("refuses the demo entrypoint when it is not configured", async () => {
+  const previousEmail = process.env.LUMINA_DEMO_EMAIL;
+  delete process.env.LUMINA_DEMO_EMAIL;
+  const result = await loginDemo();
+  expect(result.ok).toBe(false);
+  expect(result.error).toMatch(/belum dikonfigurasi/i);
+  if (previousEmail !== undefined)
+    process.env.LUMINA_DEMO_EMAIL = previousEmail;
+});
+
+it("signs into the configured demo account without exposing credentials", async () => {
+  const previousEmail = process.env.LUMINA_DEMO_EMAIL;
+  const previousPassword = process.env.LUMINA_DEMO_PASSWORD;
+  process.env.LUMINA_DEMO_EMAIL = "demo@lumina.id";
+  process.env.LUMINA_DEMO_PASSWORD = "rahasia-demo";
+  const set = jest.fn();
+  jest.mocked(cookies).mockResolvedValue({
+    get: () => undefined,
+    set,
+  } as never);
+  jest.mocked(ensureDemoAccount).mockResolvedValue({
+    id: "demo-id",
+    email: "demo@lumina.id",
+    nama: "Tamu Lumina",
+    created_at: new Date(0).toISOString(),
+  });
+  jest.mocked(authenticatePassword).mockResolvedValue({
+    id: "demo-id",
+    email: "demo@lumina.id",
+    nama: "Tamu Lumina",
+    created_at: new Date(0).toISOString(),
+  });
+  jest.mocked(createSession).mockResolvedValue("token-demo");
+  const result = await loginDemo();
+  expect(result).toEqual({
+    ok: true,
+    account: { email: "demo@lumina.id", nama: "Tamu Lumina" },
+  });
+  expect(set).toHaveBeenCalled();
+  expect(JSON.stringify(result)).not.toContain("rahasia-demo");
+  if (previousEmail === undefined) delete process.env.LUMINA_DEMO_EMAIL;
+  else process.env.LUMINA_DEMO_EMAIL = previousEmail;
+  if (previousPassword === undefined) delete process.env.LUMINA_DEMO_PASSWORD;
+  else process.env.LUMINA_DEMO_PASSWORD = previousPassword;
 });

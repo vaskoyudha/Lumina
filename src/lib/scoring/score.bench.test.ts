@@ -6,7 +6,7 @@ import { type BenchCase, LEGIT_CASES, SCAM_CASES } from "./bench-cases";
 import { scoreText } from "./score";
 
 /**
- * Corpus bench (45 messages) — the reproducible instrument behind the
+ * Corpus bench (57 messages) — the reproducible instrument behind the
  * accuracy claim in STATUS.md. Run like any test. The console table is
  * the deliverable: paste it into the pitch deck, numbers follow it.
  *
@@ -20,21 +20,21 @@ import { scoreText } from "./score";
  * in the same commit as the engine pass that earned them — a target and the
  * evidence for it may never drift apart across commits.
  *
- * Measured 8 Nov 2026, after the message.ts + link.ts honesty pass and the
- * two new false-positive traps (defensive recipient advice, APK warning):
- *   scam recall 1.00 (20/20)   hard catches 0.90 (18/20)   FP 0.00 (0/25)
+ * Measured 8 Nov 2026, after the job, marketplace, and QRIS detectors joined
+ * the pipeline (corpus grown from 45 to 57 messages):
+ *   scam recall 1.00 (29/29)   hard catches 0.86 (25/29)   FP 0.00 (0/28)
  * Pre-fix measurement for comparison: recall 0.95, hard 0.85, FP 0.10.
  */
 
 const RECALL_TARGET = 0.95;
 const HARD_CATCH_TARGET = 0.8;
-const FALSE_POSITIVE_TARGET = 0.05; // 0 of 25 legit messages may leak
+const FALSE_POSITIVE_TARGET = 0.05; // 0 of 28 legit messages may leak
 
 function runCases(cases: readonly BenchCase[]): ScoreResult[] {
   return cases.map(({ text }) => scoreText({ text }));
 }
 
-describe("corpus bench — 20 scam messages", () => {
+describe("corpus bench — 29 scam messages", () => {
   const results = runCases(SCAM_CASES);
   const caught = results.filter((r) => isRisky(r.risk)).length;
   const nailed = results.filter((r) => r.risk === "tinggi").length;
@@ -79,7 +79,7 @@ describe("corpus bench — 20 scam messages", () => {
   });
 });
 
-describe("corpus bench — 25 legit messages (false positives)", () => {
+describe("corpus bench — 28 legit messages (false positives)", () => {
   const results = runCases(LEGIT_CASES);
   const flagged = results
     .map((r, i) => ({ case: LEGIT_CASES[i], r }))

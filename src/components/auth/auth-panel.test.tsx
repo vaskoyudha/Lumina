@@ -7,6 +7,7 @@ jest.mock("next/navigation", () => ({
 }));
 jest.mock("@/lib/auth/actions", () => ({
   login: jest.fn(),
+  loginDemo: jest.fn(),
   register: jest.fn(),
 }));
 
@@ -36,10 +37,16 @@ describe("AuthPanel", () => {
     expect(
       screen.getByRole("button", { name: /buat akun/i }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the demo entrypoint only when the server enables it", () => {
+    const { rerender } = render(<AuthPanel mode="masuk" />);
     expect(
-      screen.getByText(
-        /Verifikasi email dan pemulihan password belum tersedia/,
-      ),
+      screen.queryByRole("button", { name: /masuk dengan akun demo/i }),
+    ).not.toBeInTheDocument();
+    rerender(<AuthPanel mode="masuk" demo />);
+    expect(
+      screen.getByRole("button", { name: /masuk dengan akun demo/i }),
     ).toBeInTheDocument();
   });
 

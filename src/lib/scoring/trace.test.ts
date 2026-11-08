@@ -16,6 +16,9 @@ describe("scoreWithTrace", () => {
       "link",
       "identity",
       "conversation",
+      "job",
+      "marketplace",
+      "qris",
       "scoring",
     ]);
     for (const stage of trace.stages) {

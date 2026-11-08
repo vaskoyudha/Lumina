@@ -56,7 +56,7 @@ export function AuthPage({
             ) : null}
             <AuthFeedback searchParams={searchParams} />
           </Suspense>
-          <AuthPanel mode={intent} />
+          <AuthPanel mode={intent} demo={intent === "masuk"} />
         </div>
       </SignInPage>
     </main>

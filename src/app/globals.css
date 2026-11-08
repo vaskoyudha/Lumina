@@ -76,6 +76,25 @@
   --color-brand-edge: var(--lumina-brand-edge);
   --color-brand-edge-soft: var(--lumina-brand-edge-soft);
   --color-brand-soft-2: var(--lumina-brand-soft-2);
+
+  /* Agent identity -> border/tint utilities (never status). */
+  --color-agent-message: var(--lumina-agent-message);
+  --color-agent-message-soft: var(--lumina-agent-message-soft);
+  --color-agent-link: var(--lumina-agent-link);
+  --color-agent-link-soft: var(--lumina-agent-link-soft);
+  --color-agent-identity: var(--lumina-agent-identity);
+  --color-agent-identity-soft: var(--lumina-agent-identity-soft);
+  --color-agent-conversation: var(--lumina-agent-conversation);
+  --color-agent-conversation-soft: var(--lumina-agent-conversation-soft);
+  --color-agent-job: var(--lumina-agent-job);
+  --color-agent-job-soft: var(--lumina-agent-job-soft);
+  --color-agent-marketplace: var(--lumina-agent-marketplace);
+  --color-agent-marketplace-soft: var(--lumina-agent-marketplace-soft);
+  --color-agent-qris: var(--lumina-agent-qris);
+  --color-agent-qris-soft: var(--lumina-agent-qris-soft);
+  --color-agent-evidence: var(--lumina-agent-evidence);
+  --color-agent-evidence-soft: var(--lumina-agent-evidence-soft);
+
   --color-cloud-1: var(--lumina-cloud-1);
   --color-cloud-2: var(--lumina-cloud-2);
   --color-cloud-3: var(--lumina-cloud-3);
@@ -217,6 +236,63 @@
   animation-delay: 0.36s;
 }
 
+/*
+ * Mascot micro-motion (companion empty state). The sprite itself only swaps
+ * expressions; these layers add life without touching the artwork: a slow
+ * float, a breathing brand halo, and a blurred bloom that picks up the
+ * mascot's own orange/cream. All three stop under reduced motion; the halo and
+ * bloom stay visible as static glow.
+ */
+@keyframes mascot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes mascot-halo {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes mascot-bloom {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.mascot-float {
+  animation: mascot-float 6s ease-in-out infinite;
+}
+.mascot-halo {
+  animation: mascot-halo 4s ease-in-out infinite;
+}
+.mascot-bloom {
+  animation: mascot-bloom 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-float,
+  .mascot-halo,
+  .mascot-bloom {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-animate,
   .auth-slide-right {
@@ -310,6 +386,27 @@
   --lumina-brand-edge: #fbd7b4;
   --lumina-brand-edge-soft: #fde3c9;
   --lumina-brand-soft-2: #ffe5cc;
+
+  /* Agent identity ramp. Eight hues at one lightness and chroma; the line
+     token paints a 2px border, the soft tint fills the bubble. Brand orange
+     remains the action accent — these never mean a status. */
+  --lumina-agent-message: oklch(0.52 0.1 245);
+  --lumina-agent-link: oklch(0.52 0.1 200);
+  --lumina-agent-identity: oklch(0.52 0.1 155);
+  --lumina-agent-conversation: oklch(0.52 0.1 290);
+  --lumina-agent-job: oklch(0.52 0.1 110);
+  --lumina-agent-marketplace: oklch(0.52 0.1 335);
+  --lumina-agent-qris: oklch(0.52 0.1 15);
+  --lumina-agent-evidence: oklch(0.52 0.1 75);
+
+  --lumina-agent-message-soft: oklch(0.96 0.02 245);
+  --lumina-agent-link-soft: oklch(0.96 0.02 200);
+  --lumina-agent-identity-soft: oklch(0.96 0.02 155);
+  --lumina-agent-conversation-soft: oklch(0.96 0.02 290);
+  --lumina-agent-job-soft: oklch(0.96 0.02 110);
+  --lumina-agent-marketplace-soft: oklch(0.96 0.02 335);
+  --lumina-agent-qris-soft: oklch(0.96 0.02 15);
+  --lumina-agent-evidence-soft: oklch(0.96 0.02 75);
 
   /* The lavender field, drawn as three overlapping clouds over the radial. */
   --lumina-cloud-1: rgb(255 255 255 / 0.65);

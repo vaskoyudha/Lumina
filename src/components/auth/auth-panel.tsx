@@ -12,10 +12,12 @@ export function AuthPanel({
   defaultTab = "masuk",
   variant = "card",
   mode,
+  demo = false,
 }: {
   defaultTab?: string;
   variant?: "card" | "inline";
   mode?: "masuk" | "daftar";
+  demo?: boolean;
 }) {
   const [tab, setTab] = useState<"masuk" | "daftar">(
     defaultTab === "daftar" ? "daftar" : "masuk",
@@ -24,7 +26,7 @@ export function AuthPanel({
   const content = (intent: "masuk" | "daftar") => (
     <div className="flex flex-col gap-5">
       <GoogleButton intent={intent} />
-      {intent === "masuk" ? <LoginForm /> : <RegisterForm />}
+      {intent === "masuk" ? <LoginForm demo={demo} /> : <RegisterForm />}
     </div>
   );
 
