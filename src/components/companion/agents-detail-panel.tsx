@@ -1,18 +1,11 @@
 "use client";
 
-import {
-  Fingerprint,
-  Link2,
-  type LucideIcon,
-  MessageSquare,
-  MessagesSquare,
-  Quote,
-  ShieldCheck,
-} from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import {
   AGENT_DISPLAY_NAME,
   AGENT_PURPOSE,
+  AGENT_REGISTRY,
   AGENT_SEQUENCE,
   type DetectorAgent,
 } from "@/components/companion/agents";
@@ -24,22 +17,14 @@ import { cn } from "@/lib/utils";
  * Agents detail — the right-hand pane while the Agents view is open.
  *
  * It replaces "Panel bukti" only on that view: the evidence panel reports a
- * run, and this pane explains the five detectors before any run exists. Each
+ * run, and this pane explains the detectors before any run exists. Each
  * agent gets one sentence of purpose; the center diagram carries the mechanism
  * chips, so neither surface repeats the other.
  *
- * Selection is a highlight, not a filter. All five briefs stay visible, which
+ * Selection is a highlight, not a filter. All briefs stay visible, which
  * keeps the pane readable at a glance and avoids hiding four agents behind an
  * interaction. Clicking a diagram row scrolls the matching brief into view.
  */
-
-const AGENT_ICON: Record<DetectorAgent, LucideIcon> = {
-  message: MessageSquare,
-  link: Link2,
-  identity: Fingerprint,
-  conversation: MessagesSquare,
-  evidence: Quote,
-};
 
 export function AgentsDetailPanel({
   selected = null,
@@ -89,7 +74,7 @@ export function AgentsDetailPanel({
                 </h2>
               </CardTitle>
               <p className="mt-0.5 truncate text-[10.5px] text-dim">
-                Lima pemeriksa di bawah satu orkestrator
+                {AGENT_SEQUENCE.length} pemeriksa di bawah satu orkestrator
               </p>
             </div>
           </div>
@@ -108,7 +93,7 @@ export function AgentsDetailPanel({
       >
         <ul className="flex list-none flex-col gap-2">
           {AGENT_SEQUENCE.map((agent, index) => {
-            const Icon = AGENT_ICON[agent];
+            const Icon = AGENT_REGISTRY[agent].icon;
             const display = AGENT_DISPLAY_NAME[agent];
             const { label } = STAGE_LABEL[agent];
             const active = selected === agent;

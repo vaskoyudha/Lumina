@@ -1,0 +1,28 @@
+/*
+ * The Features section becomes a pinned stage on the tabbed breakpoints:
+ * the tab strip and gallery stick under the fixed nav while the runway is
+ * spent, and scroll progress advances the active preview. Once the last
+ * preview has had its share, the section releases and the page keeps
+ * scrolling. Phones keep the single raster and no pin.
+ *
+ * The pin top is negative: it is measured so the tab strip lands just under
+ * the nav, which means the section starts sticking only after the heading has
+ * already scrolled past. That keeps the gallery level in the viewport instead
+ * of parking the tall heading inside it.
+ */
+.pw-features-runway {
+  width: 100%;
+}
+
+@media (min-width: 810px) {
+  .pw-features-runway {
+    position: relative;
+    width: 100%;
+  }
+
+  .pw-features-runway[data-pw-pinned="true"] > section.framer-95w5xq {
+    position: sticky;
+    top: var(--pw-features-top, 0px);
+    z-index: 1;
+  }
+}

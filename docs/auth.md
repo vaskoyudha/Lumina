@@ -12,6 +12,10 @@ Database menyimpan identitas akun, hash password scrypt, hash token sesi, state 
 
 Buat OAuth Client ID jenis Web application di Google Cloud, konfigurasi consent dan test users bila diperlukan, lalu daftarkan redirect URI `AUTH_URL/api/auth/google/callback`. Isi `AUTH_URL`, `GOOGLE_CLIENT_ID`, dan `GOOGLE_CLIENT_SECRET`. `AUTH_URL` adalah origin publik kanonik, HTTPS di production (contoh lokal `http://localhost:3000`). Alur menggunakan authorization code, state sekali pakai terikat cookie, PKCE S256, nonce, dan verifikasi signature/issuer/audience/expiry ID token. Email Google harus terverifikasi; token Google tidak disimpan.
 
+## Akun demo
+
+Halaman `/masuk` menampilkan tombol "Masuk dengan akun demo" yang dapat dipakai setelah `LUMINA_DEMO_EMAIL` dan `LUMINA_DEMO_PASSWORD` diisi. Keduanya hanya dibaca di server oleh server action; password tidak pernah dikirim ke browser dan tidak ada password literal di kode. Bila salah satu kosong, tombol tetap tampil tetapi menolak dengan pesan "Akun demo belum dikonfigurasi." Login demo memakai akun PostgreSQL sungguhan: akun dibuat otomatis saat pertama dipakai jika belum ada, lalu diautentikasi lewat jalur email/password yang sama, termasuk rotasi sesi dan batas percobaan. Jangan mengisi kredensial ini di lingkungan yang tidak boleh memiliki akun bersama.
+
 ## Batas dan ketersediaan
 
 Login dibatasi 10 percobaan per email dan daftar 5 per email per 15 menit, ditambah batas global. Endpoint AI dibatasi 10 teks dan 3 vision per IP per menit, serta batas global `LUMINA_AI_GLOBAL_LIMIT` per menit (default 200). `TRUST_PROXY=true` hanya boleh dipasang saat app hanya dapat dicapai melalui Caddy yang menimpa header `X-Lumina-Client-IP`. Tanpa itu semua pengguna anonim berbagi satu kunci; `X-Forwarded-For` tidak dipercaya. Jika DB tidak tersedia, login dan AI yang membutuhkan limit tidak tersedia; pemeriksaan lokal dan `/darurat` tetap tersedia. `GET /api/health` memeriksa DB, bukan provider AI.

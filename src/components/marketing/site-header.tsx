@@ -94,7 +94,7 @@ export function SiteHeader() {
               href="/companion"
               data-pressable
               aria-label={brand.navCta}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-flame-500 text-espresso-950 shadow-md transition-[background-color,color,transform] duration-200 ease-out hover:bg-flame-600 active:scale-[0.97] sm:hidden"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-flame-500 text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_3px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_5px_0_0_var(--color-flame-600)] active:translate-y-[3px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75 sm:hidden"
             >
               <svg
                 className="h-4 w-4"
@@ -112,11 +112,11 @@ export function SiteHeader() {
             </Link>
             <Button
               asChild
-              className="hidden h-auto gap-3 rounded-xl bg-flame-500 py-1.5 pr-1.5 pl-5 font-semibold text-espresso-950 text-xs shadow-md transition-[background-color,color,transform] duration-300 ease-out hover:bg-flame-600 active:scale-[0.97] sm:inline-flex sm:text-sm"
+              className="relative -top-0.5 hidden h-auto gap-2 rounded-xl border-0 bg-flame-500 bg-clip-border py-1.5 pr-1.5 pl-4 font-semibold text-espresso-950 text-xs shadow-[inset_0_1px_0_0_var(--color-flame-300),0_4px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_6px_0_0_var(--color-flame-600)] active:translate-y-[4px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75 sm:inline-flex sm:text-sm"
             >
               <Link href="/companion">
                 <span>{brand.navCta}</span>
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ls-card text-ls-ink transition-colors duration-300 ease-out">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-ls-card text-ls-ink transition-colors duration-300 ease-out">
                   <svg
                     className="h-3.5 w-3.5"
                     viewBox="0 0 24 24"

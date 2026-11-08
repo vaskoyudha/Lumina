@@ -36,13 +36,18 @@ yang dihasilkan** dan perbaiki (lihat skill `shadcn-ui`). Jangan pernah menjawab
 literal, `bg-red-500`, `text-emerald-600` dilarang. Aksen tunggal Lumina adalah
 jingga `--lumina-brand` / `bg-brand` — `--accent` adalah surface hover shadcn,
 bukan warna merek. Status memakai `bg-brand-soft` / `text-brand-ink`, bukan hijau.
+Aksen tindakan tetap `--lumina-brand`. Identitas agen memakai ramp
+`--lumina-agent-*`, hanya untuk border/tint bubble agen; status tetap memakai token
+status (`brand`, `warn`, `danger`, netral).
 
 **4. Skor, `risk`, dan `signals` hanya lahir dari `src/lib/scoring/score.ts`.**
 `scoreText()` adalah entrypoint; `scoreWithTrace()` menambahkan jejak agent. LLM
 adalah suara, bukan hakim. Routing giliran (`periksa`/`tanya`/`lanjutan`/`obrolan`)
 ada di `src/lib/companion/turn.ts` dan deterministik — model tidak boleh memutuskan
 apakah engine berjalan. Tidak ada jalur di `companion/` yang boleh menghitung atau
-menggeser skor.
+menggeser skor. Angka akurasi yang dikutip lahir dari `runEval()`
+(`src/lib/scoring/eval.ts`) atas `bench-cases.ts`, bukan dari angka yang diketik
+tangan; menambah aturan berarti menambah kasus bench di commit yang sama.
 
 **5. Kontrak di `src/lib/contracts/` dibekukan** (`score.ts`, `evidence.ts`,
 `answer.ts`, `vision.ts`, `agent-run.ts`). Mengubah satu field berarti memberi
@@ -69,13 +74,14 @@ ini. Jangan mengembalikan password literal atau sesi demo.
 
 | Lapisan | Pilihan | Versi terpasang |
 |---|---|---|
-| Framework | Next.js App Router + Turbopack | 16.4.5 |
+| Framework | Next.js App Router + Turbopack + Cache Components | 16.4.5 |
 | UI runtime | React | 19.3 |
 | Bahasa | TypeScript (strict) | 5.x |
 | Styling | Tailwind CSS v4 (`@theme inline`) | 4.x |
 | Komponen | shadcn/ui, base **radix**, style `radix-nova` | CLI 4.x |
 | Ikon | `lucide-react` | 1.x |
 | Validasi | `zod` | 4.x |
+| Database | PostgreSQL via `pg` (pool async) | 18.x (Compose 18.6) |
 | PDF | `@react-pdf/renderer` | 4.x |
 | Lint/format | Biome (bukan ESLint) | 2.x |
 | Test | Jest via `next/jest` + React Testing Library | 30.x |
@@ -85,30 +91,48 @@ dan Streaming cocok untuk panel bukti yang mengisi bertahap. Tailwind v4 karena
 token bisa dideklarasikan sekali di CSS tanpa file config. Radix karena
 `asChild` adalah API yang sudah stabil untuk komponen yang membungkus `Link`.
 Biome karena satu tool untuk format + lint, dan `next lint` sudah deprecated.
+PostgreSQL karena akun, sesi, dan penghitung limit harus bertahan lintas restart
+dan dipakai bersama; progres serta percakapan tetap di perangkat.
 
 ## Perintah
 
 ```bash
 npm run dev            # dev server (Turbopack)
 npm run verify         # typecheck + lint + test + build — gate sebelum commit
-npm run test           # jest, semua
+npm run test           # jest sekali jalan
+npm run test:watch     # jest --watch
 npm test -- src/lib/scoring/score.test.ts   # satu file
 npm test -- -t "nama test"                  # satu test
 npm run test:coverage  # jest --coverage
 npm run typecheck      # tsc --noEmit
 npm run lint:fix       # biome check --write (format + lint)
 npm run format         # biome format --write
+npm run db:migrate     # jalankan migrasi; DATABASE_URL harus menunjuk DB tujuan
+npm run db:cleanup     # hapus sesi/state OAuth/penghitung kedaluwarsa
+npm run db:import-sqlite -- <backup.sqlite>  # cutover akun, sumber read-only
 ```
 
 `npm run verify` harus lulus sebelum commit. Kalau gagal, perbaiki — jangan
 melewati gate.
 
+Selain gate, ada dua jebakan:
+
+a. `biome.json` mengecualikan `src/components/marketing/powder/sections`,
+   `src/styles/powder-{framer,fonts}.css`, dan `src/data/powder`. `lint:fix`
+   tidak memformat berkas itu; sunting dengan tangan dan pertahankan kelas
+   `framer-*` yang sudah ada.
+b. Tangkapan layar review di `.opencode/` (PNG, `shots/`, `walk-*/`) bukan
+   source; jangan ikut di-commit. Yang dilacak di sana hanya symlink `skills/`.
+
 ### Jebakan Next 16 di repo ini
 
 a. `cacheComponents` aktif, jadi `export const runtime` / `export const dynamic`
    di route atau page ditolak. Halaman dinamis memakai `export const instant =
-   false` (lihat `src/app/(chat)/belajar/[modul]/page.tsx`); route handler tanpa
-   segment config (lihat `src/app/api/companion/answer/route.ts`).
+   false` (lihat `src/app/(chat)/belajar/[modul]/page.tsx` dan
+   `src/app/admin/[no]/page.tsx`); route handler tanpa segment config (lihat
+   `src/app/api/companion/answer/route.ts`). Route yang benar-benar butuh
+   permintaan dinamis memakai `await connection()` di dalam handler
+   (`src/app/api/health/route.ts`).
 b. Membaca cookie di layout membuat semua rute dinamis. Bungkus pembaca sesi
    dalam `Suspense` seperti `NavWithSession`
    (`src/components/shell/nav-with-session.tsx`).
@@ -119,14 +143,20 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 
 `.env.example` adalah daftar variabel; `.env.local` tidak di-commit.
 
-- `DATABASE_URL` — koneksi PostgreSQL runtime; jalankan `npm run db:migrate` sebelum app.
-- `TEST_DATABASE_URL` — database khusus pengujian (nama berakhiran `_test`); jangan gunakan database produksi.
-- `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; lihat `docs/auth.md`.
+- `DATABASE_URL` — koneksi PostgreSQL runtime; jalankan `npm run db:migrate` sebelum app. Aplikasi tidak membuat tabel otomatis; pool maksimal lima koneksi per proses.
+- `TEST_DATABASE_URL` — database khusus pengujian (nama berakhiran `_test`, host/nama berbeda dari `DATABASE_URL`); tanpa ini suite integrasi PostgreSQL dilewati. Saat terisi, Jest memaksa `maxWorkers: 1` karena suite mereset database yang sama.
+- `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; callback = `AUTH_URL + /api/auth/google/callback`. Lihat `docs/auth.md`.
+- `LUMINA_DEMO_EMAIL`, `LUMINA_DEMO_PASSWORD` — opsional; tombol akun demo di `/masuk` hanya membaca keduanya di server. Kosongkan di lingkungan yang tidak boleh punya akun bersama.
+- `LUMINA_AI_GLOBAL_LIMIT` — batas AI global per menit (template Compose 100; kode jatuh ke 200 bila kosong).
+- `TRUST_PROXY` — hanya `true` di belakang Caddy yang menimpa `X-Lumina-Client-IP`; tanpa itu semua pengguna anonim berbagi satu kunci limit.
 - `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
   OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan
   panggilan jaringan dan jatuh ke `src/lib/companion/reply.ts`; route
   `/api/companion/{answer,vision,voice}` membalas 503 `not-configured`. Itu jalur
   demo offline, bukan kerusakan.
+- Compose produksi memakai `DOMAIN`, `POSTGRES_DB`, `POSTGRES_PASSWORD`,
+  `APP_DB_PASSWORD`, `APP_IMAGE`; jalankan dengan `docker compose --env-file
+  .env.production …`. Runbook lengkap: `docs/deploy.md`.
 
 ### Batas privasi yang tidak boleh digeser
 
@@ -138,6 +168,15 @@ b. `/api/companion/vision` hanya menyalin teks dari gambar. Kontraknya tidak pun
    field skor/risk/signal; hasilnya hanya boleh masuk kembali ke `scoreText()`.
 c. Model tidak pernah diminta memberi skor dan tidak boleh menambah atau
    menurunkan `signals` (plan §3b, §11.6a).
+
+## Deploy
+
+`next.config.ts` memakai `output: "standalone"`. `Dockerfile` menghasilkan image
+non-root UID 1001; `compose.yaml` menjalankan app + PostgreSQL 18.6 + Caddy, dan
+hanya Caddy yang membuka 80/443. Migrasi selalu langkah rilis terpisah
+(`npm run db:migrate`) — aplikasi tidak membuat tabel. `GET /api/health` hijau
+hanya bila `SELECT 1` lolos dalam dua detik, bukan bila provider AI hidup.
+Backup, rollback, dan cutover SQLite: `docs/deploy.md`.
 
 ## Skills
 
@@ -168,12 +207,14 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 
 | Grup | Shell | Token | Isi |
 |---|---|---|---|
-| `(marketing)` | `SiteHeader` + `Footer` + `QuickDrawer` | `.landing` (cream/espresso) | `/` landing |
+| `(marketing)` | `SiteProvider` + `SiteHeader` + `Footer` + `ThemeSlider` + `SmoothScroll` | `.landing[data-theme]` (`--ls-*`) | `/` landing |
 | `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | simulasi, darurat, profil |
 | `(chat)` | tanpa nav, sidebar sendiri | `--lumina-*` via `.appnext` | `/companion`, `/belajar` |
 | `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
 | `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
 | `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
+| `api/auth/google/*` | route handler | — | mulai OAuth + callback |
+| `api/health` | route handler | — | `SELECT 1` ke DB; bukan cek provider AI |
 
 Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
 ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
@@ -190,7 +231,7 @@ controlled, dengan tab Masuk/Daftar dari `AuthPanel`.
 
 | Permukaan | Komponen | Catatan |
 |---|---|---|
-| `SiteHeader` marketing | `MarketingAuth` | nada espresso/amberwarm, tetap tanpa sesi |
+| `SiteHeader` marketing | `MarketingAuth` | mengikuti token `--ls-*` landing; tetap tanpa sesi |
 | `SiteNav` `(app)` | `AuthNav` | masukan paling kanan setelah Darurat |
 | Rail + sidebar companion | `CompanionAuth` | `iconsOnly` memakai tombol ikon saja; nama aksesibel wajib |
 
@@ -204,51 +245,67 @@ keduanya menyusun `AuthPanel` yang sama. Logika sesi tetap di `lib/auth/`.
 |---|---|---|
 | `--lumina-*` | `src/app/globals.css` `:root` | nama kanonik; utility Tailwind `bg-brand`, `text-danger`, `border-line`, … |
 | `.appnext` | dipasang **sekali di `<body>`** (`src/app/layout.tsx`), definisi di `src/styles/appnext-tokens.css` | meremap `--lumina-*` ke palet terang AppNext, plus `--appnext-*` dan kelas `.appnext-*` |
-| `.landing` | `src/styles/landing-tokens.css` | landing marketing: cream/espresso/amberwarm |
+| `.landing[data-theme]` | `src/styles/landing-tokens.css`, dipasang di `(marketing)/layout.tsx` | landing marketing: tiga palet `cream`/`paper`/`black` lewat peran `--ls-*` |
 
 `.appnext` sudah ada di `body`, jadi jangan menambah wrapper `.appnext` kedua —
 ia menggandakan custom property dan membuat "pulau" warna sulit dilacak. Jangan
-menaruh hex di komponen; pakai utility yang dipetakan `@theme inline`. Detail:
-`docs/design-system/appnext.md`.
+menaruh hex di komponen; pakai utility yang dipetakan `@theme inline`.
+
+Landing **tidak** memakai `--lumina-*`. Ia punya peran `--ls-*` yang diganti
+seluruhnya oleh `data-theme` (default `cream`; persist di
+`localStorage["lumina-theme"]`, dengan skrip pra-paint di layout marketing).
+Section Powder memakai `--pw-*` yang memetakan ke `--ls-*`, jadi mewarnai
+section berarti mengubah peran, bukan menempel hex lokal. Skill
+`appnext-design` mengatur permukaan `.appnext`, bukan landing; kontrak landing
+ada di komentar `src/styles/landing-tokens.css` dan `powder-theme.css`. Detail
+AppNext: `docs/design-system/appnext.md`.
 
 ## Layout
 
 ```
 src/
 ├── app/
-│   ├── (marketing)/          landing `/` — SiteHeader + Footer + QuickDrawer
+│   ├── (marketing)/          landing `/` — header, footer, theme slider, smooth scroll
 │   ├── (app)/                SiteNav + footer
 │   │   ├── simulasi/         C · daftar + [id] + layout runner
 │   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
-│   │   └── profil/           akun demo + kemajuan perangkat
-│   ├── (chat)/               tanpa nav, footer ada di sidebar
+│   │   └── profil/           akun + kemajuan perangkat
+│   ├── (chat)/               tanpa nav; catatan privasi ada di panel/sidebar
 │   │   ├── companion/        A · percakapan + panel bukti
 │   │   └── belajar/          B · katalog + [modul], sidebar Companion
 │   ├── admin/                workbench kurikulum, AdminNav sendiri
-│   ├── api/companion/        answer, vision, voice (route handler)
+│   ├── api/
+│   │   ├── companion/        answer, vision, voice
+│   │   ├── auth/google/      mulai OAuth + callback
+│   │   └── health/           SELECT 1 ke DB
 │   ├── masuk/ daftar/        auth akun, tanpa chrome
 │   └── layout.tsx            `body.appnext`, font, token ground
 ├── components/
 │   ├── ui/                   shadcn — jangan diedit kecuali perbaikan registry
 │   ├── shell/                nav + AuthNav + pembaca sesi
 │   ├── auth/                 AuthDialog, AuthPanel, UserMenu
-│   ├── marketing/            sections landing
+│   ├── marketing/            sections landing + powder/ (vendored, Biome-exempt)
+│   ├── brand/                logo + mascot (dipakai shell, marketing, companion)
 │   ├── admin/                admin inventory/nav
 │   └── belajar/ companion/ darurat/ profil/
 ├── lib/
 │   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run
-│   ├── scoring/              engine deterministik: score, message, link, identity, conversation
+│   ├── scoring/              engine deterministik + eval.ts + bench-cases.ts
 │   ├── companion/            turn, reply, explain, answer-client, vision-client, voice-stream
-│   ├── auth/                 database, accounts, password, google, session, actions
+│   ├── auth/                 database, accounts, password, google, session, server-session, maintenance
+│   ├── server/               clientKey/limitAI + pembaca body berbatas
 │   ├── simulasi/             catalog, scenario, validate
 │   ├── darurat/              report, pdf
 │   ├── evidence/             bundle, extract, timeline, narrative
 │   ├── admin/                draft-store, export-course
-│   ├── progress.ts
-│   └── modus.ts              pembaca modus.json, tervalidasi zod
-├── data/                     modus.json, official-domains.json, kurikulum.ts, modul-10.ts, tactics.ts, triage.ts
-└── styles/                   appnext-tokens.css, landing-tokens.css
+│   └── progress.ts, modus.ts, scroll.ts, site.ts, utils.ts
+├── data/                     modus.json, official-domains.json, kurikulum.ts, modul-10.ts, modul-schema.ts, tactics.ts, triage.ts, powder/
+└── styles/                   appnext-tokens.css, landing-tokens.css, powder-*.css
 ```
+
+Di akar repo: `migrations/` (SQL bernomor, dijalankan `scripts/migrate.mjs`),
+`scripts/` (migrate/cleanup/import-sqlite), dan `deploy/` (Caddyfile, backup,
+db-init). Jangan menambah tabel lewat kode aplikasi — tambah migrasi bernomor.
 
 ## Batas stream
 
@@ -262,6 +319,11 @@ sesuatu, minta bentuk datanya, bukan filenya.
 | B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
 | C | `app/(app)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
 | D | `app/(app)/darurat/`, `components/darurat/`, `lib/darurat/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
+
+`components/brand`, `components/auth`, `components/shell`, `lib/auth`,
+`lib/server`, `app/api`, dan `migrations/` adalah permukaan bersama, bukan milik
+satu stream: perubahan di situ terasa di semua permukaan, jadi sebutkan di
+commit/PR.
 
 ## Kejujuran yang diuji
 

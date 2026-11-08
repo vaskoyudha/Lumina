@@ -51,6 +51,7 @@ export function BelajarWorkspace({
         onClose={() => setMobileOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((open) => !open)}
+        onShowAgents={() => router.push("/companion?panel=agen")}
         auth={(iconsOnly) => (
           <CompanionAuth session={session} iconsOnly={iconsOnly} />
         )}

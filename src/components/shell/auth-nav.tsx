@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AuthDialog, type AuthTab } from "@/components/auth/auth-dialog";
+import { DaftarButton } from "@/components/auth/daftar-button";
 import { UserMenu } from "@/components/auth/user-menu";
 
 type Session = { nama: string; email: string } | null;
@@ -45,18 +46,11 @@ export function AuthNav({
       >
         Masuk
       </button>
-      <button
-        type="button"
-        data-pressable
+      <DaftarButton
+        size={compact ? "sm" : "md"}
         onClick={() => setTab("daftar")}
-        className={
-          compact
-            ? "hidden h-[32px] items-center rounded-full border border-edge bg-panel px-3 font-medium text-[12px] text-txt transition-[background-color,border-color] duration-150 ease-out hover:bg-panel-2 sm:inline-flex"
-            : "inline-flex min-h-11 items-center rounded-md border border-line bg-panel-2 px-3 py-1.5 font-medium text-sm text-txt transition-[background-color,border-color,color] duration-150 ease-out hover:border-txt/20 hover:bg-panel"
-        }
-      >
-        Daftar
-      </button>
+        className={compact ? "hidden sm:inline-flex" : undefined}
+      />
 
       <AuthDialog
         open={tab !== null}

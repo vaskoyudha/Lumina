@@ -24,12 +24,15 @@ export type DotBorderButtonProps = {
   label?: string;
   onActivate?: () => void;
   mode?: EffectMode;
+  tone?: EffectTone;
   hue?: number;
   saturation?: number;
   brightness?: number;
   className?: string;
   style?: CSSProperties;
 };
+
+type EffectTone = "outline" | "solid";
 
 const DOT_BORDER_BUTTON_DEFAULTS = {
   label: "Kenali polanya",
@@ -93,7 +96,7 @@ const DOT_BORDER_BUTTON_SOURCE = `<!DOCTYPE html>
   align-items: center;
   height: 100vh;
   background-color: transparent;
-"><a href="#" class="btn-wrapper" style="--dot-size: 6px; --line-weight: 1px; --line-distance: 0.35rem 0.8rem; --animation-speed: 0.35s; --dot-color: #fffa; --line-color: #fffa; --grid-color: #fff3; position: relative; display: inline-flex; justify-content: center; align-items: center; width: auto; height: auto; padding: var(--line-distance); background-color: rgba(0, 0, 0, 0); user-select: none">
+"><a href="#" class="btn-wrapper" style="--dot-size: 6px; --line-weight: 1px; --line-distance: 0.35rem 0.8rem; --animation-speed: 0.35s; __DOT_BORDER_VARS__ position: relative; display: inline-flex; justify-content: center; align-items: center; width: auto; height: auto; padding: var(--line-distance); background-color: rgba(0, 0, 0, 0); user-select: none">
   <style>
     .btn-wrapper::after {
       content: "";
@@ -349,6 +352,8 @@ const DOT_BORDER_BUTTON_SOURCE = `<!DOCTYPE html>
         transform: rotate(0deg) scaleY(1);
       }
     }
+
+    __DOT_BORDER_TONE__
   </style>
 
   <div class="line horizontal top"></div>
@@ -376,10 +381,20 @@ const DOT_BORDER_BUTTON_SOURCE = `<!DOCTYPE html>
 </html>
 `;
 
-function dotBorderDefinition(label: string): EffectDefinition {
+function dotBorderDefinition(
+  label: string,
+  tone: EffectTone,
+): EffectDefinition {
+  const toneVars =
+    tone === "solid"
+      ? "--dot-color: #241c17cc; --line-color: #241c17aa; --grid-color: #fff3;"
+      : "--dot-color: #fffa; --line-color: #fffa; --grid-color: #fff3;";
+  const toneCss = tone === "solid" ? SOLID_TONE_CSS : "";
   return {
     title: label,
-    source: DOT_BORDER_BUTTON_SOURCE.replace("__LABEL__", escapeHtml(label)),
+    source: DOT_BORDER_BUTTON_SOURCE.replace("__DOT_BORDER_VARS__", toneVars)
+      .replace("__DOT_BORDER_TONE__", toneCss)
+      .replace("__LABEL__", escapeHtml(label)),
     // The iframe is a separate document, so it cannot inherit the landing
     // tokens; it stays transparent and lets the hero photo show through.
     background: "transparent",
@@ -393,6 +408,39 @@ function dotBorderDefinition(label: string): EffectDefinition {
     ],
   };
 }
+
+// "solid" keeps the reference motion untouched and recolors the control: a
+// black pill instead of the translucent outline. The dashed contour and dots
+// sit on the light hero, so they use the pill ink rather than the white the
+// dark reference uses.
+const SOLID_TONE_CSS = `
+    .btn-wrapper .btn {
+      height: 48px;
+      padding: 0 36px;
+      border-radius: 999px;
+      background-color: #241c17;
+      color: #fffdf9;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .btn-wrapper .btn:hover {
+      background-color: #3a2e26;
+      color: #fffdf9;
+      transform: scale(1.05);
+      letter-spacing: 0.06em;
+    }
+
+    .btn-wrapper .btn:active {
+      background-color: #3a2e26;
+      transform: scale(0.98);
+      letter-spacing: 0.02em;
+    }
+
+    .btn-wrapper .btn-svg {
+      display: none;
+    }`;
 
 function escapeHtml(value: string) {
   return value
@@ -540,9 +588,13 @@ function NeuformIsolatedEffect({
 
 function DotBorderButton({
   label = DOT_BORDER_BUTTON_DEFAULTS.label,
+  tone = "outline",
   ...props
 }: DotBorderButtonProps) {
-  const definition = useMemo(() => dotBorderDefinition(label), [label]);
+  const definition = useMemo(
+    () => dotBorderDefinition(label, tone),
+    [label, tone],
+  );
 
   return <NeuformIsolatedEffect {...props} definition={definition} />;
 }

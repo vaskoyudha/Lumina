@@ -27,6 +27,7 @@ import { LuminaLogo } from "@/components/brand/lumina-logo";
 import {
   AGENT_DISPLAY_NAME,
   AGENT_MECHANISM,
+  AGENT_REGISTRY,
   AGENT_SEQUENCE,
   type DetectorAgent,
   LUMINA_STEPS,
@@ -45,21 +46,34 @@ import { cn } from "@/lib/utils";
  * and what each one looks for. The connectors are decorative: they loop to show
  * direction, never to claim that a stage is running. No trace is read here.
  *
- * Shape follows the reference graph: Lumina sits at the top as the orchestrator
- * and fans out into the five detectors on one horizontal row, each detector
- * dropping into its own mechanism lane. Reading order is top-to-bottom between
- * the tiers and left-to-right only within the single agent row — no horizontal
- * chains between detectors, because none of them waits for another.
+ * Shape: Lumina sits at the top as the orchestrator and lays the detectors out
+ * in a responsive grid, each dropping into its own mechanism lane. Reading
+ * order is top-to-bottom between the tiers and left-to-right within the grid —
+ * no horizontal chains between detectors, because none of them waits for
+ * another.
  */
 
-/** The crew: one supplied mascot portrait per detector family. */
-const AGENT_PORTRAIT: Record<DetectorAgent, string> = {
-  message: "/brand/agents/message.jpg",
-  link: "/brand/agents/link.jpg",
-  identity: "/brand/agents/identity.jpg",
-  conversation: "/brand/agents/conversation.jpg",
-  evidence: "/brand/agents/evidence.jpg",
-};
+/**
+ * One agent's face: the supplied portrait when it exists, otherwise the
+ * registry icon. Reading both from the registry keeps art and icons in one
+ * place as the crew grows.
+ */
+function AgentFace({ agent, size }: { agent: DetectorAgent; size: number }) {
+  const profile = AGENT_REGISTRY[agent];
+  if (profile.portrait) {
+    return (
+      <Image
+        src={profile.portrait}
+        alt=""
+        width={size}
+        height={size}
+        className="size-full object-cover"
+      />
+    );
+  }
+  const Icon = profile.icon;
+  return <Icon aria-hidden className="size-1/2 text-brand-ink" />;
+}
 
 export function AgentsView({
   onSelect,
@@ -141,17 +155,14 @@ export function AgentsView({
         <DiagramCanvas>
           <LuminaCard />
 
-          <div className="lg:hidden">
-            <Connector reduced={reduced} size="tall" />
-          </div>
-          <FanoutConnector reduced={reduced} />
+          <Connector reduced={reduced} size="tall" />
 
           {/*
            * Each column is one channel: the detector and the mechanisms it
-           * checks live in the same tall card, so the five agents read as five
-           * parallel lanes rather than ten disconnected boxes.
+           * checks live in the same tall card, so the agents read as parallel
+           * lanes rather than disconnected boxes.
            */}
-          <ul className="mt-1 grid list-none grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5 lg:gap-3">
+          <ul className="mt-1 grid list-none grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-3">
             {AGENT_SEQUENCE.map((agent, index) => (
               <li key={agent} className="flex min-w-0 flex-col">
                 <AgentLane
@@ -167,16 +178,7 @@ export function AgentsView({
             ))}
           </ul>
 
-          {/*
-           * The figure closes the loop the copy promises: the five lanes
-           * converge into one deterministic score. Same bus geometry as the
-           * fan-out, mirrored and flowing inward. Decorative, like the rest of
-           * the rails — it never reports a live value.
-           */}
-          <ScoreConverge reduced={reduced} />
-          <div className="lg:hidden">
-            <Connector reduced={reduced} size="tall" />
-          </div>
+          <Connector reduced={reduced} size="tall" />
           <ScoreNode />
         </DiagramCanvas>
       </div>
@@ -475,8 +477,8 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
 /**
  * The orchestrator core: the warm command deck that drives the row below.
  *
- * The five supplied mascots are shown as an overlapping crew stack on the right,
- * so the card reads as "one engine, five agents" rather than a generic banner.
+ * The supplied mascots are shown as an overlapping crew stack on the right,
+ * so the card reads as "one engine, every agent" rather than a generic banner.
  * The three steps reuse the chip grammar from the detectors but sit on a
  * darkened inset so they stay legible on orange.
  */
@@ -529,7 +531,7 @@ function LuminaCard() {
               </Badge>
             </div>
             <p className="mt-1 text-[12.5px] text-panel/85 leading-snug">
-              Satu engine deterministik yang menjalankan kelima agen.
+              Satu engine deterministik yang menjalankan seluruh agen.
             </p>
           </div>
           <div className="hidden shrink-0 flex-col items-end gap-2 pr-1 sm:flex">
@@ -537,20 +539,14 @@ function LuminaCard() {
               {AGENT_SEQUENCE.map((agent) => (
                 <span
                   key={agent}
-                  className="relative size-8 overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
+                  className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
                 >
-                  <Image
-                    src={AGENT_PORTRAIT[agent]}
-                    alt=""
-                    fill
-                    sizes="32px"
-                    className="object-cover"
-                  />
+                  <AgentFace agent={agent} size={32} />
                 </span>
               ))}
             </div>
             <span className="font-mono text-[8px] text-panel/70 uppercase tracking-[0.18em] leading-none">
-              05 agen
+              {String(AGENT_SEQUENCE.length).padStart(2, "0")} agen
             </span>
           </div>
         </CardHeader>
@@ -600,7 +596,6 @@ function AgentLane({
 }) {
   const { label } = STAGE_LABEL[agent];
   const display = AGENT_DISPLAY_NAME[agent];
-  const portrait = AGENT_PORTRAIT[agent];
   const mechanisms = AGENT_MECHANISM[agent];
 
   return (
@@ -647,14 +642,8 @@ function AgentLane({
                   : "group-hover/agent:scale-[1.04]",
               )}
             >
-              <span className="relative block size-full overflow-hidden rounded-[8px]">
-                <Image
-                  src={portrait}
-                  alt=""
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                />
+              <span className="flex size-full items-center justify-center overflow-hidden rounded-[8px]">
+                <AgentFace agent={agent} size={40} />
               </span>
             </span>
             <CardTitle className="min-w-0 truncate font-semibold text-[18px] text-panel leading-tight tracking-[-0.02em]">
@@ -745,7 +734,7 @@ const RAIL_PERIOD = 8;
  * The shared clock for every flowing rail. Linear because the pattern is
  * periodic: one period per cycle loops without a seam, so the line reads as an
  * endless march rather than a pulse. Identical timing keeps the whole diagram
- * flowing as one system instead of five unrelated loops.
+ * flowing as one system instead of unrelated loops.
  */
 const RAIL_FLOW = {
   duration: 0.9,
@@ -754,94 +743,11 @@ const RAIL_FLOW = {
 } as const;
 
 /**
- * Lumina's fan-out: one stem leaves the orchestrator, a dotted bus crosses all
- * five columns outward from the middle, and a dotted drop lands on every
- * detector card.
- *
- * Only rendered beside the five-column grid; once the grid wraps there is no
- * single row to fan out into, so the plain entry arrow above the grid stands in.
- * The bus runs from the first column's centre to the last one's — `(100% − 4
- * gaps) / 10` in from either edge with the grid's 0.75rem gap. Every rail is a
- * marching dotted line, never a dot riding a static track and never a path
- * being drawn: the motion shows direction, never progress or live status.
- */
-function FanoutConnector({ reduced }: { reduced: boolean }) {
-  const edge = "calc((100% - 3rem) / 10)";
-
-  return (
-    <div aria-hidden className="hidden lg:block" data-connector="lumina-fanout">
-      <Stem reduced={reduced} />
-      <div className="relative">
-        <FlowRail
-          direction={-1}
-          reduced={reduced}
-          style={{ left: edge, right: "50%" }}
-        />
-        <FlowRail
-          direction={1}
-          reduced={reduced}
-          style={{ left: "50%", right: edge }}
-        />
-        {/* The junction where the stem meets both bus halves. */}
-        <span
-          aria-hidden
-          className="absolute top-0 left-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand shadow-orb ring-[3px] ring-panel"
-        />
-        <ul className="grid list-none grid-cols-5 gap-3">
-          {AGENT_SEQUENCE.map((agent) => (
-            <li key={agent} className="flex justify-center">
-              <Connector reduced={reduced} size="card" />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-/**
- * The mirrored fan-in: five lanes converge on one score.
- *
- * The bus reuses the fan-out geometry — first column centre to last column
- * centre — but the halves flow inward, so the whole figure reads as one closed
- * pipeline rather than a tree that stops at the mechanisms. Decorative only.
- */
-function ScoreConverge({ reduced }: { reduced: boolean }) {
-  const edge = "calc((100% - 3rem) / 10)";
-
-  return (
-    <div
-      aria-hidden
-      className="hidden lg:block"
-      data-connector="score-converge"
-    >
-      <div className="relative h-0">
-        <FlowRail
-          direction={1}
-          reduced={reduced}
-          style={{ left: edge, right: "50%" }}
-        />
-        <FlowRail
-          direction={-1}
-          reduced={reduced}
-          style={{ left: "50%", right: edge }}
-        />
-        <span
-          aria-hidden
-          className="absolute top-0 left-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand shadow-orb ring-[3px] ring-panel"
-        />
-      </div>
-      <Stem reduced={reduced} />
-    </div>
-  );
-}
-
-/**
  * The pipeline's output: one deterministic score, not a sixth agent.
  *
  * A dark terminal plate closes the value ladder the warm Lumina opens. The
  * middle carries the engine's actual 0–100 axis as tick marks — a scale, not a
- * gauge with a value — and the crew stack on the footer ties the five mascots
+ * gauge with a value — and the crew stack on the footer ties the mascots
  * to the single result.
  */
 function ScoreNode() {
@@ -924,15 +830,9 @@ function ScoreNode() {
                 {AGENT_SEQUENCE.map((agent) => (
                   <span
                     key={agent}
-                    className="relative size-5 overflow-hidden rounded-full ring-1 ring-panel/30"
+                    className="flex size-5 items-center justify-center overflow-hidden rounded-full ring-1 ring-panel/30"
                   >
-                    <Image
-                      src={AGENT_PORTRAIT[agent]}
-                      alt=""
-                      fill
-                      sizes="20px"
-                      className="object-cover"
-                    />
+                    <AgentFace agent={agent} size={20} />
                   </span>
                 ))}
               </div>
@@ -946,71 +846,11 @@ function ScoreNode() {
               </span>
             </div>
             <span className="font-mono text-[7.5px] text-panel/35 uppercase tracking-[0.12em]">
-              5 agen · 3 langkah
+              {AGENT_SEQUENCE.length} agen · 3 langkah
             </span>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/**
- * A repeating dot gradient is wider than its window by exactly one period, so
- * sliding it by that period loops with no visible seam. Direction `1` marches
- * the dots right, `-1` left; together the halves flow outward from the stem.
- */
-function FlowRail({
-  direction,
-  reduced,
-  style,
-}: {
-  direction: 1 | -1;
-  reduced: boolean;
-  style: { left: string; right: string };
-}) {
-  return (
-    <div
-      aria-hidden
-      className="absolute top-0 h-[4px] overflow-hidden"
-      style={style}
-    >
-      {/* A faint continuous trace under the marching dots binds the bus. */}
-      <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-brand/35" />
-      <motion.div
-        animate={
-          reduced
-            ? undefined
-            : {
-                x: direction === 1 ? [-RAIL_PERIOD, 0] : [0, -RAIL_PERIOD],
-              }
-        }
-        className="absolute inset-y-0 left-0"
-        style={{
-          width: `calc(100% + ${RAIL_PERIOD}px)`,
-          backgroundImage:
-            "radial-gradient(circle, var(--lumina-brand) 1.5px, color-mix(in oklab, var(--lumina-brand) 26%, transparent) 2.3px, transparent 3.2px)",
-          backgroundSize: `${RAIL_PERIOD}px 4px`,
-        }}
-        transition={RAIL_FLOW}
-      />
-    </div>
-  );
-}
-
-/** The dotted stem from Lumina down into the fan-out bus. */
-function Stem({ reduced }: { reduced: boolean }) {
-  return (
-    <div className="flex h-6 items-center justify-center">
-      <svg
-        aria-hidden="true"
-        fill="none"
-        height="24"
-        viewBox="0 0 14 24"
-        width="14"
-      >
-        <FlowingPath d="M7 0v24" reduced={reduced} />
-      </svg>
     </div>
   );
 }
@@ -1070,7 +910,7 @@ function FlowingPath({ d, reduced }: { d: string; reduced: boolean }) {
  * A vertical dotted connector that flows downward.
  *
  * `tall` is the single entry arrow under Lumina when the agent grid wraps;
- * `card` is one of the five fan-out drops onto a detector, or the link from a
+ * `card` is one of the fan-out drops onto a detector, or the link from a
  * detector to its mechanism lane. The dash pattern itself marches; the chevron
  * stays put as the destination marker. Under reduced motion nothing moves.
  */

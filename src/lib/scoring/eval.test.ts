@@ -1,5 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
+import { LEGIT_CASES, SCAM_CASES } from "@/lib/scoring/bench-cases";
 import { runEval } from "@/lib/scoring/eval";
+import { scoreText } from "@/lib/scoring/score";
 
 /**
  * The eval harness exists so "we measured it" is one function call, not a
@@ -10,12 +12,12 @@ describe("scoring eval — the numbers the pitch may quote", () => {
   const report = runEval();
 
   it("catches every scam in the corpus", () => {
-    expect(report.scamTotal).toBe(20);
+    expect(report.scamTotal).toBe(29);
     expect(report.caught).toBe(report.scamTotal);
   });
 
   it("never calls a legitimate message risky", () => {
-    expect(report.legitTotal).toBe(25);
+    expect(report.legitTotal).toBe(28);
     expect(report.legitNotRisky).toBe(report.legitTotal);
     expect(report.falsePositives).toBe(0);
   });
@@ -38,5 +40,26 @@ describe("scoring eval — the numbers the pitch may quote", () => {
     // clock here measures the machine's load. The engine is synchronous, so
     // its CPU cost is what the reader actually pays.
     expect(report.slowestCpuMs).toBeLessThan(50);
+  });
+
+  it("never lets two agents quote the same evidence", () => {
+    for (const testCase of [...SCAM_CASES, ...LEGIT_CASES]) {
+      const result = scoreText({ text: testCase.text });
+      const quoted = new Map<string, string>();
+      for (const signal of result.signals) {
+        if (signal.weight <= 0 || !signal.evidence) continue;
+        const agent = signal.agent ?? "scoring";
+        /*
+         * Conversation is an aggregator, not a detector: when two vectors
+         * agree it deliberately quotes the setup rule's own evidence. An
+         * overlap with that rule is its design, so only the owning detectors
+         * are checked for duplicate quotes here.
+         */
+        if (agent === "conversation") continue;
+        const previous = quoted.get(signal.evidence);
+        expect(previous === undefined || previous === agent).toBe(true);
+        quoted.set(signal.evidence, agent);
+      }
+    }
   });
 });

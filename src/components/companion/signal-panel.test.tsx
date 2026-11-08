@@ -101,7 +101,12 @@ describe("SignalPanel", () => {
     expect(linkRow).toHaveTextContent(/dilewati/i);
     expect(linkRow).toHaveTextContent(/tidak ada tautan pada pesan ini/i);
     expect(
-      screen.getByText(/\d+ dari 5 agen memeriksa pesan ini/i),
+      screen.getByText(
+        new RegExp(
+          `\\d+ dari ${AGENT_SEQUENCE.length} agen memeriksa pesan ini`,
+          "i",
+        ),
+      ),
     ).toBeInTheDocument();
   });
 

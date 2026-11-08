@@ -1,6 +1,6 @@
 /**
- * Bench corpus — 45 messages that span the 12 modus families (20 scams)
- * plus 25 messages an Indonesian phone user legitimately receives,
+ * Bench corpus — 57 messages that span the 12 modus families (29 scams)
+ * plus 28 messages an Indonesian phone user legitimately receives,
  * chosen so the FALSE-POSITIVE traps sit where they really hide:
  * an OTP the user's own bank sent, a verification reminder from a
  * legitimate product, a flash sale with real urgency.
@@ -146,6 +146,59 @@ export const SCAM_CASES: BenchCase[] = [
     wantModus: "fake-call",
     text: "Saya CS Bank Mandiri. OTP dipakai transaksi Rp700 ribu di perangkat tak dikenal. Berikan kode OTP 4 digit untuk menonaktifkan fitur tersebut.",
   },
+  {
+    id: "job-s01",
+    tag: "lowongan biaya",
+    wantModus: "lowongan-tugas-berbayar",
+    text: "Lowongan admin online, gaji Rp6 juta. Biaya pelatihan Rp150.000 ditransfer dulu sebelum training.",
+  },
+  {
+    id: "job-s02",
+    tag: "tugas like berbayar",
+    wantModus: "lowongan-tugas-berbayar",
+    text: "Tugas harian like dan subscribe video. Komisi Rp50.000 per tugas, top up saldo Rp100.000 dulu untuk membuka level.",
+  },
+  {
+    id: "job-s03",
+    tag: "penempatan luar negeri",
+    wantModus: "lowongan-tugas-berbayar",
+    text: "Penempatan kerja ke luar negeri tanpa ijazah. Biaya visa dan tiket pesawat ditanggung pelamar.",
+  },
+  {
+    id: "mkt-s01",
+    tag: "bayar luar marketplace",
+    wantModus: "jual-beli-palsu",
+    text: "Barang ready. Jangan lewat Shopee ya, transfer langsung ke rekening pribadi saya biar lebih murah.",
+  },
+  {
+    id: "mkt-s02",
+    tag: "gift card",
+    wantModus: "jual-beli-palsu",
+    text: "Untuk DP sepatu, bayar pakai voucher Google Play atau USDT. Nanti sisanya bisa dicicil.",
+  },
+  {
+    id: "mkt-s03",
+    tag: "refund qris",
+    wantModus: "quishing-qris",
+    text: "Refund gagal karena sistem. Scan QRIS ini dulu supaya dana kembali ke rekening kamu.",
+  },
+  {
+    id: "qris-s01",
+    tag: "qris quishing",
+    wantModus: "quishing-qris",
+    text: "Scan QRIS ini untuk membayar: 00020101021226660014ID.CO.QRIS.WWW01189360001400000000000215ID10240000000000303UMI5204581253033605802ID5920https://evil.example6007JAKARTA610512345630441C7",
+  },
+  {
+    id: "qris-s02",
+    tag: "qris crc rusak",
+    wantModus: "quishing-qris",
+    text: "Scan QRIS ini: 00020101021226660014ID.CO.QRIS.WWW01189360001400000000000215ID10240000000000303UMI5204581253033605802ID5909TOKO JAYA6007JAKARTA61051234563040000",
+  },
+  {
+    id: "qris-s03",
+    tag: "qris stiker diganti",
+    text: "Bayar ke Warung Bu Siti: 00020101021226660014ID.CO.QRIS.WWW01189360001400000000000215ID10240000000000303UMI5204581253033605802ID5909TOKO JAYA6007JAKARTA61051234563042908",
+  },
 ];
 
 export const LEGIT_CASES: BenchCase[] = [
@@ -284,5 +337,20 @@ export const LEGIT_CASES: BenchCase[] = [
     id: "l25",
     tag: "peringatan file APK",
     text: "Jangan buka file undangan.apk dari pengirim yang tidak dikenal, langsung hapus.",
+  },
+  {
+    id: "job-l01",
+    tag: "lowongan resmi",
+    text: "Lowongan staf administrasi di PT Sumber Rejeki. Biaya tes kesehatan dan pelatihan ditanggung perusahaan. Kirim CV ke karier@sumberrejeki.co.id.",
+  },
+  {
+    id: "mkt-l01",
+    tag: "struk marketplace asli",
+    text: "Pesanan Shopee sudah dibayar lewat Shopee. Paket dikirim dengan JNE dan resi bisa dilacak di aplikasi.",
+  },
+  {
+    id: "qris-l01",
+    tag: "qris merchant cocok",
+    text: "Bayar ke Toko Jaya: 00020101021226660014ID.CO.QRIS.WWW01189360001400000000000215ID10240000000000303UMI5204581253033605802ID5909TOKO JAYA6007JAKARTA61051234563042908",
   },
 ];

@@ -6,12 +6,7 @@ import { useActionState, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type AuthResult, register } from "@/lib/auth/actions";
 
@@ -107,10 +102,6 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
               {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
             </Button>
           </div>
-          <FieldDescription>
-            Gunakan 8–128 karakter. Verifikasi email dan pemulihan password
-            belum tersedia.
-          </FieldDescription>
         </Field>
 
         <Field orientation="horizontal" className="items-start">

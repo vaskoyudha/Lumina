@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { AuthDialog, type AuthTab } from "@/components/auth/auth-dialog";
+import { DaftarButton } from "@/components/auth/daftar-button";
 
 const TONE = {
   masuk: "text-ls-ink hover:text-ls-ink-2",
-  daftar:
-    "border border-ls-solid-line bg-ls-solid text-ls-solid-ink hover:bg-ls-solid-hover",
 };
 
 export function MarketingAuth() {
@@ -23,15 +22,7 @@ export function MarketingAuth() {
       >
         Masuk
       </button>
-      <button
-        type="button"
-        data-pressable
-        aria-haspopup="dialog"
-        onClick={() => setTab("daftar")}
-        className={`inline-flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold shadow-md transition-[background-color,color,transform] duration-200 ease-out active:scale-[0.97] sm:px-4 sm:text-sm ${TONE.daftar}`}
-      >
-        Daftar
-      </button>
+      <DaftarButton onClick={() => setTab("daftar")} />
 
       <AuthDialog
         open={tab !== null}
