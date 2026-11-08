@@ -36,6 +36,9 @@ yang dihasilkan** dan perbaiki (lihat skill `shadcn-ui`). Jangan pernah menjawab
 literal, `bg-red-500`, `text-emerald-600` dilarang. Aksen tunggal Lumina adalah
 jingga `--lumina-brand` / `bg-brand` — `--accent` adalah surface hover shadcn,
 bukan warna merek. Status memakai `bg-brand-soft` / `text-brand-ink`, bukan hijau.
+Aksen tindakan tetap `--lumina-brand`. Identitas agen memakai ramp
+`--lumina-agent-*`, hanya untuk border/tint bubble agen; status tetap memakai token
+status (`brand`, `warn`, `danger`, netral).
 
 **4. Skor, `risk`, dan `signals` hanya lahir dari `src/lib/scoring/score.ts`.**
 `scoreText()` adalah entrypoint; `scoreWithTrace()` menambahkan jejak agent. LLM
