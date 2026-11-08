@@ -49,14 +49,13 @@ export function BelajarDashboard({
 
   return (
     <>
-      <header className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+      <header className="-mx-5 flex flex-col justify-between gap-4 border-field border-b px-5 pb-4 shadow-sm sm:-mx-8 sm:px-8 xl:flex-row xl:items-center">
         <div className="min-w-0">
           <h1 className="font-bold text-[22px] text-txt tracking-tight sm:text-2xl">
             Halo! Siap belajar?
           </h1>
           <p className="mt-0.5 font-medium text-dim text-xs sm:text-[13px]">
-            Kenali polanya sebelum uangmu hilang. Urutan katalog mengikuti
-            jumlah laporan IASC — {complete} dari {total} modul lengkap ditulis.
+            Kenali polanya sebelum uangmu hilang.
           </p>
         </div>
 

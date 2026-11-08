@@ -846,207 +846,208 @@ export function CompanionChat({
 
         {/* Main panel: the white conversation column of the frame. */}
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-panel">
-          <header className="relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowSessions((v) => !v)}
-                aria-label="Riwayat percakapan"
-                aria-expanded={showSessions}
-                className="size-8 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink md:hidden"
-              >
-                <History aria-hidden strokeWidth={1.6} className="size-4" />
-              </Button>
+          {showAgents ? null : (
+            <header className="relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5">
+              <div className="flex min-w-0 items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowSessions((v) => !v)}
+                  aria-label="Riwayat percakapan"
+                  aria-expanded={showSessions}
+                  className="size-8 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink md:hidden"
+                >
+                  <History aria-hidden strokeWidth={1.6} className="size-4" />
+                </Button>
 
-              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-edge bg-panel px-2.5 shadow-rest lg:pl-1">
-                <span
-                  aria-hidden
-                  className="relative hidden size-[22px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong lg:grid"
-                >
-                  <Sparkles className="size-2.5 text-white" strokeWidth={2} />
-                </span>
-                <span
-                  aria-hidden
-                  className="relative grid size-4 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 to-brand-strong lg:hidden"
-                >
-                  <Sparkles className="size-2 text-white" strokeWidth={2} />
-                </span>
-                <span className="truncate font-medium text-[12px] text-txt">
-                  {showAgents
-                    ? "Agen pemeriksa"
-                    : (active?.title ?? "Percakapan baru")}
-                </span>
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-1.5 shrink-0 rounded-full",
-                    showAgents
-                      ? "hidden"
-                      : latestResult
-                        ? RISK_DOT[latestResult.risk]
-                        : "bg-dim/50",
-                  )}
-                />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Opsi percakapan"
-                      className="-mr-1 grid size-[22px] shrink-0 place-items-center rounded-full text-ink-faint outline-none transition-colors hover:bg-chip hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-glow"
-                    >
-                      <ChevronDown
-                        aria-hidden
-                        strokeWidth={1.9}
-                        className="size-3"
-                      />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    <DropdownMenuLabel className="truncate font-medium text-[11px] text-ink-faint">
-                      {active?.title ?? "Percakapan baru"}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={startNew}>
-                      <SquarePen aria-hidden strokeWidth={1.7} />
-                      Percakapan baru
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={exportThread}>
-                      <Download aria-hidden strokeWidth={1.7} />
-                      Ekspor percakapan
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="lg:hidden"
-                      onSelect={() => setShowEvidence(true)}
-                    >
-                      <Workflow aria-hidden strokeWidth={1.7} />
-                      Buka panel bukti
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem disabled>
-                      <History aria-hidden strokeWidth={1.7} />
-                      Riwayat hanya di tab ini
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-edge bg-panel px-2.5 shadow-rest lg:pl-1">
+                  <span
+                    aria-hidden
+                    className="relative hidden size-[22px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong lg:grid"
+                  >
+                    <Sparkles className="size-2.5 text-white" strokeWidth={2} />
+                  </span>
+                  <span
+                    aria-hidden
+                    className="relative grid size-4 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 to-brand-strong lg:hidden"
+                  >
+                    <Sparkles className="size-2 text-white" strokeWidth={2} />
+                  </span>
+                  <span className="truncate font-medium text-[12px] text-txt">
+                    {showAgents
+                      ? "Agen pemeriksa"
+                      : (active?.title ?? "Percakapan baru")}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "size-1.5 shrink-0 rounded-full",
+                      showAgents
+                        ? "hidden"
+                        : latestResult
+                          ? RISK_DOT[latestResult.risk]
+                          : "bg-dim/50",
+                    )}
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Opsi percakapan"
+                        className="-mr-1 grid size-[22px] shrink-0 place-items-center rounded-full text-ink-faint outline-none transition-colors hover:bg-chip hover:text-ink focus-visible:ring-2 focus-visible:ring-brand-glow"
+                      >
+                        <ChevronDown
+                          aria-hidden
+                          strokeWidth={1.9}
+                          className="size-3"
+                        />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuLabel className="truncate font-medium text-[11px] text-ink-faint">
+                        {active?.title ?? "Percakapan baru"}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={startNew}>
+                        <SquarePen aria-hidden strokeWidth={1.7} />
+                        Percakapan baru
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={exportThread}>
+                        <Download aria-hidden strokeWidth={1.7} />
+                        Ekspor percakapan
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="lg:hidden"
+                        onSelect={() => setShowEvidence(true)}
+                      >
+                        <Workflow aria-hidden strokeWidth={1.7} />
+                        Buka panel bukti
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem disabled>
+                        <History aria-hidden strokeWidth={1.7} />
+                        Riwayat hanya di tab ini
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-            </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={copiedThread ? "Tautan disalin" : "Salin tautan"}
-                onClick={copyThreadLink}
-                className="hidden size-[32px] rounded-full bg-chip text-ink-soft hover:bg-chip-hover hover:text-ink lg:grid"
-              >
-                {copiedThread ? (
-                  <Check aria-hidden strokeWidth={1.8} className="size-4" />
-                ) : (
-                  <Link2 aria-hidden strokeWidth={1.7} className="size-4" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={exportThread}
-                className="hidden h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink lg:flex"
-              >
-                <Download aria-hidden strokeWidth={1.7} className="size-3.5" />
-                Ekspor percakapan
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={startNew}
-                aria-label="Percakapan baru"
-                className="h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-8 max-md:px-0 lg:hidden"
-              >
-                <SquarePen aria-hidden strokeWidth={1.6} className="size-3.5" />
-                <span className="max-md:sr-only">Percakapan baru</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowEvidence((v) => !v)}
-                aria-label={showAgents ? "Detail agen" : "Panel bukti"}
-                aria-expanded={showEvidence}
-                className="h-[32px] gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong lg:hidden"
-              >
-                <Workflow aria-hidden strokeWidth={1.6} className="size-3.5" />
-                <span aria-hidden className="hidden sm:inline">
-                  Agen
-                </span>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                className="hidden h-[32px] rounded-full bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
-              >
-                <Link href="/darurat">Mode darurat</Link>
-              </Button>
-            </div>
-          </header>
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={copiedThread ? "Tautan disalin" : "Salin tautan"}
+                  onClick={copyThreadLink}
+                  className="hidden size-[32px] rounded-full bg-chip text-ink-soft hover:bg-chip-hover hover:text-ink lg:grid"
+                >
+                  {copiedThread ? (
+                    <Check aria-hidden strokeWidth={1.8} className="size-4" />
+                  ) : (
+                    <Link2 aria-hidden strokeWidth={1.7} className="size-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={exportThread}
+                  className="hidden h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink lg:flex"
+                >
+                  <Download
+                    aria-hidden
+                    strokeWidth={1.7}
+                    className="size-3.5"
+                  />
+                  Ekspor percakapan
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={startNew}
+                  aria-label="Percakapan baru"
+                  className="h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-8 max-md:px-0 lg:hidden"
+                >
+                  <SquarePen
+                    aria-hidden
+                    strokeWidth={1.6}
+                    className="size-3.5"
+                  />
+                  <span className="max-md:sr-only">Percakapan baru</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEvidence((v) => !v)}
+                  aria-label={showAgents ? "Detail agen" : "Panel bukti"}
+                  aria-expanded={showEvidence}
+                  className="h-[32px] gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong lg:hidden"
+                >
+                  <Workflow
+                    aria-hidden
+                    strokeWidth={1.6}
+                    className="size-3.5"
+                  />
+                  <span aria-hidden className="hidden sm:inline">
+                    Agen
+                  </span>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="hidden h-[32px] rounded-full bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
+                >
+                  <Link href="/darurat">Mode darurat</Link>
+                </Button>
+              </div>
+            </header>
+          )}
 
           {showAgents ? (
             <AgentsView
               onBack={() => setShowAgents(false)}
               onSelect={setSelectedAgent}
               selected={selectedAgent}
+              onExport={exportThread}
+              onCopyLink={copyThreadLink}
+              copied={copiedThread}
             />
           ) : empty ? (
-            <>
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
-                <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
-                  <div className="mb-2 flex items-center justify-center">
-                    {/* biome-ignore lint/performance/noImgElement: a fixed 104x94 PNG with transparency; next/image adds no value here */}
-                    <img
-                      src="/images/companion-orb.png"
-                      alt="Orb Lumina"
-                      width={104}
-                      height={94}
-                      className="pointer-events-none h-[94px] w-[104px] object-contain select-none [filter:hue-rotate(132deg)_saturate(1.45)]"
-                    />
-                  </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
+              <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
+                <div className="mb-2 flex items-center justify-center">
+                  {/* biome-ignore lint/performance/noImgElement: a fixed 104x94 PNG with transparency; next/image adds no value here */}
+                  <img
+                    src="/images/companion-orb.png"
+                    alt="Orb Lumina"
+                    width={104}
+                    height={94}
+                    className="pointer-events-none h-[94px] w-[104px] object-contain select-none [filter:hue-rotate(132deg)_saturate(1.45)]"
+                  />
+                </div>
 
-                  <h1 className="text-center font-semibold text-[24px] leading-[1.2] tracking-[-0.025em] sm:text-[26px]">
-                    <span className="bg-[linear-gradient(90deg,var(--lumina-brand-glow)_0%,var(--lumina-brand-ink-soft)_50%,var(--lumina-brand-glow)_100%)] bg-clip-text text-transparent">
-                      Periksa sebelum
-                    </span>
-                  </h1>
-                  <h2 className="mt-0.5 text-center font-semibold text-[24px] leading-[1.22] tracking-[-0.025em] text-ink sm:text-[26px]">
-                    kamu percaya.
-                  </h2>
+                <h1 className="text-center font-semibold text-[24px] leading-[1.2] tracking-[-0.025em] sm:text-[26px]">
+                  <span className="bg-[linear-gradient(90deg,var(--lumina-brand-glow)_0%,var(--lumina-brand-ink-soft)_50%,var(--lumina-brand-glow)_100%)] bg-clip-text text-transparent">
+                    Periksa sebelum
+                  </span>
+                </h1>
+                <h2 className="mt-0.5 text-center font-semibold text-[24px] leading-[1.22] tracking-[-0.025em] text-ink sm:text-[26px]">
+                  kamu percaya.
+                </h2>
 
-                  <div className="mt-5 w-full">
-                    <Composer
-                      onSubmit={(text, attachments) => send(text, attachments)}
-                      busy={busy}
-                      autoFocus
-                      placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
-                    />
-                  </div>
+                <div className="mt-5 w-full">
+                  <Composer
+                    onSubmit={(text, attachments) => send(text, attachments)}
+                    busy={busy}
+                    autoFocus
+                    placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
+                  />
+                </div>
 
-                  <div className="mt-3.5 w-full">
-                    <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
-                  </div>
+                <div className="mt-3.5 w-full">
+                  <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
                 </div>
               </div>
-
-              <div className="relative flex shrink-0 items-center justify-center bg-panel px-5 pt-2 pb-3.5 md:bg-transparent">
-                <p className="text-center text-[11px] text-ink-faint leading-[1.45]">
-                  Lumina membaca pesan, bukan mengadili orang.{" "}
-                  <Link
-                    className="font-medium text-brand-chip-ink underline underline-offset-2 hover:text-brand-strong"
-                    data-pressable
-                    href="/belajar"
-                  >
-                    Pelajari cara kerjanya
-                  </Link>
-                  .
-                </p>
-              </div>
-            </>
+            </div>
           ) : (
             <>
               <div
@@ -1317,6 +1318,7 @@ export function CompanionChat({
                 }
                 className="rounded-none border-0"
                 selected={selectedAgent}
+                titleId="panel-detail-title-sheet"
               />
             ) : (
               <SignalPanel
