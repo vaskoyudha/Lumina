@@ -4,6 +4,7 @@ import { LogIn } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AuthDialog, type AuthTab } from "@/components/auth/auth-dialog";
+import { DaftarButton } from "@/components/auth/daftar-button";
 import { cn } from "@/lib/utils";
 
 export interface CompanionSession {
@@ -116,18 +117,7 @@ export function CompanionAuth({
           <LogIn aria-hidden strokeWidth={1.8} className="size-3.5" />
           Masuk
         </button>
-        <button
-          type="button"
-          data-pressable
-          aria-haspopup="dialog"
-          onClick={() => setTab("daftar")}
-          className={cn(
-            "flex min-h-9 items-center justify-center rounded-[8px] border border-ink-line bg-ink font-medium text-[11.5px] text-bg",
-            "transition-[background-color,color] duration-150 ease-out hover:bg-ink-hover",
-          )}
-        >
-          Daftar
-        </button>
+        <DaftarButton size="xs" onClick={() => setTab("daftar")} />
       </div>
       {dialog}
     </>

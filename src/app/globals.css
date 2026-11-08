@@ -217,6 +217,63 @@
   animation-delay: 0.36s;
 }
 
+/*
+ * Mascot micro-motion (companion empty state). The sprite itself only swaps
+ * expressions; these layers add life without touching the artwork: a slow
+ * float, a breathing brand halo, and a blurred bloom that picks up the
+ * mascot's own orange/cream. All three stop under reduced motion; the halo and
+ * bloom stay visible as static glow.
+ */
+@keyframes mascot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes mascot-halo {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes mascot-bloom {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.mascot-float {
+  animation: mascot-float 6s ease-in-out infinite;
+}
+.mascot-halo {
+  animation: mascot-halo 4s ease-in-out infinite;
+}
+.mascot-bloom {
+  animation: mascot-bloom 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-float,
+  .mascot-halo,
+  .mascot-bloom {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-animate,
   .auth-slide-right {

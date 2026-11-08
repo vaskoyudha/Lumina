@@ -1,18 +1,11 @@
 "use client";
 
-import {
-  CheckCircle2,
-  FileText,
-  Layers,
-  Play,
-  RotateCcw,
-  Search,
-  Wallet,
-} from "lucide-react";
+import { FileText, Layers, RotateCcw, Search, Wallet } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { useStoredProgress } from "@/components/belajar/belajar-progress";
-import { CoverIcon, LevelSignalBadge } from "@/components/belajar/modul-visual";
+import { CoverIcon, coverArtFor } from "@/components/belajar/modul-visual";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -222,7 +215,7 @@ function ModuleCard({
   const done = progress?.completedModules.includes(m.no) ?? false;
   const loading = progress === null;
   const pct = done ? 100 : 0;
-  const laporanShort = m.laporanLabel.replace(/\s*laporan$/i, "");
+  const art = coverArtFor(m.no);
 
   return (
     <Card className="group/card h-full gap-0 rounded-[22px] border border-line bg-panel py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-line hover:shadow-[var(--appnext-shadow-soft)]">
@@ -235,10 +228,20 @@ function ModuleCard({
           <div
             className={cn(
               "relative h-44 overflow-hidden rounded-[16px] shadow-inner",
-              m.ready ? "appnext-campaign" : "appnext-cover--muted",
+              m.ready || art ? "appnext-campaign" : "appnext-cover--muted",
             )}
           >
-            {m.ready ? (
+            {art ? (
+              <Image
+                src={art}
+                alt=""
+                fill
+                sizes="(min-width: 1750px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                className="object-cover"
+              />
+            ) : null}
+
+            {art || m.ready ? (
               <span
                 aria-hidden
                 className="appnext-cover-scrim absolute inset-0"
@@ -248,18 +251,8 @@ function ModuleCard({
             <span
               aria-hidden
               className={cn(
-                "tabular absolute -right-3 -bottom-9 select-none font-semibold text-[150px] leading-none",
-                m.ready ? "text-bg/10" : "text-txt/5",
-              )}
-            >
-              {String(m.no).padStart(2, "0")}
-            </span>
-
-            <span
-              aria-hidden
-              className={cn(
                 "pointer-events-none absolute inset-x-3 top-2.5 text-center",
-                m.ready ? "text-bg" : "text-txt",
+                art || m.ready ? "text-bg" : "text-txt",
               )}
             >
               <span className="block truncate font-black text-[12px] uppercase tracking-wider">
@@ -268,50 +261,11 @@ function ModuleCard({
               <span
                 className={cn(
                   "mt-0.5 block truncate font-medium text-[10px]",
-                  m.ready ? "text-bg/80" : "text-dim",
+                  art || m.ready ? "text-bg/80" : "text-dim",
                 )}
               >
                 {m.ciri[0]}
               </span>
-            </span>
-
-            <span
-              className="absolute top-2.5 left-2.5 inline-flex max-w-[88px] items-center gap-1 rounded-full bg-brand-soft/95 px-2 py-0.5 font-extrabold text-[10px] text-brand-ink shadow"
-              title={`Laporan IASC: ${m.laporanLabel}`}
-            >
-              <FileText aria-hidden className="size-2.5 shrink-0" />
-              <span className="truncate">{laporanShort}</span>
-            </span>
-
-            <span
-              className={cn(
-                "absolute top-2.5 right-2.5 rounded-full px-2 py-0.5 font-bold text-[10px] shadow backdrop-blur-md",
-                m.ready ? "bg-bg/90 text-txt" : "bg-panel/90 text-dim",
-              )}
-            >
-              {m.ready ? "Lengkap" : "Segera"}
-            </span>
-
-            <span className="absolute bottom-2.5 left-2.5">
-              <LevelSignalBadge level={m.level} />
-            </span>
-
-            <span
-              className={cn(
-                "absolute right-2.5 bottom-2.5 inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-bold text-[10px] shadow transition-colors",
-                done
-                  ? "bg-brand-soft text-brand-ink"
-                  : m.ready
-                    ? "bg-bg/95 text-txt group-hover/card:bg-brand-strong group-hover/card:text-bg"
-                    : "bg-panel/90 text-dim",
-              )}
-            >
-              {done ? (
-                <CheckCircle2 aria-hidden className="size-3" />
-              ) : (
-                <Play aria-hidden className="size-2.5 fill-current" />
-              )}
-              <span>{done ? "Selesai" : m.ready ? "Mulai" : "Ringkasan"}</span>
             </span>
           </div>
 

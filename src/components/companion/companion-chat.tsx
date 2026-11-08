@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { Mascot } from "@/components/brand/mascot";
 import { AgentTraceCard } from "@/components/companion/agent-trace";
 import {
   AGENT_SEQUENCE,
@@ -211,6 +212,16 @@ export function CompanionChat({
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
+
+  /**
+   * History is a list of conversations that happened. A blank new-chat screen
+   * is a composer, not a thread, so it never joins the sidebar until the first
+   * message lands.
+   */
+  const conversations = React.useMemo(
+    () => sessions.filter((session) => session.turns.length > 0),
+    [sessions],
+  );
 
   /**
    * The panel describes one verdict, never the whole session. Bundling every
@@ -764,12 +775,25 @@ export function CompanionChat({
   );
 
   const startNew = () => {
-    const session = newSession();
-    setSessions((prev) => [session, ...prev]);
-    setSelectedId(session.id);
     setShowSessions(false);
     setShowAgents(false);
     setSelectedAgent(null);
+
+    /*
+     * A blank screen is already a new conversation. Pressing the button again
+     * while nothing has been said must reuse that screen, not pile another
+     * empty "Percakapan baru" into history. `sessions` is newest first, so the
+     * nearest blank screen is the one the reader just left.
+     */
+    const blank = sessions.find((session) => session.turns.length === 0);
+    if (blank) {
+      setSelectedId(blank.id);
+      return;
+    }
+
+    const session = newSession();
+    setSessions((prev) => [session, ...prev]);
+    setSelectedId(session.id);
   };
 
   /**
@@ -816,7 +840,7 @@ export function CompanionChat({
     <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
       <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-0 overflow-hidden md:flex-row">
         <SessionSidebar
-          sessions={sessions}
+          sessions={conversations}
           activeId={activeId}
           onSelect={(sessionId) => {
             setSelectedId(sessionId);
@@ -1008,13 +1032,9 @@ export function CompanionChat({
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
               <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
                 <div className="mb-2 flex items-center justify-center">
-                  {/* biome-ignore lint/performance/noImgElement: a fixed 104x94 PNG with transparency; next/image adds no value here */}
-                  <img
-                    src="/images/companion-orb.png"
-                    alt="Orb Lumina"
-                    width={104}
-                    height={94}
-                    className="pointer-events-none h-[94px] w-[104px] object-contain select-none [filter:hue-rotate(132deg)_saturate(1.45)]"
+                  <Mascot
+                    className="pointer-events-none h-[94px] w-[129px] select-none"
+                    effect
                   />
                 </div>
 

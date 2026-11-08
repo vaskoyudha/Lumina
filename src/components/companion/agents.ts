@@ -34,16 +34,17 @@ export const AGENT_SEQUENCE: DetectorAgent[] = [
 /**
  * Short names for the overview diagram.
  *
- * These are aliases, not new identities: the canonical `STAGE_LABEL` is printed
- * beside each one and stays the name the evidence panel reports. A one-word
- * name gives the diagram a readable spine without inventing a second taxonomy.
+ * These are mascot names, not a second taxonomy: the canonical `STAGE_LABEL`
+ * is printed in small mono type under each name and stays the label the
+ * evidence panel reports. The crew reads as five characters rather than five
+ * abstract nouns, while the diagram still says what each one checks.
  */
 export const AGENT_DISPLAY_NAME: Record<DetectorAgent, string> = {
-  message: "Nada",
-  link: "Jejak",
-  identity: "Sidik",
-  conversation: "Alur",
-  evidence: "Bukti",
+  message: "Mochi",
+  link: "Bubu",
+  identity: "Piyo",
+  conversation: "Naga",
+  evidence: "Bao",
 };
 
 /**
