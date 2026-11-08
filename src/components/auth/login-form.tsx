@@ -1,13 +1,13 @@
 "use client";
 
-import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { type AuthResult, login } from "@/lib/auth/actions";
+import { type AuthResult, login, loginDemo } from "@/lib/auth/actions";
 
 const fieldShell =
   "rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-brand/70 focus-within:bg-brand-soft/40";
@@ -15,9 +15,11 @@ const fieldShell =
 export function LoginForm({
   initialEmail = "",
   initialPassword = "",
+  demo = false,
 }: {
   initialEmail?: string;
   initialPassword?: string;
+  demo?: boolean;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<
@@ -27,6 +29,8 @@ export function LoginForm({
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
   const [showPassword, setShowPassword] = useState(false);
+  const [demoPending, startDemo] = useTransition();
+  const [demoError, setDemoError] = useState<string>();
 
   useEffect(() => {
     setEmail(initialEmail);
@@ -38,6 +42,19 @@ export function LoginForm({
     router.push("/companion");
     router.refresh();
   }, [state, router]);
+
+  function handleDemo() {
+    setDemoError(undefined);
+    startDemo(async () => {
+      const result = await loginDemo();
+      if (result.ok && result.account) {
+        router.push("/companion");
+        router.refresh();
+        return;
+      }
+      setDemoError(result.error ?? "Akun demo sedang tidak tersedia.");
+    });
+  }
 
   return (
     <form action={formAction}>
@@ -117,6 +134,34 @@ export function LoginForm({
           )}
           {pending ? "Memeriksa…" : "Masuk"}
         </Button>
+
+        {demo ? (
+          <>
+            {demoError ? (
+              <Alert role="alert" variant="destructive">
+                <AlertDescription>{demoError}</AlertDescription>
+              </Alert>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={demoPending}
+              onClick={handleDemo}
+              className="h-12 w-full rounded-full"
+            >
+              {demoPending ? (
+                <Loader2
+                  data-icon="inline-start"
+                  aria-hidden
+                  className="animate-spin"
+                />
+              ) : (
+                <Sparkles data-icon="inline-start" aria-hidden />
+              )}
+              {demoPending ? "Menyiapkan akun demo…" : "Masuk dengan akun demo"}
+            </Button>
+          </>
+        ) : null}
       </FieldGroup>
     </form>
   );

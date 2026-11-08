@@ -49,7 +49,15 @@ describe("ModulKatalog", () => {
     expect(
       screen.getByRole("link", { name: /jual-beli online palsu/i }),
     ).toHaveAttribute("href", "/belajar/1");
-    expect(screen.getAllByText("Segera")).toHaveLength(2);
+  });
+
+  it("keeps the illustration clean and labels it at the top", () => {
+    render(<ModulKatalog items={ITEMS} />);
+
+    const card = screen.getByRole("link", { name: /jual-beli online palsu/i });
+    expect(card.querySelector("img")?.getAttribute("src")).toMatch(/modul-01/);
+    expect(within(card).getByText("Modus 01")).toBeInTheDocument();
+    expect(within(card).queryByText("Segera")).not.toBeInTheDocument();
   });
 
   it("filters by search text and reports the new count", async () => {

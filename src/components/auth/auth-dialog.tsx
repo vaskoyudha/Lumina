@@ -42,6 +42,7 @@ export function AuthDialog({
             key={defaultTab}
             defaultTab={defaultTab}
             variant="inline"
+            demo
           />
         </SignInPage>
 

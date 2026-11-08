@@ -114,6 +114,39 @@
 }
 
 /*
+  Hero cards and the media ring. Their shadows are mixed from the active
+  theme ink, so they stay soft on paper/cream and read as raised edges on
+  black instead of disappearing into the surface.
+*/
+.framer-site .framer-oJiFP .framer-jirneu {
+  padding: 8px;
+}
+
+/*
+  The hero keeps the glass rim: a 24px pad leaves 16px visible around the
+  panel's -m-2, and the 36px outer radius stays concentric with the panel's
+  20px at that inset.
+*/
+.framer-site .framer-oJiFP .framer-dqdt72 {
+  padding: 24px;
+  border-top-left-radius: 36px;
+  border-top-right-radius: 36px;
+  background-color: color-mix(in srgb, var(--ls-card) 58%, transparent);
+  -webkit-backdrop-filter: blur(56px) saturate(160%);
+  backdrop-filter: blur(56px) saturate(160%);
+  box-shadow:
+    0 2px 8px color-mix(in srgb, var(--ls-ink) 7%, transparent),
+    0 28px 72px -26px color-mix(in srgb, var(--ls-ink) 26%, transparent);
+}
+
+.framer-site .framer-oJiFP .framer-i9bx2u {
+  filter: drop-shadow(
+      0 2px 8px color-mix(in srgb, var(--ls-ink) 7%, transparent)
+    )
+    drop-shadow(0 20px 48px color-mix(in srgb, var(--ls-ink) 24%, transparent));
+}
+
+/*
   Scroll-linked hero parallax. The ratios are the published site's own
   (0.31 / 0.17 / 0.20 of scrollY); the runtime writes --pw-parallax and the
   translate longhand composes with the appear animation's transform.
@@ -259,4 +292,273 @@
     var(--token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a, #fff) 40%,
     transparent
   );
+}
+
+/*
+  Measure dashboard print (the "Ukur" slide). This is a decorative product
+  mock, not Lumina chrome, so its dark palette is scoped here instead of
+  becoming another global token set. The print itself is non-interactive; the
+  tab strip above it is the only control that changes slides.
+*/
+.measure-preview,
+.chat-preview {
+  --mp-backdrop: #141311;
+  --mp-shell: #21201e;
+  --mp-sidebar: #1f1e1c;
+  --mp-insights: #201f1d;
+  --mp-card: #1a1917;
+  --mp-well: #171614;
+  --mp-row: #2a2927;
+  --mp-row-hover: #252422;
+  --mp-control: #2c2b29;
+  --mp-control-2: #353432;
+  --mp-bubble: #353432;
+  --mp-bubble-line: #44423f;
+  --mp-avatar: #2e2d2b;
+  --mp-line: #2b2a28;
+  --mp-line-2: #383734;
+  --mp-line-3: #3d3c3a;
+  --mp-ink: #eceae7;
+  --mp-ink-2: #e4e2df;
+  --mp-ink-3: #a3a19d;
+  --mp-muted: #8a8883;
+  --mp-faint: #7b7975;
+  --mp-faint-2: #6c6a66;
+  --mp-accent: #92908d;
+  --mp-warm: #9e7b66;
+  --mp-logo: #c8c6c2;
+  --mp-logo-ink: #262523;
+  --mp-shadow: rgb(0 0 0 / 0.55);
+  container-type: inline-size;
+}
+
+.measure-preview .mp-sky {
+  background:
+    radial-gradient(120% 90% at 18% 8%, #4c3f3b 0%, transparent 58%),
+    radial-gradient(80% 60% at 82% 96%, #211a17 0%, transparent 62%),
+    linear-gradient(
+      178deg,
+      #1b2733 0%,
+      #3b3839 34%,
+      #6d4c3f 58%,
+      #2a211d 78%,
+      #151210 100%
+    );
+}
+
+.measure-preview .mp-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(55% 40% at 12% 100%, #2c2420 0%, transparent 70%),
+    radial-gradient(45% 34% at 70% 100%, #241d19 0%, transparent 72%);
+}
+
+.measure-preview .mp-sidebar,
+.measure-preview .mp-insights {
+  display: flex;
+}
+
+.chat-preview .mp-sidebar,
+.chat-preview .mp-aside {
+  display: flex;
+}
+
+@container (max-width: 999px) {
+  .chat-preview .mp-aside {
+    display: none;
+  }
+}
+
+@container (max-width: 639px) {
+  .measure-preview .mp-sidebar {
+    display: none;
+  }
+}
+
+@container (max-width: 899px) {
+  .measure-preview .mp-card {
+    padding-block: 8px;
+  }
+
+  .measure-preview .mp-list {
+    padding-top: 6px;
+  }
+
+  .measure-preview .mp-list > li + li {
+    margin-top: 4px;
+  }
+
+  .measure-preview .mp-list-item {
+    line-height: 1.2;
+  }
+}
+
+@container (max-width: 999px) {
+  .measure-preview .mp-insights {
+    display: none;
+  }
+}
+
+.measure-preview .mp-fade-sidebar {
+  background: linear-gradient(to bottom, transparent 0%, var(--mp-sidebar) 92%);
+}
+
+.measure-preview .mp-fade-insights {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--mp-insights) 94%
+  );
+}
+
+/*
+  Chat prints (the "Tanya", "Periksa" and "Langkah" slides).
+
+  Same shell as the Measure print, but the window floats over a dusk photo and
+  is slightly translucent, so the product reads as a glass panel rather than a
+  flat card. Proportions follow the reference: 6.2% side inset and 3.6% top /
+  bottom inset (the gallery keeps a 1.78 aspect ratio, so the vertical padding
+  resolves to the same visual gap as the horizontal one).
+*/
+.chat-preview .ap-window {
+  background: color-mix(in srgb, var(--mp-shell) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(115%);
+  -webkit-backdrop-filter: blur(20px) saturate(115%);
+}
+
+.chat-preview .mp-sidebar {
+  display: flex;
+  background: color-mix(in srgb, var(--mp-sidebar) 74%, transparent);
+}
+
+.chat-preview .mp-fade-sidebar {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--mp-sidebar) 74%, transparent) 92%
+  );
+}
+
+@container (max-width: 899px) {
+  .chat-preview .ap-title {
+    font-size: 19px;
+  }
+
+  .chat-preview .ap-sub {
+    font-size: 11px;
+  }
+
+  .chat-preview .ap-action {
+    padding-block: 6px;
+  }
+}
+
+@container (max-width: 639px) {
+  .chat-preview .mp-sidebar {
+    display: none;
+  }
+}
+
+/*
+  Theme adaptation. The prints used to be fixed-dark; now they follow the
+  landing theme so the gallery does not stay a black island on cream or paper.
+  Black keeps the base palette above. Cream is the warm default; paper is the
+  cooler opt-in. Only the scoped `--mp-*` values change, never the global
+  landing tokens.
+*/
+.landing[data-theme="cream"] .measure-preview,
+.landing[data-theme="cream"] .chat-preview,
+.landing:not([data-theme]) .measure-preview,
+.landing:not([data-theme]) .chat-preview {
+  --mp-backdrop: #f7f1e8;
+  --mp-shell: #fffdf9;
+  --mp-sidebar: #f5eee3;
+  --mp-insights: #f8f2e8;
+  --mp-card: #fffdf9;
+  --mp-well: #f7f2e9;
+  --mp-row: #efe6d8;
+  --mp-row-hover: #eadfcf;
+  --mp-control: #f1e8da;
+  --mp-control-2: #e6dac6;
+  --mp-bubble: #efe1c8;
+  --mp-bubble-line: #e0d0b6;
+  --mp-avatar: #e9dfd0;
+  --mp-line: rgb(36 28 23 / 0.1);
+  --mp-line-2: rgb(36 28 23 / 0.16);
+  --mp-line-3: rgb(36 28 23 / 0.24);
+  --mp-ink: #241c17;
+  --mp-ink-2: #3d322a;
+  --mp-ink-3: #6b5e53;
+  --mp-muted: #8c8177;
+  --mp-faint: #a1968b;
+  --mp-faint-2: #b0a69b;
+  --mp-accent: #241c17;
+  --mp-warm: #9e7b66;
+  --mp-shadow: rgb(60 44 30 / 0.24);
+}
+
+.landing[data-theme="paper"] .measure-preview,
+.landing[data-theme="paper"] .chat-preview {
+  --mp-backdrop: #ffffff;
+  --mp-shell: #ffffff;
+  --mp-sidebar: #f7fafc;
+  --mp-insights: #f8fbfd;
+  --mp-card: #ffffff;
+  --mp-well: #f7fafc;
+  --mp-row: #eff3f6;
+  --mp-row-hover: #e7edf1;
+  --mp-control: #f2f6f9;
+  --mp-control-2: #e4ebf0;
+  --mp-bubble: #d8e6ee;
+  --mp-bubble-line: #c8dae5;
+  --mp-avatar: #e8eef2;
+  --mp-line: rgb(27 34 40 / 0.1);
+  --mp-line-2: rgb(27 34 40 / 0.16);
+  --mp-line-3: rgb(27 34 40 / 0.24);
+  --mp-ink: #1b2228;
+  --mp-ink-2: #33404a;
+  --mp-ink-3: #5c6a73;
+  --mp-muted: #77848c;
+  --mp-faint: #93a0a8;
+  --mp-faint-2: #a3b0b8;
+  --mp-accent: #1b2228;
+  --mp-warm: #9a5a22;
+  --mp-shadow: rgb(27 34 40 / 0.18);
+}
+
+.landing[data-theme="cream"] .chat-preview .ap-window,
+.landing[data-theme="paper"] .chat-preview .ap-window,
+.landing:not([data-theme]) .chat-preview .ap-window {
+  background: color-mix(in srgb, var(--mp-shell) 92%, transparent);
+}
+
+.landing[data-theme="cream"] .measure-preview .mp-sky,
+.landing:not([data-theme]) .measure-preview .mp-sky {
+  background:
+    radial-gradient(120% 90% at 18% 8%, #efe1c8 0%, transparent 58%),
+    radial-gradient(80% 60% at 82% 96%, #e2d2b8 0%, transparent 62%),
+    linear-gradient(
+      178deg,
+      #f7f1e8 0%,
+      #f2e8da 34%,
+      #e9d9c2 58%,
+      #f0e6d8 78%,
+      #fbf7f0 100%
+    );
+}
+
+.landing[data-theme="paper"] .measure-preview .mp-sky {
+  background:
+    radial-gradient(120% 90% at 18% 8%, #e4eef4 0%, transparent 58%),
+    radial-gradient(80% 60% at 82% 96%, #dbe8ef 0%, transparent 62%),
+    linear-gradient(
+      178deg,
+      #ffffff 0%,
+      #f3f8fb 34%,
+      #e7f0f5 58%,
+      #f6fafc 78%,
+      #ffffff 100%
+    );
 }

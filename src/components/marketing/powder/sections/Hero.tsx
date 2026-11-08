@@ -1,5 +1,6 @@
 /* Section extracted verbatim from the published Framer site: Hero */
 import { CompanionPreview } from "@/components/marketing/companion-preview";
+import { PowderPrimaryCta } from "@/components/marketing/powder/primary-cta";
 
 export default function Hero() {
   return (
@@ -57,11 +58,7 @@ export default function Hero() {
             <div className="framer-1tfsgnk">
               <div className="ssr-variant">
                 <div className="framer-1b8x4ar-container" data-framer-appear-id="1b8x4ar" style={{opacity: "0.001", transform: "translateY(24px)"}}>
-                  <a className="framer-FkYLp framer-knjRQ framer-efr9v5 framer-v-efr9v5 framer-ces3t" data-border="true" data-framer-name="L Primary" data-highlight="true" href="/companion" tabIndex={0} style={{"--border-bottom-width": "1px", "--border-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))", "--border-left-width": "1px", "--border-right-width": "1px", "--border-style": "solid", "--border-top-width": "1px", backdropFilter: "none", backgroundColor: "var(--token-792af9ed-53d8-45b2-94fd-014e7edc8f44, rgba(255, 255, 255, 0.8))", WebkitBackdropFilter: "none", borderBottomLeftRadius: "768px", borderBottomRightRadius: "768px", borderTopLeftRadius: "768px", borderTopRightRadius: "768px"}}>
-                    <div className="framer-ynqlit" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a, rgb(1, 16, 29))", "--framer-link-text-color": "var(--pw-link, rgb(0, 153, 255))", "--framer-link-text-decoration": "underline", transform: "none"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-ef8ecd6d-5204-4f29-b3b7-2d4dc011513a, rgb(1, 16, 29)))"}}>Mulai periksa</p>
-                    </div>
-                  </a>
+                  <PowderPrimaryCta />
                 </div>
               </div>
               <div className="framer-1bbw4zf" data-framer-name="button 3.0" id="1bbw4zf" tabIndex={0}>

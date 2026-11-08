@@ -115,6 +115,55 @@ export async function authenticatePassword(
   };
 }
 
+/**
+ * Provisions the shared demo account from server-held credentials on first use.
+ * The password is never returned; callers authenticate normally afterwards.
+ */
+export async function ensureDemoAccount(
+  email: string,
+  password: string,
+): Promise<Account> {
+  const normalized = email.trim().toLowerCase();
+  const db = authDatabase();
+  const existing = (
+    await db.query<AccountRecord>("SELECT * FROM users WHERE email = $1", [
+      normalized,
+    ])
+  ).rows[0];
+  if (existing)
+    return {
+      id: existing.id,
+      nama: existing.nama,
+      email: existing.email,
+      created_at: new Date(existing.created_at).toISOString(),
+    };
+  const account: Account = {
+    id: randomUUID(),
+    nama: "Tamu Lumina",
+    email: normalized,
+    created_at: new Date().toISOString(),
+  };
+  const passwordHash = await hashPassword(password);
+  const result = await db.query(
+    `INSERT INTO users (id, nama, email, password_hash, created_at)
+    VALUES ($1, $2, $3, $4, $5) ON CONFLICT(email) DO NOTHING`,
+    [account.id, account.nama, account.email, passwordHash, account.created_at],
+  );
+  if (result.rowCount) return account;
+  const concurrent = (
+    await db.query<AccountRecord>("SELECT * FROM users WHERE email = $1", [
+      normalized,
+    ])
+  ).rows[0];
+  if (!concurrent) throw new AuthError("Akun demo tidak dapat disiapkan.");
+  return {
+    id: concurrent.id,
+    nama: concurrent.nama,
+    email: concurrent.email,
+    created_at: new Date(concurrent.created_at).toISOString(),
+  };
+}
+
 /** Only called with a Google ID token verified by google-auth-library. */
 export async function googleAccount(
   sub: string,

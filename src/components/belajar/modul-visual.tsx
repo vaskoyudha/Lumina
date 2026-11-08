@@ -18,10 +18,26 @@ import { cn } from "@/lib/utils";
 
 /**
  * Visual vocabulary shared by the catalog card and the module header. The
- * reference dashboard gives every course a painted thumbnail; Lumina has no
- * stock art, so each scheme gets a token-coloured cover and a topic glyph
- * instead of a fake screenshot.
+ * reference dashboard gives every course a painted thumbnail; most schemes get
+ * a token-coloured cover and a topic glyph instead of a fake screenshot, while
+ * modules with supplied art use the illustration itself.
  */
+
+const COVER_ART: Record<number, string> = {
+  1: "/images/belajar/modul-01.jpg",
+  2: "/images/belajar/modul-02.jpg",
+  3: "/images/belajar/modul-03.jpg",
+  4: "/images/belajar/modul-04.jpg",
+  5: "/images/belajar/modul-05.jpg",
+  6: "/images/belajar/modul-06.jpg",
+  7: "/images/belajar/modul-07.jpg",
+  8: "/images/belajar/modul-08.jpg",
+  9: "/images/belajar/modul-09.jpg",
+};
+
+export function coverArtFor(no: number): string | null {
+  return COVER_ART[no] ?? null;
+}
 
 const COVER_ICON: Record<number, LucideIcon> = {
   1: ShoppingBag,

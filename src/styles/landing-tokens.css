@@ -47,6 +47,30 @@
   --color-obsidian-900: #1c1c1c;
   --color-obsidian-950: #0f0f0f;
 
+  /*
+    Uiverse layered-dark button (adamgiebl). Kept as its own charcoal ramp,
+    separate from the obsidian surface tokens, so tuning the button never
+    shifts the rest of the dark UI.
+  */
+  --color-charcoal-50: #dadada;
+  --color-charcoal-100: #4b4b4b;
+  --color-charcoal-200: #383838;
+  --color-charcoal-300: #333333;
+  --color-charcoal-400: #303030;
+  --color-charcoal-500: #292929;
+  --color-charcoal-600: #242424;
+  --color-charcoal-700: #1d1d1d;
+  --color-charcoal-800: #1a1919;
+  --color-charcoal-900: #111111;
+  --color-charcoal-950: #0f0f0f;
+
+  /*
+    The 2px ring is the button's outline. The snippet's gradient ring fades to
+    near-black at the sides, which reads as no outline at all; this dedicated
+    ring token keeps it a visible dark grey all the way around.
+  */
+  --color-charcoal-ring: #4f4f4f;
+
   --color-ink-body: #57534e;
   --color-ink-soft: #78716c;
   --color-ink-faint: #a8a29e;
@@ -175,6 +199,71 @@
     --ls-on-dark-dim: #cfc7bd;
 
     color-scheme: dark;
+  }
+
+  /*
+    Marketing print of the companion (`CompanionPreview`). The live app is
+    light-only, so the print keeps the app's class names but re-points the
+    `--lumina-*` chrome at the active landing palette. Without this the
+    screenshot stays a white island on paper and black. The real app subtree
+    is untouched.
+  */
+  .landing .lc-preview {
+    --lumina-bg: var(--ls-surface-alt);
+    --lumina-panel: var(--ls-card);
+    --lumina-line: var(--ls-line);
+    --lumina-txt: var(--ls-ink);
+    --lumina-dim: var(--ls-ink-2);
+    --lumina-ink: var(--ls-solid);
+    --lumina-ink-hover: var(--ls-solid-hover);
+    --lumina-ink-soft: var(--ls-ink-2);
+    --lumina-ink-mute: var(--ls-ink-3);
+    --lumina-ink-faint: var(--ls-ink-3);
+    --lumina-ink-line: color-mix(in srgb, var(--lumina-bg) 38%, transparent);
+    --lumina-chip: var(--ls-card-alt);
+    --lumina-edge: var(--ls-line);
+    --lumina-edge-soft: var(--ls-line);
+    --lumina-hairline: var(--ls-line);
+    --lumina-hairline-strong: var(--ls-line-strong);
+  }
+
+  /*
+    The orb PNG is opaque on a near-white ground. Fade that ground out so the
+    orb can sit on the dark preview; on light cards the mask edge is invisible.
+    Centre and radius match the orb's bounding box inside the asset.
+  */
+  .landing .lc-preview .lc-orb {
+    -webkit-mask-image: radial-gradient(
+      ellipse 40px 38px at 49px 53px,
+      #000 95%,
+      transparent 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 40px 38px at 49px 53px,
+      #000 95%,
+      transparent 100%
+    );
+  }
+
+  /*
+    Orange chroma has to lift off a dark ground: the light-theme brand inks
+    (#9a4a08 / #d97706) sit around 2:1 on #191919, so the black theme uses the
+    landing accent text ramp instead. The composer tint is rebuilt from the
+    surface rather than reusing the light peach stop.
+  */
+  .landing[data-theme="black"] .lc-preview {
+    --lumina-danger: #f87171;
+    --lumina-brand-soft: var(--ls-accent-soft);
+    --lumina-brand-tint: color-mix(
+      in srgb,
+      var(--ls-accent) 8%,
+      var(--ls-card)
+    );
+    --lumina-brand-line: color-mix(in srgb, var(--ls-accent) 28%, transparent);
+    --lumina-brand-ink: var(--ls-accent-text);
+    --lumina-brand-ink-soft: var(--ls-accent-text);
+    --lumina-brand-glow: var(--ls-accent);
+    --lumina-brand-strong: var(--ls-accent-strong);
   }
 
   .landing :is(h1, h2, h3, h4),

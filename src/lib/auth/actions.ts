@@ -7,6 +7,7 @@ import {
   AuthError,
   authenticatePassword,
   consumeAttempt,
+  ensureDemoAccount,
   registerAccount,
 } from "@/lib/auth/accounts";
 import {
@@ -49,6 +50,25 @@ export async function login(
       String(formData.get("email") ?? ""),
       String(formData.get("password") ?? ""),
     );
+    return await signedIn(account);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/**
+ * Signs into the shared demo account using credentials held only on the
+ * server. The browser never receives the password, and the resulting session
+ * belongs to a real database account (see docs/auth.md).
+ */
+export async function loginDemo(): Promise<AuthResult> {
+  const email = process.env.LUMINA_DEMO_EMAIL?.trim();
+  const password = process.env.LUMINA_DEMO_PASSWORD;
+  if (!email || !password)
+    return { ok: false, error: "Akun demo belum dikonfigurasi." };
+  try {
+    await ensureDemoAccount(email, password);
+    const account = await authenticatePassword(email, password);
     return await signedIn(account);
   } catch (error) {
     return failure(error);

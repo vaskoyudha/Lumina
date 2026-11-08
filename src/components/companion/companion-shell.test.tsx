@@ -77,6 +77,37 @@ describe("CompanionChat · shell", () => {
     expect(screen.getByText(/apk undangan/i)).toBeInTheDocument();
   });
 
+  it("keeps blank new-chat screens out of history until a message is sent", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<CompanionChat />);
+
+    const sidebar = container.querySelector("aside") as HTMLElement;
+    const sidebarScope = within(sidebar);
+
+    // Opening the app is not a conversation yet; neither is pressing the
+    // button again while the screen is still blank.
+    expect(sidebarScope.getByText(/belum ada percakapan/i)).toBeInTheDocument();
+
+    const newChat = sidebarScope.getByRole("button", {
+      name: /percakapan baru/i,
+    });
+    await user.click(newChat);
+    await user.click(newChat);
+    await user.click(newChat);
+
+    expect(sidebarScope.getByText(/belum ada percakapan/i)).toBeInTheDocument();
+    // Only the button carries that label; no empty thread row may join it.
+    expect(sidebarScope.getAllByText("Percakapan baru")).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: /akun diblokir/i }));
+
+    await waitFor(() => {
+      expect(
+        sidebarScope.getAllByText(/akun anda akan diblokir/i).length,
+      ).toBeGreaterThan(0);
+    });
+  });
+
   it("scores the attachment filename, because that is where the signal is", async () => {
     const user = userEvent.setup();
     const { container } = render(<CompanionChat />);
@@ -173,9 +204,9 @@ describe("CompanionChat · shell", () => {
     ]) {
       expect(viewScope.getByText(agent)).toBeInTheDocument();
     }
-    // The diagram's short names are aliases; the canonical labels above stay
-    // beside them so the overview still matches the evidence panel.
-    for (const display of ["Nada", "Jejak", "Sidik", "Alur", "Bukti"]) {
+    // The diagram's short names are the mascots; the canonical labels above
+    // stay beside them so the overview still matches the evidence panel.
+    for (const display of ["Mochi", "Bubu", "Piyo", "Naga", "Bao"]) {
       expect(viewScope.getByText(display)).toBeInTheDocument();
     }
     expect(viewScope.getByText("Orkestrator")).toBeInTheDocument();
@@ -226,11 +257,11 @@ describe("CompanionChat · shell", () => {
       expect(screen.getByText(purpose)).toBeInTheDocument();
     }
 
-    const nada = screen.getByRole("button", { name: /lihat detail nada/i });
-    await user.click(nada);
-    expect(nada).toHaveAttribute("aria-pressed", "true");
+    const mochi = screen.getByRole("button", { name: /lihat detail mochi/i });
+    await user.click(mochi);
+    expect(mochi).toHaveAttribute("aria-pressed", "true");
     expect(
-      screen.getByRole("button", { name: /lihat detail jejak/i }),
+      screen.getByRole("button", { name: /lihat detail bubu/i }),
     ).toHaveAttribute("aria-pressed", "false");
 
     await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);

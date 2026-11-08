@@ -183,7 +183,6 @@ export function SessionSidebar({
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [openPanels, setOpenPanels] = React.useState({
     history: true,
-    menu: true,
   });
 
   React.useEffect(() => {
@@ -339,7 +338,7 @@ export function SessionSidebar({
         <Button
           onClick={onNew}
           data-pressable
-          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-brand bg-clip-border py-1.5 pr-1.5 pl-3.5 font-semibold text-[12.5px] text-ink shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_4px_0_0_var(--lumina-brand-strong)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-brand hover:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_6px_0_0_var(--lumina-brand-strong)] active:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_0px_0_0_var(--lumina-brand-strong)] active:duration-75"
+          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-flame-500 bg-clip-border py-1.5 pr-1.5 pl-3.5 font-semibold text-[12.5px] text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_4px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_6px_0_0_var(--color-flame-600)] active:translate-y-[4px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
         >
           <span className="flex-1 text-left">Percakapan baru</span>
           <span className="flex size-7 items-center justify-center rounded-[6px] bg-panel text-ink">
@@ -347,34 +346,41 @@ export function SessionSidebar({
           </span>
         </Button>
 
-        <label className="relative mt-2.5 flex h-[34px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
-          <Search
-            aria-hidden
-            strokeWidth={1.7}
-            className="pointer-events-none size-3.5 shrink-0 text-ink-mute"
-          />
-          <input
-            ref={searchRef}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Cari"
-            className="min-w-0 flex-1 bg-transparent px-2 text-[12px] text-txt outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
-          />
-          <kbd
-            aria-hidden
-            className="grid h-[19px] min-w-[19px] shrink-0 place-items-center rounded-[5px] bg-brand-soft px-1 font-sans text-[10.5px] text-brand-ink-soft"
-          >
-            ⌘K
-          </kbd>
-          <span className="sr-only">Cari percakapan</span>
-        </label>
-
         <div className="my-2.5 border-t border-txt/[0.06]" />
 
-        {/* Two collapsible panels: the thread list and the navigation block
-            (which carries the expandable agent list). */}
+        {/* Destinations are a flat block, not a collapsed group: they are the
+            primary navigation, so they never hide behind a trigger. The search
+            card sits directly above the collapsible history below. */}
         <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-0.5">
+          <NavRail
+            agentsActive={agentsActive}
+            onShowAgents={onShowAgents}
+            onShowChat={onShowChat}
+          />
+
+          <label className="relative flex h-[34px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
+            <Search
+              aria-hidden
+              strokeWidth={1.7}
+              className="pointer-events-none size-3.5 shrink-0 text-ink-mute"
+            />
+            <input
+              ref={searchRef}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Cari"
+              className="min-w-0 flex-1 bg-transparent px-2 text-[12px] text-txt outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+            />
+            <kbd
+              aria-hidden
+              className="grid h-[19px] min-w-[19px] shrink-0 place-items-center rounded-[5px] bg-brand-soft px-1 font-sans text-[10.5px] text-brand-ink-soft"
+            >
+              ⌘K
+            </kbd>
+            <span className="sr-only">Cari percakapan</span>
+          </label>
+
           <Collapsible
             open={openPanels.history}
             onOpenChange={(open) =>
@@ -388,22 +394,6 @@ export function SessionSidebar({
             />
             <CollapsibleContent className="space-y-3 pt-1.5">
               {historyBody}
-            </CollapsibleContent>
-          </Collapsible>
-
-          <Collapsible
-            open={openPanels.menu}
-            onOpenChange={(open) =>
-              setOpenPanels((prev) => ({ ...prev, menu: open }))
-            }
-          >
-            <SectionTrigger open={openPanels.menu} label="Menu" count={5} />
-            <CollapsibleContent className="pt-0.5">
-              <NavRail
-                agentsActive={agentsActive}
-                onShowAgents={onShowAgents}
-                onShowChat={onShowChat}
-              />
             </CollapsibleContent>
           </Collapsible>
         </div>
@@ -453,7 +443,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-[10px] border-0 bg-brand bg-clip-border p-0 text-ink shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_3px_0_0_var(--lumina-brand-strong)] transition-[background-color,color,transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand hover:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_5px_0_0_var(--lumina-brand-strong)] active:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_0px_0_0_var(--lumina-brand-strong)] active:duration-75"
+        className="size-9 rounded-[10px] border-0 bg-flame-500 bg-clip-border p-0 text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_3px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_5px_0_0_var(--color-flame-600)] active:translate-y-[3px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>
