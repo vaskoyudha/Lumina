@@ -9,6 +9,7 @@ import {
   PenLine,
   XCircle,
 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import * as React from "react";
 import {
@@ -44,6 +45,16 @@ const STATUS_WORD: Record<StageStatus, string> = {
   gagal: "Gagal",
 };
 
+// One shared variant so the motion tree never changes shape between renders.
+const agentVariants = {
+  hidden: { opacity: 0, y: 4 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 380, damping: 30 },
+  },
+} as const;
+
 function isDetector(id: AgentStage["id"]): id is DetectorAgent {
   return id !== "scoring" && id !== "voice";
 }
@@ -56,9 +67,17 @@ function statusText(stage: AgentStage): string {
   return STATUS_WORD[stage.status];
 }
 
-function Glyph({ status }: { status: StageStatus }) {
+function Glyph({
+  status,
+  reduced = false,
+}: {
+  status: StageStatus;
+  reduced?: boolean;
+}) {
   if (status === "berjalan") {
-    return (
+    return reduced ? (
+      <Circle aria-hidden strokeWidth={2.4} className="size-3.5 fill-current" />
+    ) : (
       <Loader2
         aria-hidden
         className="size-3.5 animate-spin motion-reduce:animate-none"
@@ -98,10 +117,12 @@ function AgentBubble({
   stage,
   result,
   live = false,
+  reduced = false,
 }: {
   stage: AgentStage;
   result?: ScoreResult;
   live?: boolean;
+  reduced?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const profile = isDetector(stage.id) ? AGENT_REGISTRY[stage.id] : null;
@@ -176,7 +197,7 @@ function AgentBubble({
                 stage.status === "gagal" ? "text-danger" : "text-txt/70",
               )}
             >
-              <Glyph status={stage.status} />
+              <Glyph status={stage.status} reduced={reduced} />
               <span>{statusText(stage)}</span>
             </span>
             <span className="tabular w-12 shrink-0 text-right text-[10px] text-txt/70">
@@ -275,6 +296,8 @@ export function AgentRun({
   const engineMs = Math.max(0, trace.totalMs - (voice?.ms ?? 0));
   const voiceLive = live && voice?.status === "berjalan";
   const state = runState(trace.stages, live);
+  const reduce = useReducedMotion();
+  const animated = live && !reduce;
   const completed = specialists.filter(
     (stage) => stage.status === "selesai" || stage.status === "temuan",
   ).length;
@@ -305,7 +328,12 @@ export function AgentRun({
       data-live={voiceLive ? "true" : undefined}
       data-run-state={state}
     >
-      <div className="rounded-[14px] border border-line bg-panel px-3.5 py-3">
+      <motion.div
+        className="rounded-[14px] border border-line bg-panel px-3.5 py-3"
+        initial={animated ? { opacity: 0, y: 4 } : false}
+        animate={animated ? { opacity: 1, y: 0 } : false}
+        transition={{ duration: 0.12, ease: "easeOut" }}
+      >
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-medium text-[12px] text-txt">Orkestrator</span>
           <span className="text-[11px] text-dim">
@@ -377,24 +405,46 @@ export function AgentRun({
             );
           })}
         </ul>
-      </div>
+      </motion.div>
 
-      <ol className="ms-3 flex flex-col border-l border-line">
+      <motion.ol
+        className="ms-3 flex flex-col border-l border-line"
+        data-motion-list={animated ? "true" : "false"}
+        initial={animated ? "hidden" : false}
+        animate={animated ? "show" : false}
+        variants={{
+          show: { transition: { staggerChildren: 0.04, delayChildren: 0.08 } },
+        }}
+      >
         {specialists.map((stage) => (
-          <li key={stage.id} className="min-w-0">
+          <motion.li
+            key={stage.id}
+            variants={agentVariants}
+            className="min-w-0"
+          >
             <AgentBubble
               stage={stage}
               result={result}
               live={live && stage.status === "berjalan"}
+              reduced={reduce ?? false}
             />
-          </li>
+          </motion.li>
         ))}
         {voice ? (
-          <li className="min-w-0">
-            <AgentBubble stage={voice} result={result} live={live} />
-          </li>
+          <motion.li
+            key={voice.id}
+            variants={agentVariants}
+            className="min-w-0"
+          >
+            <AgentBubble
+              stage={voice}
+              result={result}
+              live={live}
+              reduced={reduce ?? false}
+            />
+          </motion.li>
         ) : null}
-      </ol>
+      </motion.ol>
 
       <output className="sr-only" aria-live="polite">
         {announcement}

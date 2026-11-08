@@ -158,4 +158,28 @@ describe("AgentRun", () => {
     expect(after).toEqual(before);
     jest.useRealTimers();
   });
+
+  it("switches off the entrance without remounting the bubbles", async () => {
+    const user = userEvent.setup();
+    const { container, rerender } = render(<AgentRun trace={trace} live />);
+    expect(container.querySelector("[data-motion-list]")).toHaveAttribute(
+      "data-motion-list",
+      "true",
+    );
+
+    const toggle = within(screen.getByTestId("agent-message")).getByRole(
+      "button",
+      {
+        name: /message agent/i,
+      },
+    );
+    await user.click(toggle);
+
+    rerender(<AgentRun trace={trace} live={false} />);
+    expect(container.querySelector("[data-motion-list]")).toHaveAttribute(
+      "data-motion-list",
+      "false",
+    );
+    expect(toggle).toHaveAttribute("aria-expanded", "true"); // same node, still open
+  });
 });
