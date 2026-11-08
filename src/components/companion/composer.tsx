@@ -273,7 +273,7 @@ export function Composer({
             rows={2}
             placeholder={placeholder}
             aria-label="Pesan"
-            className="mb-1.5 min-h-[41px] resize-none border-0 bg-transparent px-0 py-0 text-[12.5px] text-ink leading-relaxed shadow-none placeholder:text-ink-faint focus-visible:ring-0 md:text-[12.5px]"
+            className="mb-1.5 min-h-[41px] resize-none border-0 bg-transparent px-0 py-0 font-normal text-[12.5px] text-ink leading-relaxed tracking-normal shadow-none placeholder:text-ink-faint focus-visible:ring-0 md:text-[12.5px]"
           />
 
           <div className="flex items-center justify-between gap-2 pt-1">

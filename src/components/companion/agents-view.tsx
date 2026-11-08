@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   ArrowRight,
   Check,
   Download,
@@ -63,14 +62,12 @@ const AGENT_PORTRAIT: Record<DetectorAgent, string> = {
 };
 
 export function AgentsView({
-  onBack,
   onSelect,
   selected = null,
   onExport,
   onCopyLink,
   copied = false,
 }: {
-  onBack: () => void;
   onSelect: (agent: DetectorAgent) => void;
   selected?: DetectorAgent | null;
   onExport: () => void;
@@ -81,40 +78,18 @@ export function AgentsView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <header className="border-field border-b px-4 pb-4 shadow-sm sm:px-6">
-        <div className="mx-auto w-full max-w-[980px] pt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="-ml-2 h-8 gap-1.5 rounded-full px-2.5 text-[12px] text-ink-soft hover:bg-chip hover:text-ink"
-          >
-            <ArrowLeft aria-hidden strokeWidth={1.8} className="size-3.5" />
-            Kembali ke percakapan
-          </Button>
-
-          <div className="mt-3 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+      <header className="border-field border-b pt-6 pb-4 shadow-sm">
+        <div className="w-full px-5 sm:px-8">
+          <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span
-                  aria-hidden
-                  className="size-1.5 rounded-full bg-brand shadow-orb"
-                />
-                <span className="font-mono text-[9.5px] text-brand-ink uppercase tracking-[0.18em]">
-                  Alur pemeriksaan
-                </span>
-              </div>
-
               <h1
                 id="agen-pemeriksa-title"
-                className="mt-2 font-semibold text-[26px] text-ink leading-[1.1] tracking-[-0.035em]"
+                className="font-bold text-[22px] text-txt tracking-tight sm:text-2xl"
               >
                 Agen pemeriksa
               </h1>
-              <p className="mt-2 max-w-[580px] text-[13px] text-ink-soft leading-relaxed">
-                Lumina menjalankan lima agen atas pesan yang sama, mengumpulkan
-                temuannya, lalu menghitung satu skor deterministik. Pilih agen
-                untuk membaca perannya di panel kanan.
+              <p className="mt-0.5 font-medium text-dim text-xs sm:text-[13px]">
+                Lima agen, satu skor deterministik.
               </p>
             </div>
 
@@ -155,7 +130,7 @@ export function AgentsView({
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-[980px] px-4 pt-4 pb-8 sm:px-6">
+      <div className="w-full px-5 pt-4 pb-8 sm:px-8">
         {/*
          * The diagram lives on its own pannable canvas — drag to move, wheel or
          * the controls to zoom. The field is present at every width so the
