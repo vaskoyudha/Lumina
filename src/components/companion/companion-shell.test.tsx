@@ -200,13 +200,25 @@ describe("CompanionChat · shell", () => {
       "Link Agent",
       "Identity Agent",
       "Conversation Agent",
+      "Lowongan Agent",
+      "Marketplace Agent",
+      "QRIS Agent",
       "Evidence Agent",
     ]) {
       expect(viewScope.getByText(agent)).toBeInTheDocument();
     }
     // The diagram's short names are the mascots; the canonical labels above
     // stay beside them so the overview still matches the evidence panel.
-    for (const display of ["Mochi", "Bubu", "Piyo", "Naga", "Bao"]) {
+    for (const display of [
+      "Mochi",
+      "Bubu",
+      "Piyo",
+      "Naga",
+      "Kiko",
+      "Lala",
+      "Ruru",
+      "Bao",
+    ]) {
       expect(viewScope.getByText(display)).toBeInTheDocument();
     }
     expect(viewScope.getByText("Orkestrator")).toBeInTheDocument();
@@ -252,6 +264,9 @@ describe("CompanionChat · shell", () => {
       /membongkar setiap tautan/i,
       /memeriksa identitas pengirim/i,
       /membandingkan pesan dengan giliran/i,
+      /memeriksa tawaran kerja/i,
+      /mengikuti alur jual-beli/i,
+      /membaca payload qris/i,
       /merangkum temuan menjadi kutipan/i,
     ]) {
       expect(screen.getByText(purpose)).toBeInTheDocument();
