@@ -2,13 +2,21 @@
 
 import {
   ArrowRight,
+  Briefcase,
   Check,
   Download,
+  Fingerprint,
   Link2,
+  type LucideIcon,
   Maximize2,
+  MessageSquare,
+  MessagesSquare,
   Minus,
   Plus,
+  QrCode,
+  Quote,
   Sparkles,
+  Store,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
@@ -53,13 +61,50 @@ import { cn } from "@/lib/utils";
  */
 
 /** The crew: one supplied mascot portrait per detector family. */
-const AGENT_PORTRAIT: Record<DetectorAgent, string> = {
+const AGENT_PORTRAIT: Record<DetectorAgent, string | null> = {
   message: "/brand/agents/message.jpg",
   link: "/brand/agents/link.jpg",
   identity: "/brand/agents/identity.jpg",
   conversation: "/brand/agents/conversation.jpg",
+  job: null,
+  marketplace: null,
+  qris: null,
   evidence: "/brand/agents/evidence.jpg",
 };
+
+/**
+ * Icon stand-ins for the three newest detectors until mascot art lands.
+ *
+ * Kept next to the portraits so replacing art is one map edit, and typed so a
+ * new detector cannot ship with an empty face.
+ */
+const AGENT_ICON_FALLBACK: Record<DetectorAgent, LucideIcon> = {
+  message: MessageSquare,
+  link: Link2,
+  identity: Fingerprint,
+  conversation: MessagesSquare,
+  job: Briefcase,
+  marketplace: Store,
+  qris: QrCode,
+  evidence: Quote,
+};
+
+function AgentFace({ agent, size }: { agent: DetectorAgent; size: number }) {
+  const portrait = AGENT_PORTRAIT[agent];
+  if (portrait) {
+    return (
+      <Image
+        src={portrait}
+        alt=""
+        width={size}
+        height={size}
+        className="size-full object-cover"
+      />
+    );
+  }
+  const Icon = AGENT_ICON_FALLBACK[agent];
+  return <Icon aria-hidden className="size-1/2 text-brand-ink" />;
+}
 
 export function AgentsView({
   onSelect,
@@ -537,15 +582,9 @@ function LuminaCard() {
               {AGENT_SEQUENCE.map((agent) => (
                 <span
                   key={agent}
-                  className="relative size-8 overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
+                  className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
                 >
-                  <Image
-                    src={AGENT_PORTRAIT[agent]}
-                    alt=""
-                    fill
-                    sizes="32px"
-                    className="object-cover"
-                  />
+                  <AgentFace agent={agent} size={32} />
                 </span>
               ))}
             </div>
@@ -600,7 +639,6 @@ function AgentLane({
 }) {
   const { label } = STAGE_LABEL[agent];
   const display = AGENT_DISPLAY_NAME[agent];
-  const portrait = AGENT_PORTRAIT[agent];
   const mechanisms = AGENT_MECHANISM[agent];
 
   return (
@@ -647,14 +685,8 @@ function AgentLane({
                   : "group-hover/agent:scale-[1.04]",
               )}
             >
-              <span className="relative block size-full overflow-hidden rounded-[8px]">
-                <Image
-                  src={portrait}
-                  alt=""
-                  fill
-                  sizes="40px"
-                  className="object-cover"
-                />
+              <span className="flex size-full items-center justify-center overflow-hidden rounded-[8px]">
+                <AgentFace agent={agent} size={40} />
               </span>
             </span>
             <CardTitle className="min-w-0 truncate font-semibold text-[18px] text-panel leading-tight tracking-[-0.02em]">
@@ -924,15 +956,9 @@ function ScoreNode() {
                 {AGENT_SEQUENCE.map((agent) => (
                   <span
                     key={agent}
-                    className="relative size-5 overflow-hidden rounded-full ring-1 ring-panel/30"
+                    className="flex size-5 items-center justify-center overflow-hidden rounded-full ring-1 ring-panel/30"
                   >
-                    <Image
-                      src={AGENT_PORTRAIT[agent]}
-                      alt=""
-                      fill
-                      sizes="20px"
-                      className="object-cover"
-                    />
+                    <AgentFace agent={agent} size={20} />
                   </span>
                 ))}
               </div>

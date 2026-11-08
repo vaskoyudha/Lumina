@@ -111,6 +111,9 @@ const BRANCH_KIND: Record<AgentId, string> = {
   link: "Tautan",
   identity: "Identitas",
   conversation: "Eskalasi",
+  job: "Lowongan",
+  marketplace: "Jual-beli",
+  qris: "QRIS",
   evidence: "Bukti",
   scoring: "Sintesis",
 };
@@ -134,6 +137,9 @@ const BRANCH_CONDITION: Record<AgentId, string> = {
   link: "Ada tautan yang perlu dibuka",
   identity: "Ada klaim institusi atau nomor asing",
   conversation: "Ada pesan sebelumnya di percakapan",
+  job: "Ada tawaran kerja atau tugas berbayar",
+  marketplace: "Ada percakapan jual-beli",
+  qris: "Ada payload QRIS",
   evidence: "Ada temuan yang bisa dikutip",
   scoring: "Menggabungkan seluruh temuan",
 };

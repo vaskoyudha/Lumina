@@ -44,6 +44,9 @@ export const AGENT_DISPLAY_NAME: Record<DetectorAgent, string> = {
   link: "Bubu",
   identity: "Piyo",
   conversation: "Naga",
+  job: "Kiko",
+  marketplace: "Lala",
+  qris: "Ruru",
   evidence: "Bao",
 };
 
@@ -59,6 +62,9 @@ export const AGENT_MECHANISM: Record<DetectorAgent, readonly string[]> = {
   link: ["Ekstraksi URL", "Domain mirip merek", "Penyingkat · TLD"],
   identity: ["Nomor pengirim", "Klaim institusi", "Nomor asing"],
   conversation: ["Riwayat giliran", "Eskalasi bertahap", "Konteks percakapan"],
+  job: ["Biaya pendaftaran", "Tugas berbayar", "Penempatan luar negeri"],
+  marketplace: ["Bayar di luar platform", "Harga tidak wajar", "Resi palsu"],
+  qris: ["TLV EMVCo", "CRC-16", "Nama merchant"],
   evidence: ["Kutipan temuan", "Garis waktu", "Narasi bukti"],
 };
 
@@ -77,6 +83,10 @@ export const AGENT_PURPOSE: Record<DetectorAgent, string> = {
     "Memeriksa identitas pengirim: nomor kontak, klaim institusi, dan nomor asing yang tidak wajar.",
   conversation:
     "Membandingkan pesan dengan giliran sebelumnya untuk menangkap eskalasi yang muncul bertahap.",
+  job: "Memeriksa tawaran kerja: biaya di muka, tugas like/subscribe, dan penempatan luar negeri yang membebani pelamar.",
+  marketplace:
+    "Mengikuti alur jual-beli: pembayaran ke rekening pribadi, gift card, dan trik refund lewat QRIS.",
+  qris: "Membaca payload QRIS: struktur TLV, CRC, tautan di dalam QR, dan nama merchant yang tidak cocok.",
   evidence:
     "Merangkum temuan menjadi kutipan, garis waktu, dan narasi singkat yang bisa diperiksa ulang.",
 };
