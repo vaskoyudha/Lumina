@@ -1,21 +1,11 @@
 "use client";
 
-import {
-  Briefcase,
-  Fingerprint,
-  Link2,
-  type LucideIcon,
-  MessageSquare,
-  MessagesSquare,
-  QrCode,
-  Quote,
-  ShieldCheck,
-  Store,
-} from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import {
   AGENT_DISPLAY_NAME,
   AGENT_PURPOSE,
+  AGENT_REGISTRY,
   AGENT_SEQUENCE,
   type DetectorAgent,
 } from "@/components/companion/agents";
@@ -35,17 +25,6 @@ import { cn } from "@/lib/utils";
  * keeps the pane readable at a glance and avoids hiding four agents behind an
  * interaction. Clicking a diagram row scrolls the matching brief into view.
  */
-
-const AGENT_ICON: Record<DetectorAgent, LucideIcon> = {
-  message: MessageSquare,
-  link: Link2,
-  identity: Fingerprint,
-  conversation: MessagesSquare,
-  job: Briefcase,
-  marketplace: Store,
-  qris: QrCode,
-  evidence: Quote,
-};
 
 export function AgentsDetailPanel({
   selected = null,
@@ -114,7 +93,7 @@ export function AgentsDetailPanel({
       >
         <ul className="flex list-none flex-col gap-2">
           {AGENT_SEQUENCE.map((agent, index) => {
-            const Icon = AGENT_ICON[agent];
+            const Icon = AGENT_REGISTRY[agent].icon;
             const display = AGENT_DISPLAY_NAME[agent];
             const { label } = STAGE_LABEL[agent];
             const active = selected === agent;

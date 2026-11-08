@@ -1,28 +1,28 @@
+import {
+  Briefcase,
+  Fingerprint,
+  Link2,
+  type LucideIcon,
+  MessageSquare,
+  MessagesSquare,
+  QrCode,
+  Quote,
+  Store,
+} from "lucide-react";
+import { STAGE_LABEL } from "@/lib/contracts/agent-run";
 import type { AgentId } from "@/lib/contracts/score";
 
 /**
- * The detectors that actually run; `scoring` aggregates them, it is not one.
+ * The agent registry — one profile per detector, the single source of truth.
  *
- * Typing this subset keeps the distinction checkable — the sidebar can map
- * every detector to an icon without inventing a row for the orchestrator.
+ * Labels and tasks are read from the frozen trace contract instead of being
+ * copied, so the panel, the diagram, and the trace cannot describe the same
+ * detector three different ways. Mechanism chips name rule families that exist
+ * in the engine; if a family is removed, its chip goes with it.
  */
+
 export type DetectorAgent = Exclude<AgentId, "scoring">;
 
-/**
- * The agents the evidence panel walks through, in reading order.
- *
- * Shared by both companion surfaces on purpose: the panel is the product's
- * honesty display, and two copies of this list would eventually disagree
- * between the chat and the single-shot page.
- *
- * Order matches the reference graph — Message, Link, Identity, Conversation,
- * Evidence — so the panel reads the same left-to-right story as the design.
- *
- * Identity Agent sits third because it runs on the name and domain a message
- * carries, and on nothing else — SPF/DKIM/DMARC would need mail headers a
- * pasted message never has. It reports no finding rather than inventing one,
- * which is exactly the gap the panel is supposed to show.
- */
 export const AGENT_SEQUENCE: DetectorAgent[] = [
   "message",
   "link",
@@ -34,65 +34,142 @@ export const AGENT_SEQUENCE: DetectorAgent[] = [
   "evidence",
 ];
 
-/**
- * Short names for the overview diagram.
- *
- * These are mascot names, not a second taxonomy: the canonical `STAGE_LABEL`
- * is printed in small mono type under each name and stays the label the
- * evidence panel reports. The crew reads as characters rather than abstract
- * nouns, while the diagram still says what each one checks.
- */
-export const AGENT_DISPLAY_NAME: Record<DetectorAgent, string> = {
-  message: "Mochi",
-  link: "Bubu",
-  identity: "Piyo",
-  conversation: "Naga",
-  job: "Kiko",
-  marketplace: "Lala",
-  qris: "Ruru",
-  evidence: "Bao",
+export interface AgentProfile {
+  id: DetectorAgent;
+  displayName: string;
+  label: string;
+  task: string;
+  mechanism: readonly string[];
+  purpose: string;
+  flavor: string;
+  /** One honesty caveat printed in the expanded body; only `qris` uses it. */
+  caveat?: string;
+  icon: LucideIcon;
+  portrait: string | null;
+  identity: `--lumina-agent-${DetectorAgent}`;
+}
+
+export const AGENT_REGISTRY: Record<DetectorAgent, AgentProfile> = {
+  message: {
+    id: "message",
+    displayName: "Mochi",
+    label: STAGE_LABEL.message.label,
+    task: STAGE_LABEL.message.task,
+    mechanism: ["Kata kunci", "Urgensi · otoritas", "OTP · APK"],
+    purpose:
+      "Membaca nada pesan: urgensi palsu, klaim otoritas, iming-iming, serta permintaan OTP atau berkas APK.",
+    flavor: "Membaca kata yang dipakai untuk menekan.",
+    icon: MessageSquare,
+    portrait: "/brand/agents/message.jpg",
+    identity: "--lumina-agent-message",
+  },
+  link: {
+    id: "link",
+    displayName: "Bubu",
+    label: STAGE_LABEL.link.label,
+    task: STAGE_LABEL.link.task,
+    mechanism: ["Ekstraksi URL", "Domain mirip merek", "Penyingkat · TLD"],
+    purpose:
+      "Membongkar setiap tautan: domain mirip merek resmi, penyingkat, TLD berisiko, dan jalur login palsu.",
+    flavor: "Membaca domain dan bentuk tautan yang dikirim.",
+    icon: Link2,
+    portrait: "/brand/agents/link.jpg",
+    identity: "--lumina-agent-link",
+  },
+  identity: {
+    id: "identity",
+    displayName: "Piyo",
+    label: STAGE_LABEL.identity.label,
+    task: STAGE_LABEL.identity.task,
+    mechanism: ["Nomor pengirim", "Klaim institusi", "Nomor asing"],
+    purpose:
+      "Memeriksa identitas pengirim: nomor kontak, klaim institusi, dan nomor asing yang tidak wajar.",
+    flavor: "Memeriksa nomor dan klaim pengirim.",
+    icon: Fingerprint,
+    portrait: "/brand/agents/identity.jpg",
+    identity: "--lumina-agent-identity",
+  },
+  conversation: {
+    id: "conversation",
+    displayName: "Naga",
+    label: STAGE_LABEL.conversation.label,
+    task: STAGE_LABEL.conversation.task,
+    mechanism: ["Riwayat giliran", "Eskalasi bertahap", "Konteks percakapan"],
+    purpose:
+      "Membandingkan pesan dengan giliran sebelumnya untuk menangkap eskalasi yang muncul bertahap.",
+    flavor: "Melihat apakah tekanan itu datang bertahap.",
+    icon: MessagesSquare,
+    portrait: "/brand/agents/conversation.jpg",
+    identity: "--lumina-agent-conversation",
+  },
+  job: {
+    id: "job",
+    displayName: "Kiko",
+    label: STAGE_LABEL.job.label,
+    task: STAGE_LABEL.job.task,
+    mechanism: [
+      "Biaya pendaftaran",
+      "Tugas berbayar",
+      "Penempatan luar negeri",
+    ],
+    purpose:
+      "Memeriksa tawaran kerja: biaya di muka, tugas like/subscribe, dan penempatan luar negeri yang membebani pelamar.",
+    flavor: "Memeriksa biaya yang diminta sebelum ada surat tawaran.",
+    icon: Briefcase,
+    portrait: null,
+    identity: "--lumina-agent-job",
+  },
+  marketplace: {
+    id: "marketplace",
+    displayName: "Lala",
+    label: STAGE_LABEL.marketplace.label,
+    task: STAGE_LABEL.marketplace.task,
+    mechanism: ["Bayar di luar platform", "Harga tidak wajar", "Resi palsu"],
+    purpose:
+      "Mengikuti alur jual-beli: pembayaran ke rekening pribadi, gift card, dan trik refund lewat QRIS.",
+    flavor: "Mengikuti alur bayar yang keluar dari platform.",
+    icon: Store,
+    portrait: null,
+    identity: "--lumina-agent-marketplace",
+  },
+  qris: {
+    id: "qris",
+    displayName: "Ruru",
+    label: STAGE_LABEL.qris.label,
+    task: STAGE_LABEL.qris.task,
+    mechanism: ["TLV EMVCo", "CRC-16", "Nama merchant"],
+    purpose:
+      "Membaca payload QRIS: struktur TLV, CRC, tautan di dalam QR, dan nama merchant yang tidak cocok.",
+    flavor: "Membaca payload QR dan nama penerimanya.",
+    caveat:
+      "CRC valid hanya berarti formatnya benar; cocokkan nama merchant di layar sebelum membayar.",
+    icon: QrCode,
+    portrait: null,
+    identity: "--lumina-agent-qris",
+  },
+  evidence: {
+    id: "evidence",
+    displayName: "Bao",
+    label: STAGE_LABEL.evidence.label,
+    task: STAGE_LABEL.evidence.task,
+    mechanism: ["Kutipan temuan", "Garis waktu", "Narasi bukti"],
+    purpose:
+      "Merangkum temuan menjadi kutipan, garis waktu, dan narasi singkat yang bisa diperiksa ulang.",
+    flavor: "Menyimpan kutipan yang bisa diperiksa ulang.",
+    icon: Quote,
+    portrait: "/brand/agents/evidence.jpg",
+    identity: "--lumina-agent-evidence",
+  },
 };
 
-/**
- * What each agent actually looks at, in three chips.
- *
- * Every chip names a rule family that exists in the detector — nothing here is
- * decorative copy. If a family is removed from the engine, this label must go
- * with it; that is the point of keeping the list next to the sequence.
- */
-export const AGENT_MECHANISM: Record<DetectorAgent, readonly string[]> = {
-  message: ["Kata kunci", "Urgensi · otoritas", "OTP · APK"],
-  link: ["Ekstraksi URL", "Domain mirip merek", "Penyingkat · TLD"],
-  identity: ["Nomor pengirim", "Klaim institusi", "Nomor asing"],
-  conversation: ["Riwayat giliran", "Eskalasi bertahap", "Konteks percakapan"],
-  job: ["Biaya pendaftaran", "Tugas berbayar", "Penempatan luar negeri"],
-  marketplace: ["Bayar di luar platform", "Harga tidak wajar", "Resi palsu"],
-  qris: ["TLV EMVCo", "CRC-16", "Nama merchant"],
-  evidence: ["Kutipan temuan", "Garis waktu", "Narasi bukti"],
-};
+const ids = <K extends keyof AgentProfile>(key: K) =>
+  Object.fromEntries(
+    AGENT_SEQUENCE.map((id) => [id, AGENT_REGISTRY[id][key]]),
+  ) as Record<DetectorAgent, AgentProfile[K]>;
 
-/**
- * One sentence of purpose for the agents detail pane.
- *
- * The center diagram deliberately carries no prose; this is the only place the
- * long description lives, so the two surfaces cannot drift into two versions of
- * the same explanation.
- */
-export const AGENT_PURPOSE: Record<DetectorAgent, string> = {
-  message:
-    "Membaca nada pesan: urgensi palsu, klaim otoritas, iming-iming, serta permintaan OTP atau berkas APK.",
-  link: "Membongkar setiap tautan: domain mirip merek resmi, penyingkat, TLD berisiko, dan jalur login palsu.",
-  identity:
-    "Memeriksa identitas pengirim: nomor kontak, klaim institusi, dan nomor asing yang tidak wajar.",
-  conversation:
-    "Membandingkan pesan dengan giliran sebelumnya untuk menangkap eskalasi yang muncul bertahap.",
-  job: "Memeriksa tawaran kerja: biaya di muka, tugas like/subscribe, dan penempatan luar negeri yang membebani pelamar.",
-  marketplace:
-    "Mengikuti alur jual-beli: pembayaran ke rekening pribadi, gift card, dan trik refund lewat QRIS.",
-  qris: "Membaca payload QRIS: struktur TLV, CRC, tautan di dalam QR, dan nama merchant yang tidak cocok.",
-  evidence:
-    "Merangkum temuan menjadi kutipan, garis waktu, dan narasi singkat yang bisa diperiksa ulang.",
-};
+export const AGENT_DISPLAY_NAME = ids("displayName");
+export const AGENT_MECHANISM = ids("mechanism");
+export const AGENT_PURPOSE = ids("purpose");
 
 /**
  * The orchestrator's own lane, in the same chip grammar as the detectors.
