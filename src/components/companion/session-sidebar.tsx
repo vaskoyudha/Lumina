@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
  * Sidebar — the left column of the chat shell, with two states.
  *
  * Chrome is a 1:1 clone of the Cortex reference: brand mascot mark and
- * wordmark, a full-width black "Percakapan baru", a white search field with a
+ * wordmark, a full-width orange "Percakapan baru", a white search field with a
  * shortcut chip, destination rows, thread rows, and a footer card.
  *
  * The panels: history and navigation are collapsible sections. `Collapse` folds
@@ -339,10 +339,12 @@ export function SessionSidebar({
         <Button
           onClick={onNew}
           data-pressable
-          className="h-[38px] w-full gap-2 rounded-[10px] bg-ink text-[12.5px] font-medium text-white shadow-rest hover:bg-ink-hover"
+          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-brand bg-clip-border py-1.5 pr-1.5 pl-3.5 font-semibold text-[12.5px] text-ink shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_4px_0_0_var(--lumina-brand-strong)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-brand hover:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_6px_0_0_var(--lumina-brand-strong)] active:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_0px_0_0_var(--lumina-brand-strong)] active:duration-75"
         >
-          <Plus aria-hidden strokeWidth={2} className="size-4" />
-          Percakapan baru
+          <span className="flex-1 text-left">Percakapan baru</span>
+          <span className="flex size-7 items-center justify-center rounded-[6px] bg-panel text-ink">
+            <Plus aria-hidden strokeWidth={2} className="size-4" />
+          </span>
         </Button>
 
         <label className="relative mt-2.5 flex h-[34px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
@@ -451,7 +453,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-[10px] bg-ink p-0 text-white shadow-rest hover:bg-ink-hover"
+        className="size-9 rounded-[10px] border-0 bg-brand bg-clip-border p-0 text-ink shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_3px_0_0_var(--lumina-brand-strong)] transition-[background-color,color,transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand hover:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_5px_0_0_var(--lumina-brand-strong)] active:shadow-[inset_0_1px_0_0_var(--lumina-brand-glow),0_0px_0_0_var(--lumina-brand-strong)] active:duration-75"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>

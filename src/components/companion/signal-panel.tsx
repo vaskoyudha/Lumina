@@ -11,6 +11,7 @@ import {
   TriangleAlert,
   Workflow,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   type ReactNode,
@@ -139,14 +140,16 @@ const BRANCH_CONDITION: Record<AgentId, string> = {
 
 type NodeStatus = "ran" | "live" | "skipped" | "failed" | "pending";
 
-/** The brand three-circle cluster the reference uses as a branch badge. */
-function VennMark() {
+/** The brand mascot used as a branch badge. */
+function AgentMark() {
   return (
-    <svg className="size-4" fill="none" role="presentation" viewBox="0 0 20 20">
-      <circle cx="10" cy="7.2" fill="var(--lumina-brand-strong)" r="3.2" />
-      <circle cx="7.6" cy="11.8" fill="var(--lumina-brand-glow)" r="3.2" />
-      <circle cx="12.4" cy="11.8" fill="var(--lumina-brand-soft)" r="3.2" />
-    </svg>
+    <Image
+      alt=""
+      className="size-full object-cover"
+      height={128}
+      src="/brand/companion-mascot.png"
+      width={128}
+    />
   );
 }
 
@@ -445,8 +448,8 @@ function AgentNode({
 
       <div className="px-3.5 pt-2.5 pb-2">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-chip">
-            <VennMark />
+          <span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-brand-edge bg-brand-chip">
+            <AgentMark />
           </span>
           {skipped ? (
             <p className="text-[12.5px] text-ink leading-snug">

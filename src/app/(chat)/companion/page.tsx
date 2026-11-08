@@ -9,10 +9,14 @@ export const metadata: Metadata = {
     "Ceritakan pesan atau tautan yang mencurigakan; Lumina menjelaskan kenapa berbahaya.",
 };
 
-export default function CompanionPage() {
+export default function CompanionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ panel?: string }>;
+}) {
   return (
     <Suspense fallback={<CompanionChat />}>
-      <CompanionWithSession />
+      <CompanionWithSession searchParams={searchParams} />
     </Suspense>
   );
 }

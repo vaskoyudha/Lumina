@@ -180,12 +180,23 @@ describe("CompanionChat · shell", () => {
     }
     expect(viewScope.getByText("Orkestrator")).toBeInTheDocument();
 
-    await user.click(
-      viewScope.getByRole("button", { name: /kembali ke percakapan/i }),
-    );
+    await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
     expect(
       screen.queryByRole("heading", { name: "Agen pemeriksa" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("lands directly on the agent overview when opened from another surface", () => {
+    render(<CompanionChat initialPanel="agen" />);
+
+    const view = screen
+      .getByRole("heading", { name: "Agen pemeriksa" })
+      .closest("section");
+    expect(view).not.toBeNull();
+    expect(screen.getByRole("button", { name: /^agen/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("swaps the evidence panel for agent detail only while the overview is open", async () => {
@@ -222,9 +233,7 @@ describe("CompanionChat · shell", () => {
       screen.getByRole("button", { name: /lihat detail jejak/i }),
     ).toHaveAttribute("aria-pressed", "false");
 
-    await user.click(
-      screen.getByRole("button", { name: /kembali ke percakapan/i }),
-    );
+    await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
 
     expect(screen.getByText("Panel bukti")).toBeInTheDocument();
     expect(
