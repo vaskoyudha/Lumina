@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
 /**
@@ -62,7 +63,12 @@ describe("CompanionChat · evidence panel", () => {
     // is named as skipped, with the reason, rather than wearing a green tick.
     expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/\d+ dari 5 agen memeriksa pesan ini/i),
+      screen.getByText(
+        new RegExp(
+          `\\d+ dari ${AGENT_SEQUENCE.length} agen memeriksa pesan ini`,
+          "i",
+        ),
+      ),
     ).toBeInTheDocument();
   });
 

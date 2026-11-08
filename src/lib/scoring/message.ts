@@ -123,6 +123,7 @@ export const MESSAGE_RULES: readonly Rule[] = [
       "Meminta pembayaran lewat QRIS yang dikirim lewat chat — selalu periksa nama penerima di layar sebelum scan",
     pattern: /\b(?:qris|qr\s*code|scan\s+qr|stiker\s+qr)\b/i,
     gate: (text, match) => {
+      if (/000201/.test(text)) return false; // the QRIS Agent owns pasted payloads
       if (match.index === undefined) return false;
       const start = Math.max(0, match.index - 80);
       const end = Math.min(text.length, match.index + match[0].length + 80);

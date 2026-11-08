@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { ScoreCard } from "@/components/companion/score-card";
 import { scoreWithTrace } from "@/lib/scoring/score";
 
@@ -37,7 +38,12 @@ describe("ScoreCard · a clean message looks like a clean message", () => {
 
     expect(screen.getByText(/yang diperiksa/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/1 dari 5 agen benar-benar memeriksa/i),
+      screen.getByText(
+        new RegExp(
+          `1 dari ${AGENT_SEQUENCE.length} agen benar-benar memeriksa`,
+          "i",
+        ),
+      ),
     ).toBeInTheDocument();
   });
 
