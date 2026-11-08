@@ -2,21 +2,13 @@
 
 import {
   ArrowRight,
-  Briefcase,
   Check,
   Download,
-  Fingerprint,
   Link2,
-  type LucideIcon,
   Maximize2,
-  MessageSquare,
-  MessagesSquare,
   Minus,
   Plus,
-  QrCode,
-  Quote,
   Sparkles,
-  Store,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
@@ -35,6 +27,7 @@ import { LuminaLogo } from "@/components/brand/lumina-logo";
 import {
   AGENT_DISPLAY_NAME,
   AGENT_MECHANISM,
+  AGENT_REGISTRY,
   AGENT_SEQUENCE,
   type DetectorAgent,
   LUMINA_STEPS,
@@ -60,41 +53,17 @@ import { cn } from "@/lib/utils";
  * another.
  */
 
-/** The crew: one supplied mascot portrait per detector family. */
-const AGENT_PORTRAIT: Record<DetectorAgent, string | null> = {
-  message: "/brand/agents/message.jpg",
-  link: "/brand/agents/link.jpg",
-  identity: "/brand/agents/identity.jpg",
-  conversation: "/brand/agents/conversation.jpg",
-  job: null,
-  marketplace: null,
-  qris: null,
-  evidence: "/brand/agents/evidence.jpg",
-};
-
 /**
- * Icon stand-ins for the three newest detectors until mascot art lands.
- *
- * Kept next to the portraits so replacing art is one map edit, and typed so a
- * new detector cannot ship with an empty face.
+ * One agent's face: the supplied portrait when it exists, otherwise the
+ * registry icon. Reading both from the registry keeps art and icons in one
+ * place as the crew grows.
  */
-const AGENT_ICON_FALLBACK: Record<DetectorAgent, LucideIcon> = {
-  message: MessageSquare,
-  link: Link2,
-  identity: Fingerprint,
-  conversation: MessagesSquare,
-  job: Briefcase,
-  marketplace: Store,
-  qris: QrCode,
-  evidence: Quote,
-};
-
 function AgentFace({ agent, size }: { agent: DetectorAgent; size: number }) {
-  const portrait = AGENT_PORTRAIT[agent];
-  if (portrait) {
+  const profile = AGENT_REGISTRY[agent];
+  if (profile.portrait) {
     return (
       <Image
-        src={portrait}
+        src={profile.portrait}
         alt=""
         width={size}
         height={size}
@@ -102,7 +71,7 @@ function AgentFace({ agent, size }: { agent: DetectorAgent; size: number }) {
       />
     );
   }
-  const Icon = AGENT_ICON_FALLBACK[agent];
+  const Icon = profile.icon;
   return <Icon aria-hidden className="size-1/2 text-brand-ink" />;
 }
 
