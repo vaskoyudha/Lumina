@@ -1,13 +1,16 @@
 "use client";
 
 import {
+  Briefcase,
   Fingerprint,
   Link2,
   type LucideIcon,
   MessageSquare,
   MessagesSquare,
+  QrCode,
   Quote,
   ShieldCheck,
+  Store,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import {
@@ -38,6 +41,9 @@ const AGENT_ICON: Record<DetectorAgent, LucideIcon> = {
   link: Link2,
   identity: Fingerprint,
   conversation: MessagesSquare,
+  job: Briefcase,
+  marketplace: Store,
+  qris: QrCode,
   evidence: Quote,
 };
 
