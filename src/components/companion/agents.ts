@@ -28,6 +28,9 @@ export const AGENT_SEQUENCE: DetectorAgent[] = [
   "link",
   "identity",
   "conversation",
+  "job",
+  "marketplace",
+  "qris",
   "evidence",
 ];
 
@@ -36,8 +39,8 @@ export const AGENT_SEQUENCE: DetectorAgent[] = [
  *
  * These are mascot names, not a second taxonomy: the canonical `STAGE_LABEL`
  * is printed in small mono type under each name and stays the label the
- * evidence panel reports. The crew reads as five characters rather than five
- * abstract nouns, while the diagram still says what each one checks.
+ * evidence panel reports. The crew reads as characters rather than abstract
+ * nouns, while the diagram still says what each one checks.
  */
 export const AGENT_DISPLAY_NAME: Record<DetectorAgent, string> = {
   message: "Mochi",
@@ -95,7 +98,7 @@ export const AGENT_PURPOSE: Record<DetectorAgent, string> = {
  * The orchestrator's own lane, in the same chip grammar as the detectors.
  *
  * `scoring` is not an agent in the trace — it is the deterministic engine that
- * runs the five detectors and folds their findings into one score. Printing the
+ * runs every detector and folds their findings into one score. Printing the
  * three steps keeps that distinction visible instead of drawing Lumina as a
  * sixth detector.
  */

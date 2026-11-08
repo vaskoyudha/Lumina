@@ -169,7 +169,7 @@ describe("CompanionChat · shell", () => {
     }
   });
 
-  it("shows the five detection agents in the main panel when the sidebar option is pressed", async () => {
+  it("shows every detection agent in the main panel when the sidebar option is pressed", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
@@ -246,7 +246,7 @@ describe("CompanionChat · shell", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Panel bukti")).not.toBeInTheDocument();
 
-    // All five briefs are visible at once; selection only highlights one.
+    // All briefs are visible at once; selection only highlights one.
     for (const purpose of [
       /membaca nada pesan/i,
       /membongkar setiap tautan/i,

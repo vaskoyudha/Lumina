@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { CompanionEntry } from "@/components/companion/companion-entry";
 
 /**
@@ -99,7 +100,12 @@ describe("CompanionEntry", () => {
     // line reports how many real detectors inspected this message.
     expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/\d+ dari 5 agen memeriksa pesan ini/i),
+      screen.getByText(
+        new RegExp(
+          `\\d+ dari ${AGENT_SEQUENCE.length} agen memeriksa pesan ini`,
+          "i",
+        ),
+      ),
     ).toBeInTheDocument();
   });
 

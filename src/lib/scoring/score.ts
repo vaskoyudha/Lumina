@@ -8,12 +8,15 @@ import { riskFor, type ScoreResult, type Signal } from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
 import { conversationSignals } from "@/lib/scoring/conversation";
 import { identitySignals } from "@/lib/scoring/identity";
+import { jobSignals } from "@/lib/scoring/job";
 import { extractLinks, linkSignals } from "@/lib/scoring/link";
+import { marketplaceSignals } from "@/lib/scoring/marketplace";
 import {
   detectMessage,
   HARD_RULES,
   messageSignals,
 } from "@/lib/scoring/message";
+import { qrisSignals } from "@/lib/scoring/qris";
 
 /**
  * Scoring Orchestrator — the ONLY place a score is produced (§11.1).
@@ -76,7 +79,8 @@ const MODUS_KEYWORDS: ReadonlyArray<{ modus: string; pattern: RegExp }> = [
   },
   {
     modus: "lowongan-tugas-berbayar",
-    pattern: /\b(?:lowongan|tugas|like|subscribe|top\s*up|topup|komisi)\b/i,
+    pattern:
+      /\b(?:lowongan|penempatan|tugas|like|subscribe|top\s*up|topup|komisi)\b/i,
   },
   {
     modus: "love-scam",
@@ -233,6 +237,18 @@ const DETECTORS: readonly {
   {
     id: "conversation",
     run: ({ text, turns }) => conversationSignals({ text, turns }),
+  },
+  {
+    id: "job",
+    run: ({ text }) => jobSignals(text),
+  },
+  {
+    id: "marketplace",
+    run: ({ text }) => marketplaceSignals(text),
+  },
+  {
+    id: "qris",
+    run: ({ text }) => qrisSignals(text),
   },
 ];
 

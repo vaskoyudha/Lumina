@@ -27,11 +27,11 @@ import { cn } from "@/lib/utils";
  * Agents detail — the right-hand pane while the Agents view is open.
  *
  * It replaces "Panel bukti" only on that view: the evidence panel reports a
- * run, and this pane explains the five detectors before any run exists. Each
+ * run, and this pane explains the detectors before any run exists. Each
  * agent gets one sentence of purpose; the center diagram carries the mechanism
  * chips, so neither surface repeats the other.
  *
- * Selection is a highlight, not a filter. All five briefs stay visible, which
+ * Selection is a highlight, not a filter. All briefs stay visible, which
  * keeps the pane readable at a glance and avoids hiding four agents behind an
  * interaction. Clicking a diagram row scrolls the matching brief into view.
  */
@@ -95,7 +95,7 @@ export function AgentsDetailPanel({
                 </h2>
               </CardTitle>
               <p className="mt-0.5 truncate text-[10.5px] text-dim">
-                Lima pemeriksa di bawah satu orkestrator
+                {AGENT_SEQUENCE.length} pemeriksa di bawah satu orkestrator
               </p>
             </div>
           </div>

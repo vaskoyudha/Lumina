@@ -24,7 +24,7 @@ import { modusFor } from "@/lib/modus";
  * a. A verdict with no weighted finding says nothing matched. Printing the
  *    advice block for `tidak-dikenali` (or, before the classification gate,
  *    a named scheme) under a 0/100 "Bersih" score contradicts the number.
- * b. Coverage is read from the trace, never assumed. "3 dari 5 agen" is a
+ * b. Coverage is read from the trace, never assumed. "3 dari 8 agen" is a
  *    measurement; a card without a trace claims nothing.
  */
 
