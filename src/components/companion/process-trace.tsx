@@ -227,7 +227,7 @@ export function ProcessTrace({
                           </span>
                           <span
                             data-agent-tone={block.start.agent}
-                            className="agent-role-pill font-mono"
+                            className="agent-role-pill"
                           >
                             {AGENT_IDENTITIES[block.start.agent].field}
                           </span>
