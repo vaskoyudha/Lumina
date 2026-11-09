@@ -178,7 +178,12 @@ function Glyph({
 
   return (
     <span data-glyph={kind} className="flex">
-      {glyph}
+      <span
+        key={kind}
+        className="flex motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-90 motion-safe:duration-150"
+      >
+        {glyph}
+      </span>
     </span>
   );
 }
@@ -318,16 +323,21 @@ function AgentBubble({
               </p>
             ) : null}
             {profile ? (
-              <ul className="flex flex-wrap gap-1">
-                {profile.mechanism.map((chip) => (
-                  <li
-                    key={chip}
-                    className="rounded-full border border-line px-2 py-0.5 text-[10px] text-dim"
-                  >
-                    {chip}
-                  </li>
-                ))}
-              </ul>
+              <div className="flex flex-col gap-1">
+                <p className="font-mono text-[9px] text-dim uppercase tracking-[0.14em]">
+                  Ciri yang dicek
+                </p>
+                <ul className="flex flex-wrap gap-1">
+                  {profile.mechanism.map((chip) => (
+                    <li
+                      key={chip}
+                      className="rounded-full border border-line px-2 py-0.5 text-[10px] text-dim"
+                    >
+                      {chip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
             {profile?.caveat ? (
               <p className="text-[11px] text-dim">{profile.caveat}</p>

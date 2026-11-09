@@ -3,10 +3,8 @@
 import {
   Lock,
   Minus,
-  MinusCircle,
   PenLine,
   Plus,
-  ShieldCheck,
   Sparkles,
   TriangleAlert,
   Workflow,
@@ -22,6 +20,14 @@ import {
   useRef,
   useState,
 } from "react";
+import type { DetectorAgent } from "@/components/companion/agents";
+import { buildPanelLedger } from "@/components/companion/panel-ledger";
+import {
+  CoverageGroup,
+  CoverageStrip,
+  FindingsSection,
+  TraceDisclosure,
+} from "@/components/companion/panel-ledger-view";
 import {
   buildPanelWires,
   type PanelWire,
@@ -29,6 +35,7 @@ import {
   type WireHead,
   type WireTone,
 } from "@/components/companion/panel-wires";
+import { StatusPulse } from "@/components/companion/status-pulse";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +77,7 @@ const RISK_TEXT: Record<Risk, string> = {
 
 const NODE_DOT: Record<string, string> = {
   ran: "bg-brand",
-  live: "bg-brand motion-safe:animate-ping",
+  live: "bg-brand",
   skipped: "bg-ink-faint",
   failed: "bg-danger",
   pending: "bg-dot",
@@ -439,11 +446,11 @@ function AgentNode({
       data-status={status}
     >
       <span className="absolute top-4 -left-[2px] flex items-center">
-        <span
+        <StatusPulse
+          kind="ping"
           className={cn(
             "size-2.5 rounded-full border-2 bg-panel",
             PORT_IN[status],
-            live && "motion-safe:animate-ping",
           )}
           data-live={live ? "true" : undefined}
           data-node={`agent-${nodeId}`}
@@ -479,11 +486,11 @@ function AgentNode({
       <div className="relative flex items-center justify-between border-edge-soft border-t px-3.5 py-1.5 text-[11.5px] text-ink-mute">
         <span>Then</span>
         <span className="font-mono text-[10.5px]">→ &nbsp;{nextCode}</span>
-        <span
+        <StatusPulse
+          kind="ping"
           className={cn(
             "absolute top-1/2 -right-[5px] size-2.5 -translate-y-1/2 rounded-full",
             PORT_OUT[status],
-            live && "motion-safe:animate-ping",
           )}
           data-live={live ? "true" : undefined}
           data-node={`agent-${nodeId}`}
@@ -581,11 +588,13 @@ function RootNode({
   title,
   code,
   kind,
+  port = true,
   children,
 }: {
   title: ReactNode;
-  code: string;
-  kind: string;
+  code?: string;
+  kind?: string;
+  port?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -602,18 +611,22 @@ function RootNode({
               {title}
             </div>
           </div>
-          <p className="mt-2 font-mono text-[10px] text-ink-mute uppercase tracking-[0.1em]">
-            {code} &nbsp;·&nbsp; {kind}
-          </p>
+          {code && kind ? (
+            <p className="mt-2 font-mono text-[10px] text-ink-mute uppercase tracking-[0.1em]">
+              {code} &nbsp;·&nbsp; {kind}
+            </p>
+          ) : null}
         </div>
         {children}
       </div>
-      <span
-        aria-hidden
-        className="absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel"
-        data-node="root"
-        data-port="out"
-      />
+      {port ? (
+        <span
+          aria-hidden
+          className="absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 border-brand-strong bg-panel"
+          data-node="root"
+          data-port="out"
+        />
+      ) : null}
     </div>
   );
 }
@@ -626,10 +639,12 @@ function RootNode({
 function VoiceNode({
   code,
   note,
+  port = true,
   status,
 }: {
-  code: string;
+  code?: string;
   note?: string;
+  port?: boolean;
   status: NodeStatus;
 }) {
   const live = status === "live";
@@ -645,18 +660,20 @@ function VoiceNode({
       data-node="voice"
       data-status={status}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-panel",
-          PORT_IN[status],
-          live && "motion-safe:animate-ping",
-        )}
-        data-live={live ? "true" : undefined}
-        data-node="voice"
-        data-port="in"
-        data-status={status}
-      />
+      {port ? (
+        <StatusPulse
+          aria-hidden
+          kind="ping"
+          className={cn(
+            "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-panel",
+            PORT_IN[status],
+          )}
+          data-live={live ? "true" : undefined}
+          data-node="voice"
+          data-port="in"
+          data-status={status}
+        />
+      ) : null}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
@@ -667,7 +684,7 @@ function VoiceNode({
               Penyusun bahasa
             </p>
             <p className="font-mono text-[9.5px] text-ink-mute uppercase tracking-[0.08em]">
-              {code} · Bahasa
+              {code ? `${code} · Bahasa` : "Bahasa"}
             </p>
           </div>
         </div>
@@ -701,9 +718,10 @@ export function SignalPanel({
   titleId = "panel-bukti-title",
   className,
   action,
+  onSelectEvidence,
 }: {
   result: ScoreResult | null;
-  sequence: AgentId[];
+  sequence: readonly DetectorAgent[];
   /** What the Evidence Agent assembled, when this surface has produced one. */
   evidence?: EvidenceBundle | null;
   /** What the pipeline actually did. Omit on surfaces that do not measure. */
@@ -716,10 +734,16 @@ export function SignalPanel({
   className?: string;
   /** Header control supplied by the host, e.g. the sheet's close button. */
   action?: ReactNode;
+  /** Selects a finding's exact quote in the conversation. */
+  onSelectEvidence?: (evidence: string) => void;
 }) {
   const [zoom, setZoom] = useState(100);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const { attachCanvas, height, width, wires } = useGraphWires(canvasRef);
+  const findings = result
+    ? result.signals.filter((signal) => signal.weight > 0)
+    : [];
+  const ledger = buildPanelLedger(sequence, trace, findings);
 
   const header = (
     <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
@@ -749,15 +773,11 @@ export function SignalPanel({
                   ? "Pemeriksaan terakhir selesai"
                   : "Diperbarui setelah pemeriksaan terakhir"}
           </p>
+          {result ? <CoverageStrip ledger={ledger} /> : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
-            {ROOT_CODE}→{synthesisCode(sequence.length)}
-          </span>
-          <span className="rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
-            {trace
-              ? `${coverageCount(trace, sequence)}/${sequence.length} agen`
-              : `${sequence.length} agen`}
+            {result ? `${findings.length} temuan` : `${sequence.length} agen`}
           </span>
           {action}
         </div>
@@ -927,12 +947,6 @@ export function SignalPanel({
     );
   }
 
-  /*
-   * A weight-0 signal is the engine's "nothing recognised" placeholder, not a
-   * finding. Counting `signals.length` printed "1 temuan" beside a 0/100
-   * "Bersih" verdict, so the panel contradicted the score it sits next to.
-   */
-  const findings = result.signals.filter((signal) => signal.weight > 0);
   const style = RISK_TEXT[result.risk];
   const modusName = MODUS_BY_ID.get(result.modus)?.nama ?? "Belum dikenali";
   const artifacts = evidence?.artifacts ?? [];
@@ -956,44 +970,7 @@ export function SignalPanel({
       .values(),
   ];
 
-  /*
-   * Coverage is read from the trace, never from a hardcoded table. Without a
-   * trace the panel has measured nothing, so no branch claims to have run.
-   * `dilewati` is the only honest "did not run": it carries the reason in its
-   * note, which the branch node prints instead of a green tick.
-   */
-  const stageById = new Map(
-    (trace?.stages ?? []).map((stage) => [stage.id, stage]),
-  );
-  const nodes = sequence.map((agent, index) => {
-    const stage = stageById.get(agent);
-    const ran =
-      stage?.status === "selesai" ||
-      stage?.status === "temuan" ||
-      (agent === "evidence" &&
-        evidence != null &&
-        stage?.status !== "dilewati");
-    const status: NodeStatus = !trace
-      ? "pending"
-      : ran
-        ? "ran"
-        : stage?.status === "berjalan"
-          ? "live"
-          : stage?.status === "gagal"
-            ? "failed"
-            : stage?.status === "dilewati"
-              ? "skipped"
-              : "pending";
-    return {
-      agent,
-      index,
-      status,
-      note: stage?.note,
-      count: findings.filter((signal) => (signal.agent ?? "scoring") === agent)
-        .length,
-    };
-  });
-  const voiceStage = stageById.get("voice");
+  const voiceStage = trace?.stages.find((stage) => stage.id === "voice");
   const voiceStatus: NodeStatus = !trace
     ? "pending"
     : voiceStage?.status === "berjalan"
@@ -1005,11 +982,7 @@ export function SignalPanel({
           : voiceStage?.status === "dilewati"
             ? "skipped"
             : "pending";
-  const synthesisStatus: NodeStatus = trace ? "ran" : "pending";
-  const ranCount = nodes.filter((node) => node.status === "ran").length;
-  const findingsKey = `${result.score}-${findings
-    .map((signal) => signal.label)
-    .join("|")}`;
+  const coverageDefaultOpen = findings.length === 0;
 
   return (
     <Card
@@ -1022,267 +995,236 @@ export function SignalPanel({
       {header}
 
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-16">
-          <div
-            className="relative origin-top transition-transform duration-150"
-            ref={attachCanvas}
-            style={{ transform: `scale(${zoom / 100})` }}
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-4">
+          <RootNode
+            port={false}
+            title={
+              <p className="truncate font-semibold text-[13.5px] text-ink tracking-[-0.01em]">
+                Pesan yang diperiksa
+              </p>
+            }
           >
-            <GraphWires height={height} width={width} wires={wires} />
-            <EntryPort label="Masukan pesan · diperiksa" />
-
-            <RootNode
-              code={ROOT_CODE}
-              kind="Dinilai"
-              title={
-                <p className="truncate font-semibold text-[13.5px] text-ink tracking-[-0.01em]">
-                  Pesan yang diperiksa
-                </p>
-              }
+            {/* 1 · Verdict. The only live region: findings must not each announce. */}
+            <output
+              aria-atomic="true"
+              aria-live="polite"
+              className="block border-edge-soft border-t px-3.5 py-2.5"
             >
-              {/* 1 · Verdict. The only live region: findings must not each announce. */}
-              <output
-                aria-atomic="true"
-                aria-live="polite"
-                className="block border-edge-soft border-t px-3.5 py-2.5"
-              >
-                <div className="flex items-baseline gap-2">
-                  <p
-                    className={cn(
-                      "tabular font-semibold text-[2rem] leading-none",
-                      style,
-                    )}
-                  >
-                    {result.score}
-                    <span className="ms-0.5 font-normal text-dim text-xs">
-                      /100
-                    </span>
-                  </p>
-                  <Badge
-                    variant="outline"
-                    className={cn("border-current/30 text-[10.5px]", style)}
-                  >
-                    {RISK_LABEL[result.risk]}
-                  </Badge>
-                </div>
-                <p className="mt-1 font-medium text-[12.5px] text-txt">
-                  {modusName}
-                </p>
-                {result.hardOverride ? (
-                  <p className="mt-1 flex items-center gap-1 text-[11px] text-danger">
-                    <TriangleAlert aria-hidden className="size-3 shrink-0" />
-                    Permintaan OTP, PIN, atau password memaksa risiko tinggi.
-                  </p>
-                ) : null}
-                {result.advice[0] && result.risk !== "bersih" ? (
-                  <p className="mt-1.5 text-dim text-[11.5px] leading-snug">
-                    {result.advice[0]}
-                  </p>
-                ) : null}
-              </output>
-            </RootNode>
-
-            <div aria-hidden className="h-11" />
-
-            <BranchList label="Agent yang memeriksa">
-              {nodes.map((node) => (
-                <AgentNode
-                  code={branchCode(node.index)}
-                  count={node.count}
-                  key={node.agent}
-                  kind={BRANCH_KIND[node.agent]}
-                  label={STAGE_LABEL[node.agent].label}
-                  nextCode={synthesisCode(nodes.length)}
-                  nodeId={node.agent}
-                  note={node.note}
-                  status={node.status}
-                />
-              ))}
-            </BranchList>
-
-            <div aria-hidden className="h-9" />
-
-            {/* 2 · Synthesis. The only list of findings, so every row is cited once. */}
-            <section
-              aria-labelledby={`${titleId}-findings`}
-              className="relative rounded-[14px] border border-brand-line bg-panel px-3.5 py-2.5 shadow-rest"
-              data-node="synthesis"
-              data-status={synthesisStatus}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute -top-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-panel",
-                  PORT_IN[synthesisStatus],
-                )}
-                data-node="synthesis"
-                data-port="in"
-                data-status={synthesisStatus}
-              />
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
-                    <Sparkles aria-hidden className="size-3.5" />
+              <div className="flex items-baseline gap-2">
+                <p
+                  className={cn(
+                    "tabular font-semibold text-[2rem] leading-none",
+                    style,
+                  )}
+                >
+                  {result.score}
+                  <span className="ms-0.5 font-normal text-dim text-xs">
+                    /100
                   </span>
-                  <div className="min-w-0">
-                    <h3
-                      className="truncate font-semibold text-[12px] text-ink"
-                      id={`${titleId}-findings`}
-                    >
-                      Sintesis temuan
-                    </h3>
-                    <p className="font-mono text-[9.5px] text-ink-mute uppercase tracking-[0.08em]">
-                      {trace
-                        ? `${ranCount}/${sequence.length} agen melapor`
-                        : "Tanpa catatan pipeline"}
-                    </p>
-                  </div>
-                </div>
-                <span className="tabular shrink-0 rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
-                  {findings.length} temuan
-                </span>
+                </p>
+                <Badge
+                  variant="outline"
+                  className={cn("border-current/30 text-[10.5px]", style)}
+                >
+                  {RISK_LABEL[result.risk]}
+                </Badge>
               </div>
-
-              <ul
-                aria-label="Temuan terdeteksi"
-                className="mt-2 flex flex-col gap-2"
-                key={findingsKey}
-              >
-                {findings.length === 0 ? (
-                  <li className="rounded-[10px] border border-edge-soft bg-bg px-2.5 py-2 text-[11.5px] text-dim">
-                    Tidak ada pola penipuan yang dikenali pada pesan ini.
-                  </li>
-                ) : (
-                  findings.map((signal, index) => {
-                    const agent = signal.agent ?? "scoring";
-                    return (
-                      <li
-                        className="animate-in fade-in-0 slide-in-from-bottom-1 rounded-[10px] border border-edge-soft bg-bg px-2.5 py-2"
-                        key={`${signal.label}-${signal.evidence}`}
-                        style={{
-                          animationDelay: `${index * 12}ms`,
-                          animationDuration: "140ms",
-                          animationFillMode: "both",
-                        }}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            aria-hidden
-                            className="size-1.5 shrink-0 animate-in rounded-full bg-warn zoom-in-50 fade-in-0"
-                            style={{
-                              animationDelay: `${index * 12 + 60}ms`,
-                              animationDuration: "320ms",
-                              animationFillMode: "both",
-                            }}
-                          />
-                          <span className="text-[10.5px] text-dim">
-                            {STAGE_LABEL[agent].label}
-                          </span>
-                        </div>
-                        <p className="mt-1 font-medium text-[12.5px] text-txt leading-snug">
-                          {signal.label}
-                        </p>
-                        {signal.evidence ? (
-                          <p className="mt-1 text-[11px] text-dim leading-snug">
-                            “{signal.evidence}”
-                          </p>
-                        ) : null}
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
-
-              {/* 3 · Coverage. A skipped stage names its reason on its branch. */}
-              {trace ? (
-                <div className="mt-2.5 border-edge-soft border-t pt-2">
-                  <p className="flex items-center gap-1.5 text-[11px] text-dim">
-                    {ranCount === sequence.length ? (
-                      <ShieldCheck
-                        aria-hidden
-                        className="size-3.5 shrink-0 text-brand"
-                      />
-                    ) : (
-                      <MinusCircle
-                        aria-hidden
-                        className="size-3.5 shrink-0 text-dim"
-                      />
-                    )}
-                    {ranCount} dari {sequence.length} agen memeriksa pesan ini
-                  </p>
-                  {nodes
-                    .filter((node) => node.status === "failed")
-                    .map((node) => (
-                      <p
-                        className="mt-1 ps-5 text-[11px] text-danger leading-snug"
-                        key={node.agent}
-                      >
-                        <span className="font-medium">
-                          {STAGE_LABEL[node.agent].label}
-                        </span>{" "}
-                        gagal
-                        {node.note ? ` — ${node.note}` : "."}
-                      </p>
-                    ))}
-                </div>
+              <p className="mt-1 font-medium text-[12.5px] text-txt">
+                {modusName}
+              </p>
+              {result.hardOverride ? (
+                <p className="mt-1 flex items-center gap-1 text-[11px] text-danger">
+                  <TriangleAlert aria-hidden className="size-3 shrink-0" />
+                  Permintaan OTP, PIN, atau password memaksa risiko tinggi.
+                </p>
               ) : null}
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute -bottom-[5px] left-1/2 z-10 size-2.5 -translate-x-1/2 rounded-full",
-                  PORT_OUT[synthesisStatus],
-                )}
-                data-node="synthesis"
-                data-port="out"
-                data-status={synthesisStatus}
-              />
-            </section>
+              {result.advice[0] && result.risk !== "bersih" ? (
+                <p className="mt-1.5 text-dim text-[11.5px] leading-snug">
+                  {result.advice[0]}
+                </p>
+              ) : null}
+            </output>
+          </RootNode>
 
-            <div className="mt-6">
-              <VoiceNode
-                code={voiceCode(sequence.length)}
-                note={voiceStage?.note}
-                status={voiceStatus}
-              />
+          <FindingsSection
+            agents={ledger.findingAgents}
+            onSelectEvidence={onSelectEvidence}
+            titleId={titleId}
+          />
+
+          <div className="mt-3 flex flex-col gap-1.5">
+            <CoverageGroup
+              agents={ledger.cleanAgents}
+              defaultOpen={coverageDefaultOpen}
+              label="Diperiksa, nihil"
+            />
+            <CoverageGroup
+              agents={ledger.noObjectAgents}
+              defaultOpen={coverageDefaultOpen}
+              label="Tanpa objek"
+            />
+            <CoverageGroup
+              agents={ledger.pendingAgents}
+              defaultOpen={
+                findings.length === 0 &&
+                ledger.cleanAgents.length === 0 &&
+                ledger.noObjectAgents.length === 0
+              }
+              label="Belum tercatat"
+            />
+          </div>
+
+          {ledger.failedAgents.length > 0 ? (
+            <section aria-labelledby={`${titleId}-failed`} className="mt-3">
+              <h3
+                className="font-mono text-[9px] text-danger uppercase tracking-[0.14em]"
+                id={`${titleId}-failed`}
+              >
+                Gagal · {ledger.failedAgents.length}
+              </h3>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {ledger.failedAgents.map((agent) => (
+                  <li
+                    className="rounded-[10px] border border-danger/30 bg-danger/5 px-2.5 py-2"
+                    key={agent.agent}
+                  >
+                    <p className="font-medium text-[11.5px] text-danger">
+                      {STAGE_LABEL[agent.agent].label} gagal
+                    </p>
+                    <p className="mt-0.5 text-[10.5px] text-dim leading-snug">
+                      {agent.note ?? "Tidak ada catatan."}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {ledger.liveAgents.length > 0 ? (
+            <section aria-labelledby={`${titleId}-live`} className="mt-3">
+              <h3
+                className="font-mono text-[9px] text-brand uppercase tracking-[0.14em]"
+                id={`${titleId}-live`}
+              >
+                Berjalan · {ledger.liveAgents.length}
+              </h3>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {ledger.liveAgents.map((agent) => (
+                  <li
+                    className="flex items-center gap-2 rounded-[10px] border border-brand-edge bg-brand-soft px-2.5 py-2"
+                    key={agent.agent}
+                  >
+                    <StatusPulse
+                      className="size-2 rounded-full bg-brand-strong"
+                      kind="opacity"
+                    />
+                    <span className="text-[11.5px] text-txt">
+                      {STAGE_LABEL[agent.agent].label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <section
+            aria-labelledby={`${titleId}-synthesis`}
+            className="mt-3 rounded-[14px] border border-brand-line bg-panel px-3.5 py-2.5 shadow-rest"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
+                  <Sparkles aria-hidden className="size-3.5" />
+                </span>
+                <div className="min-w-0">
+                  <h3
+                    className="truncate font-semibold text-[12px] text-ink"
+                    id={`${titleId}-synthesis`}
+                  >
+                    Sintesis temuan
+                  </h3>
+                  <p className="font-mono text-[9.5px] text-ink-mute uppercase tracking-[0.08em]">
+                    {findings.length === 0
+                      ? "Tidak ada temuan"
+                      : `${ledger.findingAgents.length} agen menemukan`}
+                  </p>
+                </div>
+              </div>
+              <span className="tabular shrink-0 rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
+                {findings.length} temuan
+              </span>
             </div>
 
-            {/* 4 · Proof. Artifacts are chips, not a second list of findings. */}
-            {artifactGroups.length > 0 ? (
-              <section
-                aria-labelledby={`${titleId}-artifacts`}
-                className="mt-3"
+            {ledger.otherFindings.length > 0 ? (
+              <ul
+                aria-label="Temuan sintesis"
+                className="mt-2 flex flex-col gap-1.5"
               >
-                <h3
-                  className="font-medium text-[10.5px] text-dim uppercase tracking-[0.07em]"
-                  id={`${titleId}-artifacts`}
-                >
-                  Bukti tercatat
-                </h3>
-                <ul className="mt-2 flex flex-col gap-2">
-                  {artifactGroups.slice(0, 3).map((group) => (
-                    <li
-                      className="rounded-[10px] border border-edge bg-panel px-2.5 py-1.5"
-                      key={group.label}
-                    >
-                      <span className="block text-[10.5px] text-dim">
-                        {group.label}
-                      </span>
-                      <span className="block break-words text-[11.5px] text-txt">
-                        {group.values.join(" · ")}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                {artifactGroups.length > 3 ? (
-                  <p className="mt-1.5 text-[10.5px] text-dim">
-                    +{artifactGroups.length - 3} jenis bukti lain di laporan
-                  </p>
-                ) : null}
-              </section>
+                {ledger.otherFindings.map((signal) => (
+                  <li
+                    className="rounded-[10px] border border-edge-soft bg-bg px-2.5 py-2"
+                    key={`${signal.label}-${signal.evidence}`}
+                  >
+                    <p className="font-medium text-[11.5px] text-txt">
+                      {signal.label}
+                    </p>
+                    {signal.evidence ? (
+                      <p className="mt-0.5 text-[10.5px] text-dim">
+                        “{signal.evidence}”
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
             ) : null}
+
+            {trace ? (
+              <div className="mt-2 border-edge-soft border-t pt-1.5">
+                <TraceDisclosure trace={trace} />
+              </div>
+            ) : null}
+          </section>
+
+          <div className="mt-3">
+            <VoiceNode
+              note={voiceStage?.note}
+              port={false}
+              status={voiceStatus}
+            />
           </div>
+
+          {/* 2 · Proof. Artifacts are chips, not a second list of findings. */}
+          {artifactGroups.length > 0 ? (
+            <section aria-labelledby={`${titleId}-artifacts`} className="mt-3">
+              <h3
+                className="font-medium text-[10.5px] text-dim uppercase tracking-[0.07em]"
+                id={`${titleId}-artifacts`}
+              >
+                Bukti tercatat
+              </h3>
+              <ul className="mt-2 flex flex-col gap-2">
+                {artifactGroups.slice(0, 3).map((group) => (
+                  <li
+                    className="rounded-[10px] border border-edge bg-panel px-2.5 py-1.5"
+                    key={group.label}
+                  >
+                    <span className="block text-[10.5px] text-dim">
+                      {group.label}
+                    </span>
+                    <span className="block break-words text-[11.5px] text-txt">
+                      {group.values.join(" · ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {artifactGroups.length > 3 ? (
+                <p className="mt-1.5 text-[10.5px] text-dim">
+                  +{artifactGroups.length - 3} jenis bukti lain di laporan
+                </p>
+              ) : null}
+            </section>
+          ) : null}
         </CardContent>
-        {toolbar}
       </div>
 
       <div className="shrink-0 border-edge border-t bg-panel px-3.5 pt-2.5 pb-3">
@@ -1309,16 +1251,4 @@ export function SignalPanel({
       </div>
     </Card>
   );
-}
-
-/** Header count: how many branches actually reported. */
-function coverageCount(trace: AgentTrace, sequence: AgentId[]): number {
-  const ran = new Set(
-    trace.stages
-      .filter(
-        (stage) => stage.status === "selesai" || stage.status === "temuan",
-      )
-      .map((stage) => stage.id),
-  );
-  return sequence.filter((agent) => ran.has(agent)).length;
 }
