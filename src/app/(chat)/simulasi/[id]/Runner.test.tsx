@@ -342,4 +342,38 @@ describe("Runner misi Paket sebelum pulang", () => {
       screen.getByRole("progressbar", { name: /akses asing/i }),
     ).toHaveAttribute("aria-valuenow", "0");
   });
+
+  it("renders the simulation as a WhatsApp-style conversation", () => {
+    render(<Runner content={SIMULATION_FIXTURE} />);
+    reachFirstDecision();
+
+    expect(
+      screen.getByRole("log", { name: /percakapan latihan/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /nomor tidak tersimpan · identitas belum terverifikasi/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-direction="incoming"]'),
+    ).toBeInTheDocument();
+    expect(screen.getByText("16.42")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/pilih balasan di atas/i),
+    ).toBeDisabled();
+  });
+
+  it("sends a chosen reply as an orange outgoing bubble", () => {
+    render(<Runner content={SIMULATION_FIXTURE} />);
+    reachFirstDecision();
+    click(/cek pesanan lewat aplikasi belanja sendiri/i);
+
+    const outgoing = document.querySelector('[data-direction="outgoing"]');
+    expect(outgoing).toBeInTheDocument();
+    expect(outgoing).toHaveTextContent(
+      /cek pesanan lewat aplikasi belanja sendiri/i,
+    );
+    expect(screen.getAllByTestId("wa-ticks").length).toBeGreaterThan(0);
+  });
 });
