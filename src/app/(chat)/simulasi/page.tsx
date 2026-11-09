@@ -18,6 +18,7 @@ import {
   ContentLoading,
   ContentUnavailable,
 } from "@/components/belajar/content-state";
+import { ProfilePopup } from "@/components/profil/profile-popup";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -185,6 +186,9 @@ export async function SimulasiContent() {
             aria-hidden="true"
             className="absolute inset-0 bg-brand-tint bg-[url('/simulasi/hero-gift.webp')] bg-cover bg-[position:72%_50%] bg-no-repeat [mask-image:linear-gradient(90deg,transparent_0%,black_40%)]"
           />
+          <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+            <ProfilePopup className="size-11" />
+          </div>
           <div className="relative">
             <div className="min-w-0 max-w-xl p-6 sm:p-8">
               <p className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 py-1 font-semibold text-[11px] text-brand-ink shadow-sm">
