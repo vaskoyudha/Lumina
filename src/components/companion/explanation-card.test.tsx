@@ -35,6 +35,12 @@ describe("ExplanationCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("previews the recognizable sign before expansion", () => {
+    renderFor(PHISH);
+    expect(screen.getAllByText(/^Ciri:/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/dalam 2 jam/)).toBeInTheDocument();
+  });
+
   it("keeps the long explanation collapsed until asked", async () => {
     const user = userEvent.setup();
     renderFor(PHISH);

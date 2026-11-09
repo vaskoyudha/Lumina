@@ -86,30 +86,40 @@ function SessionRow({
         onClick={onSelect}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex w-full items-center gap-2 rounded-[7px] px-1.5 py-[6px] text-left transition-[background-color,color,box-shadow] duration-150 ease-out",
+          "flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 py-1.5 text-left",
+          "transition-[background-color,color,box-shadow] duration-150 ease-out",
+          "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1",
           active
             ? "bg-panel font-medium text-ink shadow-rest"
             : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
         )}
       >
-        <span className="min-w-0 flex-1 truncate text-[12px] leading-[1.35]">
+        <span className="min-w-0 flex-1 truncate text-[12.5px] leading-5">
           {session.title}
         </span>
         {meta ? (
           <ShieldAlert
             aria-hidden
             strokeWidth={1.8}
-            className={cn("size-3 shrink-0", meta.className)}
+            className={cn("size-3.5 shrink-0", meta.className)}
           />
         ) : null}
         {session.time ? (
-          <span className="shrink-0 text-[10.5px] text-ink-faint tabular">
+          <span className="shrink-0 tabular text-[11px] text-ink-faint">
             {session.time}
           </span>
         ) : null}
         {meta ? <span className="sr-only">{meta.label}</span> : null}
       </button>
     </li>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-1 px-1.5 font-medium text-[10.5px] text-ink-mute uppercase tracking-[0.12em]">
+      {children}
+    </p>
   );
 }
 
@@ -125,8 +135,8 @@ function SectionTrigger({
   return (
     <CollapsibleTrigger
       className={cn(
-        "group flex w-full items-center gap-1.5 rounded-[7px] px-1.5 py-1 text-left",
-        "font-medium text-[10.5px] text-ink-faint transition-colors duration-150",
+        "group flex w-full items-center gap-1.5 rounded-[7px] px-1.5 py-1.5 text-left",
+        "font-medium text-[10.5px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-150",
         "hover:bg-txt/[0.04] hover:text-ink-soft",
       )}
     >
@@ -140,7 +150,7 @@ function SectionTrigger({
       />
       <span className="flex-1 truncate">{label}</span>
       {count === undefined ? null : (
-        <span className="shrink-0 tabular text-[10px] text-ink-faint">
+        <span className="shrink-0 rounded-full bg-panel-2 px-1.5 py-0.5 tabular text-[10px] text-ink-mute normal-case tracking-normal">
           {count}
         </span>
       )}
@@ -226,7 +236,7 @@ export function SessionSidebar({
       { label: "Lebih lama", items: [] },
     ];
 
-    for (const session of [...visible].reverse()) {
+    for (const session of visible) {
       const stamp = session.updatedAt;
       const index =
         stamp === undefined || now === null
@@ -263,7 +273,7 @@ export function SessionSidebar({
     ) : (
       groups.map((group) => (
         <div key={group.label}>
-          <p className="mb-1 px-1.5 font-medium text-[10.5px] text-ink-faint">
+          <p className="mb-1.5 px-1.5 font-medium text-[11px] text-ink-mute">
             {group.label}
           </p>
           <ul className="space-y-0.5">
@@ -338,7 +348,7 @@ export function SessionSidebar({
         <Button
           onClick={onNew}
           data-pressable
-          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-flame-500 bg-clip-border py-1.5 pr-1.5 pl-3.5 font-semibold text-[12.5px] text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_4px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_6px_0_0_var(--color-flame-600)] active:translate-y-[4px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
+          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-flame-500 bg-clip-border py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_4px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_6px_0_0_var(--color-flame-600)] active:translate-y-[4px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
         >
           <span className="flex-1 text-left">Percakapan baru</span>
           <span className="flex size-7 items-center justify-center rounded-[6px] bg-panel text-ink">
@@ -349,16 +359,11 @@ export function SessionSidebar({
         <div className="my-2.5 border-t border-txt/[0.06]" />
 
         {/* Destinations are a flat block, not a collapsed group: they are the
-            primary navigation, so they never hide behind a trigger. The search
-            card sits directly above the collapsible history below. */}
-        <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-0.5">
-          <NavRail
-            agentsActive={agentsActive}
-            onShowAgents={onShowAgents}
-            onShowChat={onShowChat}
-          />
-
-          <label className="relative flex h-[34px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
+            primary navigation, so they never hide behind a trigger. Search
+            stays above them so it reads as global, not as part of Darurat;
+            Riwayat sits below as the only collapsible group. */}
+        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5">
+          <label className="relative flex h-[38px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
             <Search
               aria-hidden
               strokeWidth={1.7}
@@ -369,17 +374,26 @@ export function SessionSidebar({
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Cari"
-              className="min-w-0 flex-1 bg-transparent px-2 text-[16px] text-txt outline-none placeholder:text-ink-faint sm:text-[12px] [&::-webkit-search-cancel-button]:hidden"
+              placeholder="Cari percakapan"
+              className="min-w-0 flex-1 bg-transparent px-2 text-[16px] text-txt outline-none placeholder:text-ink-faint sm:text-[13px] [&::-webkit-search-cancel-button]:hidden"
             />
             <kbd
               aria-hidden
-              className="grid h-[19px] min-w-[19px] shrink-0 place-items-center rounded-[5px] bg-brand-soft px-1 font-sans text-[10.5px] text-brand-ink-soft"
+              className="grid h-[20px] min-w-[20px] shrink-0 place-items-center rounded-[5px] border border-hairline bg-panel-2 px-1 font-sans text-[10.5px] text-ink-mute"
             >
               ⌘K
             </kbd>
             <span className="sr-only">Cari percakapan</span>
           </label>
+
+          <div>
+            <SectionLabel>Ruang kerja</SectionLabel>
+            <NavRail
+              agentsActive={agentsActive}
+              onShowAgents={onShowAgents}
+              onShowChat={onShowChat}
+            />
+          </div>
 
           <Collapsible
             open={openPanels.history}
@@ -399,20 +413,21 @@ export function SessionSidebar({
         </div>
       </div>
 
-      {auth?.(false)}
-
-      <div className="mt-2 flex items-center gap-2.5 rounded-[12px] border border-hairline bg-panel p-2 shadow-rest">
-        <span className="grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-brand-soft text-brand-ink">
-          <Lock aria-hidden strokeWidth={1.8} className="size-3.5" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold text-[11.5px] leading-[1.3] text-txt">
-            Riwayat di tab ini
-          </span>
-          <span className="block truncate font-light text-[10.5px] leading-[1.4] text-ink-faint">
+      <div className="mt-3 border-t border-line pt-3">
+        <p className="mb-2 flex items-start gap-2 px-1.5 text-[11px] text-ink-faint leading-4">
+          <Lock
+            aria-hidden
+            strokeWidth={1.8}
+            className="mt-0.5 size-3.5 shrink-0 text-ink-mute"
+          />
+          <span>
+            <span className="font-medium text-ink-mute">
+              Riwayat hanya di tab ini.
+            </span>{" "}
             Tutup tab, hilang.
           </span>
-        </span>
+        </p>
+        {auth?.(false)}
       </div>
     </>
   );
@@ -475,13 +490,13 @@ export function SessionSidebar({
               aria-label={session.title}
               title={session.title}
               className={cn(
-                "grid size-9 shrink-0 place-items-center rounded-[8px] transition-colors duration-150",
+                "grid size-10 shrink-0 place-items-center rounded-[8px] transition-colors duration-150",
                 session.id === activeId
                   ? "bg-panel text-ink shadow-rest"
                   : "text-ink-faint hover:bg-txt/[0.04] hover:text-ink",
               )}
             >
-              <span className="font-medium text-[12px] leading-none">
+              <span className="font-medium text-[12.5px] leading-none">
                 {session.title.trim().charAt(0).toUpperCase()}
               </span>
             </button>
@@ -489,31 +504,32 @@ export function SessionSidebar({
         )}
       </div>
 
-      {auth?.(true)}
-
       <span
         title="Riwayat di tab ini — tutup tab, hilang."
-        className="mt-1 grid size-9 shrink-0 place-items-center rounded-[9px] bg-brand-soft text-brand-ink"
+        className="mt-1 grid size-9 shrink-0 place-items-center rounded-[9px] bg-panel-2 text-ink-mute"
       >
         <Lock aria-hidden strokeWidth={1.8} className="size-3.5" />
         <span className="sr-only">Riwayat di tab ini, tutup tab hilang.</span>
       </span>
+
+      {auth?.(true)}
     </>
   );
 
   return (
     <aside
       className={cn(
-        "flex shrink-0 select-none flex-col justify-between",
+        "flex shrink-0 select-none flex-col justify-between overflow-hidden",
+        "md:transition-[width] md:duration-200 md:ease-[cubic-bezier(0.22,1,0.36,1)]",
         collapsed
-          ? "w-[220px] px-2 pt-2 pb-1 md:w-[60px] md:items-center md:gap-1.5 md:px-1.5"
-          : "w-[220px] px-2 pt-2 pb-1",
+          ? "w-[248px] px-2.5 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-1.5 md:px-2"
+          : "w-[248px] px-2.5 pt-2.5 pb-2",
         className,
       )}
     >
       {collapsed ? (
         <>
-          <div className="hidden min-h-0 flex-1 flex-col items-center gap-1.5 md:flex">
+          <div className="hidden min-h-0 flex-1 flex-col items-center gap-1.5 md:flex md:animate-in md:fade-in-0 md:duration-150">
             {rail}
           </div>
           <div className="flex min-h-0 flex-1 flex-col md:hidden">
@@ -521,7 +537,9 @@ export function SessionSidebar({
           </div>
         </>
       ) : (
-        expanded
+        <div className="flex min-h-0 flex-1 flex-col justify-between md:animate-in md:fade-in-0 md:duration-150">
+          {expanded}
+        </div>
       )}
     </aside>
   );
