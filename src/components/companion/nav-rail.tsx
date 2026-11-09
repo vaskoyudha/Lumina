@@ -78,7 +78,7 @@ function RailItem({
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-semibold text-nav-active-ink"
+            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
             : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -102,7 +102,7 @@ function RailItem({
       <span
         className={cn(
           "truncate text-[12.5px]",
-          active ? "font-semibold" : "font-medium",
+          active ? "font-bold" : "font-semibold",
           iconsOnly && "sr-only",
         )}
       >
@@ -139,7 +139,7 @@ function AgentItem({
           ? "size-10 justify-center"
           : "w-full gap-2.5 px-3 py-2 text-left",
         active
-          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-semibold text-nav-active-ink"
+          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
           : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -157,7 +157,7 @@ function AgentItem({
       <span
         className={cn(
           "truncate text-[12.5px]",
-          active ? "font-semibold" : "font-medium",
+          active ? "font-bold" : "font-semibold",
           iconsOnly ? "sr-only" : "min-w-0 flex-1",
         )}
       >

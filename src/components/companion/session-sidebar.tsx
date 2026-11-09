@@ -89,11 +89,11 @@ function SessionRow({
         onClick={onSelect}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 py-1.5 text-left",
+          "flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 py-1.5 font-medium text-left",
           "transition-[background-color,color,box-shadow] duration-150 ease-out",
           "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1",
           active
-            ? "bg-panel font-medium text-ink shadow-rest"
+            ? "bg-panel font-semibold text-ink shadow-rest"
             : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
         )}
       >
@@ -120,7 +120,7 @@ function SessionRow({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1 px-1.5 font-medium text-[10.5px] text-ink-mute uppercase tracking-[0.12em]">
+    <p className="mb-1 px-1.5 font-semibold text-[10.5px] text-ink-mute uppercase tracking-[0.12em]">
       {children}
     </p>
   );
@@ -139,7 +139,7 @@ function SectionTrigger({
     <CollapsibleTrigger
       className={cn(
         "group flex w-full items-center gap-1.5 rounded-[7px] px-1.5 py-1.5 text-left",
-        "font-medium text-[10.5px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-150",
+        "font-semibold text-[10.5px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-150",
         "hover:bg-txt/[0.04] hover:text-ink-soft",
       )}
     >
@@ -276,7 +276,7 @@ export function SessionSidebar({
     ) : (
       groups.map((group) => (
         <div key={group.label}>
-          <p className="mb-1.5 px-1.5 font-medium text-[11px] text-ink-mute">
+          <p className="mb-1.5 px-1.5 font-semibold text-[11px] text-ink-mute">
             {group.label}
           </p>
           <ul className="space-y-0.5">
@@ -517,7 +517,7 @@ export function SessionSidebar({
                   : "text-ink-faint hover:bg-txt/[0.04] hover:text-ink",
               )}
             >
-              <span className="font-medium text-[12.5px] leading-none">
+              <span className="font-semibold text-[12.5px] leading-none">
                 {session.title.trim().charAt(0).toUpperCase()}
               </span>
             </button>
