@@ -374,17 +374,6 @@ export async function SimulasiContent() {
             </div>
           </Card>
         </div>
-
-        <p className="text-dim text-xs">
-          Punya pengalaman serupa?{" "}
-          <Link
-            className="font-semibold text-brand-strong underline-offset-4 hover:underline"
-            href="/komunitas"
-          >
-            Buka komunitas
-          </Link>
-          . Halaman itu tidak memakai skor atau gamifikasi.
-        </p>
       </div>
     </WorkspaceShell>
   );
