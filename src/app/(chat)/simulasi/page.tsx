@@ -1,14 +1,11 @@
 import {
   ArrowRight,
-  Briefcase,
   Check,
   Clock,
-  CreditCard,
   Lightbulb,
-  Link2,
   ListChecks,
+  Lock,
   Mail,
-  PhoneCall,
   Route,
   ShieldCheck,
   UserRound,
@@ -48,11 +45,14 @@ const CHAPTER_NOTES = [
 
 const CHAPTER_ICONS = [UserRound, Mail, ShieldCheck];
 
-const PLANNED_ICONS: Record<string, typeof ShieldCheck> = {
-  "fake-call": PhoneCall,
-  "lowongan-tugas-berbayar": Briefcase,
-  "phishing-tautan": Link2,
-  "pinjol-fiktif": CreditCard,
+const PLANNED_COPY: Record<string, { title?: string; note: string }> = {
+  "phishing-tautan": {
+    title: "Pengintipan tautan & akun",
+    note: "Mencari tautan mencurigakan",
+  },
+  "lowongan-tugas-berbayar": { note: "Waspadai jebakan kerja palsu" },
+  "pinjol-fiktif": { note: "Pinjaman cepat berisiko tinggi" },
+  "fake-call": { note: "Kenali identitas dengan cermat" },
 };
 
 const TITLE_WORDS = MISSION.title.split(" ");
@@ -81,41 +81,41 @@ function SimulasiAside() {
       >
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 id="planned-heading" className="font-bold text-sm text-txt">
+            <h2 id="planned-heading" className="font-bold text-[15px] text-txt">
               Level lain
             </h2>
-            <span className="font-semibold text-[11px] text-brand-strong">
-              Lihat semua →
+            <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-ink-soft">
+              Lihat semua
+              <ArrowRight aria-hidden className="size-3" />
             </span>
           </div>
-          <p className="mt-0.5 text-dim text-xs">
-            Masih direncanakan, belum bisa dimainkan.
-          </p>
-          <ul className="mt-3 space-y-1">
+          <ul className="mt-2.5 divide-y divide-line">
             {PLANNED.map((modus) => {
-              const Icon = PLANNED_ICONS[modus.id] ?? ShieldCheck;
+              const copy = PLANNED_COPY[modus.id];
+              const title = copy?.title ?? modus.nama;
+              const note = copy?.note ?? modus.ciri[0];
               return (
-                <li key={modus.id} className="flex items-start gap-3 py-2">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
-                    <Icon aria-hidden className="size-4" />
+                <li key={modus.id} className="flex items-start gap-3 py-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                    <Lock aria-hidden strokeWidth={1.8} className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p
-                        className="line-clamp-2 font-semibold text-xs text-txt"
-                        title={modus.nama}
+                        className="font-bold text-[12px] text-txt leading-snug"
+                        title={title}
                       >
-                        {modus.nama}
+                        {title}
                       </p>
-                      <span className="shrink-0 rounded-full border border-brand-line bg-brand-soft px-2 py-0.5 text-[10px] text-brand-ink">
+                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 font-semibold text-[9.5px] text-brand-chip-ink">
                         Rencana
                       </span>
                     </div>
                     <p
-                      className="mt-0.5 line-clamp-2 text-[10px] text-dim"
-                      title={modus.ciri[0]}
+                      className="mt-1 text-[10.5px] text-dim leading-snug"
+                      title={note}
                     >
-                      {modus.ciri[0]}
+                      {note}
                     </p>
                   </div>
                 </li>
@@ -125,24 +125,36 @@ function SimulasiAside() {
         </div>
       </Card>
 
-      <Card className="rounded-card border border-line p-4 shadow-[var(--appnext-shadow-ambient)]">
-        <h2 className="font-bold text-sm text-txt">
-          Latihan, bukan pemindaian perangkat
-        </h2>
-        <p className="mt-2 text-dim text-xs leading-relaxed">
-          Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif. Latihan
-          tidak mengubah perangkatmu dan tidak mengirim laporan ke mana pun.
-          Penilaian mengikuti aturan skenario, bukan skor model. Kalau ini
-          sedang terjadi sungguhan, gunakan mode darurat.
-        </p>
-        <div className="mt-3 flex justify-end">
-          <Link
-            href="/darurat"
-            aria-label="Buka mode darurat"
-            className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel text-brand-strong transition-colors hover:bg-brand-soft hover:text-brand-ink"
-          >
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
+      <Card className="relative gap-0 overflow-hidden rounded-card border border-brand-line/60 bg-gradient-to-br from-brand-tint via-brand-soft-2 to-brand-soft py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-0 bottom-0 size-36 translate-x-8 translate-y-8 rounded-full bg-brand-glow/25 blur-2xl"
+        />
+        <div className="relative p-4">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="max-w-[11.25rem] font-bold text-[15px] text-txt leading-snug">
+              Latihan, bukan pemindaian perangkat!
+            </h2>
+            <ShieldCheck
+              aria-hidden
+              strokeWidth={1.6}
+              className="size-10 shrink-0 text-brand"
+            />
+          </div>
+          <p className="mt-2 text-[11.5px] text-dim leading-relaxed">
+            Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif.
+            Latihan ini tidak mengubah perangkatmu dan tidak mengirim laporan ke
+            mana pun.
+          </p>
+          <div className="mt-4 flex justify-end">
+            <Link
+              href="/darurat"
+              aria-label="Buka mode darurat"
+              className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel/80 text-brand shadow-sm transition-colors hover:bg-panel hover:text-brand-strong"
+            >
+              <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          </div>
         </div>
       </Card>
     </div>

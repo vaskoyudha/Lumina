@@ -65,7 +65,6 @@ export default function BelajarPage() {
       <BelajarDashboard
         items={items}
         featured={featured}
-        complete={complete}
         total={sorted.length}
       />
 
