@@ -20,8 +20,8 @@ export type StageStatus =
   | "dilewati"
   | "gagal";
 
-/** `voice` is not a detector, so it does not belong in `AgentId`. */
-export type StageId = AgentId | "voice";
+/** `voice` and `job-search` are not detectors, so they do not belong in `AgentId`. */
+export type StageId = AgentId | "voice" | "job-search";
 
 export interface AgentStage {
   id: StageId;
@@ -83,6 +83,10 @@ export const STAGE_LABEL: Record<StageId, { label: string; task: string }> = {
   voice: {
     label: "Penyusun bahasa",
     task: "Menulis jawaban dari temuan, bukan menilai ulang",
+  },
+  "job-search": {
+    label: "Pencari Lowongan",
+    task: "Mencari lowongan dari hasil pindai",
   },
 };
 

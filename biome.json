@@ -16,7 +16,9 @@
       "!src/components/marketing/powder/sections",
       "!src/styles/powder-framer.css",
       "!src/styles/powder-fonts.css",
-      "!src/data/powder"
+      "!src/data/powder",
+      "!scanner",
+      "!.scan-data"
     ]
   },
   "formatter": {

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Briefcase,
   Check,
   ChevronRight,
   Circle,
@@ -204,10 +205,17 @@ function AgentBubble({
 }) {
   const [open, setOpen] = React.useState(false);
   const profile = isDetector(stage.id) ? AGENT_REGISTRY[stage.id] : null;
-  const identity = profile ? `var(${profile.identity})` : "var(--lumina-brand)";
-  const soft = profile
-    ? `var(${profile.identity}-soft)`
-    : "var(--lumina-brand-soft)";
+  const isSearch = stage.id === "job-search";
+  const identity = isSearch
+    ? "var(--lumina-agent-job)"
+    : profile
+      ? `var(${profile.identity})`
+      : "var(--lumina-brand)";
+  const soft = isSearch
+    ? "var(--lumina-agent-job-soft)"
+    : profile
+      ? `var(${profile.identity}-soft)`
+      : "var(--lumina-brand-soft)";
   const signals = profile ? signalsFor(result, profile.id) : [];
   const explain = stage.status === "dilewati" || stage.status === "gagal";
   const note = stage.note ?? (explain ? "Tidak ada alasan tercatat." : null);
@@ -245,6 +253,8 @@ function AgentBubble({
                 />
               ) : profile ? (
                 <profile.icon className="size-3.5" />
+              ) : isSearch ? (
+                <Briefcase className="size-3.5" />
               ) : (
                 <PenLine className="size-3.5" />
               )}
@@ -386,11 +396,13 @@ export function runAnnouncement(trace: AgentTrace): string {
       : voice?.status === "gagal"
         ? " Penyusun bahasa gagal."
         : "";
+  const search = byId.get("job-search");
+  const searched = search?.note ? ` ${search.note}.` : "";
 
   if (runState(trace.stages) === "gagal") {
-    return `Sebagian pemeriksaan gagal: ${failed} agen gagal, ${completed} selesai, ${skipped} dilewati, ${findings} temuan.${language}`;
+    return `Sebagian pemeriksaan gagal: ${failed} agen gagal, ${completed} selesai, ${skipped} dilewati, ${findings} temuan.${language}${searched}`;
   }
-  return `${completed} agen selesai, ${skipped} dilewati, ${findings} temuan.${language}`;
+  return `${completed} agen selesai, ${skipped} dilewati, ${findings} temuan.${language}${searched}`;
 }
 
 export function AgentRun({
@@ -408,11 +420,15 @@ export function AgentRun({
   const byId = new Map(trace.stages.map((stage) => [stage.id, stage]));
   const scoring = byId.get("scoring");
   const voice = byId.get("voice");
+  const jobSearch = byId.get("job-search");
   const specialists = AGENT_SEQUENCE.map((id) => byId.get(id)).filter(
     (stage): stage is AgentStage => Boolean(stage),
   );
   const findings = specialists.reduce((sum, stage) => sum + stage.findings, 0);
-  const engineMs = Math.max(0, trace.totalMs - (voice?.ms ?? 0));
+  const engineMs = Math.max(
+    0,
+    trace.totalMs - (voice?.ms ?? 0) - (jobSearch?.ms ?? 0),
+  );
   const voiceLive = live && voice?.status === "berjalan";
   const state = runState(trace.stages);
   const reduce = useReducedMotion();
@@ -567,6 +583,20 @@ export function AgentRun({
             />
           </motion.li>
         ))}
+        {jobSearch ? (
+          <motion.li
+            key={jobSearch.id}
+            variants={agentVariants}
+            className="min-w-0"
+          >
+            <AgentBubble
+              stage={jobSearch}
+              result={result}
+              live={live && jobSearch.status === "berjalan"}
+              reduced={reduce ?? false}
+            />
+          </motion.li>
+        ) : null}
         {voice ? (
           <motion.li
             key={voice.id}

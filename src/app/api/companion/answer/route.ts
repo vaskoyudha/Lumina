@@ -4,6 +4,11 @@ import {
   AnswerRequestSchema,
 } from "@/lib/contracts/answer";
 import {
+  JOB_SEARCH_TOOL,
+  JobSearchArgsSchema,
+  type ToolCall,
+} from "@/lib/contracts/tool";
+import {
   BodyTooLarge,
   limitAI,
   readJson,
@@ -124,6 +129,8 @@ export async function POST(request: Request) {
            */
           reasoning_effort: "none",
           max_tokens: MAX_TOKENS,
+          tools: [JOB_SEARCH_TOOL],
+          tool_choice: "auto",
           messages: [
             { role: "system", content: SYSTEM[parsed.data.lane] },
             {
@@ -138,12 +145,44 @@ export async function POST(request: Request) {
     if (!upstream.ok) return fail(503, "upstream-failed");
 
     const json = (await upstream.json()) as {
-      choices?: { message?: { content?: string } }[];
+      choices?: {
+        message?: {
+          content?: string | null;
+          tool_calls?: {
+            id?: string;
+            type?: string;
+            function?: { name?: string; arguments?: string };
+          }[];
+        };
+      }[];
     };
-    const text = json.choices?.[0]?.message?.content?.trim() ?? "";
-    if (text.length === 0) return fail(503, "upstream-empty");
+    const message = json.choices?.[0]?.message;
+    const text = message?.content?.trim() ?? "";
 
-    return Response.json({ ok: true, text });
+    const toolCalls: ToolCall[] = [];
+    for (const call of message?.tool_calls ?? []) {
+      if (call.type && call.type !== "function") continue;
+      if (call.function?.name !== "job_search") continue;
+      let raw: unknown;
+      try {
+        raw = JSON.parse(call.function.arguments ?? "");
+      } catch {
+        continue;
+      }
+      const parsedArgs = JobSearchArgsSchema.safeParse(raw);
+      if (!parsedArgs.success) continue;
+      toolCalls.push({
+        id: call.id ?? "",
+        name: "job_search",
+        arguments: parsedArgs.data,
+      });
+    }
+
+    if (text.length === 0 && toolCalls.length === 0) {
+      return fail(503, "upstream-empty");
+    }
+
+    return Response.json({ ok: true, text, toolCalls });
   } catch (error) {
     const aborted =
       error instanceof Error &&
