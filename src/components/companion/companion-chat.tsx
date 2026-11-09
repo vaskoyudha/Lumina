@@ -36,6 +36,7 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
+import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
 import { LokerTool } from "@/components/companion/loker-tool";
 import { ScenarioCards } from "@/components/companion/scenario-cards";
@@ -83,7 +84,7 @@ import {
   type VoiceDigest,
   voiceDigest,
 } from "@/lib/contracts/agent-run";
-import type { ScoreResult } from "@/lib/contracts/score";
+import type { ScoreResult, Signal } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { filterPostings } from "@/lib/loker/search";
 import type { LokerCorpus, LokerSearchArgs } from "@/lib/loker/types";
@@ -175,6 +176,18 @@ interface Session {
   updatedAt?: number;
 }
 
+/**
+ * A user turn borrows the findings of the companion answer that follows it.
+ * A question-only turn has no result, and therefore nothing to highlight.
+ */
+function signalsForUserTurn(
+  turns: readonly Turn[],
+  index: number,
+): readonly Signal[] {
+  const next = turns[index + 1];
+  return next?.role === "companion" ? (next.result?.signals ?? []) : [];
+}
+
 /** One dot colour per band, reused by the header pill and the pipeline header. */
 const RISK_DOT: Record<NonNullable<Session["risk"]>, string> = {
   bersih: "bg-brand",
@@ -244,6 +257,9 @@ export function CompanionChat({
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
+  const [activeEvidence, setActiveEvidence] = React.useState<string | null>(
+    null,
+  );
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const { saved, toggle: toggleSaved } = useSavedLoker();
@@ -265,6 +281,24 @@ export function CompanionChat({
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
+
+  const selectEvidence = React.useCallback((evidence: string) => {
+    setShowEvidence(false);
+    setActiveEvidence((current) => (current === evidence ? null : evidence));
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on session change
+  React.useEffect(() => {
+    setActiveEvidence(null);
+  }, [activeId]);
+
+  React.useEffect(() => {
+    if (activeEvidence === null) return;
+    const target = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-evidence]"),
+    ).find((element) => element.dataset.evidence === activeEvidence);
+    target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  }, [activeEvidence]);
 
   /*
    * Opening the Agents view unmounts the transcript, and with it AgentRun's
@@ -1237,11 +1271,28 @@ export function CompanionChat({
                 onClick={copyThreadLink}
                 className="hidden size-[32px] rounded-full bg-chip text-ink-soft hover:bg-chip-hover hover:text-ink lg:grid"
               >
-                {copiedThread ? (
-                  <Check aria-hidden strokeWidth={1.8} className="size-4" />
-                ) : (
-                  <Link2 aria-hidden strokeWidth={1.7} className="size-4" />
-                )}
+                <span className="relative grid size-4 place-items-center">
+                  <Check
+                    aria-hidden
+                    strokeWidth={1.8}
+                    className={cn(
+                      "col-start-1 row-start-1 size-4 transition-[opacity,scale] duration-150",
+                      copiedThread
+                        ? "scale-100 opacity-100"
+                        : "scale-75 opacity-0",
+                    )}
+                  />
+                  <Link2
+                    aria-hidden
+                    strokeWidth={1.7}
+                    className={cn(
+                      "col-start-1 row-start-1 size-4 transition-[opacity,scale] duration-150",
+                      copiedThread
+                        ? "scale-75 opacity-0"
+                        : "scale-100 opacity-100",
+                    )}
+                  />
+                </span>
               </Button>
               <Button
                 variant="ghost"
@@ -1330,13 +1381,14 @@ export function CompanionChat({
           ) : (
             <>
               <div
+                key={active?.id ?? "new"}
                 ref={scrollRef}
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 sm:px-6"
+                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6"
                 role="log"
                 aria-live="polite"
                 aria-label="Percakapan"
               >
-                {turns.map((turn) =>
+                {turns.map((turn, turnIndex) =>
                   turn.role === "user" ? (
                     <div
                       key={turn.id}
@@ -1346,7 +1398,12 @@ export function CompanionChat({
                       <div className="flex flex-col items-end gap-1.5">
                         {turn.text ? (
                           <p className="max-w-[85%] whitespace-pre-wrap rounded-[14px] bg-panel-2 px-4 py-2.5 font-normal text-[13px] text-txt leading-relaxed tracking-normal">
-                            {turn.text}
+                            <EvidenceText
+                              activeEvidence={activeEvidence}
+                              onSelect={selectEvidence}
+                              signals={signalsForUserTurn(turns, turnIndex)}
+                              text={turn.text}
+                            />
                           </p>
                         ) : null}
 
@@ -1577,6 +1634,7 @@ export function CompanionChat({
                 </Button>
               }
               evidence={evidence}
+              onSelectEvidence={selectEvidence}
               result={panelResult}
               sequence={AGENT_SEQUENCE}
               titleId="panel-bukti-title"
@@ -1634,6 +1692,7 @@ export function CompanionChat({
                 }
                 className="rounded-none border-0"
                 evidence={evidence}
+                onSelectEvidence={selectEvidence}
                 result={panelResult}
                 sequence={AGENT_SEQUENCE}
                 titleId="panel-bukti-title-sheet"

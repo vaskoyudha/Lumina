@@ -64,34 +64,38 @@ export function ProfilView({
         </div>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Kemajuan belajar</CardTitle>
-          <CardDescription>
-            Yang sudah selesai di perangkat ini, dari {MODUS.length} modul yang
-            tersedia.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ProfilKemajuan />
-        </CardContent>
-      </Card>
+      <section id="kemajuan" className="scroll-mt-24">
+        <Card>
+          <CardHeader>
+            <CardTitle>Kemajuan belajar</CardTitle>
+            <CardDescription>
+              Yang sudah selesai di perangkat ini, dari {MODUS.length} modul
+              yang tersedia.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfilKemajuan />
+          </CardContent>
+        </Card>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lowongan tersimpan</CardTitle>
-          <CardDescription>
-            Lowongan yang kamu simpan di perangkat ini, bukan di akun.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ProfilLoker />
-        </CardContent>
-      </Card>
+      <section id="loker" className="scroll-mt-24">
+        <Card>
+          <CardHeader>
+            <CardTitle>Lowongan tersimpan</CardTitle>
+            <CardDescription>
+              Lowongan yang kamu simpan di perangkat ini, bukan di akun.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfilLoker />
+          </CardContent>
+        </Card>
+      </section>
 
       <section
         aria-labelledby="akun-privasi"
-        className="flex flex-col gap-5 border-line border-t pt-8"
+        className="flex scroll-mt-24 flex-col gap-5 border-line border-t pt-8"
       >
         <div>
           <h2

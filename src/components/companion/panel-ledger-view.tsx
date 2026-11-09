@@ -1,0 +1,265 @@
+"use client";
+
+import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
+import { AGENT_REGISTRY } from "@/components/companion/agents";
+import type {
+  PanelAgent,
+  PanelLedger,
+  PanelOutcome,
+} from "@/components/companion/panel-ledger";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { type AgentTrace, STAGE_LABEL } from "@/lib/contracts/agent-run";
+import { cn } from "@/lib/utils";
+
+const OUTCOME_TICK: Record<PanelOutcome, string> = {
+  finding: "bg-warn",
+  clean: "bg-brand",
+  no_object: "bg-ink-faint",
+  failed: "bg-danger",
+  live: "bg-brand-strong",
+  pending: "bg-dot",
+};
+
+const OUTCOME_LABEL: Record<PanelOutcome, string> = {
+  finding: "menemukan",
+  clean: "nihil",
+  no_object: "tanpa objek",
+  failed: "gagal",
+  live: "berjalan",
+  pending: "belum tercatat",
+};
+
+const STAGE_STATUS_LABEL: Record<string, string> = {
+  menunggu: "menunggu",
+  berjalan: "berjalan",
+  selesai: "selesai",
+  temuan: "menemukan",
+  dilewati: "tanpa objek",
+  gagal: "gagal",
+};
+
+function formatMs(ms: number): string {
+  if (ms < 0.1) return "<0,1 ms";
+  return `${ms.toFixed(1).replace(".", ",")} ms`;
+}
+
+/** Coverage is a sentence first and eight ticks second, never a percentage. */
+export function CoverageStrip({ ledger }: { ledger: PanelLedger }) {
+  const { counts } = ledger;
+  const parts: string[] = [];
+
+  if (counts.checked > 0) parts.push(`${counts.checked} diperiksa`);
+  if (counts.finding > 0) parts.push(`${counts.finding} menemukan`);
+  if (counts.clean > 0) parts.push(`${counts.clean} nihil`);
+  if (counts.noObject > 0) parts.push(`${counts.noObject} tanpa objek`);
+  if (counts.failed > 0) parts.push(`${counts.failed} gagal`);
+  if (counts.live > 0) parts.push(`${counts.live} berjalan`);
+  if (counts.pending > 0) parts.push(`${counts.pending} belum tercatat`);
+
+  const sentence =
+    counts.checked === 0 && counts.live === 0
+      ? "Tanpa catatan pipeline"
+      : parts.join(" · ");
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <p className="text-[10.5px] text-dim leading-snug">{sentence}</p>
+      <div aria-hidden className="flex gap-1">
+        {ledger.agents.map((agent) => (
+          <span
+            className={cn(
+              "h-1.5 flex-1 rounded-full",
+              OUTCOME_TICK[agent.outcome],
+            )}
+            data-coverage-tick
+            data-outcome={agent.outcome}
+            key={agent.agent}
+            title={`${STAGE_LABEL[agent.agent].label}: ${OUTCOME_LABEL[agent.outcome]}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The single findings list. Every row names the agent that produced it. */
+export function FindingsSection({
+  agents,
+  titleId,
+  onSelectEvidence,
+}: {
+  agents: readonly PanelAgent[];
+  titleId: string;
+  onSelectEvidence?: (evidence: string) => void;
+}): ReactNode {
+  const total = agents.reduce((sum, agent) => sum + agent.count, 0);
+
+  return (
+    <section aria-labelledby={`${titleId}-findings`} className="mt-3">
+      <h3
+        className="font-mono text-[9px] text-dim uppercase tracking-[0.14em]"
+        id={`${titleId}-findings`}
+      >
+        {total > 0 ? `Menemukan · ${total}` : "Temuan"}
+      </h3>
+      <ul aria-label="Temuan terdeteksi" className="mt-2 flex flex-col gap-2">
+        {agents.length === 0 ? (
+          <li className="rounded-[10px] border border-edge-soft bg-bg px-2.5 py-2 text-[11.5px] text-dim">
+            Tidak ada pola penipuan yang dikenali pada pesan ini.
+          </li>
+        ) : (
+          agents.map((agent) => {
+            const Icon = AGENT_REGISTRY[agent.agent].icon;
+            return (
+              <li
+                className="overflow-hidden rounded-[14px] border border-edge bg-panel shadow-rest"
+                key={agent.agent}
+              >
+                <div className="flex items-center gap-2 border-edge-soft border-b px-3 py-2">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border border-brand-edge bg-brand-soft text-brand-strong">
+                    <Icon aria-hidden className="size-3.5" />
+                  </span>
+                  <p className="min-w-0 flex-1 truncate font-semibold text-[12px] text-ink">
+                    {STAGE_LABEL[agent.agent].label}
+                  </p>
+                  <span className="rounded bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
+                    {agent.count} temuan
+                  </span>
+                </div>
+                <ul className="flex flex-col gap-1.5 p-2">
+                  {agent.findings.map((signal) => (
+                    <li
+                      className="rounded-[10px] border border-edge-soft bg-bg px-2.5 py-2"
+                      key={`${signal.label}-${signal.evidence}`}
+                    >
+                      <p className="font-medium text-[11.5px] text-txt leading-snug">
+                        {signal.label}
+                      </p>
+                      {signal.evidence ? (
+                        <p className="mt-1 text-[11px] text-dim leading-snug">
+                          “{signal.evidence}”
+                        </p>
+                      ) : null}
+                      {onSelectEvidence && signal.evidence ? (
+                        <button
+                          aria-label={`Lihat di pesan: ${signal.label}`}
+                          className="mt-1.5 rounded-[5px] font-medium text-[10.5px] text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                          onClick={() => onSelectEvidence(signal.evidence)}
+                          type="button"
+                        >
+                          Lihat di pesan
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })
+        )}
+      </ul>
+    </section>
+  );
+}
+
+/** A compact group for agents that did not produce a finding. */
+export function CoverageGroup({
+  label,
+  agents,
+  defaultOpen = false,
+}: {
+  label: string;
+  agents: readonly PanelAgent[];
+  defaultOpen?: boolean;
+}): ReactNode {
+  if (agents.length === 0) return null;
+
+  return (
+    <Collapsible defaultOpen={defaultOpen}>
+      <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 rounded-[10px] border border-edge bg-panel px-3 py-2 text-left hover:border-brand-edge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="text-[11.5px] text-ink-mute">{label}</span>
+          <span className="rounded bg-chip px-1.5 py-0.5 font-mono text-[10px] text-ink-soft">
+            {agents.length}
+          </span>
+        </span>
+        <ChevronDown
+          aria-hidden
+          className="size-3.5 shrink-0 text-dim transition-transform duration-150 group-data-[state=open]:rotate-180"
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ul className="mt-1.5 flex flex-col gap-1.5 ps-2">
+          {agents.map((agent) => (
+            <li
+              className="rounded-[9px] border border-edge-soft bg-bg px-2.5 py-1.5"
+              key={agent.agent}
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[11px] text-txt">
+                  {STAGE_LABEL[agent.agent].label}
+                </span>
+                {agent.ms != null ? (
+                  <span className="shrink-0 font-mono text-[10px] text-dim">
+                    {formatMs(agent.ms)}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-0.5 text-[10.5px] text-dim leading-snug">
+                {agent.note ??
+                  (agent.outcome === "pending"
+                    ? "Belum ada catatan pipeline."
+                    : "0 temuan")}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/** The measured run, kept as a disclosure so the ledger stays scannable. */
+export function TraceDisclosure({ trace }: { trace: AgentTrace }): ReactNode {
+  const total = formatMs(trace.totalMs);
+
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 rounded-[8px] px-1 py-1.5 text-left text-[10.5px] text-dim hover:bg-txt/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+        <span>
+          Jejak {trace.stages.length} tahap · {total}
+        </span>
+        <ChevronDown
+          aria-hidden
+          className="size-3.5 shrink-0 transition-transform duration-150 group-data-[state=open]:rotate-180"
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ol className="mt-1 flex flex-col gap-1 border-edge-soft border-t pt-1.5">
+          {trace.stages.map((stage) => (
+            <li
+              className="rounded-[8px] px-1 py-1 text-[10.5px] leading-snug"
+              key={stage.id}
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-txt">{stage.label}</span>
+                <span className="shrink-0 font-mono text-[9.5px] text-dim">
+                  {STAGE_STATUS_LABEL[stage.status] ?? stage.status} ·{" "}
+                  {formatMs(stage.ms)}
+                </span>
+              </div>
+              {stage.note ? (
+                <p className="mt-0.5 text-dim">{stage.note}</p>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
