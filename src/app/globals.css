@@ -87,6 +87,8 @@
   --color-nav-active-to: var(--lumina-nav-active-to);
   --color-nav-active-ink: var(--lumina-nav-active-ink);
   --color-nav-active-icon: var(--lumina-nav-active-icon);
+  --color-filter-bg: var(--lumina-filter-bg);
+  --color-filter-ink: var(--lumina-filter-ink);
 
   /* Agent identity -> border/tint utilities (never status). */
   --color-agent-message: var(--lumina-agent-message);
@@ -418,6 +420,11 @@
   --lumina-nav-active-to: #fce8dc;
   --lumina-nav-active-ink: #e85515;
   --lumina-nav-active-icon: #f05a1a;
+
+  /* Reference level-filter track: #F9EFEA ground with #5C534E inactive
+     labels; the active pill reuses the #F05A1A selected-icon orange. */
+  --lumina-filter-bg: #f9efea;
+  --lumina-filter-ink: #5c534e;
 
   /* Agent identity ramp. Eight hues at one lightness and chroma; the line
      token paints a 2px border, the soft tint fills the bubble. Brand orange
