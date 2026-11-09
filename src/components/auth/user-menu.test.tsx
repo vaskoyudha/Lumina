@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UserMenu } from "@/components/auth/user-menu";
 
@@ -39,19 +39,20 @@ describe("UserMenu", () => {
     ).toBeInTheDocument();
   });
 
-  it("links to the profile page from the menu", async () => {
+  it("opens the profile as floating cards instead of a new page", async () => {
     const user = userEvent.setup();
     render(<UserMenu nama="Siti" email="siti@lumina.id" />);
 
     await user.click(screen.getByRole("button", { name: /akun siti/i }));
-
-    expect(
+    await user.click(
       await screen.findByRole("menuitem", { name: /^profil$/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: /^profil$/i })).toHaveAttribute(
-      "href",
-      "/profil",
     );
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveAccessibleName(/profil saya/i);
+    expect(
+      within(dialog).getAllByText("siti@lumina.id").length,
+    ).toBeGreaterThan(0);
   });
 
   it("shows who is signed in and offers logout", async () => {

@@ -6,10 +6,15 @@ import {
   GraduationCap,
   LogOut,
   ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useStoredProgress } from "@/components/belajar/belajar-progress";
+import { useAccountProgress } from "@/components/belajar/account-progress-context";
+import {
+  ProfileDialog,
+  type ProfileSection,
+} from "@/components/profil/profile-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,14 +49,14 @@ function initialsFor(nama: string): string {
  * Dashboard account popup.
  *
  * Replaces a trip to `/profil` with the parts that matter at a glance:
- * identity, learning progress, saved jobs and the account actions. The
- * progress and saved-job stores are per-device, so the popup reads them after
- * mount just like the dashboard header does.
+ * identity, learning progress, saved jobs and the account actions. Progress
+ * comes from the account context; saved jobs stay on this device.
  */
 export function ProfilePopup({ className }: { className?: string }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const progress = useStoredProgress();
+  const [section, setSection] = useState<ProfileSection | null>(null);
+  const { progress, modules } = useAccountProgress();
   const { saved } = useSavedLoker();
 
   useEffect(() => {
@@ -79,7 +84,7 @@ export function ProfilePopup({ className }: { className?: string }) {
 
   const initial = initialsFor(account.nama);
   const done = progress?.completedModules.length ?? 0;
-  const total = MODUS.length;
+  const total = modules.length || MODUS.length;
   const pct = Math.min(100, Math.round((done / total) * 100));
   const badges = Object.entries(BADGE_LABEL)
     .filter(([id]) => progress?.badges.includes(id))
@@ -185,6 +190,22 @@ export function ProfilePopup({ className }: { className?: string }) {
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup className="p-1">
+          <DropdownMenuItem onSelect={() => setSection("profil")}>
+            <UserRound aria-hidden className="size-4" />
+            Profil saya
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setSection("kemajuan")}>
+            <GraduationCap aria-hidden className="size-4" />
+            Kemajuan belajar
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setSection("loker")}>
+            <Briefcase aria-hidden className="size-4" />
+            Lowongan tersimpan
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setSection("privasi")}>
+            <ShieldCheck aria-hidden className="size-4" />
+            Privasi & keamanan
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/masuk" className="flex items-center gap-2">
               <ArrowLeftRight aria-hidden className="size-4" />
@@ -212,12 +233,24 @@ export function ProfilePopup({ className }: { className?: string }) {
             className="mt-px size-3 shrink-0 text-brand"
           />
           <span>
-            Progres dan lowongan tersimpan di perangkat ini, bukan di akun. Sesi
-            berlaku 24 jam
+            Progres tersimpan di akunmu; lowongan tersimpan di perangkat ini.
+            Sesi berlaku 24 jam
             {createdLabel ? ` · dibuat ${createdLabel}` : ""}.
           </span>
         </p>
       </DropdownMenuContent>
+
+      <ProfileDialog
+        session={{
+          nama: account.nama,
+          email: account.email,
+          createdAt: account.createdAt,
+        }}
+        section={section}
+        onOpenChange={(open) => {
+          if (!open) setSection(null);
+        }}
+      />
     </DropdownMenu>
   );
 }

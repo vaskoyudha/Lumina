@@ -68,7 +68,7 @@ describe("CompanionAuth", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("opens the account menu from the signed-in profile row", async () => {
+  it("opens profile details as floating cards from the signed-in menu", async () => {
     const user = userEvent.setup();
     render(
       <CompanionAuth session={{ nama: "Siti", email: "siti@lumina.id" }} />,
@@ -77,19 +77,18 @@ describe("CompanionAuth", () => {
     expect(screen.getByText("siti@lumina.id")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /akun siti/i }));
-
-    expect(
+    await user.click(
       await screen.findByRole("menuitem", { name: /profil saya/i }),
-    ).toHaveAttribute("href", "/profil");
-    expect(
-      screen.getByRole("menuitem", { name: /kemajuan belajar/i }),
-    ).toHaveAttribute("href", "/profil#kemajuan");
-    expect(
-      screen.getByRole("menuitem", { name: /lowongan tersimpan/i }),
-    ).toHaveAttribute("href", "/profil#loker");
-    expect(
-      screen.getByRole("menuitem", { name: /privasi & keamanan/i }),
-    ).toHaveAttribute("href", "/profil#akun-privasi");
+    );
+
+    expect(await screen.findByRole("dialog")).toHaveAccessibleName(
+      /profil saya/i,
+    );
+    expect(screen.getByText(/jenis akun/i)).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("button", { name: /akun siti/i }));
     expect(
       screen.getByRole("menuitem", { name: /panduan anti-penipuan/i }),
     ).toHaveAttribute("href", "/belajar");
@@ -101,6 +100,23 @@ describe("CompanionAuth", () => {
     ).toHaveAttribute("href", "/masuk");
     expect(screen.getByText(/sesi aktif/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /keluar/i })).toBeInTheDocument();
+  });
+
+  it("opens the progress card in place instead of navigating", async () => {
+    const user = userEvent.setup();
+    render(
+      <CompanionAuth session={{ nama: "Siti", email: "siti@lumina.id" }} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /akun siti/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /kemajuan belajar/i }),
+    );
+
+    expect(await screen.findByRole("dialog")).toHaveAccessibleName(
+      /kemajuan belajar/i,
+    );
+    expect(screen.getByText(/0 dari 12 modul selesai/i)).toBeInTheDocument();
   });
 
   it("keeps the rail avatar as the same account menu", async () => {
