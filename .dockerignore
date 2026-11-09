@@ -21,3 +21,7 @@ artifacts
 *.sqlite
 *.sqlite-*
 data/*.sqlite*
+
+scanner/tests
+scanner/applications.db
+.scan-data

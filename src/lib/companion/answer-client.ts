@@ -1,6 +1,7 @@
 import type { Explanation } from "@/lib/companion/explain";
 import type { VoiceDigest } from "@/lib/contracts/agent-run";
 import type { AnswerLane, AnswerRequest } from "@/lib/contracts/answer";
+import type { ToolCall } from "@/lib/contracts/tool";
 import { MODUS } from "@/lib/modus";
 
 /**
@@ -15,6 +16,7 @@ export type AnswerOutcome = "model" | "timeout" | "unconfigured" | "failed";
 export interface AnswerResult {
   outcome: AnswerOutcome;
   text: string;
+  toolCalls: ToolCall[];
 }
 
 /** Public scheme facts. No user content can enter this array. */
@@ -87,17 +89,23 @@ export async function requestAnswer(
       } catch {
         code = "";
       }
-      return { outcome: outcomeFor(code), text: "" };
+      return { outcome: outcomeFor(code), text: "", toolCalls: [] };
     }
 
-    const body = (await response.json()) as { text?: string };
+    const body = (await response.json()) as {
+      text?: string;
+      toolCalls?: ToolCall[];
+    };
     const text = body.text?.trim() ?? "";
-    if (text.length === 0) return { outcome: "failed", text: "" };
-    return { outcome: "model", text };
+    const toolCalls = body.toolCalls ?? [];
+    if (text.length === 0 && toolCalls.length === 0) {
+      return { outcome: "failed", text: "", toolCalls: [] };
+    }
+    return { outcome: "model", text, toolCalls };
   } catch (error) {
     const aborted =
       error instanceof Error &&
       (error.name === "AbortError" || error.name === "TimeoutError");
-    return { outcome: aborted ? "timeout" : "failed", text: "" };
+    return { outcome: aborted ? "timeout" : "failed", text: "", toolCalls: [] };
   }
 }

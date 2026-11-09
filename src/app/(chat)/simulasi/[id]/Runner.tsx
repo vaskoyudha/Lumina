@@ -2,6 +2,7 @@
 
 import {
   ArrowRight,
+  Check,
   ChevronDown,
   Coffee,
   FileWarning,
@@ -61,15 +62,19 @@ function Meter({
   value,
   max,
   danger,
+  start,
+  end,
 }: {
   label: string;
   value: number;
   max: number;
   danger?: boolean;
+  start?: string;
+  end?: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-2 text-sm">
+    <div className="flex min-w-0 flex-col gap-1 lg:gap-1.5">
+      <div className="flex items-baseline justify-between gap-2 text-[11px] lg:text-sm">
         <span className="font-medium text-txt">{label}</span>
         <span className="tabular text-dim">
           {Math.round(value)} / {max}
@@ -83,12 +88,18 @@ function Meter({
         aria-valuemax={max}
         aria-valuenow={Math.round(value)}
         className={cn(
-          "h-2.5",
+          "h-1.5 lg:h-2.5",
           danger
             ? "[&_[data-slot=progress-indicator]]:bg-danger"
             : "[&_[data-slot=progress-indicator]]:bg-brand",
         )}
       />
+      {start && end && (
+        <div className="flex justify-between text-[9px] text-dim leading-none lg:text-[10px]">
+          <span>{start}</span>
+          <span>{end}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -289,7 +300,7 @@ export function Runner() {
           <span className="flex min-w-0 items-center gap-2">
             <Flag aria-hidden className="size-4 shrink-0 text-dim" />
             <span className="truncate">
-              Koleksi taktik · {tactics.length} ditemukan
+              Pola penipuan · {tactics.length} ditemukan
             </span>
           </span>
           <ChevronDown
@@ -312,7 +323,7 @@ export function Runner() {
           ))
         ) : (
           <p className="rounded-xl bg-panel-2 p-4 text-dim text-sm">
-            Taktik yang kamu temukan akan muncul di sini.
+            Pola yang kamu temukan akan muncul di sini.
           </p>
         )}
       </CollapsibleContent>
@@ -325,7 +336,7 @@ export function Runner() {
         <div className="flex min-w-0 flex-col gap-5">
           <header>
             <p className="flex items-center gap-1.5 font-medium text-dim text-xs">
-              Level {scenario.scenario.level} · Misi interaktif
+              Misi · Level {scenario.scenario.level}
             </p>
             <h1 className="mt-1 font-bold text-2xl text-txt tracking-tight sm:text-[30px]">
               {MISSION.title}
@@ -340,7 +351,7 @@ export function Runner() {
               <p className="font-semibold text-[11px] text-dim uppercase tracking-wide">
                 Briefing misi
               </p>
-              <CardTitle className="text-xl">
+              <CardTitle role="heading" aria-level={2} className="text-xl">
                 Siap jadi pemeran utama?
               </CardTitle>
               <CardDescription className="text-sm leading-relaxed">
@@ -406,7 +417,7 @@ export function Runner() {
               <div className="flex flex-wrap items-center gap-2 border-line border-t pt-4">
                 <Button
                   data-pressable
-                  className="h-10 rounded-xl px-5"
+                  className="h-11 rounded-xl px-5"
                   onClick={() => setStarted(true)}
                 >
                   Mulai misi <ArrowRight aria-hidden="true" />
@@ -414,7 +425,7 @@ export function Runner() {
                 <Button
                   asChild
                   variant="outline"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                   data-pressable
                 >
                   <Link href="/belajar/10">Baca pola APK dulu</Link>
@@ -429,44 +440,44 @@ export function Runner() {
           </Card>
         </div>
 
-        <aside className="flex flex-col gap-5 lg:sticky lg:top-0">
+        <aside
+          aria-label="Ringkasan briefing"
+          className="flex flex-col gap-5 lg:sticky lg:top-0"
+        >
           <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
-              <span className="rounded-md bg-brand-soft px-2 py-0.5 font-semibold text-[10px] text-brand-ink">
-                LEVEL {scenario.scenario.level}
-              </span>
-            </div>
+            <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
             <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
               <div className="flex flex-col items-center py-1.5">
-                <dd className="tabular font-bold text-sm text-txt">
-                  {MISSION.chapters.length}
-                </dd>
-                <dt className="mt-0.5 text-[9px] text-dim leading-none">
+                <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
                   Babak
                 </dt>
+                <dd className="order-1 tabular font-bold text-sm text-txt">
+                  {MISSION.chapters.length}
+                </dd>
               </div>
               <div className="flex flex-col items-center py-1.5">
-                <dd className="tabular font-bold text-sm text-txt">
+                <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
+                  Akhir
+                </dt>
+                <dd className="order-1 tabular font-bold text-sm text-txt">
                   {
                     scenario.nodes.filter((node) => node.type === "ending")
                       .length
                   }
                 </dd>
-                <dt className="mt-0.5 text-[9px] text-dim leading-none">
-                  Akhir
-                </dt>
               </div>
               <div className="flex flex-col items-center py-1.5">
-                <dd className="tabular font-bold text-sm text-txt">3–5</dd>
-                <dt className="mt-0.5 text-[9px] text-dim leading-none">
+                <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
                   Menit
                 </dt>
+                <dd className="order-1 tabular font-bold text-sm text-txt">
+                  3–5
+                </dd>
               </div>
             </dl>
             <p className="mt-3 text-dim text-[11px] leading-relaxed">
-              Pilihanmu mengubah meter panik dan intrusi. Penilaian mengikuti
-              aturan skenario, bukan model.
+              Pilihanmu mengubah meter panik dan akses asing. Penilaian
+              mengikuti aturan skenario, bukan model.
             </p>
           </Card>
 
@@ -475,7 +486,7 @@ export function Runner() {
             <ul className="mt-2 flex flex-col gap-2 text-dim text-xs leading-relaxed">
               <li>Setiap pilihan punya konsekuensi tetap pada cerita.</li>
               <li>
-                Meter panik dan intrusi bergerak dari keputusanmu, bukan
+                Meter panik dan akses asing bergerak dari keputusanmu, bukan
                 tebakan.
               </li>
               <li>Bukti yang dibagikan harus aman; kode rahasia ditolak.</li>
@@ -504,158 +515,210 @@ export function Runner() {
     const emergency = Boolean(failure) || ending.variant === "compromised";
     return (
       <div
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-5"
         data-outcome={failure ? "failure" : ending.variant}
       >
-        <h1 className="sr-only">{MISSION.title}</h1>
-        <Card className="rounded-[24px] ring-0 shadow-[var(--appnext-shadow-ambient)]">
-          <CardHeader>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant={failure ? "destructive" : "secondary"}
-                data-tone={failure ? "danger" : undefined}
-              >
-                {failure ? "Misi dihentikan" : "Misi selesai"}
-              </Badge>
-              <Badge variant="outline">
-                {failure
-                  ? "Jalur berhenti"
-                  : ending.variant === "success"
-                    ? "Pencegahan"
-                    : ending.variant === "recovery"
-                      ? "Awal pemulihan"
-                      : "Akun perlu diamankan"}
-              </Badge>
-            </div>
-            <CardTitle
-              ref={endingRef}
-              tabIndex={-1}
-              role="heading"
-              aria-level={2}
-              className="mt-1 text-xl outline-none"
+        <header>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={failure ? "destructive" : "secondary"}
+              data-tone={failure ? "danger" : undefined}
             >
-              {failure ? "Berhenti dan ambil langkah aman" : ending.title}
-            </CardTitle>
-            <CardDescription className="text-base leading-relaxed">
-              {failure ?? ending.text}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-6">
-            {latest?.rationale && (
-              <Alert
-                role="status"
-                data-tone={latest.verdict === "salah" ? "danger" : "safe"}
-                variant={latest.verdict === "salah" ? "destructive" : "default"}
-                className="border-line"
-              >
-                <AlertTitle>
-                  {failure
-                    ? "Penjelasan pilihan"
-                    : latestTactic
-                      ? `Taktik terakhir: ${latestTactic.name}`
-                      : "Penjelasan pilihan terakhir"}
-                </AlertTitle>
-                <AlertDescription>{latest.rationale}</AlertDescription>
-              </Alert>
-            )}
+              {failure ? "Misi dihentikan" : "Misi selesai"}
+            </Badge>
+            <Badge variant="outline">
+              {failure
+                ? "Jalur berhenti"
+                : ending.variant === "success"
+                  ? "Kamu aman"
+                  : ending.variant === "recovery"
+                    ? "Awal pemulihan"
+                    : "Akun perlu diamankan"}
+            </Badge>
+          </div>
+          <h1
+            ref={endingRef}
+            tabIndex={-1}
+            className="mt-2 font-bold text-2xl text-txt tracking-tight outline-none sm:text-[30px]"
+          >
+            {failure ? "Berhenti dan ambil langkah aman" : ending.title}
+          </h1>
+          <p className="mt-1 max-w-2xl text-dim text-sm leading-relaxed">
+            {failure ?? ending.text}
+          </p>
+        </header>
 
-            <dl className="grid gap-2 sm:grid-cols-3">
-              {[
-                ["Keputusan", decisions.length],
-                ["Taktik ditemukan", tactics.length],
-                ["Bukti dipilih", proof.length],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-xl bg-panel-2 px-3 py-2.5">
-                  <dt className="text-dim text-xs">{label}</dt>
-                  <dd className="tabular mt-0.5 font-medium text-sm text-txt">
-                    {value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-
-            <section className="flex flex-col gap-2">
-              <h2 className="font-semibold text-lg tracking-tight">
-                Empat hal untuk diingat
-              </h2>
-              <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm">
-                {ending.debrief.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ol>
-            </section>
-
-            <section className="flex flex-col gap-2">
-              <h2 className="font-semibold text-lg tracking-tight">
-                Jejak keputusan
-              </h2>
-              <div className="flex flex-col gap-2">
-                {decisions.map((choice, index) => (
-                  <div
-                    key={`${index}-${choice.label}`}
-                    className="rounded-xl bg-panel-2 p-3"
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+          <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
+            <Card className="rounded-[24px] ring-0 shadow-[var(--appnext-shadow-ambient)]">
+              <CardContent className="flex flex-col gap-6 pt-6">
+                {latest?.rationale && (
+                  <Alert
+                    role="status"
+                    data-tone={latest.verdict === "salah" ? "danger" : "safe"}
+                    variant={
+                      latest.verdict === "salah" ? "destructive" : "default"
+                    }
+                    className="border-line"
                   >
-                    <p className="text-sm">
-                      <strong className="font-medium">
-                        {choice.verdict === "benar"
-                          ? "Langkah aman"
-                          : "Langkah berisiko"}
-                        :
-                      </strong>{" "}
-                      {choice.label}
-                    </p>
-                    <p className="mt-1 text-dim text-sm">{choice.rationale}</p>
+                    <AlertTitle>
+                      {failure
+                        ? "Penjelasan pilihan"
+                        : latestTactic
+                          ? `Pola terakhir: ${latestTactic.name}`
+                          : "Penjelasan pilihan terakhir"}
+                    </AlertTitle>
+                    <AlertDescription>{latest.rationale}</AlertDescription>
+                  </Alert>
+                )}
+
+                <section className="flex flex-col gap-2">
+                  <h2 className="font-bold text-[15px] text-txt">
+                    Empat hal untuk diingat
+                  </h2>
+                  <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm leading-relaxed">
+                    {ending.debrief.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ol>
+                </section>
+
+                <section className="flex flex-col gap-2 border-line border-t pt-5">
+                  <h2 className="font-bold text-[15px] text-txt">
+                    Jejak keputusan
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    {decisions.map((choice, index) => (
+                      <div
+                        key={`${index}-${choice.label}`}
+                        className="rounded-xl bg-panel-2 p-3"
+                      >
+                        <p className="text-sm">
+                          <strong className="font-medium">
+                            {choice.verdict === "benar"
+                              ? "Langkah aman"
+                              : "Langkah berisiko"}
+                            :
+                          </strong>{" "}
+                          {choice.label}
+                        </p>
+                        <p className="mt-1 text-dim text-sm">
+                          {choice.rationale}
+                        </p>
+                      </div>
+                    ))}
+                    {decisions.length === 0 && (
+                      <p className="text-sm">Belum ada keputusan.</p>
+                    )}
+                  </div>
+                </section>
+
+                {proof.length > 0 && (
+                  <section className="flex flex-col gap-2 border-line border-t pt-5">
+                    <h2 className="font-bold text-[15px] text-txt">
+                      Bukti latihan yang dipilih
+                    </h2>
+                    <ul className="list-disc pl-5 text-sm leading-relaxed">
+                      {REPORT_ARTIFACTS.filter((item) =>
+                        proof.includes(item.id),
+                      ).map((item) => (
+                        <li key={item.id}>{item.label}</li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <aside
+            aria-label="Ringkasan hasil misi"
+            className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
+          >
+            <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
+                <span className="rounded-md bg-brand-soft px-2 py-0.5 font-semibold text-[10px] text-brand-ink">
+                  LEVEL {scenario.scenario.level}
+                </span>
+              </div>
+              <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
+                {[
+                  ["Keputusan", decisions.length],
+                  ["Pola", tactics.length],
+                  ["Bukti", proof.length],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex flex-col items-center py-1.5"
+                  >
+                    <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
+                      {label}
+                    </dt>
+                    <dd className="order-1 tabular font-bold text-sm text-txt">
+                      {value}
+                    </dd>
                   </div>
                 ))}
-                {decisions.length === 0 && (
-                  <p className="text-sm">Belum ada keputusan.</p>
+              </dl>
+              <p className="mt-3 text-dim text-[11px] leading-relaxed">
+                {tactics.length > 0
+                  ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
+                  : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
+              </p>
+            </Card>
+
+            <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+              <h2 className="font-bold text-sm text-txt">Langkah berikutnya</h2>
+              <div className="mt-3 flex flex-col gap-2">
+                {emergency && (
+                  <Button asChild className="h-11 rounded-xl" data-pressable>
+                    <Link href="/darurat">Buka mode darurat</Link>
+                  </Button>
                 )}
+                <Button
+                  data-pressable
+                  variant={emergency ? "outline" : "default"}
+                  className="h-11 rounded-xl"
+                  onClick={reset}
+                >
+                  Coba jalur lain
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-11 rounded-xl"
+                  data-pressable
+                >
+                  <Link href="/belajar/10">Pelajari pola ini</Link>
+                </Button>
+                {!emergency && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-11 rounded-xl"
+                    data-pressable
+                  >
+                    <Link href="/darurat">Buka mode darurat</Link>
+                  </Button>
+                )}
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="h-11 rounded-xl text-dim hover:text-txt"
+                  data-pressable
+                >
+                  <Link href="/simulasi">Semua simulasi</Link>
+                </Button>
               </div>
-            </section>
-
-            {proof.length > 0 && (
-              <section className="flex flex-col gap-2">
-                <h2 className="font-semibold text-lg tracking-tight">
-                  Bukti latihan yang dipilih
-                </h2>
-                <ul className="list-disc pl-5 text-sm">
-                  {REPORT_ARTIFACTS.filter((item) =>
-                    proof.includes(item.id),
-                  ).map((item) => (
-                    <li key={item.id}>{item.label}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {collection}
-
-            <div className="flex flex-wrap gap-2 border-line border-t pt-5">
-              <Button
-                data-pressable
-                variant={emergency ? "outline" : "default"}
-                className="h-11"
-                onClick={reset}
-              >
-                Coba jalur lain
-              </Button>
-              <Button asChild variant="outline" className="h-11" data-pressable>
-                <Link href="/belajar/10">Pelajari pola ini</Link>
-              </Button>
-              <Button
-                asChild
-                variant={emergency ? "default" : "outline"}
-                className={cn("h-11", emergency && "order-first")}
-                data-pressable
-              >
-                <Link href="/darurat">Buka mode darurat</Link>
-              </Button>
-              <Button asChild variant="outline" className="h-11" data-pressable>
-                <Link href="/simulasi">Semua simulasi</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <p className="mt-2 text-dim text-[11px] leading-relaxed">
+                Mode darurat untuk kejadian nyata, bukan bagian dari latihan
+                ini.
+              </p>
+              <div className="mt-3 border-line border-t pt-2">{collection}</div>
+            </Card>
+          </aside>
+        </div>
       </div>
     );
   }
@@ -729,16 +792,18 @@ export function Runner() {
         )}
         {task.tool === "report" && (
           <>
-            <p className="text-sm">
-              Pilih sedikitnya dua bukti aman. Jangan masukkan data nyata atau
-              kode rahasia.
+            <p className="text-dim text-xs">
+              Jangan masukkan data nyata atau kode rahasia.
+            </p>
+            <p className="font-medium text-sm text-txt" aria-live="polite">
+              {proof.length}/2 bukti aman dipilih
             </p>
             {REPORT_ARTIFACTS.map((item) => (
               <Button
                 key={item.id}
                 data-pressable
                 variant={proof.includes(item.id) ? "secondary" : "outline"}
-                className="h-auto justify-start whitespace-normal px-4 py-3 text-left"
+                className="h-auto justify-start gap-2 whitespace-normal px-4 py-3 text-left"
                 aria-pressed={proof.includes(item.id)}
                 disabled={paused}
                 onClick={() => {
@@ -750,7 +815,10 @@ export function Runner() {
                   setProof(toggle(proof, item.id));
                 }}
               >
-                {item.label}
+                {proof.includes(item.id) && (
+                  <Check aria-hidden="true" className="size-4 shrink-0" />
+                )}
+                <span className="min-w-0">{item.label}</span>
               </Button>
             ))}
             {unsafeNotice && (
@@ -780,48 +848,93 @@ export function Runner() {
     <div className="flex flex-col gap-4">
       <h1 className="sr-only">{MISSION.title}</h1>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1">
-          <Card className="rounded-[24px] ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
+        <aside
+          aria-label="Status misi"
+          className="sticky top-0 z-20 -mx-5 border-line border-b bg-panel/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:sticky lg:top-0 lg:z-auto lg:col-start-2 lg:row-start-1 lg:mx-0 lg:flex lg:flex-col lg:gap-4 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none"
+        >
+          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-[24px] lg:bg-card lg:py-4 lg:shadow-[var(--appnext-shadow-ambient)]">
+            <CardContent className="flex flex-col gap-3 p-0 lg:gap-4 lg:p-4 xl:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">
+                    <Badge variant="outline" className="lg:hidden">
+                      Fiktif
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="hidden lg:inline-flex"
+                    >
                       Mode {mode === "santai" ? "santai" : "tantangan"}
                     </Badge>
-                    <Badge variant="outline">
+                    <Badge
+                      variant="outline"
+                      className={paused ? undefined : "hidden lg:inline-flex"}
+                    >
                       {paused ? "Dijeda" : "Berlangsung"}
                     </Badge>
                   </div>
-                  <p className="text-dim text-sm">
-                    Tahap {active.chapter ?? 1} dari {MISSION.chapters.length} ·{" "}
+                  <p className="text-dim text-xs lg:text-sm">
                     <span className="font-medium text-txt">
-                      {MISSION.chapters[(active.chapter ?? 1) - 1]}
+                      Babak {active.chapter ?? 1} dari {MISSION.chapters.length}
+                    </span>
+                    <span className="lg:hidden">
+                      {" "}
+                      · {MISSION.chapters[(active.chapter ?? 1) - 1]} ·{" "}
+                      {mode === "santai" ? "Santai" : "Tantangan"}
+                      {compromised && (
+                        <span className="text-danger">
+                          {" "}
+                          · {isolated ? "Terputus" : "Akses terbuka"}
+                        </span>
+                      )}
+                    </span>
+                    <span className="hidden lg:inline">
+                      {" "}
+                      ·{" "}
+                      <span className="font-medium text-txt">
+                        {MISSION.chapters[(active.chapter ?? 1) - 1]}
+                      </span>
                     </span>
                   </p>
                 </div>
-                <Button
-                  data-pressable
-                  variant="outline"
-                  className="h-11 w-11 shrink-0 sm:h-10 sm:w-auto"
-                  aria-label={paused ? "Lanjutkan misi" : "Jeda"}
-                  onClick={() => {
-                    pausedRef.current = !paused;
-                    setPaused(!paused);
-                  }}
-                >
-                  {paused ? (
-                    <Play aria-hidden="true" />
-                  ) : (
-                    <Pause aria-hidden="true" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {paused ? "Lanjutkan misi" : "Jeda"}
-                  </span>
-                </Button>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button
+                    data-pressable
+                    variant="outline"
+                    className="h-11 w-11 shrink-0 lg:h-10 lg:w-auto"
+                    aria-label={paused ? "Lanjutkan misi" : "Jeda"}
+                    onClick={() => {
+                      pausedRef.current = !paused;
+                      setPaused(!paused);
+                    }}
+                  >
+                    {paused ? (
+                      <Play aria-hidden="true" />
+                    ) : (
+                      <Pause aria-hidden="true" />
+                    )}
+                    <span className="hidden lg:inline">
+                      {paused ? "Lanjutkan misi" : "Jeda"}
+                    </span>
+                  </Button>
+                  <Button
+                    data-pressable
+                    variant="outline"
+                    className="h-11 w-11 shrink-0 lg:hidden"
+                    aria-label="Kurangi panik"
+                    title="Tarik napas · kurangi panik 15"
+                    disabled={paused || breathingUsed}
+                    onClick={() => {
+                      setPanic(Math.max(0, panic - 15));
+                      setBreathingUsed(true);
+                    }}
+                  >
+                    <Wind aria-hidden="true" />
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex gap-1" aria-hidden="true">
+              <div className="hidden gap-1 lg:flex" aria-hidden="true">
                 {MISSION.chapters.map((chapter, index) => {
                   const step = index + 1;
                   const current = (active.chapter ?? 1) === step;
@@ -838,22 +951,26 @@ export function Runner() {
                 })}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 lg:gap-4">
                 <Meter
                   label="Panik"
                   value={panic}
                   max={scenario.hud.panic.max}
                   danger={panic >= 70}
+                  start="Tenang"
+                  end="Panik"
                 />
                 <Meter
-                  label="Intrusi"
+                  label="Akses asing"
                   value={intrusion}
                   max={scenario.hud.intrusion.max}
                   danger={intrusion >= 70}
+                  start="Aman"
+                  end="Bocor"
                 />
               </div>
 
-              <div className="flex flex-col gap-2 border-line border-t pt-3">
+              <div className="hidden flex-col gap-2 border-line border-t pt-3 lg:flex">
                 <p className="text-dim text-sm">
                   {!compromised
                     ? "Belum ada akses"
@@ -882,7 +999,7 @@ export function Runner() {
             </CardContent>
           </Card>
           {paused && (
-            <Alert role="status" className="border-line">
+            <Alert role="status" className="mt-2 border-line lg:mt-0">
               <AlertTitle>Misi dijeda</AlertTitle>
               <AlertDescription>
                 Pesan dan tekanan berhenti hingga kamu melanjutkan.
@@ -909,7 +1026,7 @@ export function Runner() {
                 aria-label="Percakapan latihan"
                 // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus and scroll the transcript.
                 tabIndex={0}
-                className="flex max-h-96 flex-col gap-3 overflow-y-auto rounded-2xl px-0.5 py-1"
+                className="flex flex-col gap-3 overflow-visible rounded-2xl px-0.5 py-1 lg:max-h-96 lg:overflow-y-auto"
               >
                 {transcript.map((entry) =>
                   entry.kind === "reply" ? (
@@ -1017,8 +1134,8 @@ export function Runner() {
                 >
                   <AlertTitle>
                     {latestTactic
-                      ? `Taktik terungkap: ${latestTactic.name}`
-                      : "Penjelasan pilihan"}
+                      ? `Pelatih · Pola penipuan: ${latestTactic.name}`
+                      : "Pelatih · penjelasan pilihan"}
                   </AlertTitle>
                   <AlertDescription>{latest.rationale}</AlertDescription>
                 </Alert>

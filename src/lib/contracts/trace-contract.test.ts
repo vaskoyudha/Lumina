@@ -27,4 +27,12 @@ describe("trace contract", () => {
     expect(STAGE_LABEL.voice.label).toBe("Penyusun bahasa");
     expect(AGENT_IDS).not.toContain("voice");
   });
+
+  it("labels the job-search stage as a non-detector", () => {
+    expect(STAGE_LABEL["job-search"]).toEqual({
+      label: "Pencari Lowongan",
+      task: expect.any(String),
+    });
+    expect(AGENT_IDS).not.toContain("job-search");
+  });
 });

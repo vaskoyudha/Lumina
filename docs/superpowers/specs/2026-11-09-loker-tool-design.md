@@ -174,8 +174,10 @@ d. `lumina_signals` stores `{label, weight}[]` only — no `evidence` quotes are
 | `scanner/` | vendored career-ops engine + portals + licence |
 | `src/lib/loker/bootstrap.ts` | data root, write-once portals/skeletons |
 | `src/lib/loker/scan.ts` | spawn, receipt parsing, run lifecycle |
+| `src/lib/loker/receipt.ts` | pure receipt/pipeline/url-key parsing |
 | `src/lib/loker/store.ts` | parameterized upsert + cumulative query |
 | `src/lib/loker/enrich.ts` | email extraction + RDAP domain age |
+| `src/lib/loker/boards/*` | ported detail adapters + `Io` |
 | `src/lib/loker/audit/sentinel.ts` | ported Sentinel audit |
 | `src/lib/loker/filters.ts` | ported location/content/salary filters |
 | `src/lib/loker/query.ts` | `uraiKueri`, `teksLoker` |
@@ -295,6 +297,42 @@ b. `GET /api/loker/scan/status` — returns the latest run's
 
 No network call happens in tests; RDAP and the engine are injected/fixtured.
 
+### 4.5 Detail enrichment (board adapters)
+
+`data/pipeline.md` records only `url | company | role | location | compensation |
+posted`. It carries **no description**, and the Sentinel fee rules read the
+description, so a row cannot be audited from the pipeline file alone. Careevo
+solves this with per-board detail adapters; Lumina ports them unchanged:
+
+```
+src/lib/loker/boards/
+  types.ts      BahanAudit, Io, PapanAdapter, perusahaanTerkenal
+  url.ts        hostDari, applyUrlOffPlatform
+  html.ts       htmlKeTeks, ambilNextData, metaOgDescription,
+                potongDivId, bersihkanPlaceholder
+  index.ts      adapterUntuk(url)
+  jobstreet.ts  JSON detail by job id
+  kalibrr.ts    __NEXT_DATA__ page
+  dealls.ts     __NEXT_DATA__ dehydrated query
+  workable.ts   redirect → account slug → JSON detail
+  smartrecruiters.ts  JSON detail
+  breezy.ts     server-rendered HTML
+  io.ts         real-network Io (10 s timeout, one 429 retry)
+  jobstreet-audit.ts  bahanAudit, jobIdFromUrl
+```
+
+a. An adapter returns `{ description, apply_url, company, employer_known }`.
+   No adapter ⇒ the row is `dropped` (we cannot audit it honestly).
+b. `apply_url` is the off-platform URL when the board names one, exactly as
+   Careevo's `applyUrlOffPlatform` decides.
+c. `employer_known` is `perusahaanTerkenal(company)`; `Private Advertiser` is
+   not a verifiable employer.
+d. Enrichment runs with bounded concurrency (4) and a 10 s per-request timeout.
+e. The adapters are the only place board-specific knowledge lives. Adding a
+   board is one file plus one registry entry, no branch in the audit.
+f. A row whose adapter fails is `dropped`, never inserted with an empty
+   description. That is the honest count the card reports.
+
 ---
 
 ## 5. Audit
@@ -322,6 +360,11 @@ auditPosting(input: {
 The escalation policy is copied exactly: `link_apk` or two independent content
 signals or an unparseable URL escalates; a weak structural flag never rejects
 alone.
+
+Careevo's internal middle status is `quarantined`; Lumina stores and displays it
+as `suspicious` (the schema and the UI use `clean | suspicious | rejected`).
+The mapping happens once, in `auditPosting()`, so the ported rule code and its
+ported tests keep Careevo's exact vocabulary.
 
 ### 5.2 Lumina score
 
@@ -409,10 +452,13 @@ The route validates `arguments` against `JobSearchArgsSchema`; an invalid
 argument set is dropped, not forwarded. `text` may be empty when the model only
 calls the tool.
 
-The tool is offered in every lane (the owner's choice), and the system prompt
-tells the model to call it only when the user asks for a job search. The route
-does not hard-block a `periksa` call: a model that calls it there gets the card
-after the verdict, with no evidence in the arguments.
+The tool is offered in every **conversational** lane (`tanya`, `lanjutan`,
+`obrolan`), which are the three lanes served by `/api/companion/answer`. A
+`periksa` turn is served by `/api/companion/voice`, which has no tool schema, so
+it cannot produce a tool call; the "Cari lowongan" chip remains the path while a
+message is being checked. The system prompt tells the model to call the tool
+only when the user asks for a job search, and the route validates every argument
+against `JobSearchArgsSchema`.
 
 ### 7.3 Phase 2 — the summary
 
@@ -541,19 +587,21 @@ a. `src/lib/loker/filters.test.ts` — ported Careevo cases (word boundaries,
 b. `src/lib/loker/query.test.ts` — filler stripping, AND semantics, punctuation.
 c. `src/lib/loker/audit/sentinel.test.ts` — ported Careevo cases (fee rules,
    APK, trust escalation, missing-data behaviour).
-d. `src/lib/loker/scan.test.ts` — receipt parsing (exit 0, exit 2, exit 1),
-   fixture-based, no subprocess.
-e. `src/lib/loker/rdap.test.ts` — fixture responses, registration date parsing,
+d. `src/lib/loker/receipt.test.ts` — receipt parsing (exit 0, exit 2, exit 1),
+   `parseInbox` rows, URL-key normalisation, fixture-based, no subprocess.
+e. `src/lib/loker/boards/*.test.ts` — ported Careevo adapter cases over
+   fixture JSON/HTML; registry uniqueness; no network.
+f. `src/lib/loker/rdap.test.ts` — fixture responses, registration date parsing,
    failure → drop.
-f. `src/app/api/companion/answer/route.test.ts` — tool call returned and
+g. `src/app/api/companion/answer/route.test.ts` — tool call returned and
    validated; invalid args dropped.
-g. `src/app/api/companion/tools/summary/route.test.ts` — schema, 503 fallback,
+h. `src/app/api/companion/tools/summary/route.test.ts` — schema, 503 fallback,
    no descriptions accepted.
-h. `src/components/companion/loker-tool.test.tsx` — filters, both verdicts,
+i. `src/components/companion/loker-tool.test.tsx` — filters, both verdicts,
    disagreement copy, empty/capped/dropped states, save.
-i. `src/components/companion/agent-run.test.tsx` — `job-search` stage renders as
+j. `src/components/companion/agent-run.test.tsx` — `job-search` stage renders as
    a non-detector.
-j. `src/lib/loker/store.test.ts` — Postgres upsert + cumulative corpus query,
+k. `src/lib/loker/store.test.ts` — Postgres upsert + cumulative corpus query,
    skipped without `TEST_DATABASE_URL`.
 
 ### Updated
@@ -561,6 +609,8 @@ j. `src/lib/loker/store.test.ts` — Postgres upsert + cumulative corpus query,
 k. `src/lib/contracts/trace-contract.test.ts` — new `StageId` entry.
 l. `companion-chat.test.tsx` — tool call renders the card; chip path skips the
    summary.
+m. `src/lib/loker/bootstrap.test.ts` — write-once portal seeding, skeleton
+   creation, second call creates nothing.
 
 ---
 

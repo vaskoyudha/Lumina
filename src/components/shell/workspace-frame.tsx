@@ -51,6 +51,12 @@ export function WorkspaceFrame({
         className,
       )}
     >
+      <a
+        href="#workspace-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-panel focus:px-3 focus:py-2 focus:font-medium focus:text-sm focus:text-txt focus:shadow-lg"
+      >
+        Langsung ke konten
+      </a>
       <SessionSidebar
         sessions={[]}
         onSelect={() => {}}
@@ -76,7 +82,7 @@ export function WorkspaceFrame({
             onClick={() => setMobileOpen(true)}
             aria-label="Buka navigasi"
             aria-expanded={mobileOpen}
-            className="size-8 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink"
+            className="size-11 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink"
           >
             <PanelLeftOpen aria-hidden strokeWidth={1.6} className="size-4" />
           </Button>
@@ -87,14 +93,21 @@ export function WorkspaceFrame({
           data-workspace-scroll
           className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden"
         >
-          <div className="flex min-w-0 flex-1 flex-col lg:overflow-y-auto">
+          <div
+            id="workspace-content"
+            tabIndex={-1}
+            className="flex min-w-0 flex-1 flex-col outline-none lg:overflow-y-auto"
+          >
             <div className="flex min-w-0 flex-col gap-6 px-5 py-6 sm:px-8 lg:py-7">
               {children}
             </div>
           </div>
 
           {aside ? (
-            <aside className="min-w-0 border-line border-t bg-panel px-5 py-6 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-7">
+            <aside
+              aria-label="Ringkasan halaman"
+              className="min-w-0 border-line border-t bg-panel px-5 py-6 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-7"
+            >
               {aside}
             </aside>
           ) : null}

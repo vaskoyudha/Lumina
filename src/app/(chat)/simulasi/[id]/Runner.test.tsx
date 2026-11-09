@@ -137,7 +137,7 @@ describe("Runner misi Paket sebelum pulang", () => {
     expect(screen.getByText(/hadiah boleh terlambat/i)).toBeInTheDocument();
     expectEmergencyLinks();
 
-    click(/koleksi taktik/i);
+    click(/pola penipuan/i);
     expect(screen.getByText("Meminjam kepercayaan")).toBeInTheDocument();
     expect(screen.getByText("File menyamar")).toBeInTheDocument();
   });
@@ -225,12 +225,12 @@ describe("Runner misi Paket sebelum pulang", () => {
 
     act(() => jest.advanceTimersByTime(10_000));
     expect(
-      screen.getByRole("progressbar", { name: /intrusi/i }),
+      screen.getByRole("progressbar", { name: /akses asing/i }),
     ).toHaveAttribute("aria-valuenow", "0");
 
     click(/pasang berkas agar paket tidak dibawa pergi/i);
     act(() => jest.advanceTimersByTime(3000));
-    const intrusion = screen.getByRole("progressbar", { name: /intrusi/i });
+    const intrusion = screen.getByRole("progressbar", { name: /akses asing/i });
     expect(Number(intrusion.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
     click(/^jeda$/i);
     const pausedAt = intrusion.getAttribute("aria-valuenow");
@@ -266,7 +266,7 @@ describe("Runner misi Paket sebelum pulang", () => {
 
     act(() => jest.advanceTimersByTime(60_000));
     expect(
-      screen.getByRole("progressbar", { name: /intrusi/i }),
+      screen.getByRole("progressbar", { name: /akses asing/i }),
     ).toHaveAttribute("aria-valuenow", "0");
     expect(screen.queryByText(/misi dihentikan/i)).not.toBeInTheDocument();
 
@@ -331,7 +331,7 @@ describe("Runner misi Paket sebelum pulang", () => {
       "25",
     );
     expect(
-      screen.getByRole("progressbar", { name: /intrusi/i }),
+      screen.getByRole("progressbar", { name: /akses asing/i }),
     ).toHaveAttribute("aria-valuenow", "0");
   });
 });

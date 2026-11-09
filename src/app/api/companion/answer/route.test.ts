@@ -98,10 +98,17 @@ describe("POST /api/companion/answer", () => {
     const body = (await response.json()) as { ok: boolean; text: string };
 
     expect(response.status).toBe(200);
-    expect(body.text).toBe("Pinjol adalah pinjaman ilegal.");
+    expect(body).toMatchObject({
+      ok: true,
+      text: "Pinjol adalah pinjaman ilegal.",
+      toolCalls: [],
+    });
 
     const sent = String(fetchMock.mock.calls[0]?.[1]?.body);
     expect(sent).toContain("apa itu pinjol?");
+    // The tool must actually be offered to the model, not just declared.
+    expect(sent).toContain('"job_search"');
+    expect(sent).toContain('"tool_choice":"auto"');
     // The digest route's rule, restated for this route: nothing but what the
     // user typed.
     expect(sent).not.toContain("diblokir");
@@ -126,5 +133,196 @@ describe("POST /api/companion/answer", () => {
       ok: false,
       error: "not-configured",
     });
+  });
+
+  it("returns a validated job_search call, even with empty text", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "",
+              tool_calls: [
+                {
+                  id: "call-1",
+                  type: "function",
+                  function: {
+                    name: "job_search",
+                    arguments: JSON.stringify({
+                      query: "React remote",
+                      location: "Jakarta",
+                      salaryMin: 8000000,
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "obrolan", question: "cari lowongan React remote" }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      text: "",
+      toolCalls: [
+        {
+          id: "call-1",
+          name: "job_search",
+          arguments: {
+            query: "React remote",
+            location: "Jakarta",
+            salaryMin: 8000000,
+          },
+        },
+      ],
+    });
+  });
+
+  it("drops a tool call whose arguments do not validate", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Baik.",
+              tool_calls: [
+                {
+                  id: "call-1",
+                  type: "function",
+                  function: {
+                    name: "job_search",
+                    arguments: JSON.stringify({ message: "Halo dari BCA" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "obrolan", question: "cari lowongan" }),
+    );
+    const body = (await response.json()) as { toolCalls: unknown[] };
+    expect(body.toolCalls).toEqual([]);
+  });
+
+  it("drops an unknown function name", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Baik.",
+              tool_calls: [
+                {
+                  id: "call-1",
+                  type: "function",
+                  function: { name: "delete_everything", arguments: "{}" },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "obrolan", question: "cari lowongan" }),
+    );
+    const body = (await response.json()) as { toolCalls: unknown[] };
+    expect(body.toolCalls).toEqual([]);
+  });
+
+  it("returns 503 when the model produced neither text nor a tool call", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: "   " } }] }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "obrolan", question: "cari lowongan" }),
+    );
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: "upstream-empty",
+    });
+  });
+
+  it("drops a tool call whose arguments are malformed JSON", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Baik.",
+              tool_calls: [
+                {
+                  id: "call-1",
+                  type: "function",
+                  function: { name: "job_search", arguments: "{not json" },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "obrolan", question: "cari lowongan" }),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { toolCalls: unknown[] };
+    expect(body.toolCalls).toEqual([]);
+  });
+
+  it("drops a tool call whose type is not function", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Baik.",
+              tool_calls: [
+                {
+                  id: "call-1",
+                  type: "retrieval",
+                  function: {
+                    name: "job_search",
+                    arguments: JSON.stringify({ query: "React" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "obrolan", question: "cari lowongan" }),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { toolCalls: unknown[] };
+    expect(body.toolCalls).toEqual([]);
   });
 });
