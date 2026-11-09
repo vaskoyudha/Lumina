@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
 /**
@@ -222,6 +223,13 @@ describe("CompanionChat · shell", () => {
       expect(viewScope.getByText(display)).toBeInTheDocument();
     }
     expect(viewScope.getByText("Orkestrator")).toBeInTheDocument();
+    // The subtitle must follow the registry, or it keeps claiming five
+    // agents after the sequence grows.
+    expect(
+      viewScope.getByText(
+        `${AGENT_SEQUENCE.length} agen, satu skor deterministik.`,
+      ),
+    ).toBeInTheDocument();
 
     await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
     expect(
@@ -285,5 +293,42 @@ describe("CompanionChat · shell", () => {
     expect(
       screen.queryByRole("heading", { name: "Detail agen" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("opens the mobile navigation from a named button, not the history icon", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    const toggle = screen.getByRole("button", { name: /buka navigasi/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    // The drawer is the navigation: all destinations are inside it.
+    expect(screen.getByRole("link", { name: "Belajar" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Simulasi" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Darurat" })).toBeInTheDocument();
+
+    // The scrim is the outside-tap target, separate from the header toggle.
+    await user.click(screen.getByRole("button", { name: /tutup navigasi/i }));
+    await waitFor(() =>
+      expect(toggle).toHaveAttribute("aria-expanded", "false"),
+    );
+  });
+
+  it("closes the mobile navigation drawer with Escape", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    const toggle = screen.getByRole("button", { name: /buka navigasi/i });
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(toggle).toHaveAttribute("aria-expanded", "false"),
+    );
   });
 });

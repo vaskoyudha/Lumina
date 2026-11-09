@@ -37,4 +37,10 @@ describe("agent registry", () => {
       expect(AGENT_REGISTRY[id].mechanism).toHaveLength(3);
     }
   });
+
+  it("points every identity token at a declared CSS variable for its own id", () => {
+    for (const id of IDS) {
+      expect(AGENT_REGISTRY[id].identity).toBe(`--lumina-agent-${id}`);
+    }
+  });
 });

@@ -1,12 +1,28 @@
 import { render, screen } from "@testing-library/react";
 import RunnerPage, {
   generateStaticParams,
-} from "@/app/(app)/simulasi/[id]/page";
+} from "@/app/(chat)/simulasi/[id]/page";
 
 jest.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("Scenario not found");
   },
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+  }),
+  usePathname: () => "/simulasi/L1-kurir-apk",
+}));
+
+// The shared workspace shell reads the session through `next/server`, which
+// jsdom cannot provide (`Request` is undefined). The runner does not depend on
+// the account, so stub the read instead of polyfilling the whole edge runtime.
+jest.mock("@/lib/auth/server-session", () => ({
+  getSession: jest.fn().mockResolvedValue(null),
 }));
 
 describe("simulation routes", () => {

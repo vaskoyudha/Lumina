@@ -298,8 +298,8 @@ export function SessionSidebar({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              aria-label="Tutup riwayat"
-              className="size-6 shrink-0 rounded-[6px] text-ink-mute hover:bg-txt/[0.05] hover:text-ink md:hidden"
+              aria-label="Tutup bilah samping"
+              className="size-11 shrink-0 rounded-[6px] text-ink-mute hover:bg-txt/[0.05] hover:text-ink md:hidden"
             >
               <svg
                 role="presentation"
@@ -370,7 +370,7 @@ export function SessionSidebar({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Cari"
-              className="min-w-0 flex-1 bg-transparent px-2 text-[12px] text-txt outline-none placeholder:text-ink-faint [&::-webkit-search-cancel-button]:hidden"
+              className="min-w-0 flex-1 bg-transparent px-2 text-[16px] text-txt outline-none placeholder:text-ink-faint sm:text-[12px] [&::-webkit-search-cancel-button]:hidden"
             />
             <kbd
               aria-hidden

@@ -4,13 +4,16 @@ import {
   BookOpen,
   CheckCircle2,
   ClipboardCheck,
+  Clock3,
   FileWarning,
   Flag,
   Globe,
+  Lightbulb,
   Link2,
   type LucideIcon,
   MessageSquareWarning,
   Phone,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -205,15 +208,113 @@ function ContohFrame({ modul }: { modul: ModuleContent }) {
 }
 
 /** Sidebar contents. The example entry follows the course's declared shape. */
-function tocFor(jenis: ContohJenis) {
+function tocFor(modul: ModuleContent) {
+  const jenis: ContohJenis = modul.contohJenis ?? "pesan";
   const contoh = CONTOH_SHAPE[jenis];
+  const hasOrientation = Boolean(modul.ringkasan || modul.tujuan?.length);
+  const hasKeyPoints = Boolean(modul.poinKunci?.length);
   return [
+    ...(hasOrientation
+      ? [{ id: "tujuan", label: "Tujuan pembelajaran", Icon: Target }]
+      : []),
     { id: "anatomi", label: "Cara kerja penipuan", Icon: BookOpen },
     { id: "contoh", label: contoh.label, Icon: contoh.Icon },
     { id: "checklist", label: "Checklist tanda bahaya", Icon: ClipboardCheck },
     { id: "kuis", label: "Uji pemahaman", Icon: FileWarning },
     { id: "lapor", label: "Kalau sudah terjadi", Icon: Flag },
+    ...(hasKeyPoints
+      ? [{ id: "poin-kunci", label: "Poin kunci", Icon: Lightbulb }]
+      : []),
   ];
+}
+
+/**
+ * Orientation card. Published courses declare what the learner will be able
+ * to do and how long it takes; showing that up front is what separates a
+ * course from a wall of text. Rendered only when the course supplies it, so
+ * older drafts stay honest instead of showing an empty frame.
+ */
+function ModuleOrientation({ modul }: { modul: ModuleContent }) {
+  if (!modul.ringkasan && !modul.tujuan?.length) return null;
+
+  return (
+    <Card
+      id="tujuan"
+      className="scroll-mt-24 gap-0 overflow-hidden rounded-[24px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
+    >
+      <CardContent className="flex flex-col gap-4 py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 font-semibold text-[11px] text-brand-ink">
+            <Target aria-hidden className="size-3.5" />
+            Tujuan pembelajaran
+          </span>
+          {modul.estimasiMenit ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-2.5 py-1 font-medium text-[11px] text-dim">
+              <Clock3 aria-hidden className="size-3.5" />
+              {modul.estimasiMenit} menit
+            </span>
+          ) : null}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-2.5 py-1 font-medium text-[11px] text-dim">
+            <FileWarning aria-hidden className="size-3.5" />
+            {modul.kuis.length} soal kuis
+          </span>
+        </div>
+
+        {modul.ringkasan ? (
+          <p className="max-w-prose text-txt leading-relaxed">
+            {modul.ringkasan}
+          </p>
+        ) : null}
+
+        {modul.tujuan?.length ? (
+          <ul className="grid list-none gap-2 p-0 sm:grid-cols-2">
+            {modul.tujuan.map((item) => (
+              <li key={item} className="flex gap-2.5 rounded-xl bg-panel-2 p-3">
+                <CheckCircle2
+                  aria-hidden
+                  className="mt-0.5 size-4 shrink-0 text-brand-ink"
+                />
+                <span className="text-sm leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Recap shown after the reporting steps: the few rules worth memorising. */
+function KeyPoints({ modul }: { modul: ModuleContent }) {
+  if (!modul.poinKunci?.length) return null;
+
+  return (
+    <Card
+      id="poin-kunci"
+      className="scroll-mt-24 gap-0 rounded-[24px] border border-brand-line bg-brand-soft/40 py-0 shadow-[var(--appnext-shadow-ambient)]"
+    >
+      <CardContent className="py-5">
+        <h2 className="flex items-center gap-2 font-medium text-xl text-txt">
+          <Lightbulb aria-hidden className="size-5 text-brand" />
+          Poin kunci
+        </h2>
+        <p className="mt-1 text-dim text-sm">
+          Kalau hanya satu bagian yang kamu ingat, ingat ini.
+        </p>
+        <ul className="mt-3 flex list-none flex-col gap-2.5 p-0">
+          {modul.poinKunci.map((item) => (
+            <li key={item} className="flex gap-3">
+              <span
+                aria-hidden
+                className="mt-2 size-1.5 shrink-0 rounded-full bg-brand-strong"
+              />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
 }
 
 /**
@@ -228,7 +329,7 @@ function tocFor(jenis: ContohJenis) {
 export function ModulBody({ modul }: { modul: ModuleContent }) {
   const [passed, setPassed] = useState(false);
   const jenis = modul.contohJenis ?? "pesan";
-  const toc = tocFor(jenis);
+  const toc = tocFor(modul);
 
   // A pass unlocks completion; the questions that were missed are recorded
   // honestly so the review surface (and Stream C later, §11.4) has real data
@@ -243,6 +344,8 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
       <div className="flex min-w-0 flex-col gap-5">
+        <ModuleOrientation modul={modul} />
+
         <LessonSection
           id="anatomi"
           index={1}
@@ -328,6 +431,8 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
             ))}
           </ol>
         </LessonSection>
+
+        <KeyPoints modul={modul} />
 
         {passed ? (
           <CompleteButton moduleNo={modul.no} />

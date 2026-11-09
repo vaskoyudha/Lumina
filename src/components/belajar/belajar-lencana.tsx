@@ -43,7 +43,7 @@ export function BelajarLencana() {
         </p>
       </div>
 
-      <div className="mt-3.5 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="mt-3.5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {ENTRIES.map(([no, badgeId]) => {
           const earned = badges.includes(badgeId);
           const modul = MODUS_BY_NO.get(Number(no));
@@ -53,7 +53,6 @@ export function BelajarLencana() {
               key={badgeId}
               className={cn(
                 "gap-0 rounded-2xl border border-line bg-panel p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all hover:border-brand-line hover:shadow-md",
-                ENTRIES.length === 1 && "md:col-span-2",
               )}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">

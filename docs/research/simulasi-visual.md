@@ -39,11 +39,11 @@ kontrak antar-stream, isi skenario, dan salinan teks tidak berubah.
 ## Struktur berkas
 
 ```
-src/app/(app)/simulasi/
-├── layout.tsx          pass-through; tidak ada tema lokal
+src/app/(chat)/simulasi/
+├── layout.tsx          WorkspaceShell — sidebar Companion, tanpa nav situs
 ├── page.tsx            daftar misi + level yang masih "Rencana"
 └── [id]/
-    ├── page.tsx        header misi + Runner
+    ├── page.tsx        BackButton + Runner (header misi di dalam Runner)
     ├── loading.tsx     skeleton memakai Card + Skeleton
     └── Runner.tsx      alur permainan, shadcn + token
 ```
