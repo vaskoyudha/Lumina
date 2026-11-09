@@ -225,7 +225,10 @@ export function ProcessTrace({
                           <span className="font-semibold text-txt">
                             {AGENT_IDENTITIES[block.start.agent].displayName}
                           </span>
-                          <span className="text-[10.5px] text-dim">
+                          <span
+                            data-agent-tone={block.start.agent}
+                            className="agent-role-pill font-mono"
+                          >
                             {AGENT_IDENTITIES[block.start.agent].field}
                           </span>
                           <span

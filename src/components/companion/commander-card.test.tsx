@@ -27,7 +27,9 @@ describe("CommanderCard", () => {
 
   it("shows agents working once delegation starts", () => {
     render(<CommanderCard phase="delegating" startedAt={Date.now() - 1500} />);
-    expect(screen.getByText("Menjalankan agen")).toBeInTheDocument();
+    const status = screen.getByText("Menjalankan agen");
+    expect(status).toBeInTheDocument();
+    expect(status.closest("output")).not.toBeNull();
     expect(screen.getByText(/detik/)).toBeInTheDocument();
   });
 
