@@ -98,7 +98,7 @@ export function WorkspaceFrame({
           <div
             id="workspace-content"
             tabIndex={-1}
-            className="flex min-w-0 flex-1 flex-col outline-none lg:overflow-y-auto"
+            className="no-scrollbar flex min-w-0 flex-1 flex-col outline-none lg:overflow-y-auto"
           >
             <div className="flex min-w-0 flex-col gap-3.5 px-4 py-3.5 sm:px-5 lg:py-4 lg:pl-4 lg:pr-0">
               {children}
@@ -108,7 +108,7 @@ export function WorkspaceFrame({
           {aside ? (
             <aside
               aria-label="Ringkasan halaman"
-              className="min-w-0 border-line border-t px-4 py-3.5 sm:px-5 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-4 lg:pl-0 lg:pr-4"
+              className="no-scrollbar min-w-0 border-line border-t px-4 py-3.5 sm:px-5 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-4 lg:pl-0 lg:pr-4"
             >
               {aside}
             </aside>
