@@ -1278,7 +1278,7 @@ export function CompanionChat({
               <Button
                 asChild
                 size="sm"
-                className="hidden h-[32px] rounded-full bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
+                className="hidden h-[32px] bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
               >
                 <Link href="/darurat">Mode darurat</Link>
               </Button>
