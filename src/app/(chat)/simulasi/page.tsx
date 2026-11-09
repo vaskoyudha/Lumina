@@ -39,7 +39,7 @@ function SimulasiAside() {
       <Card
         role="region"
         aria-labelledby="planned-heading"
-        className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]"
+        className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]"
       >
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
@@ -100,7 +100,7 @@ export default function SimulasiPage() {
   return (
     <WorkspaceShell label="Simulasi" aside={<SimulasiAside />}>
       <div className="flex w-full flex-col gap-6">
-        <section className="appnext-campaign relative overflow-hidden rounded-[22px] p-6 text-bg shadow-[var(--appnext-shadow-soft)] sm:p-7">
+        <section className="appnext-campaign relative overflow-hidden rounded-card p-6 text-bg shadow-[var(--appnext-shadow-soft)] sm:p-7">
           {/* Keeps white copy at AA over the lighter campaign gradient. */}
           <div
             aria-hidden="true"
@@ -159,7 +159,7 @@ export default function SimulasiPage() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Button
                 asChild
-                className="min-h-10 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
+                className="min-h-11 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
               >
                 <Link
                   href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
@@ -192,7 +192,7 @@ export default function SimulasiPage() {
             </h2>
             <p className="text-dim text-xs">Satu keputusan per babak.</p>
           </div>
-          <ol className="list-none divide-y divide-line overflow-hidden rounded-2xl border border-line bg-panel p-0 shadow-[var(--appnext-shadow-ambient)]">
+          <ol className="list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-panel p-0 shadow-[var(--appnext-shadow-ambient)]">
             {MISSION.chapters.map((chapter, index) => (
               <li key={chapter} className="flex gap-4 p-4 sm:p-5">
                 <span className="tabular flex size-8 shrink-0 items-center justify-center rounded-xl bg-brand-soft font-black text-[11px] text-brand-ink">

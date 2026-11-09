@@ -88,7 +88,7 @@ function LessonSection({
   children: ReactNode;
 }) {
   return (
-    <Card className="gap-0 overflow-hidden rounded-[24px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
+    <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
       <div className="flex items-start gap-3 border-line border-b px-5 py-4">
         <span
           aria-hidden
@@ -240,7 +240,7 @@ function ModuleOrientation({ modul }: { modul: ModuleContent }) {
   return (
     <Card
       id="tujuan"
-      className="scroll-mt-24 gap-0 overflow-hidden rounded-[24px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
+      className="scroll-mt-24 gap-0 overflow-hidden rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
     >
       <CardContent className="flex flex-col gap-4 py-5">
         <div className="flex flex-wrap items-center gap-2">
@@ -291,7 +291,7 @@ function KeyPoints({ modul }: { modul: ModuleContent }) {
   return (
     <Card
       id="poin-kunci"
-      className="scroll-mt-24 gap-0 rounded-[24px] border border-brand-line bg-brand-soft/40 py-0 shadow-[var(--appnext-shadow-ambient)]"
+      className="scroll-mt-24 gap-0 rounded-card border border-brand-line bg-brand-soft/40 py-0 shadow-[var(--appnext-shadow-ambient)]"
     >
       <CardContent className="py-5">
         <h2 className="flex items-center gap-2 font-medium text-xl text-txt">
@@ -437,7 +437,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         {passed ? (
           <CompleteButton moduleNo={modul.no} />
         ) : (
-          <Card className="gap-0 rounded-[22px] border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
+          <Card className="gap-0 rounded-card border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
             <CardContent className="py-4 text-dim">
               Selesaikan kuis dengan skor minimal 60% untuk menandai modul ini
               selesai dan membuka lencana.
@@ -459,7 +459,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
       </div>
 
       <aside className="appnext-toc hidden lg:block" aria-label="Isi modul">
-        <Card className="gap-0 rounded-[22px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
+        <Card className="gap-0 rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
           <CardContent className="py-3">
             <p className="appnext-caption px-2 pt-1 font-medium tracking-wide uppercase">
               Isi modul

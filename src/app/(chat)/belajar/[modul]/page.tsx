@@ -153,7 +153,7 @@ export default async function ModulPage({
       </section>
 
       <dl className="grid gap-2 sm:grid-cols-3">
-        <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-none">
+        <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-none">
           <CardContent className="py-3.5">
             <dt className="appnext-caption text-[10px] uppercase tracking-wide">
               Laporan IASC
@@ -164,7 +164,7 @@ export default async function ModulPage({
             </dd>
           </CardContent>
         </Card>
-        <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-none">
+        <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-none">
           <CardContent className="py-3.5">
             <dt className="appnext-caption text-[10px] uppercase tracking-wide">
               Estimasi kerugian
@@ -174,7 +174,7 @@ export default async function ModulPage({
             </dd>
           </CardContent>
         </Card>
-        <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-none">
+        <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-none">
           <CardContent className="py-3.5">
             <dt className="appnext-caption text-[10px] uppercase tracking-wide">
               Status modul
@@ -189,7 +189,7 @@ export default async function ModulPage({
       {isi ? (
         <ModulBody modul={isi} />
       ) : (
-        <Card className="gap-0 rounded-[24px] border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+        <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
           <CardContent className="py-5">
             <h2 className="font-normal text-2xl text-txt">
               Modul ini belum ditulis
@@ -215,11 +215,11 @@ export default async function ModulPage({
 
       {next && next.no !== entry.no ? (
         <nav aria-label="Modul berikutnya">
-          <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
             <Link
               href={`/belajar/${next.no}`}
               data-pressable
-              className="group flex items-center justify-between gap-3 rounded-2xl p-3 transition-all hover:border-brand-line"
+              className="group flex items-center justify-between gap-3 rounded-card p-3 transition-all hover:border-brand-line"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <span

@@ -33,7 +33,7 @@ export function CompleteButton({ moduleNo }: { moduleNo: number }) {
   return (
     <Card
       aria-label="Selesaikan modul"
-      className="gap-0 rounded-[22px] border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
+      className="gap-0 rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
     >
       <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">

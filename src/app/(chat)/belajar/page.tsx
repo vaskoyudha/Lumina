@@ -82,7 +82,7 @@ export default function BelajarPage() {
 
 function CardNote({ complete, total }: { complete: number; total: number }) {
   return (
-    <Card className="gap-0 rounded-2xl border border-line bg-panel-2 py-0 ring-0 shadow-none">
+    <Card className="gap-0 rounded-card border border-line bg-panel-2 py-0 ring-0 shadow-none">
       <CardContent className="flex items-start gap-3 p-4">
         <span
           aria-hidden

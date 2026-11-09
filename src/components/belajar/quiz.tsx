@@ -150,7 +150,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
                 const correct = q.options.find((o) => o.id === q.correctId);
                 return (
                   <li key={attempt.questionId}>
-                    <Card className="gap-0 rounded-2xl py-0 shadow-[var(--appnext-shadow-soft)]">
+                    <Card className="gap-0 rounded-card py-0 shadow-[var(--appnext-shadow-soft)]">
                       <CardContent className="flex flex-col gap-1.5 py-4">
                         <p className="font-medium text-txt">{q.prompt}</p>
                         <p className="text-dim text-sm">
