@@ -1190,7 +1190,7 @@ export function CompanionChat({
                 />
               </Button>
 
-              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-edge bg-panel px-2.5 shadow-rest lg:pl-1">
+              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 shadow-rest lg:pl-1">
                 <span
                   aria-hidden
                   className="relative hidden size-[22px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong lg:grid"
@@ -1308,7 +1308,7 @@ export function CompanionChat({
                 size="sm"
                 onClick={startNew}
                 aria-label="Percakapan baru"
-                className="h-11 gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-11 max-md:px-0 lg:hidden"
+                className="h-11 gap-1.5 rounded-full bg-brand-soft px-3 text-[12px] font-medium text-brand-ink hover:bg-brand-soft-2 max-md:size-11 max-md:px-0 lg:hidden"
               >
                 <SquarePen aria-hidden strokeWidth={1.6} className="size-3.5" />
                 <span className="max-md:sr-only">Percakapan baru</span>
