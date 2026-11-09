@@ -350,7 +350,7 @@ export function SessionSidebar({
         <Button
           onClick={onNew}
           data-pressable
-          className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand to-brand-strong py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:brightness-105 active:scale-[0.98]"
+          className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.98]"
         >
           <span className="flex items-center gap-2">
             <Sparkles
@@ -440,7 +440,7 @@ export function SessionSidebar({
           <Link
             href="/darurat"
             data-pressable
-            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand to-brand-strong px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
           >
             <span>Buka darurat</span>
             <ChevronRight aria-hidden strokeWidth={2.4} className="size-3" />
@@ -493,7 +493,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand to-brand-strong p-0 text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:brightness-105 active:scale-[0.96]"
+        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to p-0 text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.96]"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>

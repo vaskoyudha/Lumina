@@ -145,7 +145,7 @@ export function ModulKatalog({
               type="button"
               data-pressable
               onClick={resetFilters}
-              className="min-h-11 rounded-full border border-brand-line bg-gradient-to-r from-brand to-brand-strong px-4 text-bg hover:brightness-105"
+              className="min-h-11 rounded-full border border-brand-line bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-4 text-bg hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to"
             >
               <RotateCcw aria-hidden className="size-4" />
               Atur ulang saringan
