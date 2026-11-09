@@ -175,7 +175,7 @@ export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
                         </p>
                         <p className="text-dim text-sm">
                           Yang aman:{" "}
-                          <span className="text-brand-ink">
+                          <span className="text-[color:var(--appnext-success-strong)]">
                             {correct?.label}
                           </span>
                         </p>
@@ -256,7 +256,7 @@ export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
               className={cn(
                 "h-auto min-h-[52px] w-full justify-start gap-3 rounded-2xl px-4 py-3 text-left text-base font-normal whitespace-normal text-[color:var(--appnext-ink-2)]",
                 "aria-disabled:cursor-default",
-                "data-[state=correct]:border-brand data-[state=correct]:bg-brand-soft data-[state=correct]:text-brand-ink",
+                "data-[state=correct]:border-[color:var(--appnext-success)] data-[state=correct]:bg-[var(--appnext-success-wash)] data-[state=correct]:text-[color:var(--appnext-success-deep)]",
                 "data-[state=wrong]:border-[color:var(--appnext-danger)] data-[state=wrong]:bg-[var(--appnext-danger-wash)] data-[state=wrong]:text-[color:var(--appnext-danger-deep)]",
               )}
             >
@@ -264,7 +264,8 @@ export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
                 aria-hidden
                 className={cn(
                   "inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-line font-medium text-[13px]",
-                  state === "correct" && "border-brand text-brand-ink",
+                  state === "correct" &&
+                    "border-[color:var(--appnext-success)] text-[color:var(--appnext-success-deep)]",
                   state === "wrong" &&
                     "border-[color:var(--appnext-danger)] text-[color:var(--appnext-danger-deep)]",
                 )}
@@ -283,13 +284,13 @@ export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
           className="border-danger/40 bg-danger/5 text-[color:var(--appnext-danger-deep)] [&>[data-slot=alert-description]]:text-current/90"
         >
           <TriangleAlert aria-hidden />
-          <AlertTitle>Itu langkah yang berbahaya</AlertTitle>
+          <AlertTitle>Jawabanmu berbahaya</AlertTitle>
           <AlertDescription>{question.rationale}</AlertDescription>
         </Alert>
       ) : null}
 
       {locked && wasCorrect && !isLast ? (
-        <p className="font-medium text-brand-ink">
+        <p className="font-medium text-[color:var(--appnext-success-strong)]">
           Betul — itu yang menghentikan penipuan sebelum uang bergerak.
         </p>
       ) : null}

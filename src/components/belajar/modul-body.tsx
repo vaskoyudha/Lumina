@@ -15,11 +15,11 @@ import {
   Phone,
   Target,
 } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useAccountProgress } from "@/components/belajar/belajar-progress";
 import { CompleteButton } from "@/components/belajar/complete-button";
+import { CourseSimulationCta } from "@/components/belajar/course-simulation-cta";
 import { Quiz } from "@/components/belajar/quiz";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -488,17 +488,10 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           </Card>
         )}
 
-        {/* TODO(stream-C): route exists; runner content is C's until Gate 2. */}
-        {modul.scenarioId ? (
-          <Button
-            asChild
-            className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
-          >
-            <Link href={`/simulasi/${modul.scenarioId}`} data-pressable>
-              Latih pola ini di simulasi
-            </Link>
-          </Button>
-        ) : null}
+        <CourseSimulationCta
+          moduleNo={modul.no}
+          scenarioId={modul.scenarioId}
+        />
       </div>
 
       <aside className="appnext-toc hidden lg:block" aria-label="Isi modul">
