@@ -8,7 +8,6 @@ import {
   Plus,
   Search,
   ShieldAlert,
-  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -352,14 +351,7 @@ export function SessionSidebar({
           data-pressable
           className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.98]"
         >
-          <span className="flex items-center gap-2">
-            <Sparkles
-              aria-hidden
-              strokeWidth={2}
-              className="size-4 shrink-0 text-bg/80"
-            />
-            <span>Percakapan baru</span>
-          </span>
+          <span>Percakapan baru</span>
           <span className="flex size-6 items-center justify-center rounded-full bg-bg text-brand-ink shadow-sm">
             <Plus aria-hidden strokeWidth={2.8} className="size-3.5" />
           </span>
