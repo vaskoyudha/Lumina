@@ -35,12 +35,34 @@ export const EMPTY_PROGRESS: Progress = {
 
 /** One badge per written module. §11.4 level-5 social badges are cut (§5-B). */
 export const BADGE_FOR_MODULE: Record<number, string> = {
+  1: "penjaga-marketplace",
+  2: "penjaga-telepon",
+  3: "penjaga-investasi",
+  4: "penjaga-lowongan",
+  5: "penjaga-hadiah",
+  6: "penjaga-relasi",
+  7: "penjaga-tautan",
+  8: "penjaga-layar",
+  9: "penjaga-pinjol",
   10: "penjaga-apk",
+  11: "penjaga-qris",
+  12: "penjaga-musim",
 };
 
 /** Badge id → display label. Add a row here when a new module earns a badge. */
 export const BADGE_LABEL: Record<string, string> = {
+  "penjaga-marketplace": "Penjaga Marketplace",
+  "penjaga-telepon": "Penjaga Telepon",
+  "penjaga-investasi": "Penjaga Investasi",
+  "penjaga-lowongan": "Penjaga Lowongan",
+  "penjaga-hadiah": "Penjaga Hadiah",
+  "penjaga-relasi": "Penjaga Relasi",
+  "penjaga-tautan": "Penjaga Tautan",
+  "penjaga-layar": "Penjaga Layar",
+  "penjaga-pinjol": "Penjaga Pinjol",
   "penjaga-apk": "Penjaga APK",
+  "penjaga-qris": "Penjaga QRIS",
+  "penjaga-musim": "Penjaga Musim",
 };
 
 export function loadProgress(): Progress {

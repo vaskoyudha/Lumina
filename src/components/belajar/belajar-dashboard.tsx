@@ -187,7 +187,7 @@ export function BelajarDashboard({
                 </span>
               </span>
               <span className="rounded-full border border-bg/20 bg-bg/15 px-2.5 py-0.5 font-semibold text-[10px] text-bg">
-                Satu modul lengkap
+                {complete} modul lengkap
               </span>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AgentRun } from "@/components/companion/agent-run";
 import type { AgentStage, AgentTrace } from "@/lib/contracts/agent-run";
+import type { ScoreResult } from "@/lib/contracts/score";
 
 const stage = (
   over: Partial<AgentStage> & Pick<AgentStage, "id">,
@@ -73,6 +74,31 @@ describe("AgentRun", () => {
       "data-status",
       "berjalan",
     );
+  });
+
+  it("prints the voice name once, not twice", () => {
+    const settled: AgentTrace = {
+      ...trace,
+      stages: trace.stages.map((item) =>
+        item.id === "voice" ? { ...item, status: "selesai", ms: 10_923 } : item,
+      ),
+    };
+    render(<AgentRun trace={settled} />);
+    const voice = screen.getByTestId("agent-voice");
+    expect(within(voice).getAllByText("Penyusun bahasa")).toHaveLength(1);
+  });
+
+  it("prints a long duration in seconds so the row does not wrap", () => {
+    const settled: AgentTrace = {
+      ...trace,
+      stages: trace.stages.map((item) =>
+        item.id === "voice" ? { ...item, status: "selesai", ms: 10_923 } : item,
+      ),
+    };
+    render(<AgentRun trace={settled} />);
+    const voice = screen.getByTestId("agent-voice");
+    expect(within(voice).getByText("10,9 s")).toBeInTheDocument();
+    expect(within(voice).queryByText(/10\.923,0 ms/)).not.toBeInTheDocument();
   });
 
   it("shows the note for skipped stages", () => {
@@ -181,5 +207,181 @@ describe("AgentRun", () => {
       "false",
     );
     expect(toggle).toHaveAttribute("aria-expanded", "true"); // same node, still open
+  });
+
+  it("prints the honest status word for every kind of stage", () => {
+    const mixed: AgentTrace = {
+      stages: [
+        stage({ id: "message", status: "temuan", findings: 2 }),
+        stage({ id: "identity", status: "selesai", findings: 0 }),
+        stage({ id: "job", status: "selesai", findings: 0 }),
+        stage({
+          id: "evidence",
+          status: "selesai",
+          findings: 0,
+          note: "2 kutipan tercatat untuk laporan",
+        }),
+        stage({ id: "voice", label: "Penyusun bahasa", status: "selesai" }),
+        stage({ id: "scoring", label: "Scoring Orchestrator" }),
+      ],
+      totalMs: 5,
+    };
+    render(<AgentRun trace={mixed} />);
+
+    expect(
+      within(screen.getByTestId("agent-message")).getByText("2 temuan"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("agent-identity")).getByText("Tidak melapor"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("agent-job")).getByText("Selesai · 0 temuan"),
+    ).toBeInTheDocument();
+    // Evidence counts quotes and voice writes language; neither "detects a
+    // pattern", so neither may claim a detector's finding count.
+    const evidence = screen.getByTestId("agent-evidence");
+    expect(within(evidence).getByText("Selesai")).toBeInTheDocument();
+    expect(within(evidence).queryByText(/0 temuan/)).not.toBeInTheDocument();
+    const voice = screen.getByTestId("agent-voice");
+    expect(within(voice).getByText("Selesai")).toBeInTheDocument();
+    expect(within(voice).queryByText(/0 temuan/)).not.toBeInTheDocument();
+  });
+
+  it("never gives a non-reporting or finding stage the success glyph", () => {
+    const mixed: AgentTrace = {
+      stages: [
+        stage({ id: "message", status: "temuan", findings: 2 }),
+        stage({ id: "identity", status: "selesai", findings: 0 }),
+        stage({ id: "job", status: "selesai", findings: 0 }),
+        stage({ id: "scoring", label: "Scoring Orchestrator" }),
+      ],
+      totalMs: 5,
+    };
+    render(<AgentRun trace={mixed} />);
+
+    expect(
+      screen
+        .getByTestId("agent-message")
+        .querySelector('[data-glyph="finding"]'),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByTestId("agent-identity")
+        .querySelector('[data-glyph="quiet"]'),
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId("agent-job").querySelector('[data-glyph="check"]'),
+    ).not.toBeNull();
+  });
+
+  it("counts stage statuses without overlap and subtracts the voice time", () => {
+    const settled: AgentTrace = {
+      ...trace,
+      stages: trace.stages.map((item) =>
+        item.id === "voice" ? { ...item, status: "selesai", ms: 2.5 } : item,
+      ),
+      totalMs: 12,
+    };
+    const { container } = render(<AgentRun trace={settled} />);
+    const head = container.querySelector("[data-run-state]");
+
+    // 3 selesai + 1 dengan temuan + 4 dilewati = 8 agents, and 12 - 2.5 = 9.5.
+    expect(head).toHaveTextContent(
+      "3 selesai · 1 dengan temuan · 4 dilewati · 2 temuan · 9,5 ms",
+    );
+  });
+
+  it("announces the settled summary once the run stops", () => {
+    const settled: AgentTrace = {
+      ...trace,
+      stages: trace.stages.map((item) =>
+        item.id === "voice" ? { ...item, status: "selesai", ms: 4 } : item,
+      ),
+    };
+    const { rerender } = render(<AgentRun trace={settled} live />);
+    rerender(<AgentRun trace={settled} live={false} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "4 agen selesai, 4 dilewati, 2 temuan.",
+    );
+  });
+
+  it("shows a detector only its own weighted signals", async () => {
+    const user = userEvent.setup();
+    const result: ScoreResult = {
+      score: 70,
+      risk: "tinggi",
+      signals: [
+        {
+          label: "Pola pesan menekan",
+          weight: 0.5,
+          evidence: "buruan",
+          agent: "message",
+        },
+        {
+          label: "Sinyal pasar unik",
+          weight: 0.4,
+          evidence: "transfer pribadi",
+          agent: "marketplace",
+        },
+        {
+          label: "Placeholder nol",
+          weight: 0,
+          evidence: "tidak ada",
+          agent: "message",
+        },
+      ],
+      modus: "tidak-dikenali",
+      advice: [],
+      relatedModule: null,
+      hardOverride: false,
+    };
+    render(<AgentRun trace={trace} live={false} result={result} />);
+
+    const message = screen.getByTestId("agent-message");
+    await user.click(
+      within(message).getByRole("button", { name: /message agent/i }),
+    );
+    expect(within(message).getByText("Pola pesan menekan")).toBeInTheDocument();
+    expect(
+      within(message).queryByText("Sinyal pasar unik"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(message).queryByText("Placeholder nol"),
+    ).not.toBeInTheDocument();
+
+    const market = screen.getByTestId("agent-marketplace");
+    await user.click(
+      within(market).getByRole("button", { name: /marketplace agent/i }),
+    );
+    expect(within(market).getByText("Sinyal pasar unik")).toBeInTheDocument();
+    expect(
+      within(market).queryByText("Pola pesan menekan"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the full skip or failure note in the expanded body", async () => {
+    const user = userEvent.setup();
+    const note = "Model terlalu lambat menjawab; jawaban disusun dari templat.";
+    const failed: AgentTrace = {
+      stages: [
+        stage({ id: "message", status: "gagal", note }),
+        stage({ id: "scoring", label: "Scoring Orchestrator" }),
+      ],
+      totalMs: 4,
+    };
+    render(<AgentRun trace={failed} live={false} />);
+
+    const bubble = screen.getByTestId("agent-message");
+    const toggle = within(bubble).getByRole("button", {
+      name: /message agent/i,
+    });
+    await user.click(toggle);
+
+    const panelId = toggle.getAttribute("aria-controls");
+    expect(panelId).not.toBeNull();
+    const body = document.getElementById(panelId as string);
+    expect(body).not.toBeNull();
+    expect(within(body as HTMLElement).getByText(note)).toBeInTheDocument();
   });
 });

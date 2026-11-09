@@ -107,7 +107,7 @@ export function CompanionPreview({ compact = false }: { compact?: boolean }) {
               </p>
 
               <div className="mt-5 w-full rounded-[18px] border border-brand-line bg-brand-tint p-[5px] shadow-[0_4px_24px_color-mix(in_oklab,var(--lumina-brand-glow)_8%,transparent)]">
-                <div className="rounded-[14px] border border-brand-line/70 bg-panel px-3.5 pt-3 pb-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.015)]">
+                <div className="rounded-[14px] border border-brand-line/70 bg-panel px-3.5 pt-3 pb-2.5 shadow-[0_1px_2px_color-mix(in_oklab,var(--lumina-txt)_3%,transparent)]">
                   <p className="mb-1.5 min-h-[41px] text-[12.5px] text-ink-faint leading-relaxed">
                     Tempel pesan, lampirkan tangkapan layar, atau tulis
                     pertanyaanmu…

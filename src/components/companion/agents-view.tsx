@@ -103,7 +103,7 @@ export function AgentsView({
                 Agen pemeriksa
               </h1>
               <p className="mt-0.5 font-medium text-dim text-xs sm:text-[13px]">
-                Lima agen, satu skor deterministik.
+                {AGENT_SEQUENCE.length} agen, satu skor deterministik.
               </p>
             </div>
 
@@ -515,7 +515,7 @@ function LuminaCard() {
           }}
         />
         <CardHeader className="relative flex flex-row items-center gap-4 px-5 pt-4 pb-0">
-          <span className="relative grid size-[68px] shrink-0 place-items-center rounded-[20px] bg-panel shadow-[0_14px_30px_-10px_rgba(0,0,0,0.55)] ring-1 ring-panel/70">
+          <span className="relative grid size-[68px] shrink-0 place-items-center rounded-[20px] bg-panel shadow-lift ring-1 ring-panel/70">
             <LuminaLogo variant="mark" className="size-[52px]" />
           </span>
           <div className="min-w-0 flex-1">
@@ -636,7 +636,7 @@ function AgentLane({
           <div className="relative mt-2.5 flex items-center gap-2">
             <span
               className={cn(
-                "relative size-10 shrink-0 rounded-[11px] bg-panel p-[2px] shadow-[0_8px_18px_-8px_rgba(0,0,0,0.55)] ring-1 ring-panel/70 transition-[box-shadow,transform] duration-200",
+                "relative size-10 shrink-0 rounded-[11px] bg-panel p-[2px] shadow-lift ring-1 ring-panel/70 transition-[box-shadow,transform] duration-200",
                 selected
                   ? "ring-2 ring-panel"
                   : "group-hover/agent:scale-[1.04]",

@@ -60,9 +60,10 @@ describe("progress", () => {
     expect(twice.badges.filter((b) => b === "penjaga-apk")).toHaveLength(1);
   });
 
-  it("does not hand out a badge for modules that have none", () => {
-    const p = completeModule(loadProgress(), 1);
-    expect(p.completedModules).toContain(1);
+  it("does not hand out a badge for modules without one", () => {
+    // Numbers outside the written catalog (admin-only drafts) get no badge.
+    const p = completeModule(loadProgress(), 13);
+    expect(p.completedModules).toContain(13);
     expect(p.badges).toEqual([]);
   });
 
@@ -109,7 +110,7 @@ describe("progress", () => {
     });
 
     expect(seeded.completedModules.sort((a, b) => a - b)).toEqual([3, 10]);
-    expect(seeded.badges).toEqual(["penjaga-apk"]);
+    expect(seeded.badges).toEqual(["penjaga-investasi", "penjaga-apk"]);
     expect(loadProgress().completedModules.sort((a, b) => a - b)).toEqual([
       3, 10,
     ]);

@@ -119,8 +119,8 @@ function AgentItem({
       className={cn(
         "flex min-w-0 items-center rounded-[7px] transition-[background-color,color] duration-150 ease-out",
         iconsOnly
-          ? "size-9 justify-center"
-          : "w-full gap-2.5 px-2 py-[7px] text-left",
+          ? "size-11 justify-center"
+          : "min-h-11 w-full gap-2.5 px-2 py-[7px] text-left",
         active
           ? "bg-chip font-medium text-ink"
           : "text-ink-soft hover:bg-txt/6 hover:text-ink",
