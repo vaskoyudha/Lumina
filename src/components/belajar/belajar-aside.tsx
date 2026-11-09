@@ -245,7 +245,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3.5">
       <Card className="gap-0 rounded-card border border-line p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)]">
         <div
           aria-hidden
