@@ -78,7 +78,7 @@ function RailItem({
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-gradient-to-r from-brand-soft to-brand-soft-2 font-semibold text-brand-ink"
+            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-semibold text-nav-active-ink"
             : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -91,7 +91,14 @@ function RailItem({
           )}
         />
       ) : null}
-      <Icon aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
+      <Icon
+        aria-hidden
+        strokeWidth={1.8}
+        className={cn(
+          "size-4 shrink-0",
+          active && !emergency && "text-nav-active-icon",
+        )}
+      />
       <span
         className={cn(
           "truncate text-[13px] leading-5",
@@ -132,7 +139,7 @@ function AgentItem({
           ? "size-10 justify-center"
           : "min-h-10 w-full gap-2.5 px-2.5 py-2 text-left",
         active
-          ? "bg-gradient-to-r from-brand-soft to-brand-soft-2 font-semibold text-brand-ink"
+          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-semibold text-nav-active-ink"
           : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -142,7 +149,11 @@ function AgentItem({
           className="absolute -left-2 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand"
         />
       ) : null}
-      <Bot aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
+      <Bot
+        aria-hidden
+        strokeWidth={1.8}
+        className={cn("size-4 shrink-0", active && "text-nav-active-icon")}
+      />
       <span
         className={cn(
           "truncate text-[13px] leading-5",

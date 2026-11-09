@@ -10,7 +10,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Paperclip,
-  Sparkles,
   SquarePen,
   Workflow,
   X,
@@ -1190,19 +1189,7 @@ export function CompanionChat({
                 />
               </Button>
 
-              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 shadow-rest lg:pl-1">
-                <span
-                  aria-hidden
-                  className="relative hidden size-[22px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong lg:grid"
-                >
-                  <Sparkles className="size-2.5 text-white" strokeWidth={2} />
-                </span>
-                <span
-                  aria-hidden
-                  className="relative grid size-4 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 to-brand-strong lg:hidden"
-                >
-                  <Sparkles className="size-2 text-white" strokeWidth={2} />
-                </span>
+              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 shadow-rest">
                 <span className="truncate font-medium text-[12px] text-txt">
                   {showAgents
                     ? "Agen pemeriksa"

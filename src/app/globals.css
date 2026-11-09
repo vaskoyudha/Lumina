@@ -77,6 +77,17 @@
   --color-brand-edge-soft: var(--lumina-brand-edge-soft);
   --color-brand-soft-2: var(--lumina-brand-soft-2);
 
+  /* Reference dashboard action + selected-row stops. Named so the buttons use
+     the supplied hexes without literals in JSX. */
+  --color-brand-cta-from: var(--lumina-brand-cta-from);
+  --color-brand-cta-to: var(--lumina-brand-cta-to);
+  --color-brand-cta-hover-from: var(--lumina-brand-cta-hover-from);
+  --color-brand-cta-hover-to: var(--lumina-brand-cta-hover-to);
+  --color-nav-active-from: var(--lumina-nav-active-from);
+  --color-nav-active-to: var(--lumina-nav-active-to);
+  --color-nav-active-ink: var(--lumina-nav-active-ink);
+  --color-nav-active-icon: var(--lumina-nav-active-icon);
+
   /* Agent identity -> border/tint utilities (never status). */
   --color-agent-message: var(--lumina-agent-message);
   --color-agent-message-soft: var(--lumina-agent-message-soft);
@@ -393,6 +404,20 @@
   --lumina-brand-edge: #fbd7b4;
   --lumina-brand-edge-soft: #fde3c9;
   --lumina-brand-soft-2: #ffe5cc;
+
+  /* Reference dashboard action and selected-row colours. The CTA uses the
+     supplied #F66B1E -> #EC5310 gradient (#F9752B -> #E04809 on hover); the
+     selected sidebar row uses #FDE2D2 -> #FCE8DC with a #E85515 label and
+     #F05A1A icon. Kept separate from the structural brand ramp so the rest of
+     the product does not inherit the reference's exact stops. */
+  --lumina-brand-cta-from: #f66b1e;
+  --lumina-brand-cta-to: #ec5310;
+  --lumina-brand-cta-hover-from: #f9752b;
+  --lumina-brand-cta-hover-to: #e04809;
+  --lumina-nav-active-from: #fde2d2;
+  --lumina-nav-active-to: #fce8dc;
+  --lumina-nav-active-ink: #e85515;
+  --lumina-nav-active-icon: #f05a1a;
 
   /* Agent identity ramp. Eight hues at one lightness and chroma; the line
      token paints a 2px border, the soft tint fills the bubble. Brand orange
