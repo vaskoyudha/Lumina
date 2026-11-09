@@ -3,6 +3,7 @@
 import {
   Bookmark,
   BookmarkCheck,
+  Building2,
   ChevronDown,
   ExternalLink,
   MapPin,
@@ -66,9 +67,13 @@ function luminaTone(posting: LokerView): string {
 /**
  * One posting with both verdicts, never one standing in for the other.
  *
- * When they disagree the card says so and the caution wins: the posting is
- * already flagged for the "hide flagged" filter, and the sentence explains why
- * it is still on screen when that filter is off.
+ * The card layout follows the Lumina dashboard reference: title + source pill,
+ * a bookmark on the right, then a compact meta row, tag pills and the two
+ * verdict chips. Trust detail stays behind "Lihat detail" so a five-result list
+ * reads as five cards, not five essays. When the two verdicts disagree the card
+ * says so and the caution wins: the posting is already flagged for the "hide
+ * flagged" filter, and the sentence explains why it is still on screen when
+ * that filter is off.
  */
 export function LokerCard({
   posting,
@@ -82,109 +87,123 @@ export function LokerCard({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <li className="min-w-0 bg-panel transition-colors hover:bg-panel-2/40">
+    <li className="min-w-0 rounded-2xl border border-line bg-panel p-4 shadow-rest">
       <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex flex-col gap-2 px-3.5 py-3">
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-txt leading-snug">
-                {posting.title}
-              </p>
-              <p className="truncate text-[11px] text-dim">{posting.company}</p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              aria-label={
-                saved
-                  ? `Hapus ${posting.title} dari simpanan`
-                  : `Simpan ${posting.title}`
-              }
-              aria-pressed={saved}
-              onClick={() => onToggleSave(posting)}
-              className="-mt-1 -mr-1 text-dim hover:bg-brand-soft hover:text-brand-ink"
-            >
-              {saved ? <BookmarkCheck aria-hidden /> : <Bookmark aria-hidden />}
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-dim">
-            {posting.location ? (
-              <span className="inline-flex items-center gap-1">
-                <MapPin aria-hidden className="size-3" />
-                {posting.location}
-              </span>
-            ) : null}
-            <span className="inline-flex items-center gap-1">
-              <Wallet aria-hidden className="size-3" />
-              {posting.salaryText ?? "Gaji tidak dicantumkan"}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+            <h3 className="text-[16px] font-bold text-txt leading-tight tracking-tight">
+              {posting.title}
+            </h3>
+            <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[10.5px] font-semibold text-brand-ink">
+              {posting.source}
             </span>
-            <span className="text-dim/80">{posting.source}</span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className={cn(
-                "h-6 rounded-full px-2.5 text-[11px] font-medium",
-                sentinelTone(posting),
-              )}
-            >
-              Sentinel: {SENTINEL_LABEL[posting.sentinelStatus]}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={cn(
-                "h-6 rounded-full px-2.5 text-[11px] font-medium",
-                luminaTone(posting),
-              )}
-            >
-              Lumina: {RISK_LABEL[posting.luminaRisk]}
-            </Badge>
-            {posting.tags.slice(0, 4).map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="h-5 rounded-full border-transparent bg-panel-2/70 px-2 text-[10px] font-normal text-dim"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-
-          {disagreement(posting) ? (
-            <p className="flex items-start gap-1.5 rounded-[8px] bg-warn/5 px-2.5 py-2 text-[11px] text-warn leading-snug">
-              <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
-              <span>
-                Penilaian berbeda: Sentinel{" "}
-                {SENTINEL_LABEL[posting.sentinelStatus]}, Lumina{" "}
-                {RISK_LABEL[posting.luminaRisk]}. Anggap perlu kehati-hatian.
-              </span>
-            </p>
-          ) : null}
-
-          <CollapsibleTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 w-fit rounded-[8px] px-1.5 text-[11px] font-medium text-brand-ink hover:bg-brand-soft hover:text-brand-strong"
-            >
-              {open ? "Tutup detail" : "Lihat detail"}
-              <ChevronDown
-                aria-hidden
-                className={cn(
-                  "transition-transform duration-200 ease-out motion-reduce:transition-none",
-                  open && "rotate-180",
-                )}
-              />
-            </Button>
-          </CollapsibleTrigger>
+          <button
+            type="button"
+            onClick={() => onToggleSave(posting)}
+            aria-label={
+              saved
+                ? `Hapus ${posting.title} dari simpanan`
+                : `Simpan ${posting.title}`
+            }
+            aria-pressed={saved}
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors",
+              saved
+                ? "bg-brand-soft text-brand-ink"
+                : "bg-panel-2 text-dim hover:bg-brand-soft hover:text-brand-ink",
+            )}
+          >
+            {saved ? (
+              <BookmarkCheck aria-hidden className="size-3.5" />
+            ) : (
+              <Bookmark aria-hidden className="size-3.5" />
+            )}
+          </button>
         </div>
 
+        <div className="mt-1.5 flex flex-wrap items-center gap-4 text-[11.5px] text-dim">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <Building2 aria-hidden className="size-3.5 shrink-0 text-dim" />
+            <span className="truncate">{posting.company}</span>
+          </span>
+          {posting.location ? (
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <MapPin aria-hidden className="size-3.5 shrink-0 text-dim" />
+              <span className="truncate">{posting.location}</span>
+            </span>
+          ) : null}
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <Wallet aria-hidden className="size-3.5 shrink-0 text-dim" />
+            <span className="truncate">
+              {posting.salaryText ?? "Gaji tidak dicantumkan"}
+            </span>
+          </span>
+        </div>
+
+        {posting.tags.length > 0 ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {posting.tags.slice(0, 4).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-panel-2 px-3 py-1 text-[10.5px] font-semibold text-dim"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn(
+              "h-6 rounded-full px-2.5 text-[10.5px] font-semibold",
+              sentinelTone(posting),
+            )}
+          >
+            Sentinel: {SENTINEL_LABEL[posting.sentinelStatus]}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              "h-6 rounded-full px-2.5 text-[10.5px] font-semibold",
+              luminaTone(posting),
+            )}
+          >
+            Lumina: {RISK_LABEL[posting.luminaRisk]}
+          </Badge>
+        </div>
+
+        {disagreement(posting) ? (
+          <p className="mt-2.5 flex items-start gap-1.5 rounded-[8px] bg-warn/5 px-2.5 py-2 text-[11px] text-warn leading-snug">
+            <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+            <span>
+              Penilaian berbeda: Sentinel{" "}
+              {SENTINEL_LABEL[posting.sentinelStatus]}, Lumina{" "}
+              {RISK_LABEL[posting.luminaRisk]}. Anggap perlu kehati-hatian.
+            </span>
+          </p>
+        ) : null}
+
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-bold text-brand-ink transition-colors hover:text-brand-strong"
+          >
+            <span>{open ? "Tutup detail" : "Lihat detail"}</span>
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "size-3.5 transition-transform",
+                open && "rotate-180",
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+
         <CollapsibleContent>
-          <div className="flex flex-col gap-2.5 border-t border-line bg-panel-2/30 px-3.5 py-3">
+          <div className="mt-3 flex flex-col gap-2.5 rounded-xl border border-line bg-panel-2/40 p-3.5">
             <p className="whitespace-pre-wrap text-[12px] text-txt leading-relaxed">
               {posting.description}
             </p>
@@ -233,7 +252,7 @@ export function LokerCard({
               </div>
             ) : null}
 
-            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-[8px] border border-line bg-panel px-2.5 py-2 text-[10px]">
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl border border-line bg-panel px-2.5 py-2 text-[10px]">
               <div className="min-w-0">
                 <dt className="text-dim">Email perusahaan</dt>
                 <dd className="truncate text-[11px] text-txt">
