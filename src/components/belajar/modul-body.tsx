@@ -1,19 +1,12 @@
 "use client";
 
 import {
-  BookOpen,
   CheckCircle2,
-  ClipboardCheck,
-  Clock3,
-  FileWarning,
-  Flag,
   Globe,
-  Lightbulb,
   Link2,
   type LucideIcon,
   MessageSquareWarning,
   Phone,
-  Target,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -69,45 +62,43 @@ const CONTOH_SHAPE: Record<ContohJenis, ContohShape> = {
 };
 
 /**
- * One lesson block. Every section of the module is the same shape — numbered
- * marker, heading, one line of framing, content — so the player reads as a
- * course, not a pile of unrelated panels. The number is the same visual rhythm
- * the reference dashboard uses on its course cards.
+ * One lesson block. Every section of the module is the same shape — kicker,
+ * heading, one line of framing, content — so the player reads as a course, not
+ * a pile of unrelated panels. The kicker and hairline replace the numbered
+ * tile and decorative icon: the page already has enough chrome, and an
+ * editorial rule carries the rhythm without another card inside the card.
  */
 function LessonSection({
   id,
   index,
   title,
   lede,
-  Icon,
   children,
 }: {
   id: string;
   index: number;
   title: string;
   lede: string;
-  Icon: LucideIcon;
   children: ReactNode;
 }) {
   return (
     <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
-      <div className="flex items-start gap-3 border-line border-b px-5 py-4">
-        <span
-          aria-hidden
-          className="tabular inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft font-semibold text-brand-ink text-sm"
-        >
-          {String(index).padStart(2, "0")}
-        </span>
-        <div className="min-w-0">
-          <h2
-            id={id}
-            className="flex items-center gap-2 font-medium text-xl text-txt leading-snug sm:text-2xl"
-          >
-            <Icon aria-hidden className="size-5 shrink-0 text-brand" />
-            {title}
-          </h2>
-          <p className="mt-1 text-dim text-sm leading-relaxed">{lede}</p>
+      <div className="border-line border-b px-5 py-4">
+        <div className="flex items-baseline gap-3">
+          <span className="tabular font-medium text-[11px] text-brand-ink">
+            Bagian {String(index).padStart(2, "0")}
+          </span>
+          <span aria-hidden className="h-px flex-1 bg-line" />
         </div>
+        <h2
+          id={id}
+          className="mt-2 font-medium text-xl text-txt leading-snug sm:text-2xl"
+        >
+          {title}
+        </h2>
+        <p className="mt-1 max-w-prose text-dim text-sm leading-relaxed">
+          {lede}
+        </p>
       </div>
       <CardContent className="py-5">{children}</CardContent>
     </Card>
@@ -216,17 +207,13 @@ function tocFor(modul: ModuleContent) {
   const hasOrientation = Boolean(modul.ringkasan || modul.tujuan?.length);
   const hasKeyPoints = Boolean(modul.poinKunci?.length);
   return [
-    ...(hasOrientation
-      ? [{ id: "tujuan", label: "Tujuan pembelajaran", Icon: Target }]
-      : []),
-    { id: "anatomi", label: "Cara kerja penipuan", Icon: BookOpen },
-    { id: "contoh", label: contoh.label, Icon: contoh.Icon },
-    { id: "checklist", label: "Checklist tanda bahaya", Icon: ClipboardCheck },
-    { id: "kuis", label: "Uji pemahaman", Icon: FileWarning },
-    { id: "lapor", label: "Kalau sudah terjadi", Icon: Flag },
-    ...(hasKeyPoints
-      ? [{ id: "poin-kunci", label: "Poin kunci", Icon: Lightbulb }]
-      : []),
+    ...(hasOrientation ? [{ id: "tujuan", label: "Tujuan pembelajaran" }] : []),
+    { id: "anatomi", label: "Cara kerja penipuan" },
+    { id: "contoh", label: contoh.label },
+    { id: "checklist", label: "Checklist tanda bahaya" },
+    { id: "kuis", label: "Uji pemahaman" },
+    { id: "lapor", label: "Kalau sudah terjadi" },
+    ...(hasKeyPoints ? [{ id: "poin-kunci", label: "Poin kunci" }] : []),
   ];
 }
 
@@ -235,6 +222,11 @@ function tocFor(modul: ModuleContent) {
  * to do and how long it takes; showing that up front is what separates a
  * course from a wall of text. Rendered only when the course supplies it, so
  * older drafts stay honest instead of showing an empty frame.
+ *
+ * The brief is set as an editorial spec sheet — kicker, rule, lead paragraph,
+ * numbered outcomes — rather than a row of icon pills. Pills made the three
+ * facts look like equal buttons; here the paragraph leads and the facts sit
+ * on one quiet line.
  */
 function ModuleOrientation({ modul }: { modul: ModuleContent }) {
   if (!modul.ringkasan && !modul.tujuan?.length) return null;
@@ -242,44 +234,59 @@ function ModuleOrientation({ modul }: { modul: ModuleContent }) {
   return (
     <Card
       id="tujuan"
-      className="scroll-mt-24 gap-0 overflow-hidden rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]"
+      className="scroll-mt-24 gap-0 overflow-hidden rounded-card border-0 bg-panel py-0 shadow-[var(--appnext-shadow-ambient)]"
     >
-      <CardContent className="flex flex-col gap-4 py-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 font-semibold text-[11px] text-brand-ink">
-            <Target aria-hidden className="size-3.5" />
-            Tujuan pembelajaran
-          </span>
-          {modul.estimasiMenit ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-2.5 py-1 font-medium text-[11px] text-dim">
-              <Clock3 aria-hidden className="size-3.5" />
-              {modul.estimasiMenit} menit
-            </span>
-          ) : null}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-panel-2 px-2.5 py-1 font-medium text-[11px] text-dim">
-            <FileWarning aria-hidden className="size-3.5" />
-            {modul.kuis.length} soal kuis
-          </span>
+      <CardContent className="flex flex-col py-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+          <h2 className="font-medium text-sm text-txt">Tujuan pembelajaran</h2>
+          <dl className="flex items-center gap-3 text-xs text-dim">
+            {modul.estimasiMenit ? (
+              <div className="flex items-baseline gap-1.5">
+                <dt className="sr-only">Estimasi waktu</dt>
+                <dd className="tabular font-medium text-txt">
+                  {modul.estimasiMenit} menit
+                </dd>
+              </div>
+            ) : null}
+            {modul.estimasiMenit ? (
+              <span aria-hidden className="h-3 w-px bg-line" />
+            ) : null}
+            <div className="flex items-baseline gap-1.5">
+              <dt className="sr-only">Jumlah soal kuis</dt>
+              <dd className="tabular font-medium text-txt">
+                {modul.kuis.length} soal kuis
+              </dd>
+            </div>
+          </dl>
         </div>
 
+        <div aria-hidden className="mt-3 h-px bg-line" />
+
         {modul.ringkasan ? (
-          <p className="max-w-prose text-txt leading-relaxed">
+          <p className="mt-4 max-w-prose text-lg text-txt leading-relaxed">
             {modul.ringkasan}
           </p>
         ) : null}
 
         {modul.tujuan?.length ? (
-          <ul className="grid list-none gap-2 p-0 sm:grid-cols-2">
-            {modul.tujuan.map((item) => (
-              <li key={item} className="flex gap-2.5 rounded-xl bg-panel-2 p-3">
-                <CheckCircle2
-                  aria-hidden
-                  className="mt-0.5 size-4 shrink-0 text-brand-ink"
-                />
-                <span className="text-sm leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-5 border-line border-t pt-4">
+            <p className="font-medium text-[11px] text-dim">
+              Setelah modul ini
+            </p>
+            <ol className="mt-2 grid list-none gap-x-8 p-0 sm:grid-cols-2">
+              {modul.tujuan.map((item, i) => (
+                <li
+                  key={item}
+                  className="flex gap-3 border-line border-t py-3 first:border-t-0 sm:[&:nth-child(-n+2)]:border-t-0"
+                >
+                  <span className="tabular pt-0.5 font-medium text-[11px] text-brand-ink">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-sm leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
         ) : null}
       </CardContent>
     </Card>
@@ -296,10 +303,8 @@ function KeyPoints({ modul }: { modul: ModuleContent }) {
       className="scroll-mt-24 gap-0 rounded-card border border-brand-line bg-brand-soft/40 py-0 shadow-[var(--appnext-shadow-ambient)]"
     >
       <CardContent className="py-5">
-        <h2 className="flex items-center gap-2 font-medium text-xl text-txt">
-          <Lightbulb aria-hidden className="size-5 text-brand" />
-          Poin kunci
-        </h2>
+        <p className="font-medium text-[11px] text-dim">Ringkasan</p>
+        <h2 className="mt-1 font-medium text-xl text-txt">Poin kunci</h2>
         <p className="mt-1 text-dim text-sm">
           Kalau hanya satu bagian yang kamu ingat, ingat ini.
         </p>
@@ -333,7 +338,6 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const { update, authenticated } = useAccountProgress();
-  const jenis = modul.contohJenis ?? "pesan";
   const toc = tocFor(modul);
 
   // A pass unlocks completion; the questions that were missed are recorded
@@ -376,7 +380,6 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           index={1}
           title="Bagaimana penipuan ini bekerja"
           lede={`${modul.anatomi.length} langkah, selalu dengan urutan yang sama. Kenali langkah awalnya, dan rantai berikutnya tidak akan pernah terjadi.`}
-          Icon={BookOpen}
         >
           <ol className="appnext-path flex list-none flex-col gap-6 p-0">
             {modul.anatomi.map((step, i) => (
@@ -401,7 +404,6 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           index={2}
           title={modul.contohJudul}
           lede="Contoh di bawah sengaja dibuat mirip kejadian aslinya. Bagian yang disorot merah adalah yang harus membuatmu berhenti."
-          Icon={CONTOH_SHAPE[jenis].Icon}
         >
           <ContohFrame modul={modul} />
 
@@ -416,7 +418,6 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           index={3}
           title="Checklist tanda bahaya"
           lede="Satu saja muncul, berhenti. Jangan dilanjutkan."
-          Icon={ClipboardCheck}
         >
           <ul className="flex list-none flex-col gap-3 p-0">
             {modul.checklist.map((item) => (
@@ -433,7 +434,6 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           index={4}
           title="Uji pemahamanmu"
           lede="Pilih apa yang kamu lakukan sekarang — bukan definisi. Lulus di 60% untuk menyelesaikan modul."
-          Icon={FileWarning}
         >
           <Quiz
             questions={modul.kuis}
@@ -461,7 +461,6 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           index={5}
           title="Kalau ini sudah terlanjur terjadi"
           lede="Urutan ini penting — jangan dibalik."
-          Icon={Flag}
         >
           <ol className="flex list-none flex-col gap-3.5 p-0">
             {modul.lapor.map((step, i) => (
@@ -497,18 +496,21 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
       <aside className="appnext-toc hidden lg:block" aria-label="Isi modul">
         <Card className="gap-0 rounded-card border border-line py-0 shadow-[var(--appnext-shadow-ambient)]">
           <CardContent className="py-3">
-            <p className="appnext-caption px-2 pt-1 font-medium tracking-wide uppercase">
+            <p className="px-2 pt-1 font-medium text-[11px] text-dim">
               Isi modul
             </p>
             <ul className="mt-2 flex list-none flex-col p-0">
-              {toc.map(({ id, label, Icon }) => (
+              {toc.map(({ id, label }) => (
                 <li key={id}>
                   <a
                     href={`#${id}`}
                     data-pressable
-                    className="appnext-toc-link"
+                    className="appnext-toc-link group"
                   >
-                    <Icon aria-hidden className="size-4 shrink-0" />
+                    <span
+                      aria-hidden
+                      className="h-px w-3 shrink-0 bg-line transition-colors group-hover:bg-brand"
+                    />
                     <span className="flex-1">{label}</span>
                     {id === "kuis" && passed ? (
                       <CheckCircle2
