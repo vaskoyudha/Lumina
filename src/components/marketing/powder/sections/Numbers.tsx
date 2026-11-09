@@ -239,7 +239,7 @@ export default function Numbers() {
                 </div>
               </div>
               <div className="framer-qdrhh3" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Kemajuan belajar tersimpan per akun; riwayat triage tetap di perangkat.</p>
+                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Kemajuan belajar tersimpan per akun; diskusi komunitas bersifat publik.</p>
               </div>
             </div>
           </div>

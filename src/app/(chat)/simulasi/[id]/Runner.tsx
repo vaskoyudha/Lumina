@@ -790,7 +790,7 @@ export function Runner({ content }: { content: SimulationContent }) {
                 <div className="mt-3 flex flex-col gap-2">
                   {emergency && (
                     <Button asChild className="h-11 rounded-xl" data-pressable>
-                      <Link href="/darurat">Buka mode darurat</Link>
+                      <Link href="/komunitas">Diskusikan pola ini</Link>
                     </Button>
                   )}
                   <Button
@@ -807,7 +807,15 @@ export function Runner({ content }: { content: SimulationContent }) {
                     className="h-11 rounded-xl"
                     data-pressable
                   >
-                    <Link href="/belajar/10">Pelajari pola ini</Link>
+                    <Link
+                      href={
+                        content.moduleNo
+                          ? `/belajar/${content.moduleNo}`
+                          : "/belajar"
+                      }
+                    >
+                      Pelajari pola ini
+                    </Link>
                   </Button>
                   {!emergency && (
                     <Button
@@ -816,7 +824,7 @@ export function Runner({ content }: { content: SimulationContent }) {
                       className="h-11 rounded-xl"
                       data-pressable
                     >
-                      <Link href="/darurat">Buka mode darurat</Link>
+                      <Link href="/komunitas">Diskusikan pola ini</Link>
                     </Button>
                   )}
                   <Button
@@ -829,8 +837,9 @@ export function Runner({ content }: { content: SimulationContent }) {
                   </Button>
                 </div>
                 <p className="mt-2 text-dim text-[11px] leading-relaxed">
-                  Mode darurat untuk kejadian nyata, bukan bagian dari latihan
-                  ini.
+                  Diskusi adalah tempat berbagi pengalaman. Bila kasus sedang
+                  berlangsung, hubungi bank atau penyedia akun melalui kanal
+                  resmi.
                 </p>
                 <div className="mt-3 border-line border-t pt-2">
                   {collection}

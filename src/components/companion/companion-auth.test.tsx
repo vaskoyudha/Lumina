@@ -94,8 +94,8 @@ describe("CompanionAuth", () => {
       screen.getByRole("menuitem", { name: /panduan anti-penipuan/i }),
     ).toHaveAttribute("href", "/belajar");
     expect(
-      screen.getByRole("menuitem", { name: /mode darurat/i }),
-    ).toHaveAttribute("href", "/darurat");
+      screen.getByRole("menuitem", { name: /komunitas/i }),
+    ).toHaveAttribute("href", "/komunitas");
     expect(
       screen.getByRole("menuitem", { name: /ganti akun/i }),
     ).toHaveAttribute("href", "/masuk");

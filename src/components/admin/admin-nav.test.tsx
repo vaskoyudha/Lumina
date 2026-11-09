@@ -20,7 +20,7 @@ describe("AdminNav", () => {
       screen.getByRole("navigation", { name: /navigasi admin/i }),
     ).toBeInTheDocument();
 
-    for (const href of ["/companion", "/belajar", "/simulasi", "/darurat"]) {
+    for (const href of ["/companion", "/belajar", "/simulasi", "/komunitas"]) {
       expect(
         screen.queryByRole("link", { name: new RegExp(href.slice(1), "i") }),
       ).not.toBeInTheDocument();

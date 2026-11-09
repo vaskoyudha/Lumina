@@ -3,10 +3,10 @@
 import {
   Bot,
   GraduationCap,
-  LifeBuoy,
   type LucideIcon,
   MessageSquare,
   Swords,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,7 @@ const DESTINATIONS: {
   { href: "/companion", label: "Companion", icon: MessageSquare },
   { href: "/belajar", label: "Belajar", icon: GraduationCap },
   { href: "/simulasi", label: "Simulasi", icon: Swords },
-  { href: "/darurat", label: "Darurat", icon: LifeBuoy, emergency: true },
+  { href: "/komunitas", label: "Komunitas", icon: UsersRound },
 ];
 
 function RailItem({

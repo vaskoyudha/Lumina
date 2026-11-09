@@ -1321,7 +1321,7 @@ export function CompanionChat({
                 size="sm"
                 className="hidden h-[32px] bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
               >
-                <Link href="/darurat">Mode darurat</Link>
+                <Link href="/komunitas">Komunitas</Link>
               </Button>
             </div>
           </header>
