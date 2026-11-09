@@ -63,6 +63,7 @@ export function ProfilLoker() {
                 variant={
                   item.sentinelStatus === "clean" ? "outline" : "secondary"
                 }
+                className="rounded-md"
               >
                 Sentinel: {SENTINEL_LABEL[item.sentinelStatus]}
               </Badge>
@@ -73,6 +74,7 @@ export function ProfilLoker() {
                     ? "secondary"
                     : "outline"
                 }
+                className="rounded-md"
               >
                 Lumina: {RISK_LABEL[item.luminaRisk]}
               </Badge>
