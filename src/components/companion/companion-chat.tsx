@@ -1111,7 +1111,7 @@ export function CompanionChat({
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
           className={cn(
-            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:border-line max-md:border-r md:border-line md:border-r",
+            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:shadow-rest md:z-10 md:rounded-r-xl md:border-line md:border-r-2 md:shadow-rest",
             showSessions ? "max-md:flex" : "max-md:hidden",
           )}
         />
