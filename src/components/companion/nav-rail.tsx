@@ -3,15 +3,14 @@
 import {
   Bot,
   GraduationCap,
-  LifeBuoy,
   type LucideIcon,
   MessageSquare,
   Swords,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
-import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,7 +41,7 @@ const DESTINATIONS: {
   { href: "/companion", label: "Companion", icon: MessageSquare },
   { href: "/belajar", label: "Belajar", icon: GraduationCap },
   { href: "/simulasi", label: "Simulasi", icon: Swords },
-  { href: "/darurat", label: "Darurat", icon: LifeBuoy, emergency: true },
+  { href: "/komunitas", label: "Komunitas", icon: UsersRound },
 ];
 
 function RailItem({
@@ -72,13 +71,13 @@ function RailItem({
       onClick={onClick}
       className={cn(
         "relative flex min-w-0 items-center rounded-xl transition-[background-color,color] duration-150 ease-out",
-        iconsOnly ? "size-10 justify-center" : "min-h-10 gap-2.5 px-2.5 py-2",
+        iconsOnly ? "size-10 justify-center" : "gap-2.5 px-3 py-2",
         emergency
           ? active
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-semibold text-nav-active-ink"
+            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
             : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -94,6 +93,7 @@ function RailItem({
       <Icon
         aria-hidden
         strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
         className={cn(
           "size-4 shrink-0",
           active && !emergency && "text-nav-active-icon",
@@ -101,8 +101,8 @@ function RailItem({
       />
       <span
         className={cn(
-          "truncate text-[13px] leading-5",
-          active ? "font-semibold" : "font-normal",
+          "truncate text-[12.5px]",
+          active ? "font-bold" : "font-semibold",
           iconsOnly && "sr-only",
         )}
       >
@@ -137,9 +137,9 @@ function AgentItem({
         "relative flex min-w-0 items-center rounded-xl transition-[background-color,color] duration-150 ease-out",
         iconsOnly
           ? "size-10 justify-center"
-          : "min-h-10 w-full gap-2.5 px-2.5 py-2 text-left",
+          : "w-full gap-2.5 px-3 py-2 text-left",
         active
-          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-semibold text-nav-active-ink"
+          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
           : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -152,25 +152,18 @@ function AgentItem({
       <Bot
         aria-hidden
         strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
         className={cn("size-4 shrink-0", active && "text-nav-active-icon")}
       />
       <span
         className={cn(
-          "truncate text-[13px] leading-5",
-          active ? "font-semibold" : "font-normal",
+          "truncate text-[12.5px]",
+          active ? "font-bold" : "font-semibold",
           iconsOnly ? "sr-only" : "min-w-0 flex-1",
         )}
       >
         Agen
       </span>
-      {iconsOnly ? null : (
-        <span
-          aria-hidden
-          className="shrink-0 rounded-full bg-panel-2 px-1.5 py-0.5 font-medium tabular text-[10.5px] text-ink-mute"
-        >
-          {AGENT_SEQUENCE.length}
-        </span>
-      )}
     </button>
   );
 }

@@ -54,7 +54,15 @@ async function WorkspaceShellWithSession({
 
   return (
     <WorkspaceFrame
-      session={session ? { nama: session.nama, email: session.email } : null}
+      session={
+        session
+          ? {
+              nama: session.nama,
+              email: session.email,
+              createdAt: session.created_at,
+            }
+          : null
+      }
       aside={aside}
       className={className}
       label={label}

@@ -1147,7 +1147,7 @@ export function CompanionChat({
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
           className={cn(
-            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:shadow-rest md:z-10 md:rounded-r-xl md:border-line md:border-r-2 md:shadow-rest",
+            "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:bg-bg max-md:shadow-rest md:z-10 md:bg-transparent",
             showSessions ? "max-md:flex" : "max-md:hidden",
           )}
         />
@@ -1326,7 +1326,7 @@ export function CompanionChat({
                 size="sm"
                 className="hidden h-[32px] bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
               >
-                <Link href="/darurat">Mode darurat</Link>
+                <Link href="/komunitas">Komunitas</Link>
               </Button>
             </div>
           </header>

@@ -43,11 +43,11 @@ export default function Changelog() {
                   <div className="framer-17uixp2">
                     <div className="framer-1152z25" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
                       <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240)))"}}>
-                        <strong className="framer-text">Mode darurat terbuka tanpa akun</strong>
+                        <strong className="framer-text">Diskusi komunitas terbuka untuk dibaca</strong>
                       </p>
                     </div>
                     <div className="framer-1qrg0fm" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Halaman darurat sekarang bisa dibuka tanpa masuk. Kalau kamu sedang kena sekarang, triage, langkah aman, dan laporan PDF tetap tersedia dalam satu tempat.</p>
+                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Komunitas dapat dibaca tanpa masuk. Gunakan akun Lumina untuk berbagi modus baru, bertanya, dan membalas pengalaman anggota lain.</p>
                       <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Progres belajar dan hasil simulasi tersimpan per akun. Percakapan tidak disimpan di server.</p>
                     </div>
                   </div>
@@ -71,11 +71,11 @@ export default function Changelog() {
                   <div className="framer-17uixp2">
                     <div className="framer-1152z25" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
                       <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240)))"}}>
-                        <strong className="framer-text">Mode darurat terbuka tanpa akun</strong>
+                        <strong className="framer-text">Diskusi komunitas terbuka untuk dibaca</strong>
                       </p>
                     </div>
                     <div className="framer-1qrg0fm" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Halaman darurat sekarang bisa dibuka tanpa masuk. Kalau kamu sedang kena sekarang, triage, langkah aman, dan laporan PDF tetap tersedia dalam satu tempat.</p>
+                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Komunitas dapat dibaca tanpa masuk. Gunakan akun Lumina untuk berbagi modus baru, bertanya, dan membalas pengalaman anggota lain.</p>
                       <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Progres belajar dan hasil simulasi tersimpan per akun. Percakapan tidak disimpan di server.</p>
                     </div>
                   </div>
@@ -166,7 +166,7 @@ export default function Changelog() {
                     </div>
                     <div className="framer-1qrg0fm" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
                       <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Pemeriksaan berjalan lokal di browser. Pesan yang kamu periksa tidak pernah dikirim ke mana pun; hanya pertanyaan lanjutan yang kamu tulis sendiri yang boleh mencapai model.</p>
-                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Kemajuan belajar dan hasil simulasi disimpan per akun; data triage tetap di perangkat.</p>
+                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Kemajuan belajar dan hasil simulasi disimpan per akun; diskusi komunitas bersifat publik.</p>
                     </div>
                   </div>
                   <div className="framer-1dthm98" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -194,7 +194,7 @@ export default function Changelog() {
                     </div>
                     <div className="framer-1qrg0fm" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
                       <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Pemeriksaan berjalan lokal di browser. Pesan yang kamu periksa tidak pernah dikirim ke mana pun; hanya pertanyaan lanjutan yang kamu tulis sendiri yang boleh mencapai model.</p>
-                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Kemajuan belajar dan hasil simulasi disimpan per akun; data triage tetap di perangkat.</p>
+                      <p dir="auto" className="framer-text framer-styles-preset-1fhxhj6">Kemajuan belajar dan hasil simulasi disimpan per akun; diskusi komunitas bersifat publik.</p>
                     </div>
                   </div>
                   <div className="framer-1dthm98" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>

@@ -4,14 +4,18 @@ import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  createContext,
   type ReactNode,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
+import {
+  AccountProgressContext,
+  type AccountProgressState,
+  useAccountProgress,
+  useStoredProgress,
+} from "@/components/belajar/account-progress-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -24,22 +28,7 @@ import {
 } from "@/lib/progress";
 
 export { BADGE_LABEL };
-
-type AccountProgressState = {
-  modules: LearningSummary[];
-  progress: StoredProgress | null;
-  error: string | null;
-  authenticated: boolean;
-  simulations: {
-    scenarioId: string;
-    mode: string;
-    outcome: string;
-    finishedAt: string;
-  }[];
-  refresh: () => Promise<void>;
-  update: (progress: StoredProgress) => void;
-};
-const AccountProgressContext = createContext<AccountProgressState | null>(null);
+export { useAccountProgress, useStoredProgress };
 export function AccountProgressProvider({
   children,
   modules,
@@ -107,20 +96,6 @@ export function AccountProgressProvider({
     </AccountProgressContext.Provider>
   );
 }
-export function useAccountProgress() {
-  const state = useContext(AccountProgressContext);
-  if (!state)
-    return {
-      modules: [],
-      progress: null,
-      error: null,
-      authenticated: false,
-      simulations: [],
-      refresh: async () => {},
-      update: () => {},
-    } as AccountProgressState;
-  return state;
-}
 export function ProgressNotice() {
   const { error, refresh, authenticated } = useAccountProgress();
   if (!error) return null;
@@ -146,10 +121,6 @@ export function ProgressNotice() {
     </Alert>
   );
 }
-export function useStoredProgress(): StoredProgress | null {
-  return useAccountProgress().progress;
-}
-
 /** Progress is loaded from the authenticated account after mount. */
 export function useCompletedModules(): Set<number> {
   const progress = useStoredProgress();

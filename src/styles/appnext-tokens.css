@@ -44,6 +44,13 @@
     /* Success wash (accent at low opacity on white) */
     --appnext-accent-wash: #e9f9f0;
     --appnext-accent-wash-2: #d3f2e1;
+    /* Success is a semantic state, not the brand accent. The warm workspace
+       palette remaps the accent family to orange, so correct-answer states
+       must not ride on --appnext-accent or they turn orange. */
+    --appnext-success: #1bab49;
+    --appnext-success-deep: #0e7c36;
+    --appnext-success-strong: #0b7a34;
+    --appnext-success-wash: #e9f9f0;
     /* Dark chip ground for app mockups in marketing (never a text colour) */
     --appnext-ink-3: #1c1c1c;
 
@@ -512,6 +519,16 @@
    * the peach ground.
    */
   [data-workspace] {
+    /* The supplied dashboard reference runs on Plus Jakarta Sans; scope it to
+       the workspace so the sidebar and dashboard match without touching the
+       marketing, auth, darurat, or admin surfaces. */
+    font-family:
+      var(--font-jakarta), var(--font-sans), ui-sans-serif, system-ui,
+      sans-serif;
+    /* The reference sets these on `*`; inheriting them here keeps Plus Jakarta
+       from rendering heavier than the supplied screenshot on Linux/GTK. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     --appnext-white: #fff9f5;
     --appnext-ink: #231e1b;
     --appnext-ink-2: #1f1b18;
@@ -521,6 +538,11 @@
     --appnext-accent: #f05a1a;
     --appnext-accent-deep: #e85515;
     --appnext-accent-strong: #c2410c;
+    /* Success stays green here on purpose: correctness is not brand chrome. */
+    --appnext-success: #1bab49;
+    --appnext-success-deep: #0e7c36;
+    --appnext-success-strong: #0b7a34;
+    --appnext-success-wash: #e9f9f0;
     --appnext-tint: #fdece2;
 
     --lumina-bg: #fff9f5;

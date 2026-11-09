@@ -82,8 +82,8 @@ export function AuthPanel({
           Lanjut tanpa akun
         </Link>
         {" · "}
-        <Link href="/darurat" className="underline-offset-4 hover:underline">
-          Bantuan darurat
+        <Link href="/komunitas" className="underline-offset-4 hover:underline">
+          Komunitas diskusi
         </Link>
       </p>
     </div>

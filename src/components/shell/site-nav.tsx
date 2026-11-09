@@ -1,23 +1,18 @@
 "use client";
 
-import { LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LuminaLogo } from "@/components/brand/lumina-logo";
 import { AuthNav } from "@/components/shell/auth-nav";
 import { cn } from "@/lib/utils";
 
-/**
- * Shell nav — 4 destinations, reachable at 380px (§5-D).
- *
- * Emergency is visually separate from the three learning destinations: it is
- * the one path used by someone who is being defrauded right now.
- */
+/** Four destinations wrap at mobile widths. */
 
 const DESTINATIONS = [
   { href: "/companion", label: "Companion" },
   { href: "/belajar", label: "Belajar" },
   { href: "/simulasi", label: "Simulasi" },
+  { href: "/komunitas", label: "Komunitas" },
 ] as const;
 
 export function SiteNav({
@@ -45,7 +40,7 @@ export function SiteNav({
             On phones the three destinations get their own row and wrap. The
             previous `overflow-x-auto` row scrolled them out of sight: at 380px
             the nav held 261px of content in a 123px box, so "Belajar" and
-            "Simulasi" were clipped behind a scroller and the Darurat button
+            "Simulasi" were clipped behind a scroller and the old action button
             overlapped them. A destination you cannot see is not reachable.
           */
           className="order-3 -mx-1 flex w-full basis-full flex-wrap items-center gap-1 px-1 sm:order-none sm:mx-0 sm:w-auto sm:min-w-0 sm:flex-1 sm:basis-auto sm:px-0"
@@ -70,20 +65,6 @@ export function SiteNav({
             );
           })}
         </nav>
-
-        <Link
-          href="/darurat"
-          data-pressable
-          className={cn(
-            "ml-auto inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium text-sm",
-            pathname.startsWith("/darurat")
-              ? "border-danger bg-danger text-bg"
-              : "border-danger/60 bg-danger/10 text-danger hover:bg-danger/20",
-          )}
-        >
-          <LifeBuoy aria-hidden className="size-4" />
-          Darurat
-        </Link>
 
         <AuthNav session={session ?? null} />
       </div>

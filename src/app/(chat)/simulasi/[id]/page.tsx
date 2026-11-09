@@ -9,7 +9,8 @@ import {
 } from "@/components/belajar/content-state";
 import { BackButton } from "@/components/shell/back-button";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
-import { getSimulation } from "@/lib/content/store";
+import { getModule, getSimulation } from "@/lib/content/store";
+import { buildPracticeSimulation } from "@/lib/simulasi/from-module";
 
 export const metadata: Metadata = {
   title: "Simulasi",
@@ -39,7 +40,31 @@ export async function RunnerContent({
     return <ContentUnavailable />;
   }
 
-  if (!scenario) notFound();
+  if (!scenario) {
+    const practice = /^pola-(\d+)$/.exec(id);
+    if (!practice) notFound();
+    const no = Number(practice[1]);
+    let module: Awaited<ReturnType<typeof getModule>>;
+    try {
+      module = await getModule(no);
+    } catch {
+      return <ContentUnavailable />;
+    }
+    if (!module || !module.content) notFound();
+
+    return (
+      <WorkspaceShell label="Simulasi">
+        <div className="flex w-full flex-col gap-6">
+          <BackButton href={`/belajar/${no}`} label="Kembali ke modul" />
+          <Runner
+            key={id}
+            content={buildPracticeSimulation(module)}
+            persist={false}
+          />
+        </div>
+      </WorkspaceShell>
+    );
+  }
 
   return (
     <WorkspaceShell label="Simulasi">

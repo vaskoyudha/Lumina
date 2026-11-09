@@ -173,14 +173,14 @@ export function CompanionEntry() {
       />
 
       <p className="text-dim text-xs lg:col-span-2">
-        Butuh bantuan sekarang?{" "}
+        Temukan pola yang baru?{" "}
         <Link
-          href="/darurat"
-          className="text-danger underline-offset-4 hover:underline"
+          href="/komunitas"
+          className="text-brand-ink underline-offset-4 hover:underline"
         >
-          Buka mode darurat
+          Buka komunitas
         </Link>{" "}
-        — checklist berurutan dan laporan siap cetak.
+        — bagikan pengalaman dan diskusikan bersama anggota lain.
       </p>
     </div>
   );

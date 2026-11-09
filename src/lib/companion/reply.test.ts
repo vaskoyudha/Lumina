@@ -75,7 +75,7 @@ describe("composeReply", () => {
       first: false,
       containsContent: true,
     });
-    expect(reply.toLowerCase()).toContain("mode darurat");
+    expect(reply.toLowerCase()).toContain("kanal resmi");
   });
 
   it("stays calm on clean input", () => {
@@ -104,7 +104,7 @@ describe("suggestedActions", () => {
     const result = scoreText({ text: APK });
     const actions = suggestedActions(result);
     expect(actions.some((a) => a.href === "/belajar/10")).toBe(true);
-    expect(actions.some((a) => a.href === "/darurat")).toBe(true);
+    expect(actions.some((a) => a.href === "/komunitas")).toBe(true);
   });
 
   it("offers the playable scenario because module 10 has one", () => {
