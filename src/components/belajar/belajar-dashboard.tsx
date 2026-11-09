@@ -118,7 +118,7 @@ export function BelajarDashboard({
       </header>
 
       {featured ? (
-        <section className="appnext-campaign relative overflow-hidden rounded-[22px] p-6 text-bg shadow-[var(--appnext-shadow-soft)] sm:p-7">
+        <section className="appnext-campaign relative overflow-hidden rounded-card p-6 text-bg shadow-[var(--appnext-shadow-soft)] sm:p-7">
           <svg
             aria-hidden
             role="presentation"
@@ -160,7 +160,7 @@ export function BelajarDashboard({
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button
                   asChild
-                  className="min-h-10 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
+                  className="min-h-11 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
                 >
                   <Link href={`/belajar/${featured.no}`} data-pressable>
                     Buka modul lengkap
@@ -170,7 +170,7 @@ export function BelajarDashboard({
                 <Button
                   asChild
                   variant="outline"
-                  className="min-h-10 rounded-xl border-bg/25 bg-bg/15 px-4 font-semibold text-bg text-xs backdrop-blur-md hover:bg-bg/25 hover:text-bg"
+                  className="min-h-11 rounded-xl border-bg/40 bg-bg px-4 font-semibold text-brand-ink text-xs hover:bg-bg/90 hover:text-brand-ink"
                 >
                   <Link href="#semua-modul" data-pressable>
                     Lihat semua modul
