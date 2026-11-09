@@ -40,10 +40,9 @@ describe("halaman misi simulasi", () => {
     const chapters = screen.getByRole("region", { name: "Alur misi" });
     expect(within(chapters).getAllByRole("listitem")).toHaveLength(3);
 
-    expect(screen.getByRole("link", { name: "Buka briefing" })).toHaveAttribute(
-      "href",
-      "/simulasi/L1-kurir-apk",
-    );
+    expect(
+      screen.getByRole("link", { name: "Mulai briefing" }),
+    ).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
     const planned = screen.getByRole("region", { name: "Level lain" });
     expect(within(planned).getAllByText("Rencana")).toHaveLength(4);
     expect(within(planned).queryByRole("link")).not.toBeInTheDocument();
