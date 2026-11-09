@@ -1530,6 +1530,7 @@ export function CompanionChat({
   };
 
   const empty = turns.length === 0;
+  const contentTop = tutorModule ? "pt-4" : "pt-[76px]";
 
   return (
     <div
@@ -1593,10 +1594,10 @@ export function CompanionChat({
         ) : null}
 
         {/* Main panel: the conversation column shares the workspace ground. */}
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <section className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header
             className={cn(
-              "relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5",
+              "absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5",
               showAgents && "md:hidden",
             )}
           >
@@ -1781,7 +1782,7 @@ export function CompanionChat({
           </header>
 
           {tutorModule && (
-            <div className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2 px-4 pt-[76px] pb-2 text-sm">
               <span>
                 Modul {tutorModule.no}: {tutorModule.title}
               </span>
@@ -1796,7 +1797,12 @@ export function CompanionChat({
             </div>
           )}
           {showAgents ? (
-            <div className="min-h-0 flex-1 py-4 pr-2.5 pl-4 xl:py-5 xl:pr-3 xl:pl-5">
+            <div
+              className={cn(
+                "min-h-0 flex-1 pb-4 pr-2.5 pl-4 md:py-4 xl:py-5 xl:pr-3 xl:pl-5",
+                tutorModule ? "pt-4" : "pt-[76px]",
+              )}
+            >
               <AgentsView
                 onSelect={(agent) => {
                   setSelectedAgent(agent);
@@ -1812,7 +1818,12 @@ export function CompanionChat({
               />
             </div>
           ) : empty ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
+            <div
+              className={cn(
+                "flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6",
+                contentTop,
+              )}
+            >
               <div className="mx-auto my-auto flex w-full max-w-[840px] flex-col items-center py-2">
                 <div className="mb-2 flex items-center justify-center">
                   <Mascot
@@ -1869,7 +1880,10 @@ export function CompanionChat({
                 key={active?.id ?? "new"}
                 ref={scrollRef}
                 style={{ paddingBottom: composerHeight + 8 }}
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6"
+                className={cn(
+                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
+                  contentTop,
+                )}
                 role="log"
                 aria-live="polite"
                 aria-label="Percakapan"
