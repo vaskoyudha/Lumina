@@ -532,8 +532,6 @@ export function SessionSidebar({
         <Lock aria-hidden strokeWidth={1.8} className="size-3.5" />
         <span className="sr-only">Riwayat di tab ini, tutup tab hilang.</span>
       </span>
-
-      {auth?.(true)}
     </>
   );
 
@@ -543,15 +541,21 @@ export function SessionSidebar({
         "flex shrink-0 select-none flex-col justify-between overflow-hidden",
         "md:transition-[width] md:duration-200 md:ease-[cubic-bezier(0.22,1,0.36,1)]",
         collapsed
-          ? "w-[248px] px-3 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-1.5 md:px-2"
+          ? "w-[248px] px-3 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-2.5 md:px-2"
           : "w-[248px] px-3 pt-2.5 pb-2",
         className,
       )}
     >
       {collapsed ? (
         <>
-          <div className="hidden min-h-0 flex-1 flex-col items-center gap-1.5 md:flex md:animate-in md:fade-in-0 md:duration-150">
+          {/* The rail is the same glass surface as the expanded panel: without
+              it the icons float on the peach field and the white pill that
+              marks the sidebar disappears. The account stays a second card. */}
+          <div className="hidden w-full min-h-0 flex-1 flex-col items-center gap-1.5 rounded-[24px] border border-white/80 bg-panel/95 px-1 py-2 shadow-panel backdrop-blur-md md:flex md:animate-in md:fade-in-0 md:duration-150">
             {rail}
+          </div>
+          <div className="hidden w-full shrink-0 place-items-center rounded-[20px] border border-white/80 bg-panel/95 px-1 py-2 shadow-panel backdrop-blur-md md:grid">
+            {auth?.(true)}
           </div>
           <div className="flex min-h-0 flex-1 flex-col md:hidden">
             {expanded}
