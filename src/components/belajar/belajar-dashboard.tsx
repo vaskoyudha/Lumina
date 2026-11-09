@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, Bell, Search, X } from "lucide-react";
+import { ArrowRight, Bell, Play, Search, Sparkles, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { BelajarLencana } from "@/components/belajar/belajar-lencana";
@@ -10,7 +11,6 @@ import {
   LevelFilter,
   ModulKatalog,
 } from "@/components/belajar/modul-katalog";
-import { CoverIcon } from "@/components/belajar/modul-visual";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -49,157 +49,137 @@ export function BelajarDashboard({
 
   return (
     <>
-      <header className="-mx-5 flex flex-col justify-between gap-4 border-field border-b px-5 pb-4 shadow-sm sm:-mx-8 sm:px-8 xl:flex-row xl:items-center">
-        <div className="min-w-0">
-          <h1 className="font-bold text-[22px] text-txt tracking-tight sm:text-2xl">
-            Halo! Siap belajar?
-          </h1>
-          <p className="mt-0.5 font-medium text-dim text-xs sm:text-[13px]">
-            Kenali polanya sebelum uangmu hilang.
-          </p>
+      <header className="-mx-5 flex flex-wrap items-center gap-2.5 border-field border-b px-5 pb-4 shadow-sm sm:-mx-8 sm:px-8">
+        <div className="relative min-w-0 flex-1 basis-64">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-dim"
+          />
+          <Input
+            type="search"
+            aria-label="Cari modul"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Cari modul atau ciri…"
+            className="h-11 w-full rounded-full border border-line bg-panel pr-10 pl-11 text-xs text-txt shadow-sm placeholder:text-dim focus-visible:border-brand-line focus-visible:ring-brand-glow/40"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Hapus pencarian"
+              className="absolute top-1/2 right-3.5 -translate-y-1/2 text-dim transition-colors hover:text-txt"
+            >
+              <X aria-hidden className="size-3.5" />
+            </button>
+          ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:gap-3">
-          <span
-            className="flex shrink-0 items-center gap-2 rounded-xl border border-brand-line bg-brand-soft px-3 py-2 shadow-sm"
-            title="Progres belajar di perangkat ini"
-          >
-            <span className="flex size-5 items-center justify-center rounded-full bg-brand-strong font-black text-[11px] text-bg">
-              {progress ? done : "—"}
-            </span>
-            <span className="tabular font-extrabold text-brand-ink text-xs">
-              {progress ? `${done}/${total}` : `—/${total}`}
-            </span>
-            <span className="rounded-md bg-brand-soft-2 px-1.5 py-0.5 font-semibold text-[10px] text-brand-ink">
-              MODUL
-            </span>
+        <span
+          className="flex shrink-0 items-center gap-2 rounded-full border border-brand-line bg-brand-soft px-3 py-2 shadow-sm"
+          title="Progres belajar di perangkat ini"
+        >
+          <span className="flex size-5 items-center justify-center rounded-full bg-brand-strong font-black text-[11px] text-bg">
+            {progress ? done : "—"}
           </span>
+          <span className="tabular font-extrabold text-brand-ink text-xs">
+            {progress ? `${done}/${total}` : `—/${total}`}
+          </span>
+          <span className="rounded-full bg-brand-soft-2 px-1.5 py-0.5 font-semibold text-[10px] text-brand-ink">
+            MODUL
+          </span>
+        </span>
 
-          <div className="relative order-3 w-full min-w-0 xl:order-none xl:w-64 xl:flex-none">
-            <Search
+        <Link
+          href="#lencana"
+          aria-label="Lihat lencana"
+          title="Lencana"
+          className="relative flex size-11 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-txt shadow-sm transition-colors hover:bg-panel-2"
+        >
+          <Bell aria-hidden className="size-4" />
+          {hasBadge ? (
+            <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-dim"
+              className="absolute top-2.5 right-2.5 size-2 rounded-full bg-brand ring-2 ring-panel"
             />
-            <Input
-              type="search"
-              aria-label="Cari modul"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Cari modul atau ciri…"
-              className="h-10 w-full rounded-xl border border-line bg-panel pr-8 pl-10 text-xs text-txt shadow-sm placeholder:text-dim focus-visible:border-brand-line focus-visible:ring-brand-glow/40"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Hapus pencarian"
-                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-dim transition-colors hover:text-txt"
-              >
-                <X aria-hidden className="size-3.5" />
-              </button>
-            ) : null}
-          </div>
-
-          <Link
-            href="#lencana"
-            aria-label="Lihat lencana"
-            title="Lencana"
-            className="relative ml-auto flex size-10 shrink-0 items-center justify-center rounded-xl border border-line bg-panel text-txt shadow-sm transition-colors hover:bg-panel-2 xl:ml-0"
-          >
-            <Bell aria-hidden className="size-4" />
-            {hasBadge ? (
-              <span
-                aria-hidden
-                className="absolute top-2 right-2.5 size-2 rounded-full bg-brand ring-2 ring-panel"
-              />
-            ) : null}
-          </Link>
-        </div>
+          ) : null}
+        </Link>
       </header>
 
-      {featured ? (
-        <section className="appnext-campaign relative overflow-hidden rounded-card p-6 text-bg shadow-[var(--appnext-shadow-soft)] sm:p-7">
-          <svg
-            aria-hidden
-            role="presentation"
-            viewBox="0 0 800 220"
-            preserveAspectRatio="none"
-            className="pointer-events-none absolute inset-0 size-full opacity-45"
-          >
-            <path
-              d="M-40 180 C 140 90, 290 230, 480 140 C 640 65, 720 150, 840 95 L 840 240 L -40 240 Z"
-              className="fill-bg/10"
-            />
-            <path
-              d="M-20 205 C 180 120, 340 215, 530 145 C 670 95, 760 165, 850 130"
-              fill="none"
-              strokeWidth="2.5"
-              className="stroke-bg/25"
-            />
-            <path
-              d="M40 220 C 240 135, 390 200, 590 125 C 700 85, 770 120, 850 90"
-              fill="none"
-              strokeWidth="1.75"
-              className="stroke-bg/20"
-            />
-          </svg>
+      <section className="relative isolate overflow-hidden rounded-card text-bg shadow-[var(--appnext-shadow-soft)]">
+        <Image
+          src="/images/belajar/hero-akademi.jpg"
+          alt=""
+          fill
+          priority
+          sizes="(min-width: 1024px) 62vw, 100vw"
+          className="object-cover object-[68%_center]"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-r from-brand-strong/95 via-brand-strong/55 to-transparent"
+        />
 
-          <div className="relative z-10 flex items-center justify-between gap-6">
-            <div className="max-w-lg">
-              <div className="mb-2.5 inline-flex items-center rounded-full border border-bg/20 bg-bg/15 px-2.5 py-1 font-semibold text-[11px] backdrop-blur-sm">
-                <span>AKADEMI ANTI-PENIPUAN LUMINA</span>
-              </div>
-              <h2 className="font-bold text-bg text-xl leading-tight tracking-tight sm:text-[26px]">
-                {featured.nama}
-              </h2>
-              <p className="mt-2 max-w-md text-bg/85 text-xs leading-relaxed sm:text-sm">
-                {featured.ciri.join(" · ")}. {featured.laporanLabel} ·{" "}
-                {featured.kerugian}.
-              </p>
+        <div className="relative z-10 flex flex-col gap-5 p-6 sm:p-8">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-bg/25 bg-bg/15 px-3 py-1 font-semibold text-[10px] text-bg uppercase tracking-[0.14em] backdrop-blur-sm">
+              <Sparkles aria-hidden className="size-3.5" />
+              Akademi Anti-Penipuan Lumina
+            </span>
+            <h1 className="mt-4 font-bold text-[32px] text-bg leading-[1.03] tracking-tight sm:text-[44px]">
+              Halo! Siap belajar?
+            </h1>
+            <p className="mt-2 max-w-md text-bg/90 text-sm leading-relaxed">
+              {featured ? (
+                <>
+                  Kenali polanya sebelum uangmu hilang. Modul unggulan:{" "}
+                  <strong className="font-semibold text-bg">
+                    {featured.nama}
+                  </strong>{" "}
+                  — {featured.laporanLabel} · {featured.kerugian}.
+                </>
+              ) : (
+                "Kenali polanya sebelum uangmu hilang."
+              )}
+            </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+            {featured ? (
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Button
                   asChild
-                  className="min-h-11 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
+                  className="h-12 rounded-full border-0 bg-bg px-6 font-semibold text-brand-strong text-xs shadow-lg hover:bg-bg/90"
                 >
                   <Link href={`/belajar/${featured.no}`} data-pressable>
+                    <Play aria-hidden className="size-4 fill-current" />
                     Buka modul lengkap
-                    <ArrowRight aria-hidden />
+                    <ArrowRight aria-hidden className="size-4" />
                   </Link>
                 </Button>
                 <Button
                   asChild
-                  variant="outline"
-                  className="min-h-11 rounded-xl border-bg/40 bg-bg px-4 font-semibold text-brand-ink text-xs hover:bg-bg/90 hover:text-brand-ink"
+                  variant="ghost"
+                  className="h-12 rounded-full border border-bg/40 bg-bg/10 px-5 font-semibold text-bg text-xs backdrop-blur-sm hover:bg-bg/20 hover:text-bg"
                 >
                   <Link href="#semua-modul" data-pressable>
                     Lihat semua modul
                   </Link>
                 </Button>
               </div>
-            </div>
-
-            <div className="hidden shrink-0 flex-col items-center gap-2 pr-2 sm:flex">
-              <span className="flex size-20 flex-col items-center justify-center rounded-[26px] bg-bg text-brand-ink shadow-lg">
-                <CoverIcon no={featured.no} className="size-7" />
-                <span className="tabular mt-1 font-black text-xl">
-                  {String(featured.no).padStart(2, "0")}
-                </span>
-              </span>
-              <span className="rounded-full border border-bg/20 bg-bg/15 px-2.5 py-0.5 font-semibold text-[10px] text-bg">
-                {complete} modul lengkap
-              </span>
-            </div>
+            ) : null}
           </div>
-        </section>
-      ) : null}
+        </div>
+      </section>
 
       <section aria-labelledby="semua-modul" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 id="semua-modul" className="font-bold text-[18px] text-txt">
+            <h2
+              id="semua-modul"
+              className="flex items-center gap-2.5 font-bold text-[18px] text-txt"
+            >
+              <span aria-hidden className="h-5 w-1.5 rounded-full bg-brand" />
               Modul belajarmu
-            </h3>
+            </h2>
             <LevelFilter
               items={items}
               level={level}
