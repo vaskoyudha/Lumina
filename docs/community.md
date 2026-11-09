@@ -86,6 +86,27 @@ tinjau memakai akun moderator. Route lama `/darurat` kini 404.
 
 ## Referensi desain
 
+UI pada branch `codex/community-social-ui` mengikuti layout
+[ccrsxx/twitter-clone](https://github.com/ccrsxx/twitter-clone) sesuai pilihan
+pemilik produk 10 November 2026. Sidebar, timeline maksimal 576px, panel kanan,
+composer, dan breakpoint 500/1024/1280px diport dari sumber upstream ke App
+Router. Di ponsel navigasi pindah ke bawah; menu tambahan membuka Belajar dan
+Simulasi. Palet terang Twitter dibatasi ke `.community-twitter`, tanpa mengubah
+shell Companion/Belajar/Simulasi. Brand dan isi tetap Lumina.
+
+Composer di feed menerbitkan teks melalui Server Actions yang sama; judul
+diturunkan dari baris pertama (atau teks awal bila baris pertama terlalu pendek).
+Linimasa dan halaman diskusi tidak mencetak ulang baris yang sudah menjadi judul,
+jadi teks kiriman tidak muncul dua kali. Pintu "Jelajahi" di rail membuka panel
+cari/filter, bukan hanya menggulir ke panel yang masih tertutup.
+Editor lengkap tetap tersedia di `/komunitas/baru`, termasuk tautan sumber.
+Reaksi Membantu, opsi edit/hapus/lapor, balasan, pencarian dan paginasi memakai
+PostgreSQL yang sudah ada. Next tetap **16.4.5**, React **19.3.0**; Firebase,
+Pages Router, dan dependensi Next 12 upstream tidak diinstal.
+
+Revisi sumber dan pemetaan file tersedia di [riset UI](community-ui-research.md);
+notice MIT upstream disertakan di [lisensi](licenses/twitter-clone-MIT.txt).
+
 - [Discourse](https://meta.discourse.org/t/understanding-discourse-for-new-users/96331):
   kategori, daftar topik, pencarian, dan balasan kronologis.
 - [GitHub Discussions](https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions):

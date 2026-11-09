@@ -286,26 +286,28 @@ describe("CompanionChat · shell", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Panel bukti")).not.toBeInTheDocument();
 
-    // All briefs are visible at once; selection only highlights one.
-    for (const purpose of [
-      /membaca nada pesan/i,
-      /membongkar setiap tautan/i,
-      /memeriksa identitas pengirim/i,
-      /membandingkan pesan dengan giliran/i,
-      /memeriksa tawaran kerja/i,
-      /mengikuti alur jual-beli/i,
-      /membaca payload qris/i,
-      /merangkum temuan menjadi kutipan/i,
-    ]) {
-      expect(screen.getByText(purpose)).toBeInTheDocument();
-    }
+    // The pane is the long form for one agent, not a wall of all eight. The
+    // first card is selected by default; clicking another lane swaps the brief.
+    const detail = screen.getByRole("region", { name: "Detail agen" });
+    expect(within(detail).getByText(/membaca nada pesan/i)).toBeInTheDocument();
+    expect(
+      within(detail).queryByText(/membongkar setiap tautan/i),
+    ).not.toBeInTheDocument();
 
     const mochi = screen.getByRole("button", { name: /lihat detail mochi/i });
-    await user.click(mochi);
+    const bubu = screen.getByRole("button", { name: /lihat detail bubu/i });
     expect(mochi).toHaveAttribute("aria-pressed", "true");
+    expect(bubu).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(bubu);
+    expect(bubu).toHaveAttribute("aria-pressed", "true");
+    expect(mochi).toHaveAttribute("aria-pressed", "false");
     expect(
-      screen.getByRole("button", { name: /lihat detail bubu/i }),
-    ).toHaveAttribute("aria-pressed", "false");
+      within(detail).getByText(/membongkar setiap tautan/i),
+    ).toBeInTheDocument();
+    expect(
+      within(detail).queryByText(/membaca nada pesan/i),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
 
