@@ -1,8 +1,8 @@
 import {
   type Scenario,
   type ScenarioNode,
-  TACTICS,
-} from "@/lib/simulasi/scenario";
+  TACTIC_IDS,
+} from "@/lib/simulasi/types";
 
 const HUD_MIN = 0;
 const HUD_MAX = 100;
@@ -20,7 +20,7 @@ function isFiniteNumber(value: number): boolean {
 
 export function validateScenario(scenario: Scenario): string[] {
   const errors: string[] = [];
-  const tacticIds = new Set(TACTICS.map((tactic) => tactic.id));
+  const tacticIds = new Set<string>(TACTIC_IDS);
   const nodeIds = new Set<string>();
   const toolIds = new Set<string>();
   const nodesById = new Map<string, ScenarioNode>();

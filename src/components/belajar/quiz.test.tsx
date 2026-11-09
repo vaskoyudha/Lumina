@@ -119,7 +119,11 @@ describe("Quiz", () => {
       screen.getByRole("button", { name: /konfirmasi lewat telepon/i }),
     );
     expect(screen.getByText(/3 benar dari 3 soal/i)).toBeInTheDocument();
-    expect(onDone).toHaveBeenCalledWith(3, 3, []);
+    expect(onDone).toHaveBeenCalledWith(3, 3, [], {
+      q1: "c",
+      q2: "b",
+      q3: "a",
+    });
   });
 
   it("calls onDone with missed patterns when answers were wrong", async () => {
@@ -144,7 +148,11 @@ describe("Quiz", () => {
     await user.click(
       screen.getByRole("button", { name: /konfirmasi lewat telepon/i }),
     );
-    expect(onDone).toHaveBeenCalledWith(2, 3, ["q1"]);
+    expect(onDone).toHaveBeenCalledWith(2, 3, ["q1"], {
+      q1: "b",
+      q2: "b",
+      q3: "a",
+    });
   });
 
   it("does not let a score below 60% finish the module", async () => {

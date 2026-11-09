@@ -44,8 +44,8 @@ export function AuthPage({
               aria-hidden
               className="mt-0.5 size-3.5 shrink-0 text-brand"
             />
-            Nama dan email disimpan untuk akun. Progres belajar tetap di
-            perangkat ini; pesan yang diperiksa tetap diproses di perangkat.
+            Nama dan email disimpan untuk akun. Progres belajar disimpan di
+            akunmu; pesan yang diperiksa tetap diproses di perangkat.
           </p>
         }
       >

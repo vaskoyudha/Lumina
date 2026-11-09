@@ -77,7 +77,7 @@ export function BelajarDashboard({
 
         <span
           className="flex shrink-0 items-center gap-2 rounded-full border border-brand-line bg-brand-soft px-3 py-2 shadow-sm"
-          title="Progres belajar di perangkat ini"
+          title="Progres belajar di akunmu"
         >
           <span className="flex size-5 items-center justify-center rounded-full bg-brand-strong font-black text-[11px] text-bg">
             {progress ? done : "—"}

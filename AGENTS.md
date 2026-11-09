@@ -1,5 +1,9 @@
 # AGENTS.md — Lumina
 
+**Aturan branch (pemilik produk, 9 November 2026):** jangan mengerjakan perubahan langsung di `main`. Buat branch `codex/<nama-pekerjaan>` sebelum menyunting kode.
+
+**Pengecualian database, 9 November 2026:** materi Belajar, kuis, dan skenario Simulasi dibaca dari PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Percakapan dan pesan yang diperiksa tetap tidak disimpan. Lihat `docs/learning-database.md`.
+
 Empat orang, submission 10 November 2026. Branch stream sudah di-merge ke
 `main`; `main` adalah cabang integrasi. Aturan di file ini mengikat semua agent.
 Baca `docs/plan.md` (sumber kebenaran produk) dan `STATUS.md` (status per stream)
@@ -27,7 +31,7 @@ token bisa dideklarasikan sekali di CSS tanpa file config. Radix karena
 `asChild` adalah API yang sudah stabil untuk komponen yang membungkus `Link`.
 Biome karena satu tool untuk format + lint, dan `next lint` sudah deprecated.
 PostgreSQL karena akun, sesi, dan penghitung limit harus bertahan lintas restart
-dan dipakai bersama; progres serta percakapan tetap di perangkat.
+dan dipakai bersama; progres belajar serta hasil simulasi tersimpan per akun, sedangkan percakapan tetap di perangkat.
 
 ## Perintah
 
@@ -213,7 +217,7 @@ src/
 │   ├── (marketing)/          landing `/` — header, footer, theme slider, smooth scroll
 │   ├── (app)/                SiteNav + footer
 │   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
-│   │   └── profil/           akun + kemajuan perangkat
+│   │   └── profil/           akun + kemajuan akun
 │   ├── (chat)/               tanpa nav; catatan privasi ada di panel/sidebar
 │   │   ├── companion/        A · percakapan + panel bukti
 │   │   ├── belajar/          B · katalog + [modul], sidebar Companion

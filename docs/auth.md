@@ -1,10 +1,10 @@
 # Autentikasi Lumina
 
-Akun email/password dan Google OAuth disimpan di PostgreSQL. Progres belajar di localStorage; percakapan tidak disimpan di database. Pertanyaan obrolan dan gambar OCR dapat dikirim ke provider yang dikonfigurasi; isi pesan yang diperiksa tetap diskor di perangkat. Node 24 diperlukan.
+Akun email/password dan Google OAuth disimpan di PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun di PostgreSQL; percakapan tidak disimpan di database. Pertanyaan obrolan dan gambar OCR dapat dikirim ke provider yang dikonfigurasi; isi pesan yang diperiksa tetap diskor di perangkat. Node 24 diperlukan.
 
 ## Menjalankan
 
-Siapkan PostgreSQL dan database aplikasi, lalu isi `DATABASE_URL` di `.env.local`. Jalankan `npm ci`, `npm run db:migrate`, dan `npm run dev`. Migrasi harus dijalankan sebelum aplikasi menerima trafik; aplikasi tidak membuat tabel otomatis. Pool dibuka saat dibutuhkan, maksimal lima koneksi per proses. `npm run db:cleanup` menghapus sesi, state OAuth, dan penghitung kedaluwarsa; jalankan berkala melalui cron.
+Siapkan PostgreSQL dan database aplikasi, lalu isi `DATABASE_URL` di `.env.local`. Jalankan `npm ci`, `npm run db:migrate`, `npm run db:seed`, dan `npm run dev`. Migrasi harus dijalankan sebelum aplikasi menerima trafik; aplikasi tidak membuat tabel otomatis. Pool dibuka saat dibutuhkan, maksimal lima koneksi per proses. `npm run db:cleanup` menghapus sesi, state OAuth, dan penghitung kedaluwarsa; jalankan berkala melalui cron.
 
 Database menyimpan identitas akun, hash password scrypt, hash token sesi, state OAuth sementara dan penghitung limit. Password dan token sesi mentah tidak disimpan. Cookie sesi HttpOnly, SameSite=Lax, Secure di production, berlaku 24 jam. Login merotasi sesi lama secara atomik; logout mencabut sesi. Email dinormalisasi dan unik. Akun Google diikat ke `sub`; email yang sama tidak otomatis menggabungkan akun. Pemulihan password dan verifikasi email belum tersedia.
 

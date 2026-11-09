@@ -32,8 +32,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
       <footer className="shrink-0 border-line border-t px-4 py-6 text-dim text-sm sm:px-6">
         <p className="mx-auto max-w-6xl">
-          Akun bersifat opsional. Progres belajar tetap di perangkat ini. Tutup
-          tab, riwayat percakapannya hilang.
+          Akun bersifat opsional. Masuk untuk menyimpan progres belajar dan
+          hasil simulasi di akunmu. Tutup tab, riwayat percakapannya hilang.
         </p>
       </footer>
     </div>

@@ -1,5 +1,13 @@
+import { CONTENT_FIXTURE } from "@/lib/content/fixtures";
+
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
 import { render, screen, within } from "@testing-library/react";
-import SimulasiPage from "@/app/(chat)/simulasi/page";
+import { SimulasiContent as SimulasiPage } from "@/app/(chat)/simulasi/page";
 
 // The page now lives under the shared workspace shell, whose session read pulls
 // `next/server`; jsdom has no `Request`. The session is irrelevant to the
@@ -22,8 +30,8 @@ jest.mock("next/navigation", () => ({
 }));
 
 describe("halaman misi simulasi", () => {
-  it("menampilkan cerita fiktif, tiga babak, tiga akhir, dan jalur L1 yang hidup", () => {
-    render(<SimulasiPage />);
+  it("menampilkan cerita fiktif, tiga babak, tiga akhir, dan jalur L1 yang hidup", async () => {
+    render(await SimulasiPage());
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Paket sebelum pulang" }),
@@ -48,3 +56,17 @@ describe("halaman misi simulasi", () => {
     expect(within(planned).queryByRole("link")).not.toBeInTheDocument();
   });
 });
+
+jest.mock("next/server", () => ({
+  connection: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock("@/lib/content/store", () => ({
+  listModules: jest.fn(async () => CONTENT_FIXTURE.modules),
+  listSimulations: jest.fn(async () => CONTENT_FIXTURE.simulations),
+  moduleSummaries: jest.fn((modules) =>
+    modules.map((m: (typeof CONTENT_FIXTURE.modules)[number]) => ({
+      ...m.metadata,
+      ready: !!m.content,
+    })),
+  ),
+}));

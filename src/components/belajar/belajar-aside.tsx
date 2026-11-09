@@ -12,17 +12,18 @@ import Link from "next/link";
 import { useId } from "react";
 import {
   ProgressRing,
+  useAccountProgress,
   useStoredProgress,
 } from "@/components/belajar/belajar-progress";
 import { CoverIcon } from "@/components/belajar/modul-visual";
 import { Card } from "@/components/ui/card";
-import { MODUS } from "@/lib/modus";
+
 import { cn } from "@/lib/utils";
 
 /**
  * Right rail of the catalog, shaped like the supplied dashboard's profile,
  * calendar, activity and task column. Every number is real: completion comes
- * from `lib/progress.ts`, the module map from `modus.json`, and `readyModules`
+ * from the account snapshot, the module map from PostgreSQL, and `readyModules`
  * is the list the server says is actually written. There is no streak, no XP
  * and no invented activity chart.
  *
@@ -78,6 +79,7 @@ function ProgressChart({
   focusNo: number;
   total: number;
 }) {
+  const { modules: MODUS } = useAccountProgress();
   const fillId = `chart-fill-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const x0 = 20;
   const x1 = 332;
@@ -205,6 +207,7 @@ function ProgressChart({
 }
 
 export function BelajarAside({ readyModules }: { readyModules: number[] }) {
+  const { modules: MODUS } = useAccountProgress();
   const progress = useStoredProgress();
   const ready = new Set(readyModules);
   const total = MODUS.length;
@@ -281,9 +284,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
           </div>
 
           <h2 className="mt-2 font-bold text-sm text-txt">Belajar</h2>
-          <p className="font-medium text-[11px] text-dim">
-            Data di perangkat ini
-          </p>
+          <p className="font-medium text-[11px] text-dim">Data di akunmu</p>
         </div>
 
         <div className="mt-4 grid grid-cols-5 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
@@ -443,7 +444,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
           ) : (
             <Card className="gap-0 rounded-card border border-line py-0 ring-0">
               <p className="p-4 text-dim text-sm">
-                Semua modul sudah selesai di perangkat ini.
+                Semua modul sudah selesai di akunmu.
               </p>
             </Card>
           )
