@@ -86,8 +86,8 @@ function RailItem({
         <span
           aria-hidden
           className={cn(
-            "absolute -left-2 top-1.5 bottom-1.5 w-1 rounded-r-full",
-            emergency ? "bg-danger" : "bg-brand",
+            "absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full",
+            emergency ? "bg-danger" : "bg-nav-active-icon",
           )}
         />
       ) : null}
@@ -146,7 +146,7 @@ function AgentItem({
       {active && !iconsOnly ? (
         <span
           aria-hidden
-          className="absolute -left-2 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand"
+          className="absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full bg-nav-active-icon"
         />
       ) : null}
       <Bot
