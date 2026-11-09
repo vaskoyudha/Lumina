@@ -11,8 +11,85 @@ import type { Signal } from "@/lib/contracts/score";
 const JOB_CONTEXT =
   /\b(?:lowongan|kerja|karier|recruiter|rekrut|kandidat|pelamar|gaji|upah|honor|interview|wawancara|bergabung|tim|posisi|magang|part\s*time|full\s*time|tugas\s+harian)\b/i;
 
-const EMPLOYER_PAYS =
-  /\b(?:ditanggung|gratis|tidak\s+dipungut|tanpa\s+biaya|gaji\s+dibayar)\b[^.!?]{0,30}(?:perusahaan|pemberi\s+kerja|kantor|employer)\b/i;
+/**
+ * "Biaya ditanggung perusahaan" is a waiver; "ditanggung pelamar" is the
+ * opposite. Both must be judged per occurrence, never globally: one waived fee
+ * must not silence a second demand in the same ad.
+ */
+const EMPLOYER_COVERS =
+  /\b(?:ditanggung|gratis|tidak\s+dipungut|tanpa\s+biaya)\b[^.!?]{0,30}(?:perusahaan|pemberi\s+kerja|kantor|employer)\b/i;
+
+/**
+ * A negation waives a fee only when it directly precedes the fee trigger.
+ * "tanpa pengalaman" and "gratis konsultasi" must not silence "biaya pelatihan",
+ * and a negation earlier in the sentence must not reach a later fee.
+ */
+const FEE_DECLINED_BEFORE =
+  /(?:^|[\s,;:])(?:tanpa|tidak\s+(?:ada|dipungut|memungut|mengenakan|meminta|minta)|bebas(?:\s+dari)?|gratis)\s*$/i;
+
+const FEE_DECLINED_AFTER =
+  /^\s*[,;:]?\s*(?:gratis|bebas|tidak\s+(?:dipungut|ada|memungut|diminta|dipinta))\b/i;
+
+const CONTRAST =
+  /\b(?:tetapi|tapi|namun|akan\s+tetapi|selain\s+itu|melainkan)\b/i;
+
+/** A comma list that continues a denial: "tanpa biaya apa pun, termasuk …". */
+const LIST_CONTINUATION =
+  /^\s*(?:termasuk|yaitu|meliputi|seperti|antara\s+lain|di\s+antaranya)\b/i;
+
+/** A fee explicitly billed to the applicant, even if another fee is waived. */
+const APPLICANT_BILLED =
+  /\b(?:biaya|bayar|transfer)\b[^.!?]{0,40}\b(?:ditanggung|dibebankan)\s+(?:oleh\s+)?(?:pelamar|peserta|sendiri|karyawan)\b/i;
+
+/** A denial inside the matched span, e.g. "luar negeri tanpa biaya visa". */
+const DECLINED_INSIDE =
+  /(?:^|[\s,;:])(?:tanpa|tidak\s+(?:ada|dipungut|memungut|mengenakan|meminta|minta)|bebas(?:\s+dari)?|gratis)\s+(?:biaya|bayar|transfer|pungutan)\b/i;
+
+/**
+ * The rest of the sentence a match sits in, capped. A `.` between digits is a
+ * thousands separator, not a sentence break: "biaya pelatihan Rp100.000
+ * ditanggung perusahaan" is one waiver.
+ */
+function sentenceWindow(text: string, start: number, limit = 80): string {
+  const hardEnd = Math.min(text.length, start + limit);
+  let end = hardEnd;
+  for (let index = start; index < hardEnd; index += 1) {
+    if (!".!?".includes(text[index])) continue;
+    const isThousands =
+      /\d/.test(text[index - 1] ?? "") && /\d/.test(text[index + 1] ?? "");
+    if (!isThousands) {
+      end = index;
+      break;
+    }
+  }
+  return text.slice(start, end);
+}
+
+type DeclineReason = "employer" | "negated";
+
+function feeDeclineReason(
+  text: string,
+  match: RegExpMatchArray,
+): DeclineReason | null {
+  const start = match.index ?? 0;
+  const end = start + match[0].length;
+
+  const after = sentenceWindow(text, start);
+  if (EMPLOYER_COVERS.test(after) && !CONTRAST.test(after)) {
+    return "employer";
+  }
+
+  // Only a negation that ends right before this fee trigger governs it.
+  const before = text.slice(Math.max(0, start - 24), start);
+  if (FEE_DECLINED_BEFORE.test(before)) return "negated";
+
+  if (DECLINED_INSIDE.test(match[0]) && !CONTRAST.test(match[0])) {
+    return "negated";
+  }
+
+  if (FEE_DECLINED_AFTER.test(text.slice(end, end + 40))) return "negated";
+  return null;
+}
 
 interface JobRule {
   id: string;
@@ -28,7 +105,7 @@ const JOB_RULES: readonly JobRule[] = [
     label:
       "Meminta biaya pendaftaran/pelatihan sebelum ada surat tawaran kerja",
     pattern:
-      /\b(?:biaya|bayar|transfer)\b[^.!?]{0,30}\b(?:pendaftaran|pelatihan|seragam|tes\s+kesehatan|akomodasi)\b/i,
+      /\b(?:biaya|bayar|transfer)\b[^.!?]{0,30}\b(?:pendaftaran|daftar|pelatihan|seragam|tes\s+kesehatan|akomodasi)\b/i,
   },
   {
     id: "job-pay-to-earn",
@@ -52,7 +129,7 @@ const JOB_RULES: readonly JobRule[] = [
     label:
       "Meminta KTP/OTP/data rekening sebelum tawaran kerja resmi diberikan",
     pattern:
-      /\b(?:ktp|selfie\s+ktp|pin|otp|nomor\s+rekening|kartu\s+atm)\b[^.!?]{0,60}\b(?:daftar|lamar|sebelum|syarat|kirim)\b/i,
+      /\b(?:ktp|selfie\s+ktp|pin|otp|nomor\s+rekening|kartu\s+atm)\b[^.!?]{0,60}\b(?:daftar|lamar|sebelum|syarat|kirim|dikirim|dikirimkan)\b|\b(?:kirim|kirimkan|serahkan|unggah|foto)\b[^.!?]{0,40}\b(?:ktp|selfie\s+ktp|pin|otp|nomor\s+rekening|kartu\s+atm)\b/i,
   },
   {
     id: "job-overseas-fee",
@@ -60,7 +137,7 @@ const JOB_RULES: readonly JobRule[] = [
     label:
       "Penempatan luar negeri dengan biaya visa/tiket yang dibebankan ke pelamar",
     pattern:
-      /\b(?:luar\s+negeri|visa|tiket\s+pesawat|paspor)\b[^.!?]{0,60}\b(?:biaya|ditanggung\s+pelamar|bayar)\b/i,
+      /\b(?:luar\s+negeri|visa|tiket(?:\s+pesawat)?|paspor)\b[^.!?]{0,60}\b(?:biaya|ditanggung\s+pelamar|bayar)\b/i,
   },
   {
     id: "job-brand-lure",
@@ -68,7 +145,7 @@ const JOB_RULES: readonly JobRule[] = [
     label:
       "Mengaku lowongan perusahaan resmi tetapi mengarah ke tautan chat/formulir",
     pattern:
-      /\b(?:lowongan|rekrutmen)\b[^.!?]{0,40}\b(?:wa\.me|t\.me|forms\.gle|bit\.ly|blogspot)\b/i,
+      /\b(?:lowongan|rekrutmen)\b[\s\S]{0,40}\b(?:wa\.me|t\.me|forms\.gle|bit\.ly|blogspot)\b|\b(?:wa\.me|t\.me|forms\.gle|bit\.ly|blogspot)\b[\s\S]{0,60}\b(?:lowongan|rekrutmen)\b/i,
   },
 ];
 
@@ -94,15 +171,64 @@ const NOISY: readonly JobRule[] = [
   },
 ];
 
-function matchRule(text: string, rule: JobRule): Signal | null {
-  const match = text.match(rule.pattern);
-  if (!match) return null;
+function toSignal(rule: JobRule, match: RegExpMatchArray): Signal {
   return {
     label: rule.label,
     weight: rule.weight,
     evidence: match[0].trim(),
     agent: "job",
   };
+}
+
+/** A declined span may still contain a later, independently demanded fee. */
+function retryAfterDecline(
+  rule: JobRule,
+  match: RegExpMatchArray,
+  reason: DeclineReason,
+): Signal | null {
+  const separators =
+    reason === "employer"
+      ? /,|\b(?:dan|serta)\b/i
+      : /[,;]|\b(?:tetapi|tapi|namun|akan\s+tetapi|selain\s+itu|melainkan)\b/i;
+
+  if (!separators.test(match[0])) return null;
+  for (const part of match[0].split(separators).slice(1)) {
+    // "tanpa biaya apa pun, termasuk biaya pendaftaran" is one denial.
+    if (reason === "negated" && LIST_CONTINUATION.test(part)) continue;
+    const inner = part.match(rule.pattern);
+    if (inner && !feeDeclineReason(part, inner)) return toSignal(rule, inner);
+  }
+  return null;
+}
+
+function matchRule(
+  text: string,
+  rule: JobRule,
+  declineNegated = false,
+): Signal | null {
+  if (!declineNegated) {
+    const match = text.match(rule.pattern);
+    return match ? toSignal(rule, match) : null;
+  }
+
+  const global = new RegExp(
+    rule.pattern.source,
+    rule.pattern.flags.includes("g")
+      ? rule.pattern.flags
+      : `${rule.pattern.flags}g`,
+  );
+  for (const match of text.matchAll(global)) {
+    const reason = feeDeclineReason(text, match);
+    if (!reason) return toSignal(rule, match);
+    // A waived fee never hides a second one billed to the applicant.
+    if (reason === "employer") {
+      const billed = text.match(APPLICANT_BILLED);
+      if (billed) return toSignal(rule, billed);
+    }
+    const retry = retryAfterDecline(rule, match, reason);
+    if (retry) return retry;
+  }
+  return null;
 }
 
 export interface JobResult {
@@ -115,19 +241,12 @@ export function jobSignals(text: string): JobResult {
     return { signals: [], note: "Bukan tawaran kerja." };
   }
 
-  const employerPays = EMPLOYER_PAYS.test(text);
   const strong: Signal[] = [];
   const noisy: Signal[] = [];
 
   for (const rule of JOB_RULES) {
-    // "Biaya ditanggung perusahaan" is the opposite of a fee demand.
-    if (
-      employerPays &&
-      (rule.id === "job-fee" || rule.id === "job-overseas-fee")
-    ) {
-      continue;
-    }
-    const signal = matchRule(text, rule);
+    const feeRule = rule.id === "job-fee" || rule.id === "job-overseas-fee";
+    const signal = matchRule(text, rule, feeRule);
     if (signal) strong.push(signal);
   }
 

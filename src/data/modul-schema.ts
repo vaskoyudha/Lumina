@@ -62,6 +62,17 @@ export const ModuleContentSchema = z
   .object({
     /** 1..99: 12 modus awal (§11.2), sisanya boleh ditambah lewat admin. */
     no: z.number().int().min(1).max(99),
+    /**
+     * Professional layer, all optional so drafts written before it existed
+     * still parse. Published courses fill them; the module page renders an
+     * orientation card from them instead of dropping the learner straight
+     * into step one.
+     */
+    ringkasan: z.string().min(40).max(400).optional(),
+    tujuan: z.array(z.string().min(10)).min(2).max(5).optional(),
+    poinKunci: z.array(z.string().min(10)).min(2).max(6).optional(),
+    /** Honest reading estimate; omitted means the page makes no claim. */
+    estimasiMenit: z.number().int().min(3).max(60).optional(),
     anatomi: z
       .array(
         z.object({

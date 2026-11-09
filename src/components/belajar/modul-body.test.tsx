@@ -43,6 +43,24 @@ describe("ModulBody — modul 10", () => {
     ).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
   });
 
+  it("shows the orientation and key points from the course data", () => {
+    render(<ModulBody modul={MODUL_10} />);
+
+    expect(screen.getAllByText(/tujuan pembelajaran/i).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getByText(MODUL_10.ringkasan ?? "")).toBeInTheDocument();
+    expect(
+      screen.getByText(`${MODUL_10.estimasiMenit} menit`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /poin kunci/i }),
+    ).toBeInTheDocument();
+    for (const item of MODUL_10.poinKunci ?? []) {
+      expect(screen.getByText(item)).toBeInTheDocument();
+    }
+  });
+
   it("does not claim completion before the quiz is passed", () => {
     render(<ModulBody modul={MODUL_10} />);
 

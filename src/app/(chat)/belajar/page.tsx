@@ -28,7 +28,11 @@ export const metadata: Metadata = {
 
 export default function BelajarPage() {
   const sorted = [...MODUS].sort((a, b) => a.no - b.no);
-  const featuredModus = sorted.find((m) => isPublished(m.no));
+  // Feature the module wired to a simulation when one exists, otherwise the
+  // first published course. This keeps the demo path (module 10) on the hero.
+  const featuredModus =
+    sorted.find((m) => isPublished(m.no) && m.scenarioId) ??
+    sorted.find((m) => isPublished(m.no));
   const complete = sorted.filter((m) => isPublished(m.no)).length;
   const readyModules = sorted.filter((m) => isPublished(m.no)).map((m) => m.no);
 
@@ -66,7 +70,7 @@ export default function BelajarPage() {
       />
 
       <div className="flex flex-col gap-3">
-        <CardNote />
+        <CardNote complete={complete} total={sorted.length} />
         <p className="appnext-caption">
           Kemajuan belajar disimpan di perangkat ini saja. Tanpa akun, tanpa
           unggahan.
@@ -76,7 +80,7 @@ export default function BelajarPage() {
   );
 }
 
-function CardNote() {
+function CardNote({ complete, total }: { complete: number; total: number }) {
   return (
     <Card className="gap-0 rounded-2xl border border-line bg-panel-2 py-0 ring-0 shadow-none">
       <CardContent className="flex items-start gap-3 p-4">
@@ -87,10 +91,10 @@ function CardNote() {
           <ShieldCheck className="size-4" />
         </span>
         <p className="text-dim text-sm leading-relaxed">
-          Satu modul sudah lengkap dan bisa dipelajari sekarang. Sisanya
-          bertanda <span className="font-medium text-txt">segera</span> sampai
-          isinya benar-benar ditulis — kami tidak menampilkan modul setengah
-          jadi.
+          {complete} dari {total} modul sudah lengkap dan bisa dipelajari
+          sekarang. Sisanya bertanda{" "}
+          <span className="font-medium text-txt">segera</span> sampai isinya
+          benar-benar ditulis — kami tidak menampilkan modul setengah jadi.
         </p>
       </CardContent>
     </Card>

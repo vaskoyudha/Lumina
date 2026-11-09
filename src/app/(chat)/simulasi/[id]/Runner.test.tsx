@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { Runner } from "@/app/(app)/simulasi/[id]/Runner";
+import { Runner } from "@/app/(chat)/simulasi/[id]/Runner";
 import {
   L1_KURIR_APK,
   PERMISSIONS,

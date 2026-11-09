@@ -21,6 +21,13 @@ describe("modul 10 — File APK via WhatsApp", () => {
     }
   });
 
+  it("carries the professional layer the module page renders", () => {
+    expect(MODUL_10.ringkasan?.length ?? 0).toBeGreaterThan(40);
+    expect(MODUL_10.tujuan?.length ?? 0).toBeGreaterThanOrEqual(2);
+    expect(MODUL_10.poinKunci?.length ?? 0).toBeGreaterThanOrEqual(2);
+    expect(MODUL_10.estimasiMenit ?? 0).toBeGreaterThanOrEqual(3);
+  });
+
   it("marks the dangerous segments of the example message", () => {
     const joined = MODUL_10.contohIsi.map((s) => s.text).join("");
     expect(joined).toMatch(/\.apk/i);

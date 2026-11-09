@@ -4,6 +4,7 @@ import {
   Check,
   ChevronRight,
   Circle,
+  EyeOff,
   Loader2,
   MinusCircle,
   PenLine,
@@ -36,6 +37,14 @@ const MS = new Intl.NumberFormat("id-ID", {
   maximumFractionDigits: 1,
 });
 
+/**
+ * A duration the row can print without wrapping. Detector stages finish in
+ * milliseconds; the language stage can take seconds, and `10.923,0 ms` is both
+ * harder to read and wider than the ms column.
+ */
+const durationText = (ms: number) =>
+  ms >= 1000 ? `${MS.format(ms / 1000)} s` : `${MS.format(ms)} ms`;
+
 const STATUS_WORD: Record<StageStatus, string> = {
   menunggu: "Menunggu",
   berjalan: "Berjalan",
@@ -56,10 +65,27 @@ const agentVariants = {
 } as const;
 
 function isDetector(id: AgentStage["id"]): id is DetectorAgent {
-  return id !== "scoring" && id !== "voice";
+  // Registry-driven, so a future non-detector stage cannot be indexed as one.
+  return Object.hasOwn(AGENT_REGISTRY, id);
 }
 
+/**
+ * Only these stages look for patterns in the message. `evidence` assembles
+ * quotes and `voice` writes language, so neither may print "0 temuan" as if
+ * it had run a detector and found nothing.
+ */
+const SIGNAL_AGENTS: ReadonlySet<AgentStage["id"]> = new Set([
+  "message",
+  "link",
+  "identity",
+  "conversation",
+  "job",
+  "marketplace",
+  "qris",
+]);
+
 function statusText(stage: AgentStage): string {
+  if (!SIGNAL_AGENTS.has(stage.id)) return STATUS_WORD[stage.status];
   if (stage.status === "temuan") return `${stage.findings} temuan`;
   if (stage.status === "selesai" && stage.findings === 0) {
     return stage.id === "identity" ? "Tidak melapor" : "Selesai · 0 temuan";
@@ -67,41 +93,93 @@ function statusText(stage: AgentStage): string {
   return STATUS_WORD[stage.status];
 }
 
+type GlyphKind =
+  | "spin"
+  | "check"
+  | "finding"
+  | "failure"
+  | "skip"
+  | "quiet"
+  | "pending";
+
+function glyphKind(stage: AgentStage): GlyphKind {
+  if (stage.status === "berjalan") return "spin";
+  if (stage.status === "temuan") return "finding";
+  if (stage.status === "selesai") {
+    // Identity may decline to report. That is not a success.
+    return stage.id === "identity" && stage.findings === 0 ? "quiet" : "check";
+  }
+  if (stage.status === "gagal") return "failure";
+  if (stage.status === "dilewati") return "skip";
+  return "pending";
+}
+
 function Glyph({
-  status,
+  stage,
   reduced = false,
 }: {
-  status: StageStatus;
+  stage: AgentStage;
   reduced?: boolean;
 }) {
-  if (status === "berjalan") {
-    return reduced ? (
-      <Circle aria-hidden strokeWidth={2.4} className="size-3.5 fill-current" />
-    ) : (
-      <Loader2
-        aria-hidden
-        className="size-3.5 animate-spin motion-reduce:animate-none"
-      />
-    );
-  }
-  if (status === "temuan" || status === "selesai") {
-    return <Check aria-hidden strokeWidth={2.2} className="size-3.5" />;
-  }
-  if (status === "gagal") {
-    return (
-      <XCircle aria-hidden strokeWidth={1.8} className="size-3.5 text-danger" />
-    );
-  }
-  if (status === "dilewati") {
-    return (
-      <MinusCircle
-        aria-hidden
-        strokeWidth={1.8}
-        className="size-3.5 text-dim"
-      />
-    );
-  }
-  return <Circle aria-hidden strokeWidth={1.8} className="size-3.5 text-dim" />;
+  const kind = glyphKind(stage);
+  const glyph = (() => {
+    switch (kind) {
+      case "spin":
+        return reduced ? (
+          <Circle
+            aria-hidden
+            strokeWidth={2.4}
+            className="size-3.5 fill-current"
+          />
+        ) : (
+          <Loader2
+            aria-hidden
+            className="size-3.5 animate-spin motion-reduce:animate-none"
+          />
+        );
+      case "check":
+        return <Check aria-hidden strokeWidth={2.2} className="size-3.5" />;
+      case "finding":
+        // A filled dot, not a tick: this stage found something.
+        return (
+          <Circle
+            aria-hidden
+            strokeWidth={2.4}
+            className="size-3.5 fill-current text-warn"
+          />
+        );
+      case "failure":
+        return (
+          <XCircle
+            aria-hidden
+            strokeWidth={1.8}
+            className="size-3.5 text-danger"
+          />
+        );
+      case "skip":
+        return (
+          <MinusCircle
+            aria-hidden
+            strokeWidth={1.8}
+            className="size-3.5 text-dim"
+          />
+        );
+      case "quiet":
+        return (
+          <EyeOff aria-hidden strokeWidth={1.8} className="size-3.5 text-dim" />
+        );
+      default:
+        return (
+          <Circle aria-hidden strokeWidth={1.8} className="size-3.5 text-dim" />
+        );
+    }
+  })();
+
+  return (
+    <span data-glyph={kind} className="flex">
+      {glyph}
+    </span>
+  );
 }
 
 function signalsFor(
@@ -163,7 +241,7 @@ function AgentBubble({
                   alt=""
                   width={28}
                   height={28}
-                  className="size-7 object-cover"
+                  className="size-full object-cover"
                 />
               ) : profile ? (
                 <profile.icon className="size-3.5" />
@@ -176,16 +254,18 @@ function AgentBubble({
                 <span className="truncate font-medium text-[12px] text-txt">
                   {profile?.displayName ?? stage.label}
                 </span>
-                <span className="sr-only sm:not-sr-only sm:shrink-0 sm:font-mono sm:text-[10px] sm:text-dim">
-                  {stage.label}
-                </span>
+                {profile ? (
+                  <span className="sr-only sm:not-sr-only sm:shrink-0 sm:font-mono sm:text-[10px] sm:text-dim">
+                    {stage.label}
+                  </span>
+                ) : null}
               </span>
               {showFlavor ? (
                 <span className="line-clamp-1 text-[11px] text-dim leading-snug">
                   {profile?.flavor ?? stage.task}
                 </span>
               ) : null}
-              {note ? (
+              {note && !open ? (
                 <span className="line-clamp-2 text-[11px] text-dim leading-snug">
                   {note}
                 </span>
@@ -197,11 +277,11 @@ function AgentBubble({
                 stage.status === "gagal" ? "text-danger" : "text-txt/70",
               )}
             >
-              <Glyph status={stage.status} reduced={reduced} />
+              <Glyph stage={stage} reduced={reduced} />
               <span>{statusText(stage)}</span>
             </span>
-            <span className="tabular w-12 shrink-0 text-right text-[10px] text-txt/70">
-              {stage.status === "berjalan" ? "…" : `${MS.format(stage.ms)} ms`}
+            <span className="tabular w-12 shrink-0 whitespace-nowrap text-right text-[10px] text-txt/70">
+              {stage.status === "berjalan" ? "…" : durationText(stage.ms)}
             </span>
             <ChevronRight
               aria-hidden
@@ -222,6 +302,11 @@ function AgentBubble({
         <CollapsibleContent className="overflow-hidden">
           <div className="mt-1 flex flex-col gap-2 pb-1">
             <p className="text-[11px] text-dim">{stage.task}</p>
+            {note ? (
+              <p className="text-[11px] text-dim [overflow-wrap:anywhere]">
+                {note}
+              </p>
+            ) : null}
             {profile ? (
               <ul className="flex flex-wrap gap-1">
                 {profile.mechanism.map((chip) => (
@@ -251,7 +336,8 @@ function AgentBubble({
                 ))}
               </ul>
             ) : null}
-            {stage.status === "selesai" &&
+            {SIGNAL_AGENTS.has(stage.id) &&
+            stage.status === "selesai" &&
             stage.findings === 0 &&
             !stage.note ? (
               <p className="text-[11px] text-dim">
@@ -265,26 +351,59 @@ function AgentBubble({
   );
 }
 
-function runState(stages: readonly AgentStage[], live: boolean): StageStatus {
+function runState(stages: readonly AgentStage[]): StageStatus {
   if (stages.some((stage) => stage.status === "gagal")) return "gagal";
-  if (
-    live &&
-    stages.some((stage) => stage.id === "voice" && stage.status === "berjalan")
-  ) {
-    return "berjalan";
-  }
+  // A stage that is still running is never reported as finished, even when the
+  // caller's `live` flag has already moved on (a stale trace must not lie).
+  if (stages.some((stage) => stage.status === "berjalan")) return "berjalan";
   if (stages.some((stage) => stage.status === "temuan")) return "temuan";
   return "selesai";
+}
+
+/**
+ * The one sentence a screen reader hears when a run settles.
+ *
+ * Exported so the chat shell can keep announcing while the Agents view has
+ * replaced the transcript and unmounted this component.
+ */
+export function runAnnouncement(trace: AgentTrace): string {
+  const byId = new Map(trace.stages.map((stage) => [stage.id, stage]));
+  const voice = byId.get("voice");
+  const specialists = AGENT_SEQUENCE.map((id) => byId.get(id)).filter(
+    (stage): stage is AgentStage => Boolean(stage),
+  );
+  const findings = specialists.reduce((sum, stage) => sum + stage.findings, 0);
+  const completed = specialists.filter(
+    (stage) => stage.status === "selesai" || stage.status === "temuan",
+  ).length;
+  const skipped = specialists.filter(
+    (stage) => stage.status === "dilewati",
+  ).length;
+  const failed = specialists.filter((stage) => stage.status === "gagal").length;
+  const language =
+    voice?.status === "dilewati"
+      ? " Jawaban disusun dari templat."
+      : voice?.status === "gagal"
+        ? " Penyusun bahasa gagal."
+        : "";
+
+  if (runState(trace.stages) === "gagal") {
+    return `Sebagian pemeriksaan gagal: ${failed} agen gagal, ${completed} selesai, ${skipped} dilewati, ${findings} temuan.${language}`;
+  }
+  return `${completed} agen selesai, ${skipped} dilewati, ${findings} temuan.${language}`;
 }
 
 export function AgentRun({
   trace,
   result,
   live = false,
+  announce = true,
 }: {
   trace: AgentTrace;
   result?: ScoreResult;
   live?: boolean;
+  /** The chat shell owns the live region; standalone use keeps its own. */
+  announce?: boolean;
 }) {
   const byId = new Map(trace.stages.map((stage) => [stage.id, stage]));
   const scoring = byId.get("scoring");
@@ -295,12 +414,17 @@ export function AgentRun({
   const findings = specialists.reduce((sum, stage) => sum + stage.findings, 0);
   const engineMs = Math.max(0, trace.totalMs - (voice?.ms ?? 0));
   const voiceLive = live && voice?.status === "berjalan";
-  const state = runState(trace.stages, live);
+  const state = runState(trace.stages);
   const reduce = useReducedMotion();
   const animated = live && !reduce;
-  const completed = specialists.filter(
-    (stage) => stage.status === "selesai" || stage.status === "temuan",
+  const clean = specialists.filter(
+    (stage) => stage.status === "selesai",
   ).length;
+  const withFindings = specialists.filter(
+    (stage) => stage.status === "temuan",
+  ).length;
+  // Statuses never overlap: clean + withFindings + skipped + failed = agents.
+  const completed = clean + withFindings;
   const skipped = specialists.filter(
     (stage) => stage.status === "dilewati",
   ).length;
@@ -309,18 +433,13 @@ export function AgentRun({
   const wasLive = React.useRef(live);
 
   React.useEffect(() => {
+    if (!announce) return;
     if (live) {
       wasLive.current = true;
       return;
     }
-    if (wasLive.current) {
-      setAnnouncement(
-        state === "gagal"
-          ? "Sebagian pemeriksaan gagal. Lihat alasan di setiap agen."
-          : `${completed} agen selesai, ${skipped} dilewati, ${findings} temuan.`,
-      );
-    }
-  }, [live, state, completed, skipped, findings]);
+    if (wasLive.current) setAnnouncement(runAnnouncement(trace));
+  }, [announce, live, trace]);
 
   return (
     <section
@@ -339,15 +458,28 @@ export function AgentRun({
           <span className="text-[11px] text-dim">
             {specialists.length} agen
           </span>
-          {voiceLive ? (
+          {state === "berjalan" ? (
             <span className="text-[11px] text-brand-ink">
-              {completed} agen selesai · menyusun jawaban…
+              {completed} agen selesai ·{" "}
+              {voiceLive ? "menyusun jawaban…" : "berjalan…"}
             </span>
           ) : (
             <span className="tabular text-[11px] text-dim">
-              {state === "gagal" ? `${failed} gagal · ` : ""}
-              {completed} selesai · {skipped} dilewati · {findings} temuan ·{" "}
-              {MS.format(engineMs)} ms
+              {[
+                failed > 0 ? `${failed} gagal` : null,
+                `${clean} selesai`,
+                withFindings > 0 ? `${withFindings} dengan temuan` : null,
+                `${skipped} dilewati`,
+                `${findings} temuan`,
+                `${durationText(engineMs)}`,
+                voice?.status === "dilewati"
+                  ? "jawaban dari templat"
+                  : voice?.status === "gagal"
+                    ? "penyusun bahasa gagal"
+                    : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           )}
         </div>
@@ -367,7 +499,7 @@ export function AgentRun({
               <span>{step}</span>
               {index === 2 && scoring ? (
                 <span className="tabular text-[10px] text-txt/70">
-                  {MS.format(scoring.ms)} ms
+                  {durationText(scoring.ms)}
                 </span>
               ) : null}
               {index < 2 ? <span aria-hidden>→</span> : null}
@@ -396,7 +528,7 @@ export function AgentRun({
                     alt=""
                     width={20}
                     height={20}
-                    className="size-5 object-cover"
+                    className="size-full object-cover"
                   />
                 ) : profile ? (
                   <profile.icon className="size-2.5" />
@@ -404,6 +536,11 @@ export function AgentRun({
               </li>
             );
           })}
+          {specialists.length > 8 ? (
+            <li className="flex size-5 items-center justify-center rounded-full border border-panel bg-panel-2 font-mono text-[9px] text-dim">
+              +{specialists.length - 8}
+            </li>
+          ) : null}
         </ul>
       </motion.div>
 
@@ -446,9 +583,11 @@ export function AgentRun({
         ) : null}
       </motion.ol>
 
-      <output className="sr-only" aria-live="polite">
-        {announcement}
-      </output>
+      {announce ? (
+        <output className="sr-only" aria-live="polite">
+          {announcement}
+        </output>
+      ) : null}
     </section>
   );
 }

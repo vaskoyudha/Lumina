@@ -249,7 +249,7 @@ export function Composer({
           }}
         />
 
-        <div className="rounded-[14px] border border-brand-line/70 bg-panel px-3.5 pt-3 pb-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.015)]">
+        <div className="rounded-[14px] border border-brand-line/70 bg-panel px-3.5 pt-3 pb-2.5 shadow-[0_1px_2px_color-mix(in_oklab,var(--lumina-txt)_3%,transparent)]">
           <Textarea
             ref={textareaRef}
             value={draft}
@@ -273,7 +273,7 @@ export function Composer({
             rows={2}
             placeholder={placeholder}
             aria-label="Pesan"
-            className="mb-1.5 min-h-[41px] resize-none border-0 bg-transparent px-0 py-0 font-normal text-[12.5px] text-ink leading-relaxed tracking-normal shadow-none placeholder:text-ink-faint focus-visible:ring-0 md:text-[12.5px]"
+            className="mb-1.5 min-h-[41px] resize-none border-0 bg-transparent px-0 py-0 font-normal text-[16px] text-ink leading-relaxed tracking-normal shadow-none placeholder:text-ink-faint focus-visible:ring-0 sm:text-[12.5px]"
           />
 
           <div className="flex items-center justify-between gap-2 pt-1">
@@ -284,7 +284,7 @@ export function Composer({
                 size="icon"
                 onClick={() => inputRef.current?.click()}
                 aria-label="Lampirkan gambar atau berkas"
-                className="size-[29px] shrink-0 rounded-[8px] border border-transparent bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink"
+                className="size-11 shrink-0 rounded-[8px] border border-transparent bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink sm:size-[29px]"
               >
                 <ImageIcon aria-hidden strokeWidth={1.6} className="size-3.5" />
               </Button>
@@ -299,7 +299,7 @@ export function Composer({
               onClick={submit}
               disabled={busy || !canSend}
               aria-label={submitLabel}
-              className="size-[30px] shrink-0 rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong p-0 text-white ring-2 ring-brand-line shadow-[0_2px_8px_color-mix(in_oklab,var(--lumina-brand-glow)_45%,transparent)] hover:brightness-[1.03] disabled:opacity-40"
+              className="size-11 shrink-0 rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong p-0 text-white ring-2 ring-brand-line shadow-[0_2px_8px_color-mix(in_oklab,var(--lumina-brand-glow)_45%,transparent)] hover:brightness-[1.03] disabled:opacity-40 sm:size-[30px]"
             >
               {busy ? (
                 <Loader2
@@ -340,7 +340,7 @@ export function Composer({
               }
               textareaRef.current?.focus();
             }}
-            className="flex items-center gap-1.5 font-semibold text-[11.5px] text-ink-soft transition-colors hover:text-brand-chip-ink"
+            className="flex min-h-11 items-center gap-1.5 text-left font-semibold text-[11.5px] text-ink-soft transition-colors hover:text-brand-chip-ink sm:min-h-0"
           >
             <Sparkles
               aria-hidden
@@ -353,7 +353,7 @@ export function Composer({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="flex h-[24px] items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 text-[11px] font-medium text-ink-soft shadow-rest transition-colors hover:bg-brand-tint"
+            className="flex h-11 items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 text-[11px] font-medium text-ink-soft shadow-rest transition-colors hover:bg-brand-tint sm:h-[24px]"
           >
             <Paperclip
               aria-hidden

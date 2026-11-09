@@ -17,6 +17,20 @@ export type { ContohSegment, ModuleContent, QuizQuestion };
 
 export const MODUL_10 = {
   no: 10,
+  ringkasan:
+    "File .apk yang dikirim lewat chat bukan dokumen, melainkan aplikasi Android. Begitu dipasang dan diberi izin SMS, ia membaca kode OTP dan membuka jalan bagi pelaku untuk menguras rekening tanpa pernah menyentuh HP-mu.",
+  tujuan: [
+    "Mengenali file .apk yang menyamar sebagai undangan, resi, atau surat resmi.",
+    "Menjelaskan mengapa izin SMS dan aksesibilitas adalah kunci pencurian OTP.",
+    "Mengambil langkah aman saat file sudah terlanjur dibuka atau dipasang.",
+  ],
+  poinKunci: [
+    "Dokumen resmi tidak pernah berupa aplikasi .apk yang dikirim lewat chat.",
+    "Izin SMS dan aksesibilitas memberi malware akses ke kode OTP, bukan sekadar notifikasi.",
+    "Konfirmasi lewat kanal lain bila file datang dari nomor yang kamu kenal.",
+    "Kalau sudah terpasang: putus koneksi, hapus aplikasi, lalu hubungi bank lewat nomor resmi.",
+  ],
+  estimasiMenit: 8,
   anatomi: [
     {
       judul: "Kontak awal dari nomor tak dikenal",

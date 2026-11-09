@@ -45,12 +45,22 @@ export function AgentsDetailPanel({
     const target = listRef.current?.querySelector<HTMLElement>(
       `[data-detail="${selected}"]`,
     );
+    // Global scroll-behavior CSS cannot override the JS scroll options, so
+    // honour the OS preference here as well.
+    const reduce =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // jsdom has no layout; optional call keeps the behaviour testable.
-    target?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    target?.scrollIntoView?.({
+      block: "nearest",
+      behavior: reduce ? "auto" : "smooth",
+    });
   }, [selected]);
 
   return (
     <Card
+      role="region"
       aria-labelledby={titleId}
       className={cn(
         "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-none bg-transparent py-0 ring-0",
@@ -102,6 +112,7 @@ export function AgentsDetailPanel({
               <li
                 data-detail={agent}
                 data-active={active ? "true" : undefined}
+                aria-current={active ? "true" : undefined}
                 key={agent}
                 className={cn(
                   "group/detail relative overflow-hidden rounded-[12px] bg-panel px-3 py-3 transition-[box-shadow,transform] duration-200",

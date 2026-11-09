@@ -37,16 +37,19 @@ describe("AdminInventory", () => {
     ).toBeInTheDocument();
     // Every course with content in KURIKULUM shows Terbit.
     expect(screen.getAllByText("Terbit")).toHaveLength(PUBLISHED_COUNT);
-    expect(screen.getAllByText("Kosong").length).toBeGreaterThan(0);
+    // Every catalog course is now written, so no row is left "Kosong".
+    expect(screen.queryAllByText("Kosong")).toHaveLength(
+      MODUS.length - PUBLISHED_COUNT,
+    );
   });
 
-  it("marks a course with a stored draft as Draf", async () => {
-    upsertDraft(blankDraft(3, { nama: "Lowongan kerja palsu" }));
+  it("marks a stored draft for a new number as a new draft", async () => {
+    upsertDraft(blankDraft(13, { nama: "Lowongan kerja palsu" }));
     render(<AdminInventory />);
     expect(
       await screen.findByText(/1 draf di perangkat ini/),
     ).toBeInTheDocument();
-    expect(screen.getByText("Draf")).toBeInTheDocument();
+    expect(screen.getByText("Draf baru")).toBeInTheDocument();
   });
 
   it("creates a new course draft after asking for its name", async () => {
