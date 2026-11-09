@@ -9,7 +9,9 @@ import {
   PanelLeftOpen,
   PanelRightOpen,
   Paperclip,
+  RotateCcw,
   SquarePen,
+  TriangleAlert,
   Users,
   Workflow,
   X,
@@ -103,11 +105,7 @@ import {
   learningModulesFor,
   wantsLinkCheck,
 } from "@/lib/companion/intent";
-import {
-  composeAnswerFallback,
-  composeReply,
-  suggestedActions,
-} from "@/lib/companion/reply";
+import { composeReply, suggestedActions } from "@/lib/companion/reply";
 import { runSettled } from "@/lib/companion/run-state";
 import { requestToolSummary } from "@/lib/companion/tool-client";
 import {
@@ -231,6 +229,12 @@ interface Turn {
   lane?: Lane;
   /** The reader's own words, kept only so the lane chip can re-send them. */
   laneSource?: string;
+  /**
+   * Set when the model lane produced no usable answer. The bubble shows an
+   * honest failure and a retry instead of a templated answer dressed as the
+   * model's voice.
+   */
+  failure?: VoiceOutcome;
   /** The job-search card for this turn, when the tool ran. */
   tool?: LokerTurnTool;
   /** The report card the model opened for the previous verdict. */
@@ -403,6 +407,29 @@ const EMPTY_CORPUS: LokerCorpus = {
  */
 function summaryFallback(postings: readonly LokerView[]): string {
   return kalimatRekomendasi(ringkasRekomendasi(postings));
+}
+
+function failureHeadline(reason: VoiceOutcome): string {
+  if (reason === "timeout") return "Model terlalu lambat menjawab.";
+  if (reason === "unconfigured") return "Model belum dikonfigurasi.";
+  if (reason === "truncated") return "Jawaban model terpotong.";
+  return "Model tidak merespons.";
+}
+
+function failureHint(reason: VoiceOutcome): string {
+  if (reason === "unconfigured")
+    return "Jawaban AI belum aktif di lingkungan ini.";
+  return "Tidak ada jawaban yang ditampilkan. Coba lagi sebentar lagi.";
+}
+
+function failureNote(reason: VoiceOutcome): string {
+  if (reason === "timeout")
+    return "Model terlalu lambat menjawab; tidak ada jawaban yang ditampilkan.";
+  if (reason === "unconfigured")
+    return "Model belum dikonfigurasi; tidak ada jawaban yang ditampilkan.";
+  if (reason === "truncated")
+    return "Jawaban model terpotong; tidak ada jawaban yang ditampilkan.";
+  return "Model gagal dihubungi; tidak ada jawaban yang ditampilkan.";
 }
 
 export function CompanionChat({
@@ -1039,6 +1066,10 @@ export function CompanionChat({
          * Conversation Agent models messages the user received, and feeding it
          * "apa itu dana?" because the word "dana" appears there would let a
          * question manufacture an escalation.
+         *
+         * `source` is the local text the engine examined (typed words plus
+         * OCR), not the model's answer, so a failed language layer does not
+         * invalidate it: the next turn must still see the earlier message.
          */
         const priorTurns = (active?.turns ?? [])
           .filter(
@@ -1332,6 +1363,7 @@ export function CompanionChat({
           voice: "model" | "template",
           reason?: VoiceOutcome,
           finalResult?: ScoreResult,
+          failure?: VoiceOutcome,
         ) => {
           if (sealed) return;
           sealed = true;
@@ -1341,6 +1373,7 @@ export function CompanionChat({
             text: finalText,
             streaming: false,
             voiceStartedAt: undefined,
+            failure,
             lane,
             laneSource: lane === "tanya" ? text : undefined,
             result: checked
@@ -1356,14 +1389,21 @@ export function CompanionChat({
                     stage.id === "voice"
                       ? {
                           ...stage,
-                          status: voice === "model" ? "selesai" : "dilewati",
+                          status:
+                            voice === "model"
+                              ? "selesai"
+                              : failure
+                                ? "gagal"
+                                : "dilewati",
                           ms: voiceMs,
                           note:
                             voice === "model"
                               ? reason === "truncated"
                                 ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
                                 : undefined
-                              : templateNote(reason ?? "unconfigured"),
+                              : failure
+                                ? failureNote(reason ?? "failed")
+                                : templateNote(reason ?? "unconfigured"),
                         }
                       : stage,
                   ),
@@ -1379,7 +1419,12 @@ export function CompanionChat({
                 stage.id === "voice"
                   ? {
                       ...stage,
-                      status: voice === "model" ? "selesai" : "dilewati",
+                      status:
+                        voice === "model"
+                          ? "selesai"
+                          : failure
+                            ? "gagal"
+                            : "dilewati",
                       ms: voiceMs,
                     }
                   : stage,
@@ -1395,6 +1440,15 @@ export function CompanionChat({
           release();
         };
         let sealed = false;
+
+        /**
+         * The model lane failed. Seal the turn with no text and keep the
+         * deterministic verdict: an honest failure plus a retry beats a
+         * templated answer that looks like the model spoke.
+         */
+        const fail = (reason: VoiceOutcome, finalResult?: ScoreResult) => {
+          finish("", "template", reason, finalResult, reason);
+        };
 
         /*
          * The follow-up lane answers *from* the verdict it followed, so it must
@@ -1442,12 +1496,6 @@ export function CompanionChat({
         const controller = control;
         const abortTimer = setTimeout(() => controller.abort(), 55000);
         pendingTimers.current.add(abortTimer);
-        const fallbackContext = {
-          question: text,
-          history: chatHistory
-            .filter((turn) => turn.role === "user")
-            .map((turn) => turn.text),
-        };
 
         // Defensive: nothing below may leave `busy` stuck.
         try {
@@ -1583,14 +1631,7 @@ export function CompanionChat({
               // clean finish.
               finish(partial, "model", keepPartial ? "truncated" : undefined);
             } else {
-              finish(
-                composeReply(text || attachments[0]?.name || "", result, {
-                  first: false,
-                  containsContent: true,
-                }),
-                "template",
-                voice.outcome,
-              );
+              fail(voice.outcome);
             }
             return;
           }
@@ -1908,22 +1949,9 @@ export function CompanionChat({
             return;
           }
 
-          finish(
-            composeAnswerFallback(lane, loop.outcome, fallbackContext),
-            "template",
-            loop.outcome as VoiceOutcome,
-          );
+          fail(loop.outcome as VoiceOutcome);
         } catch {
-          finish(
-            lane === "periksa"
-              ? composeReply(text || attachments[0]?.name || "", result, {
-                  first: false,
-                  containsContent: checked,
-                })
-              : composeAnswerFallback(lane, "failed", fallbackContext),
-            "template",
-            "failed",
-          );
+          fail("failed");
         } finally {
           clearTimeout(abortTimer);
           pendingTimers.current.delete(abortTimer);
@@ -1949,6 +1977,34 @@ export function CompanionChat({
       orchestrator,
     ],
   );
+
+  /**
+   * Retry a failed model turn without faking a result.
+   *
+   * The failed bubble and the user turn that produced it are removed, then the
+   * same text and attachments are sent again. The check lane is preserved so a
+   * retry of a `periksa` turn stays a check.
+   */
+  const retryTurn = (turn: Turn) => {
+    if (busy || inFlight.current) return;
+    const list = active?.turns ?? [];
+    const index = list.findIndex((item) => item.id === turn.id);
+    const userTurn = index > 0 ? list[index - 1] : undefined;
+    if (!userTurn || userTurn.role !== "user") return;
+    const removed = new Set([turn.id, userTurn.id]);
+    setSessions((prev) =>
+      prev.map((item) =>
+        item.id === activeId
+          ? { ...item, turns: item.turns.filter((t) => !removed.has(t.id)) }
+          : item,
+      ),
+    );
+    void send(
+      userTurn.text,
+      userTurn.attachments ?? [],
+      turn.lane === "periksa" ? { force: "periksa" } : {},
+    );
+  };
 
   /**
    * The chip path: open the card with no filters and no model call.
@@ -2618,6 +2674,39 @@ export function CompanionChat({
                         />
                       ) : null}
 
+                      {turn.failure && turn.text.length === 0 ? (
+                        <div className="max-w-[92%] rounded-[12px] border border-line bg-panel-2 px-3.5 py-3">
+                          <p className="flex items-start gap-2 text-[13px] leading-relaxed">
+                            <TriangleAlert
+                              aria-hidden
+                              strokeWidth={1.75}
+                              className="mt-0.5 size-4 shrink-0 text-warn"
+                            />
+                            <span>
+                              <span className="font-medium text-txt">
+                                {failureHeadline(turn.failure)}
+                              </span>{" "}
+                              <span className="text-dim">
+                                {failureHint(turn.failure)}
+                              </span>
+                            </span>
+                          </p>
+                          <Button
+                            className="mt-2.5 min-h-9"
+                            onClick={() => retryTurn(turn)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <RotateCcw
+                              aria-hidden
+                              strokeWidth={1.75}
+                              className="size-3.5"
+                            />
+                            Coba lagi
+                          </Button>
+                        </div>
+                      ) : null}
+
                       {turn.attachmentNote ? (
                         <p className="max-w-[92%] text-[12px] text-dim">
                           {turn.attachmentNote}
@@ -2817,7 +2906,9 @@ export function CompanionChat({
                       {turn.lane === "tanya" && turn.laneSource ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-dim text-[0.7rem]">
-                            Dijawab sebagai pertanyaan
+                            {turn.failure
+                              ? "Dianggap pertanyaan"
+                              : "Dijawab sebagai pertanyaan"}
                           </span>
                           <Button
                             variant="ghost"
