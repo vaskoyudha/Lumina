@@ -192,7 +192,7 @@ export function LevelFilter({
     <fieldset
       aria-label="Saring menurut level"
       className={cn(
-        "flex flex-wrap items-center gap-1 rounded-full bg-panel-2 p-1",
+        "inline-flex items-center rounded-full border border-white/80 bg-filter-bg p-1 shadow-sm",
         className,
       )}
     >
@@ -362,10 +362,10 @@ function FilterPill({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center rounded-full px-3 font-semibold text-[11px] transition-colors duration-150 ease-out",
+        "inline-flex items-center rounded-full px-4 py-1.5 font-semibold text-[11.5px] transition-all duration-150 ease-out",
         active
-          ? "bg-brand-strong font-bold text-bg shadow-sm"
-          : "text-dim hover:bg-panel/60 hover:text-txt",
+          ? "bg-brand font-bold text-bg shadow-sm"
+          : "text-filter-ink hover:text-txt",
       )}
     >
       {children}
