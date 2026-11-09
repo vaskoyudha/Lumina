@@ -163,6 +163,7 @@ describe("CompanionChat · shell", () => {
           title: "Tagihan listrik palsu lewat tautan",
           turns: 4,
           risk: "tinggi",
+          transcript: [],
           updatedAt: "2026-11-09T09:00:00.000Z",
         },
         {
@@ -170,6 +171,7 @@ describe("CompanionChat · shell", () => {
           title: "Cek tautan karier",
           turns: 2,
           risk: null,
+          transcript: [],
           updatedAt: "2026-11-08T09:00:00.000Z",
         },
       ],

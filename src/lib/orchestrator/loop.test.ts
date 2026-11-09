@@ -89,6 +89,47 @@ function toolCall(id: string, name: string, args: unknown) {
 }
 
 describe("runOrchestrator", () => {
+  it("streams synthesis deltas and rewrites a wrong score", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+        onDelta?: (chunk: string) => void;
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban")) {
+          options.onDelta?.("Pesan ini 99/100. ");
+          options.onDelta?.("Jangan kirim OTP.");
+          return {
+            role: "assistant",
+            content: "Pesan ini 99/100. Jangan kirim OTP.",
+          };
+        }
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const events: { type: string; text?: string }[] = [];
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+      onEvent: (event) => events.push(event),
+    });
+
+    const deltas = events.filter((event) => event.type === "synthesis_delta");
+    const streamed = deltas.map((event) => event.text ?? "").join("");
+    expect(deltas.length).toBeGreaterThanOrEqual(2);
+    expect(streamed).toContain("72/100");
+    expect(streamed).not.toContain("99/100");
+    expect(result.text).toContain("72/100");
+    const end = result.events.find((event) => event.type === "synthesis_end");
+    expect(end?.type === "synthesis_end" ? end.text : "").toContain("72/100");
+  });
+
   it("runs identity agents and carries their points into synthesis", async () => {
     const chat = jest.fn(
       async (options: {

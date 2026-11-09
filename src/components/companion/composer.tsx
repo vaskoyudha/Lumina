@@ -7,6 +7,7 @@ import {
   Loader2,
   Paperclip,
   Sparkles,
+  Square,
   X,
 } from "lucide-react";
 import * as React from "react";
@@ -102,6 +103,7 @@ export function Composer({
   className,
   initialDraft = "",
   onSearchJobs,
+  onStop,
 }: {
   /** Called with the typed text and the attachments for this turn. */
   onSubmit: (text: string, attachments: Attachment[]) => void;
@@ -114,6 +116,8 @@ export function Composer({
   initialDraft?: string;
   /** Opens the job-search card with no query; no model call. */
   onSearchJobs?: () => void;
+  /** Stops the in-flight turn while keeping what already streamed. */
+  onStop?: () => void;
 }) {
   const [draft, setDraft] = React.useState(initialDraft);
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
@@ -170,6 +174,7 @@ export function Composer({
   }, [attachments, busy, draft, onSubmit]);
 
   const canSend = draft.trim().length > 0 || attachments.length > 0;
+  const stopping = busy && Boolean(onStop);
 
   return (
     <div className={cn("w-full", className)}>
@@ -321,12 +326,19 @@ export function Composer({
 
             <Button
               type="button"
-              onClick={submit}
-              disabled={busy || !canSend}
-              aria-label={submitLabel}
+              onClick={() => (stopping && onStop ? onStop() : submit())}
+              disabled={stopping ? false : busy || !canSend}
+              aria-label={stopping ? "Hentikan" : submitLabel}
               className="size-11 shrink-0 rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong p-0 text-white ring-2 ring-brand-line shadow-[0_2px_8px_color-mix(in_oklab,var(--lumina-brand-glow)_45%,transparent)] hover:brightness-[1.03] disabled:opacity-40 sm:size-[30px]"
             >
-              {busy ? (
+              {stopping ? (
+                <Square
+                  aria-hidden
+                  strokeWidth={2}
+                  className="size-[13px]"
+                  fill="currentColor"
+                />
+              ) : busy ? (
                 <Loader2
                   aria-hidden
                   strokeWidth={2}

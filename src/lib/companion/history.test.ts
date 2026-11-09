@@ -164,6 +164,66 @@ const signedIn = (id: string) => ({
     ).toBe(false);
   });
 
+  it("round-trips the transcript and keeps it across metadata-only saves", async () => {
+    const id = randomUUID();
+    jest.mocked(getSession).mockResolvedValue(signedIn(userA));
+    const transcript = [
+      {
+        role: "user",
+        text: "Pesan yang diperiksa",
+        at: "2026-11-10T00:00:00.000Z",
+        attachments: [
+          { id: "att-1", name: "bukti.png", size: 12, type: "image/png" },
+        ],
+      },
+      {
+        role: "companion",
+        text: "Jawaban",
+        result: { score: 85, risk: "tinggi", signals: [] },
+      },
+    ];
+    expect(
+      await saveConversationHistory({
+        id,
+        title: "Pemeriksaan pesan",
+        turns: 2,
+        transcript,
+      }),
+    ).toEqual({ ok: true });
+    const first = await listConversationHistory();
+    expect(
+      first.conversations.find((item) => item.id === id)?.transcript,
+    ).toEqual(transcript);
+
+    // A later metadata-only write must not wipe the stored conversation.
+    await saveConversationHistory({
+      id,
+      title: "Pemeriksaan pesan",
+      turns: 2,
+      risk: "tinggi",
+    });
+    const second = await listConversationHistory();
+    expect(
+      second.conversations.find((item) => item.id === id)?.transcript,
+    ).toEqual(transcript);
+  });
+
+  it("rejects a transcript over the Server Action budget", async () => {
+    jest.mocked(getSession).mockResolvedValue(signedIn(userA));
+    const transcript = Array.from({ length: 400 }, () => ({
+      role: "user",
+      text: "x".repeat(2000),
+    }));
+    expect(
+      await saveConversationHistory({
+        id: randomUUID(),
+        title: "Percakapan Companion",
+        turns: 400,
+        transcript,
+      }),
+    ).toEqual({ ok: false, error: "Transkrip terlalu besar." });
+  });
+
   it("never stores arbitrary message excerpts as history titles", async () => {
     const id = randomUUID();
     jest.mocked(getSession).mockResolvedValue(signedIn(userA));
