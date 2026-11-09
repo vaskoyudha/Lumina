@@ -1102,7 +1102,10 @@ export function CompanionChat({
   const empty = turns.length === 0;
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
+    <div
+      data-workspace
+      className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
+    >
       {/*
         One live region for the whole shell, outside the transcript's
         `role="log"`. AgentRun suppresses its own region here so the summary is
@@ -1144,7 +1147,7 @@ export function CompanionChat({
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
           className={cn(
-            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:shadow-rest md:z-10 md:rounded-r-xl md:border-line md:border-r-2 md:shadow-rest",
+            "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:bg-bg max-md:shadow-rest md:z-10 md:bg-transparent",
             showSessions ? "max-md:flex" : "max-md:hidden",
           )}
         />
