@@ -6,16 +6,20 @@ import {
   Briefcase,
   ChevronsUpDown,
   GraduationCap,
-  LifeBuoy,
   LogIn,
   LogOut,
   ShieldCheck,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AuthDialog, type AuthTab } from "@/components/auth/auth-dialog";
 import { DaftarButton } from "@/components/auth/daftar-button";
+import {
+  ProfileDialog,
+  type ProfileSection,
+} from "@/components/profil/profile-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -32,6 +36,7 @@ import { cn } from "@/lib/utils";
 export interface CompanionSession {
   nama: string;
   email: string;
+  createdAt?: string | null;
 }
 
 function initialsFor(nama: string): string {
@@ -54,150 +59,151 @@ function ProfileMenu({
   session: CompanionSession;
   iconsOnly?: boolean;
 }) {
+  const [section, setSection] = useState<ProfileSection | null>(null);
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {iconsOnly ? (
-          <button
-            type="button"
-            data-pressable
-            aria-label={`Akun ${session.nama}`}
-            title={`Akun ${session.nama}`}
-            className="grid size-10 place-items-center rounded-full bg-brand-soft font-semibold text-[11.5px] text-brand-ink transition-[background-color,color] duration-150 ease-out hover:bg-brand-soft-2"
-          >
-            {initialsFor(session.nama)}
-          </button>
-        ) : (
-          <button
-            type="button"
-            data-pressable
-            aria-label={`Akun ${session.nama}`}
-            className="group flex w-full items-center gap-2.5 rounded-[12px] border border-hairline bg-panel p-2 text-left shadow-rest transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:border-edge hover:bg-chip"
-          >
-            <Avatar className="size-8 shrink-0">
-              <AvatarFallback className="bg-brand-soft font-semibold text-[11.5px] text-brand-ink">
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          {iconsOnly ? (
+            <button
+              type="button"
+              data-pressable
+              aria-label={`Akun ${session.nama}`}
+              title={`Akun ${session.nama}`}
+              className="grid size-10 place-items-center rounded-full bg-brand-soft font-semibold text-[11.5px] text-brand-ink transition-[background-color,color] duration-150 ease-out hover:bg-brand-soft-2"
+            >
+              {initialsFor(session.nama)}
+            </button>
+          ) : (
+            <button
+              type="button"
+              data-pressable
+              aria-label={`Akun ${session.nama}`}
+              className="group flex w-full items-center gap-2.5 text-left"
+            >
+              <Avatar className="size-8 shrink-0">
+                <AvatarFallback className="bg-brand-soft font-bold text-[11.5px] text-brand-ink">
+                  {initialsFor(session.nama)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-bold text-[11.5px] leading-4 text-txt">
+                  {session.nama}
+                </span>
+                <span className="block truncate text-[10px] leading-4 text-ink-faint">
+                  {session.email}
+                </span>
+              </span>
+              <ChevronsUpDown
+                aria-hidden
+                strokeWidth={1.8}
+                className="size-3.5 shrink-0 text-ink-faint transition-[color,rotate] duration-150 group-hover:text-ink-mute group-data-[state=open]:rotate-180"
+              />
+            </button>
+          )}
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          align={iconsOnly ? "start" : "end"}
+          side={iconsOnly ? "right" : "top"}
+          sideOffset={8}
+          className="max-h-[min(26rem,calc(100dvh-5rem))] w-[228px] overflow-y-auto"
+        >
+          <DropdownMenuLabel className="flex items-center gap-2.5 px-1.5 py-2">
+            <Avatar className="size-9 shrink-0">
+              <AvatarFallback className="bg-brand-soft font-semibold text-[12px] text-brand-ink">
                 {initialsFor(session.nama)}
               </AvatarFallback>
             </Avatar>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-medium text-[13px] leading-5 text-txt">
+            <span className="min-w-0">
+              <span className="block truncate font-medium text-[13px] text-txt">
                 {session.nama}
               </span>
-              <span className="block truncate text-[11px] leading-4 text-ink-faint">
+              <span className="block truncate text-[11px] text-dim">
                 {session.email}
               </span>
             </span>
-            <ChevronsUpDown
-              aria-hidden
-              strokeWidth={1.8}
-              className="size-3.5 shrink-0 text-ink-faint transition-[color,rotate] duration-150 group-hover:text-ink-mute group-data-[state=open]:rotate-180"
-            />
-          </button>
-        )}
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        align={iconsOnly ? "start" : "end"}
-        side={iconsOnly ? "right" : "top"}
-        sideOffset={8}
-        className="max-h-[min(26rem,calc(100dvh-5rem))] w-[228px] overflow-y-auto"
-      >
-        <DropdownMenuLabel className="flex items-center gap-2.5 px-1.5 py-2">
-          <Avatar className="size-9 shrink-0">
-            <AvatarFallback className="bg-brand-soft font-semibold text-[12px] text-brand-ink">
-              {initialsFor(session.nama)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="min-w-0">
-            <span className="block truncate font-medium text-[13px] text-txt">
-              {session.nama}
-            </span>
-            <span className="block truncate text-[11px] text-dim">
-              {session.email}
-            </span>
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-1.5 pt-1 pb-0.5 font-medium text-[10px] text-ink-faint uppercase tracking-[0.1em]">
-            Akun
           </DropdownMenuLabel>
-          <DropdownMenuItem asChild>
-            <Link href="/profil" className="flex items-center gap-2">
+          <DropdownMenuSeparator />
+
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="px-1.5 pt-1 pb-0.5 font-medium text-[10px] text-ink-faint uppercase tracking-[0.1em]">
+              Akun
+            </DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => setSection("profil")}>
               <UserRound aria-hidden className="size-4" />
               Profil saya
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/profil#kemajuan" className="flex items-center gap-2">
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSection("kemajuan")}>
               <GraduationCap aria-hidden className="size-4" />
               Kemajuan belajar
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/profil#loker" className="flex items-center gap-2">
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSection("loker")}>
               <Briefcase aria-hidden className="size-4" />
               Lowongan tersimpan
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/masuk" className="flex items-center gap-2">
-              <ArrowLeftRight aria-hidden className="size-4" />
-              Ganti akun
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/masuk" className="flex items-center gap-2">
+                <ArrowLeftRight aria-hidden className="size-4" />
+                Ganti akun
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-1.5 pt-1 pb-0.5 font-medium text-[10px] text-ink-faint uppercase tracking-[0.1em]">
-            Bantuan
-          </DropdownMenuLabel>
-          <DropdownMenuItem asChild>
-            <Link
-              href="/profil#akun-privasi"
-              className="flex items-center gap-2"
-            >
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="px-1.5 pt-1 pb-0.5 font-medium text-[10px] text-ink-faint uppercase tracking-[0.1em]">
+              Bantuan
+            </DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => setSection("privasi")}>
               <ShieldCheck aria-hidden className="size-4" />
               Privasi &amp; keamanan
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/belajar" className="flex items-center gap-2">
-              <BookOpen aria-hidden className="size-4" />
-              Panduan anti-penipuan
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/darurat" className="flex items-center gap-2">
-              <LifeBuoy aria-hidden className="size-4 text-danger" />
-              Mode darurat
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/belajar" className="flex items-center gap-2">
+                <BookOpen aria-hidden className="size-4" />
+                Panduan anti-penipuan
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/komunitas" className="flex items-center gap-2">
+                <UsersRound aria-hidden className="size-4 text-brand" />
+                Komunitas
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        <div className="flex items-center gap-1.5 px-1.5 py-1.5 text-[10.5px] text-ink-faint">
-          <span aria-hidden className="size-1.5 rounded-full bg-brand" />
-          Sesi aktif · berlaku 24 jam
-        </div>
+          <div className="flex items-center gap-1.5 px-1.5 py-1.5 text-[10.5px] text-ink-faint">
+            <span aria-hidden className="size-1.5 rounded-full bg-brand" />
+            Sesi aktif · berlaku 24 jam
+          </div>
 
-        <DropdownMenuItem variant="destructive">
-          <form action={logout} className="w-full">
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2 text-left"
-            >
-              <LogOut aria-hidden className="size-4" />
-              Keluar
-            </button>
-          </form>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem variant="destructive">
+            <form action={logout} className="w-full">
+              <button
+                type="submit"
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <LogOut aria-hidden className="size-4" />
+                Keluar
+              </button>
+            </form>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ProfileDialog
+        session={session}
+        section={section}
+        onOpenChange={(open) => {
+          if (!open) setSection(null);
+        }}
+      />
+    </>
   );
 }
 

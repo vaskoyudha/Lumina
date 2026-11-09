@@ -5,7 +5,6 @@ import {
   Download,
   GraduationCap,
   ImageIcon,
-  LifeBuoy,
   Link2,
   Lock,
   LogIn,
@@ -17,6 +16,7 @@ import {
   Sparkles,
   SquarePen,
   Swords,
+  UsersRound,
   Workflow,
 } from "lucide-react";
 import { ThemedLuminaLogo } from "@/components/brand/lumina-logo";
@@ -86,7 +86,7 @@ export function CompanionPreview({ compact = false }: { compact?: boolean }) {
                 <span className="hidden sm:inline">Agen</span>
               </span>
               <span className="hidden h-[32px] items-center rounded-full border border-ink-line bg-ink px-3.5 text-[12px] font-medium text-bg lg:inline-flex">
-                Mode darurat
+                Komunitas
               </span>
             </div>
           </div>
@@ -202,7 +202,7 @@ const SIDEBAR_DESTINATIONS = [
   { label: "Companion", icon: MessageSquare, active: true, emergency: false },
   { label: "Belajar", icon: GraduationCap, active: false, emergency: false },
   { label: "Simulasi", icon: Swords, active: false, emergency: false },
-  { label: "Darurat", icon: LifeBuoy, active: false, emergency: true },
+  { label: "Komunitas", icon: UsersRound, active: false, emergency: false },
 ] as const;
 
 function CompanionSidebarPreview() {

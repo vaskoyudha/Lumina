@@ -98,7 +98,13 @@ function Meter({
   );
 }
 
-export function Runner({ content }: { content: SimulationContent }) {
+export function Runner({
+  content,
+  persist = true,
+}: {
+  content: SimulationContent;
+  persist?: boolean;
+}) {
   const {
     scenario,
     mission: MISSION,
@@ -144,7 +150,7 @@ export function Runner({ content }: { content: SimulationContent }) {
   pausedRef.current = paused;
   const ended = !!failure || active?.type === "ending";
   const saveResult = useCallback(async () => {
-    if (!ended || !attemptId) return;
+    if (!persist || !ended || !attemptId) return;
     setSaveState("saving");
     try {
       const result = await submitSimulation({
@@ -171,6 +177,7 @@ export function Runner({ content }: { content: SimulationContent }) {
       setSaveError("Hasil belum tersimpan. Coba lagi.");
     }
   }, [
+    persist,
     ended,
     attemptId,
     scenario.scenario.id,
@@ -181,9 +188,16 @@ export function Runner({ content }: { content: SimulationContent }) {
     breathingAt,
   ]);
   useEffect(() => {
-    if (ended) void saveResult();
-  }, [ended, saveResult]);
-  const resultNotice = (
+    if (persist && ended) void saveResult();
+  }, [persist, ended, saveResult]);
+  const resultNotice = !persist ? (
+    <Alert className="mb-4">
+      <AlertDescription>
+        Latihan pola ini tidak menyimpan hasil. Progres belajar tetap tersimpan
+        di akunmu.
+      </AlertDescription>
+    </Alert>
+  ) : (
     <Alert className="mb-4">
       <AlertDescription>
         {saveState === "saved"
@@ -438,7 +452,9 @@ export function Runner({ content }: { content: SimulationContent }) {
         <div className="flex min-w-0 flex-col gap-5">
           <header>
             <p className="flex items-center gap-1.5 font-medium text-dim text-xs">
-              Misi · Level {scenario.scenario.level}
+              {persist
+                ? `Misi · Level ${scenario.scenario.level}`
+                : `Latihan modul ${content.moduleNo ?? ""}`.trim()}
             </p>
             <h1 className="mt-1 font-bold text-2xl text-txt tracking-tight sm:text-[30px]">
               {MISSION.title}
@@ -447,6 +463,17 @@ export function Runner({ content }: { content: SimulationContent }) {
               {MISSION.duration} · {MISSION.chapters.length} babak
             </p>
           </header>
+
+          {!persist && (
+            <Alert className="rounded-2xl border-line">
+              <ShieldCheck aria-hidden />
+              <AlertTitle>Latihan dari modul</AlertTitle>
+              <AlertDescription>
+                Ini latihan keputusan dari modul yang sudah kamu selesaikan.
+                Hasilnya tidak disimpan sebagai misi.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Card className="rounded-card border border-line ring-0 shadow-[var(--appnext-shadow-ambient)]">
             <CardHeader>
@@ -525,7 +552,8 @@ export function Runner({ content }: { content: SimulationContent }) {
                     setStarted(true);
                   }}
                 >
-                  Mulai misi <ArrowRight aria-hidden="true" />
+                  {persist ? "Mulai misi" : "Mulai latihan"}{" "}
+                  <ArrowRight aria-hidden="true" />
                 </Button>
                 <Button
                   asChild
@@ -639,7 +667,13 @@ export function Runner({ content }: { content: SimulationContent }) {
                 variant={failure ? "destructive" : "secondary"}
                 data-tone={failure ? "danger" : undefined}
               >
-                {failure ? "Misi dihentikan" : "Misi selesai"}
+                {failure
+                  ? persist
+                    ? "Misi dihentikan"
+                    : "Latihan dihentikan"
+                  : persist
+                    ? "Misi selesai"
+                    : "Latihan selesai"}
               </Badge>
               <Badge variant="outline">
                 {failure
@@ -790,7 +824,7 @@ export function Runner({ content }: { content: SimulationContent }) {
                 <div className="mt-3 flex flex-col gap-2">
                   {emergency && (
                     <Button asChild className="h-11 rounded-xl" data-pressable>
-                      <Link href="/darurat">Buka mode darurat</Link>
+                      <Link href="/komunitas">Diskusikan pola ini</Link>
                     </Button>
                   )}
                   <Button
@@ -807,7 +841,15 @@ export function Runner({ content }: { content: SimulationContent }) {
                     className="h-11 rounded-xl"
                     data-pressable
                   >
-                    <Link href="/belajar/10">Pelajari pola ini</Link>
+                    <Link
+                      href={
+                        content.moduleNo
+                          ? `/belajar/${content.moduleNo}`
+                          : "/belajar"
+                      }
+                    >
+                      Pelajari pola ini
+                    </Link>
                   </Button>
                   {!emergency && (
                     <Button
@@ -816,7 +858,7 @@ export function Runner({ content }: { content: SimulationContent }) {
                       className="h-11 rounded-xl"
                       data-pressable
                     >
-                      <Link href="/darurat">Buka mode darurat</Link>
+                      <Link href="/komunitas">Diskusikan pola ini</Link>
                     </Button>
                   )}
                   <Button
@@ -829,8 +871,9 @@ export function Runner({ content }: { content: SimulationContent }) {
                   </Button>
                 </div>
                 <p className="mt-2 text-dim text-[11px] leading-relaxed">
-                  Mode darurat untuk kejadian nyata, bukan bagian dari latihan
-                  ini.
+                  Diskusi adalah tempat berbagi pengalaman. Bila kasus sedang
+                  berlangsung, hubungi bank atau penyedia akun melalui kanal
+                  resmi.
                 </p>
                 <div className="mt-3 border-line border-t pt-2">
                   {collection}

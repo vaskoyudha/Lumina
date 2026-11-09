@@ -8,6 +8,7 @@ import {
   type CompanionSession,
 } from "@/components/companion/companion-auth";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
+import { ProfilePopup } from "@/components/profil/profile-popup";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +70,7 @@ export function WorkspaceFrame({
           <CompanionAuth session={session} iconsOnly={iconsOnly} />
         )}
         className={cn(
-          "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:shadow-rest md:z-10 md:rounded-r-xl md:border-line md:border-r-2 md:shadow-rest",
+          "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:bg-bg max-md:shadow-rest md:z-10 md:bg-transparent",
           mobileOpen ? "max-md:flex" : "max-md:hidden",
         )}
       />
@@ -87,6 +88,7 @@ export function WorkspaceFrame({
             <PanelLeftOpen aria-hidden strokeWidth={1.6} className="size-4" />
           </Button>
           <span className="truncate font-medium text-sm text-txt">{label}</span>
+          <ProfilePopup className="ml-auto size-8 text-[10px]" />
         </div>
 
         <div

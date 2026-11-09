@@ -1,4 +1,13 @@
-# Status — per 8 November 2026
+# Status — per 9 November 2026
+
+**10 November 2026 — port layout Twitter untuk Komunitas.** Branch
+`codex/community-social-ui` mengikuti layout MIT `ccrsxx/twitter-clone`, dengan
+sidebar/rail/navigasi bawah, timeline 576px, panel kanan, composer inline dan
+opsi kiriman. UI terhubung ke backend Komunitas yang sama. Palet di-scope ke
+route Komunitas; Next tetap 16.4.5, tanpa dependensi Firebase atau downgrade.
+Pemetaan sumber dan lisensi: `docs/community-ui-research.md`.
+
+**9 November 2026 — Komunitas menggantikan Darurat (permintaan pemilik produk).** Halaman Darurat, triage, pembuat laporan, PDF, dan dependensi PDF dihapus. `/komunitas` menyediakan daftar/detail publik, kategori, pencarian, paginasi, topik dan balasan per akun, reaksi Membantu, laporan, serta peninjauan moderator. PostgreSQL memakai migrasi `004_community.sql`; postingan tidak di-seed sebagai aktivitas palsu. Panduan VPS dan batas lomba: `docs/community.md`.
 
 **9 November 2026 — database Belajar dan Simulasi (permintaan pemilik produk).** Materi dan kuis 12 modul serta satu skenario yang benar-benar tersedia dipindahkan ke PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Kuis dinilai ulang di server dan hasil simulasi direkam per percobaan. Migrasi `003_learning_simulation.sql`, kemudian `npm run db:seed`, wajib dijalankan pada deployment. Skenario level lain tetap Rencana. Panduan: `docs/learning-database.md`.
 

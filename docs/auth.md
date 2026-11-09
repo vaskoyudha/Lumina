@@ -1,6 +1,6 @@
 # Autentikasi Lumina
 
-Akun email/password dan Google OAuth disimpan di PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun di PostgreSQL; percakapan tidak disimpan di database. Pertanyaan obrolan dan gambar OCR dapat dikirim ke provider yang dikonfigurasi; isi pesan yang diperiksa tetap diskor di perangkat. Node 24 diperlukan.
+Akun email/password dan Google OAuth disimpan di PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun di PostgreSQL; percakapan tidak disimpan di database. Postingan dan balasan yang sengaja diterbitkan di Komunitas disimpan sebagai konten publik; nama tampilan terlihat, email tidak. Pertanyaan obrolan dan gambar OCR dapat dikirim ke provider yang dikonfigurasi; isi pesan yang diperiksa tetap diskor di perangkat. Node 24 diperlukan.
 
 ## Menjalankan
 
@@ -18,7 +18,7 @@ Halaman `/masuk` menampilkan tombol "Masuk dengan akun demo" yang dapat dipakai 
 
 ## Batas dan ketersediaan
 
-Login dibatasi 10 percobaan per email dan daftar 5 per email per 15 menit, ditambah batas global. Endpoint AI dibatasi 10 teks dan 3 vision per IP per menit, serta batas global `LUMINA_AI_GLOBAL_LIMIT` per menit (default 200). `TRUST_PROXY=true` hanya boleh dipasang saat app hanya dapat dicapai melalui Caddy yang menimpa header `X-Lumina-Client-IP`. Tanpa itu semua pengguna anonim berbagi satu kunci; `X-Forwarded-For` tidak dipercaya. Jika DB tidak tersedia, login dan AI yang membutuhkan limit tidak tersedia; pemeriksaan lokal dan `/darurat` tetap tersedia. `GET /api/health` memeriksa DB, bukan provider AI.
+Login dibatasi 10 percobaan per email dan daftar 5 per email per 15 menit, ditambah batas global. Endpoint AI dibatasi 10 teks dan 3 vision per IP per menit, serta batas global `LUMINA_AI_GLOBAL_LIMIT` per menit (default 200). `TRUST_PROXY=true` hanya boleh dipasang saat app hanya dapat dicapai melalui Caddy yang menimpa header `X-Lumina-Client-IP`. Tanpa itu semua pengguna anonim berbagi satu kunci; `X-Forwarded-For` tidak dipercaya. Jika DB tidak tersedia, login dan AI yang membutuhkan limit tidak tersedia; pemeriksaan lokal tetap tersedia; Komunitas memerlukan database. `GET /api/health` memeriksa DB, bukan provider AI.
 
 ## Impor SQLite lama
 

@@ -122,6 +122,22 @@
     color-mix(in oklab, var(--lumina-txt) 8%, transparent);
   --shadow-lift: 0 10px 32px
     color-mix(in oklab, var(--lumina-txt) 11%, transparent);
+  /* Reference glass cards in the workspace sidebar: a warm, wide ambient
+     shadow plus a tight contact shadow, so the card reads as paper floating on
+     the peach field instead of a bordered box. */
+  --shadow-panel:
+    0 8px 26px -6px rgb(150 75 35 / 0.07), 0 2px 6px rgb(150 75 35 / 0.03);
+  /* Primary CTA "slab": a solid darker edge under the button plus a soft
+     contact shadow, so the new-chat button reads as a raised key. The pressed
+     variant shortens the edge when the button is pushed down. */
+  --shadow-slab:
+    0 4px 0 0 var(--lumina-brand-ink),
+    0 14px 24px -12px
+    color-mix(in oklab, var(--lumina-brand-cta-to) 60%, transparent);
+  --shadow-slab-pressed:
+    0 2px 0 0 var(--lumina-brand-ink),
+    0 7px 14px -9px
+    color-mix(in oklab, var(--lumina-brand-cta-to) 45%, transparent);
   /* The floating frame on the lavender field. */
   --shadow-frame:
     0 24px 70px color-mix(in oklab, var(--lumina-page-3) 62%, transparent),
@@ -717,35 +733,4 @@ html {
 button.bg-primary,
 a.bg-primary {
   border-color: var(--lumina-ink-line);
-}
-
-/*
- * Print. The app shell is a fixed-viewport document with `main` as its only
- * scroll container, so the browser would otherwise print one clipped screen.
- * Only the requested content (e.g. the triage checklist) is printed: chrome,
- * the site footer, and anything marked `data-print="hide"` are removed, and
- * every clipping ancestor is released for the page flow.
- */
-@media print {
-  [data-print="hide"],
-  header,
-  footer {
-    display: none !important;
-  }
-
-  [data-app-shell] {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  [data-app-shell] > main {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  body {
-    background: #ffffff;
-  }
 }

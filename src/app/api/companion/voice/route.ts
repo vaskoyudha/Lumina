@@ -52,7 +52,7 @@ const SYSTEM = [
   "b. Sebutkan temuan terkuat dengan kalimatnya sendiri.",
   "c. Jangan menambah temuan yang tidak ada di daftar. Jangan menyebut sesuatu aman melebihi temuan.",
   "d. Maksimal tiga kalimat. Tanpa salam pembuka, tanpa markdown, tanpa daftar bernomor.",
-  "e. Kalau risikonya tinggi, sarankan berhenti bertindak dan membuka mode darurat.",
+  "e. Kalau risikonya tinggi, sarankan menghentikan komunikasi dan menghubungi bank atau penyedia akun melalui kanal resmi dari perangkat lain yang aman.",
 ].join("\n");
 
 function fail(status: number, error: string) {
