@@ -301,7 +301,8 @@
   tab strip above it is the only control that changes slides.
 */
 .measure-preview,
-.chat-preview {
+.chat-preview,
+.about-preview {
   --mp-backdrop: #141311;
   --mp-shell: #21201e;
   --mp-sidebar: #1f1e1c;
@@ -326,6 +327,7 @@
   --mp-faint-2: #6c6a66;
   --mp-accent: #92908d;
   --mp-warm: #9e7b66;
+  --mp-danger: #e5484d;
   --mp-logo: #c8c6c2;
   --mp-logo-ink: #262523;
   --mp-shadow: rgb(0 0 0 / 0.55);
@@ -470,8 +472,10 @@
 */
 .landing[data-theme="cream"] .measure-preview,
 .landing[data-theme="cream"] .chat-preview,
+.landing[data-theme="cream"] .about-preview,
 .landing:not([data-theme]) .measure-preview,
-.landing:not([data-theme]) .chat-preview {
+.landing:not([data-theme]) .chat-preview,
+.landing:not([data-theme]) .about-preview {
   --mp-backdrop: #f7f1e8;
   --mp-shell: #fffdf9;
   --mp-sidebar: #f5eee3;
@@ -496,11 +500,13 @@
   --mp-faint-2: #b0a69b;
   --mp-accent: #241c17;
   --mp-warm: #9e7b66;
+  --mp-danger: #d92d20;
   --mp-shadow: rgb(60 44 30 / 0.24);
 }
 
 .landing[data-theme="paper"] .measure-preview,
-.landing[data-theme="paper"] .chat-preview {
+.landing[data-theme="paper"] .chat-preview,
+.landing[data-theme="paper"] .about-preview {
   --mp-backdrop: #ffffff;
   --mp-shell: #ffffff;
   --mp-sidebar: #f7fafc;
@@ -525,13 +531,28 @@
   --mp-faint-2: #a3b0b8;
   --mp-accent: #1b2228;
   --mp-warm: #9a5a22;
+  --mp-danger: #c2362f;
   --mp-shadow: rgb(27 34 40 / 0.18);
 }
 
 .landing[data-theme="cream"] .chat-preview .ap-window,
 .landing[data-theme="paper"] .chat-preview .ap-window,
 .landing:not([data-theme]) .chat-preview .ap-window {
-  background: color-mix(in srgb, var(--mp-shell) 92%, transparent);
+  background: var(--mp-shell);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.landing[data-theme="cream"] .chat-preview .mp-sidebar,
+.landing[data-theme="paper"] .chat-preview .mp-sidebar,
+.landing:not([data-theme]) .chat-preview .mp-sidebar {
+  background: var(--mp-sidebar);
+}
+
+.landing[data-theme="cream"] .chat-preview .mp-fade-sidebar,
+.landing[data-theme="paper"] .chat-preview .mp-fade-sidebar,
+.landing:not([data-theme]) .chat-preview .mp-fade-sidebar {
+  background: linear-gradient(to bottom, transparent 0%, var(--mp-sidebar) 92%);
 }
 
 .landing[data-theme="cream"] .measure-preview .mp-sky,

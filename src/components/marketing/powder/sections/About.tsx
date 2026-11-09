@@ -1,4 +1,10 @@
 /* Section extracted verbatim from the published Framer site: About */
+import {
+  KonteksPreview,
+  LangkahCardPreview,
+  WawasanCardPreview,
+} from "../about-preview";
+
 export default function About() {
   return (
     <section className="framer-fdt3dq" data-border="true" data-framer-name="About" id="about">
@@ -84,18 +90,13 @@ export default function About() {
                   </div>
                 </div>
                 <div className="framer-1r491ug" data-border="true">
-                  <div className="ssr-variant hidden-nzvz5l">
-                    <div className="framer-1aovpg7" data-framer-name="IMG" style={{willChange: "transform", opacity: "0", transform: "scale(1.1)"}}>
-                      <div style={{position: "absolute", borderRadius: "inherit", cornerShape: "inherit", top: "0", right: "0", bottom: "0", left: "0"}} data-framer-background-image-wrapper="true">
-                        <img decoding="async" loading="lazy" width={1596} height={1692} sizes="(min-width: 1280px) max((max(min(min(100vw, 1600px) - 80px, 1080px), 1px) - 16px) / 2, 1px), (min-width: 810px) and (max-width: 1279.98px) max((max(min(min(100vw, 1600px) - 80px, 720px), 1px) - 16px) / 2, 1px), (max-width: 809.98px) max(max(min(min(100vw, 1600px) - 48px, 1080px), 1px) - 24px, 1px)" srcSet="/sites/powder-framer-website-4824bd20/root-8a5edab2/D7e4TugadmJTFjHpPSKhXEtOnk.jpg 965w, /sites/powder-framer-website-4824bd20/root-8a5edab2/D7e4TugadmJTFjHpPSKhXEtOnk.jpg 1596w" src="/sites/powder-framer-website-4824bd20/root-8a5edab2/D7e4TugadmJTFjHpPSKhXEtOnk.jpg" alt="Bagian fitur menampilkan sumber pengetahuan terhubung dan percakapan yang menjawab pertanyaan tentang perpanjangan klien." style={{display: "block", width: "100%", height: "100%", borderRadius: "inherit", cornerShape: "inherit", objectPosition: "center", objectFit: "cover"}} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="ssr-variant hidden-3job37 hidden-kj696b">
-                    <div className="framer-1aovpg7" data-framer-name="IMG" style={{willChange: "transform", height: "auto", aspectRatio: "0.9432624113475178", opacity: "0", transform: "scale(1.1)"}}>
-                      <div style={{position: "absolute", borderRadius: "inherit", cornerShape: "inherit", top: "0", right: "0", bottom: "0", left: "0"}} data-framer-background-image-wrapper="true">
-                        <img decoding="async" loading="lazy" width={1596} height={1692} sizes="(min-width: 1280px) max((max(min(min(100vw, 1600px) - 80px, 1080px), 1px) - 16px) / 2, 1px), (min-width: 810px) and (max-width: 1279.98px) max((max(min(min(100vw, 1600px) - 80px, 720px), 1px) - 16px) / 2, 1px), (max-width: 809.98px) max(max(min(min(100vw, 1600px) - 48px, 1080px), 1px) - 24px, 1px)" srcSet="/sites/powder-framer-website-4824bd20/root-8a5edab2/D7e4TugadmJTFjHpPSKhXEtOnk.jpg 965w, /sites/powder-framer-website-4824bd20/root-8a5edab2/D7e4TugadmJTFjHpPSKhXEtOnk.jpg 1596w" src="/sites/powder-framer-website-4824bd20/root-8a5edab2/D7e4TugadmJTFjHpPSKhXEtOnk.jpg" alt="Bagian fitur menampilkan sumber pengetahuan terhubung dan percakapan yang menjawab pertanyaan tentang perpanjangan klien." style={{display: "block", width: "100%", height: "100%", borderRadius: "inherit", cornerShape: "inherit", objectPosition: "center", objectFit: "cover"}} />
-                      </div>
+                  <div
+                    className="framer-1aovpg7"
+                    data-framer-name="IMG"
+                    style={{ aspectRatio: "0.6" }}
+                  >
+                    <div style={{position: "absolute", top: "0", right: "0", bottom: "0", left: "0"}}>
+                      <KonteksPreview />
                     </div>
                   </div>
                 </div>
@@ -112,18 +113,13 @@ export default function About() {
               </div>
               <div className="framer-108h96l" data-framer-name="Copy">
                 <div className="framer-rk65ng" data-border="true">
-                  <div className="ssr-variant hidden-nzvz5l">
-                    <div className="framer-1m0pk4b" data-framer-name="IMG" style={{willChange: "transform", opacity: "0", transform: "scale(1.1)"}}>
-                      <div style={{position: "absolute", borderRadius: "inherit", cornerShape: "inherit", top: "0", right: "0", bottom: "0", left: "0"}} data-framer-background-image-wrapper="true">
-                        <img decoding="async" loading="lazy" width={1596} height={1692} sizes="(min-width: 1280px) max((max(min(min(100vw, 1600px) - 80px, 1080px), 1px) - 16px) / 2, 1px), (min-width: 810px) and (max-width: 1279.98px) max((max(min(min(100vw, 1600px) - 80px, 720px), 1px) - 16px) / 2, 1px), (max-width: 809.98px) max(max(min(min(100vw, 1600px) - 48px, 1080px), 1px) - 16px, 1px)" srcSet="/sites/powder-framer-website-4824bd20/root-8a5edab2/egCROtkGjJt43Q9SunwaHjvGUL4.jpg 965w, /sites/powder-framer-website-4824bd20/root-8a5edab2/egCROtkGjJt43Q9SunwaHjvGUL4.jpg 1596w" src="/sites/powder-framer-website-4824bd20/root-8a5edab2/egCROtkGjJt43Q9SunwaHjvGUL4.jpg" alt="Bagian fitur dengan dialog pembuatan tiket berisi penerima tugas, prioritas, dan ringkasan sebagai contoh alur dari pertanyaan ke tindakan." style={{display: "block", width: "100%", height: "100%", borderRadius: "inherit", cornerShape: "inherit", objectPosition: "center", objectFit: "cover"}} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="ssr-variant hidden-3job37 hidden-kj696b">
-                    <div className="framer-1m0pk4b" data-framer-name="IMG" style={{willChange: "transform", height: "auto", aspectRatio: "0.9432624113475178", opacity: "0", transform: "scale(1.1)"}}>
-                      <div style={{position: "absolute", borderRadius: "inherit", cornerShape: "inherit", top: "0", right: "0", bottom: "0", left: "0"}} data-framer-background-image-wrapper="true">
-                        <img decoding="async" loading="lazy" width={1596} height={1692} sizes="(min-width: 1280px) max((max(min(min(100vw, 1600px) - 80px, 1080px), 1px) - 16px) / 2, 1px), (min-width: 810px) and (max-width: 1279.98px) max((max(min(min(100vw, 1600px) - 80px, 720px), 1px) - 16px) / 2, 1px), (max-width: 809.98px) max(max(min(min(100vw, 1600px) - 48px, 1080px), 1px) - 16px, 1px)" srcSet="/sites/powder-framer-website-4824bd20/root-8a5edab2/egCROtkGjJt43Q9SunwaHjvGUL4.jpg 965w, /sites/powder-framer-website-4824bd20/root-8a5edab2/egCROtkGjJt43Q9SunwaHjvGUL4.jpg 1596w" src="/sites/powder-framer-website-4824bd20/root-8a5edab2/egCROtkGjJt43Q9SunwaHjvGUL4.jpg" alt="Bagian fitur dengan dialog pembuatan tiket berisi penerima tugas, prioritas, dan ringkasan sebagai contoh alur dari pertanyaan ke tindakan." style={{display: "block", width: "100%", height: "100%", borderRadius: "inherit", cornerShape: "inherit", objectPosition: "center", objectFit: "cover"}} />
-                      </div>
+                  <div
+                    className="framer-1m0pk4b"
+                    data-framer-name="IMG"
+                    style={{ aspectRatio: "0.6" }}
+                  >
+                    <div style={{position: "absolute", top: "0", right: "0", bottom: "0", left: "0"}}>
+                      <LangkahCardPreview />
                     </div>
                   </div>
                 </div>
@@ -204,18 +200,13 @@ export default function About() {
                   </div>
                 </div>
                 <div className="framer-1cmuf0h" data-border="true">
-                  <div className="ssr-variant hidden-nzvz5l">
-                    <div className="framer-yxhp5q" data-framer-name="IMG" style={{willChange: "transform", opacity: "0", transform: "scale(1.1)"}}>
-                      <div style={{position: "absolute", borderRadius: "inherit", cornerShape: "inherit", top: "0", right: "0", bottom: "0", left: "0"}} data-framer-background-image-wrapper="true">
-                        <img decoding="async" loading="lazy" width={1596} height={1692} sizes="(min-width: 1280px) max((max(min(min(100vw, 1600px) - 80px, 1080px), 1px) - 16px) / 2, 1px), (min-width: 810px) and (max-width: 1279.98px) max((max(min(min(100vw, 1600px) - 80px, 720px), 1px) - 16px) / 2, 1px), (max-width: 809.98px) max(max(min(min(100vw, 1600px) - 48px, 1080px), 1px) - 16px, 1px)" srcSet="/sites/powder-framer-website-4824bd20/root-8a5edab2/jwCVtbSWlvsuvrIejVWwVB7mAU.jpg 965w, /sites/powder-framer-website-4824bd20/root-8a5edab2/jwCVtbSWlvsuvrIejVWwVB7mAU.jpg 1596w" src="/sites/powder-framer-website-4824bd20/root-8a5edab2/jwCVtbSWlvsuvrIejVWwVB7mAU.jpg" alt="Bagian fitur menampilkan dasbor tren dengan persentase tagihan, tindak lanjut, dan wawasan mingguan." style={{display: "block", width: "100%", height: "100%", borderRadius: "inherit", cornerShape: "inherit", objectPosition: "center", objectFit: "cover"}} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="ssr-variant hidden-3job37 hidden-kj696b">
-                    <div className="framer-yxhp5q" data-framer-name="IMG" style={{willChange: "transform", height: "auto", aspectRatio: "0.9432624113475178", opacity: "0", transform: "scale(1.1)"}}>
-                      <div style={{position: "absolute", borderRadius: "inherit", cornerShape: "inherit", top: "0", right: "0", bottom: "0", left: "0"}} data-framer-background-image-wrapper="true">
-                        <img decoding="async" loading="lazy" width={1596} height={1692} sizes="(min-width: 1280px) max((max(min(min(100vw, 1600px) - 80px, 1080px), 1px) - 16px) / 2, 1px), (min-width: 810px) and (max-width: 1279.98px) max((max(min(min(100vw, 1600px) - 80px, 720px), 1px) - 16px) / 2, 1px), (max-width: 809.98px) max(max(min(min(100vw, 1600px) - 48px, 1080px), 1px) - 16px, 1px)" srcSet="/sites/powder-framer-website-4824bd20/root-8a5edab2/jwCVtbSWlvsuvrIejVWwVB7mAU.jpg 965w, /sites/powder-framer-website-4824bd20/root-8a5edab2/jwCVtbSWlvsuvrIejVWwVB7mAU.jpg 1596w" src="/sites/powder-framer-website-4824bd20/root-8a5edab2/jwCVtbSWlvsuvrIejVWwVB7mAU.jpg" alt="Bagian fitur menampilkan dasbor tren dengan persentase tagihan, tindak lanjut, dan wawasan mingguan." style={{display: "block", width: "100%", height: "100%", borderRadius: "inherit", cornerShape: "inherit", objectPosition: "center", objectFit: "cover"}} />
-                      </div>
+                  <div
+                    className="framer-yxhp5q"
+                    data-framer-name="IMG"
+                    style={{ aspectRatio: "0.6" }}
+                  >
+                    <div style={{position: "absolute", top: "0", right: "0", bottom: "0", left: "0"}}>
+                      <WawasanCardPreview />
                     </div>
                   </div>
                 </div>
