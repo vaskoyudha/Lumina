@@ -363,7 +363,7 @@ export function SessionSidebar({
             primary navigation, so they never hide behind a trigger. Search
             stays above them so it reads as global, not as part of Darurat;
             Riwayat sits below as the only collapsible group. */}
-        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5">
+        <div className="-ml-3 min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5 pl-3">
           <label className="relative flex h-[38px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
             <Search
               aria-hidden
@@ -549,8 +549,8 @@ export function SessionSidebar({
         "flex shrink-0 select-none flex-col justify-between overflow-hidden",
         "md:transition-[width] md:duration-200 md:ease-[cubic-bezier(0.22,1,0.36,1)]",
         collapsed
-          ? "w-[248px] px-2.5 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-1.5 md:px-2"
-          : "w-[248px] px-2.5 pt-2.5 pb-2",
+          ? "w-[248px] px-3 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-1.5 md:px-2"
+          : "w-[248px] px-3 pt-2.5 pb-2",
         className,
       )}
     >
