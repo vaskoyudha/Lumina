@@ -124,7 +124,7 @@ export function ModulKatalog({
           ))}
         </ul>
       ) : (
-        <Card className="mt-4 gap-0 rounded-[22px] border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+        <Card className="mt-4 gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
           <div className="flex flex-col items-start gap-3 p-6">
             <p className="font-medium text-txt">
               Tidak ada modul yang cocok dengan saringan ini.
@@ -218,7 +218,7 @@ function ModuleCard({
   const art = coverArtFor(m.no);
 
   return (
-    <Card className="group/card h-full gap-0 rounded-[22px] border border-line bg-panel py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-line hover:shadow-[var(--appnext-shadow-soft)]">
+    <Card className="group/card h-full gap-0 rounded-card border border-line bg-panel py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-line hover:shadow-[var(--appnext-shadow-soft)]">
       <Link
         href={`/belajar/${m.no}`}
         data-pressable

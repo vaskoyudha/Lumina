@@ -158,6 +158,13 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* One card shape for every app dashboard. Keep this in step with the campaign
+   hero so content cards and the hero share an edge. Declared outside the
+   `inline` block so `rounded-card` resolves to a real utility. */
+@theme {
+  --radius-card: 22px;
+}
+
 /*
  * Streaming shimmer, extracted from the reference's `thinking-label-shimmer`:
  * a 300%-wide gradient swept from 100% to 0% over 2.2s, linear and infinite.

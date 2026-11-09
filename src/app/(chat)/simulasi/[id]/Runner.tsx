@@ -346,7 +346,7 @@ export function Runner() {
             </p>
           </header>
 
-          <Card className="rounded-2xl border border-line ring-0 shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="rounded-card border border-line ring-0 shadow-[var(--appnext-shadow-ambient)]">
             <CardHeader>
               <p className="font-semibold text-[11px] text-dim uppercase tracking-wide">
                 Briefing misi
@@ -444,7 +444,7 @@ export function Runner() {
           aria-label="Ringkasan briefing"
           className="flex flex-col gap-5 lg:sticky lg:top-0"
         >
-          <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
             <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
             <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
               <div className="flex flex-col items-center py-1.5">
@@ -481,7 +481,7 @@ export function Runner() {
             </p>
           </Card>
 
-          <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
             <h2 className="font-bold text-sm text-txt">Cara dinilai</h2>
             <ul className="mt-2 flex flex-col gap-2 text-dim text-xs leading-relaxed">
               <li>Setiap pilihan punya konsekuensi tetap pada cerita.</li>
@@ -550,7 +550,7 @@ export function Runner() {
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
           <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
-            <Card className="rounded-[24px] ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
               <CardContent className="flex flex-col gap-6 pt-6">
                 {latest?.rationale && (
                   <Alert
@@ -635,7 +635,7 @@ export function Runner() {
             aria-label="Ringkasan hasil misi"
             className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
           >
-            <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
                 <span className="rounded-md bg-brand-soft px-2 py-0.5 font-semibold text-[10px] text-brand-ink">
@@ -668,7 +668,7 @@ export function Runner() {
               </p>
             </Card>
 
-            <Card className="gap-0 rounded-2xl border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
               <h2 className="font-bold text-sm text-txt">Langkah berikutnya</h2>
               <div className="mt-3 flex flex-col gap-2">
                 {emergency && (
@@ -724,7 +724,7 @@ export function Runner() {
   }
   const task = active.type === "tool_task" ? active : null;
   const tool = task && (
-    <Card className="rounded-[24px] ring-0 shadow-[var(--appnext-shadow-ambient)]">
+    <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
       <CardHeader>
         <div className="flex items-center gap-2">
           {task.tool === "isolation" ? (
@@ -852,7 +852,7 @@ export function Runner() {
           aria-label="Status misi"
           className="sticky top-0 z-20 -mx-5 border-line border-b bg-panel/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:sticky lg:top-0 lg:z-auto lg:col-start-2 lg:row-start-1 lg:mx-0 lg:flex lg:flex-col lg:gap-4 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none"
         >
-          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-[24px] lg:bg-card lg:py-4 lg:shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-card lg:bg-card lg:py-4 lg:shadow-[var(--appnext-shadow-ambient)]">
             <CardContent className="flex flex-col gap-3 p-0 lg:gap-4 lg:p-4 xl:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1.5">
@@ -1008,7 +1008,7 @@ export function Runner() {
           )}
         </aside>
         <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
-          <Card className="rounded-[24px] ring-0 shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
             <CardHeader className="border-line border-b">
               <div className="flex items-center gap-2">
                 <MessageSquare aria-hidden className="size-4 text-dim" />
