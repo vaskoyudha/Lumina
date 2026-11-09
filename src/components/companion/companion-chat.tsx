@@ -250,9 +250,9 @@ export function CompanionChat({
   const [showSessions, setShowSessions] = React.useState(false);
   /** The center column's second view; the turns stay in state while it is away. */
   const [showAgents, setShowAgents] = React.useState(initialPanel === "agen");
-  /** Which agent's brief the right pane highlights while the overview is open. */
+  /** Which agent's brief the right pane shows while the overview is open. */
   const [selectedAgent, setSelectedAgent] =
-    React.useState<DetectorAgent | null>(null);
+    React.useState<DetectorAgent | null>(AGENT_SEQUENCE[0]);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -1102,7 +1102,10 @@ export function CompanionChat({
   const empty = turns.length === 0;
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
+    <div
+      data-workspace={showAgents ? "" : undefined}
+      className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
+    >
       {/*
         One live region for the whole shell, outside the transcript's
         `role="log"`. AgentRun suppresses its own region here so the summary is
@@ -1132,7 +1135,7 @@ export function CompanionChat({
           agentsActive={showAgents}
           onShowAgents={() => {
             setShowAgents(true);
-            setSelectedAgent(null);
+            setSelectedAgent(AGENT_SEQUENCE[0]);
             setShowSessions(false);
             setAgentsAnnouncement("");
           }}
@@ -1165,7 +1168,12 @@ export function CompanionChat({
         ) : null}
 
         {/* Main panel: the white conversation column of the frame. */}
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-panel">
+        <section
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            showAgents ? "bg-transparent" : "bg-panel",
+          )}
+        >
           <header
             className={cn(
               "relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5",
@@ -1324,13 +1332,15 @@ export function CompanionChat({
           </header>
 
           {showAgents ? (
-            <AgentsView
-              onSelect={setSelectedAgent}
-              selected={selectedAgent}
-              onExport={exportThread}
-              onCopyLink={copyThreadLink}
-              copied={copiedThread}
-            />
+            <div className="min-h-0 flex-1 py-4 pr-2.5 pl-4 xl:py-5 xl:pr-3 xl:pl-5">
+              <AgentsView
+                onSelect={setSelectedAgent}
+                selected={selectedAgent}
+                onExport={exportThread}
+                onCopyLink={copyThreadLink}
+                copied={copiedThread}
+              />
+            </div>
           ) : empty ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
               <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
@@ -1547,7 +1557,10 @@ export function CompanionChat({
 
         <aside
           className={cn(
-            "cortex-dots hidden shrink-0 overflow-hidden border-hairline border-l bg-bg lg:block",
+            "hidden shrink-0 lg:block",
+            showAgents
+              ? "border-0 bg-transparent"
+              : "cortex-dots border-hairline border-l bg-bg",
             evidenceCollapsed ? "w-[48px]" : "w-[376px] xl:w-[396px]",
           )}
         >
@@ -1583,25 +1596,28 @@ export function CompanionChat({
               </span>
             </div>
           ) : showAgents ? (
-            <AgentsDetailPanel
-              action={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="Ciutkan panel detail"
-                  aria-expanded
-                  onClick={() => setEvidenceCollapsed(true)}
-                  className="size-8 rounded-full text-dim hover:text-txt"
-                >
-                  <PanelRightClose
-                    aria-hidden
-                    strokeWidth={1.6}
-                    className="size-3.5"
-                  />
-                </Button>
-              }
-              selected={selectedAgent}
-            />
+            <div className="h-full py-4 pr-4 pl-2.5 xl:py-5 xl:pr-5 xl:pl-3">
+              <AgentsDetailPanel
+                action={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Ciutkan panel detail"
+                    aria-expanded
+                    onClick={() => setEvidenceCollapsed(true)}
+                    className="size-8 rounded-full text-dim hover:text-txt"
+                  >
+                    <PanelRightClose
+                      aria-hidden
+                      strokeWidth={1.6}
+                      className="size-3.5"
+                    />
+                  </Button>
+                }
+                className="rounded-[22px] bg-panel shadow-lift ring-1 ring-edge/50"
+                selected={selectedAgent}
+              />
+            </div>
           ) : (
             <SignalPanel
               action={
