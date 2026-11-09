@@ -1,6 +1,12 @@
 "use client";
 
-import { Loader2, RefreshCw } from "lucide-react";
+import {
+  Briefcase,
+  Loader2,
+  RefreshCw,
+  Search,
+  TriangleAlert,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { LokerCard } from "@/components/companion/loker-card";
@@ -33,6 +39,10 @@ function parseRupiah(value: string): number | undefined {
  * is not a network call and clearing it restores postings the first filter
  * removed. The scan button only refills the corpus for the next search; it
  * never blocks the results already on screen.
+ *
+ * One surface, not a card inside a card: the shell carries the border and every
+ * posting is a row separated by a hairline. That keeps a five-posting result
+ * reading as one list instead of five competing panels.
  */
 export function LokerTool({
   corpus,
@@ -83,6 +93,12 @@ export function LokerTool({
 
   const scanning = scan === "starting" || scan === "running";
   const lastScan = lastRun?.finishedAt ?? corpus.postings[0]?.fetchedAt ?? null;
+  const hasNotice =
+    scan === "failed" ||
+    scan === "running" ||
+    corpus.capped ||
+    Boolean(lastRun) ||
+    summaryState === "running";
 
   const refresh = async () => {
     if (!canRefresh || scanning) return;
@@ -107,19 +123,24 @@ export function LokerTool({
   return (
     <section
       aria-label="Pencari lowongan"
-      className="flex min-w-0 flex-col gap-3 rounded-[14px] border border-line bg-panel-2/40 p-3"
+      className="flex min-w-0 flex-col overflow-hidden rounded-[16px] border border-line bg-panel"
     >
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="font-medium text-[12px] text-txt">Pencari Lowongan</h3>
-          <p className="tabular text-[10px] text-dim">
-            {results.length} dari {corpus.postings.length} lowongan di perangkat
-            ini
-          </p>
-          <p className="tabular text-[10px] text-dim">
+      <header className="flex items-start gap-2.5 p-3.5">
+        <span
+          aria-hidden
+          className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-brand-soft text-brand-ink"
+        >
+          <Briefcase className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[13px] font-semibold text-txt leading-tight">
+            Lowongan kerja
+          </h3>
+          <p className="tabular mt-0.5 text-[11px] text-dim leading-snug">
+            {results.length} dari {corpus.postings.length} lowongan
             {lastScan
-              ? `Terakhir dipindai ${lastScan.slice(0, 10)}`
-              : "Belum pernah dipindai"}
+              ? ` · dipindai ${lastScan.slice(0, 10)}`
+              : " · belum dipindai"}
           </p>
         </div>
         <Button
@@ -128,7 +149,10 @@ export function LokerTool({
           size="sm"
           onClick={refresh}
           disabled={!canRefresh || scanning}
-          aria-label="Pindai ulang lowongan"
+          aria-label={
+            canRefresh ? "Pindai ulang lowongan" : "Masuk untuk memindai"
+          }
+          className="h-8 shrink-0 rounded-full border-line bg-panel px-3 text-[11px] font-medium text-txt hover:bg-panel-2"
         >
           {scanning ? (
             <Loader2 aria-hidden className="animate-spin" />
@@ -143,12 +167,12 @@ export function LokerTool({
         </Button>
       </header>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <label
-          htmlFor="loker-kata-kunci"
-          className="flex flex-col gap-1 text-[10px] text-dim"
-        >
-          Kata kunci
+      <div className="flex flex-col gap-2 px-3.5 pb-3">
+        <div className="relative">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-dim"
+          />
           <Input
             id="loker-kata-kunci"
             value={args.query}
@@ -157,133 +181,156 @@ export function LokerTool({
             }
             placeholder="React, data analyst…"
             aria-label="Kata kunci lowongan"
+            className="h-10 rounded-[11px] border-field bg-panel pl-9 text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
           />
-        </label>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <label
+            htmlFor="loker-lokasi"
+            className="col-span-2 flex flex-col gap-1 sm:col-span-1"
+          >
+            <span className="text-[11px] font-medium text-dim">Lokasi</span>
+            <Input
+              id="loker-lokasi"
+              value={args.location ?? ""}
+              onChange={(event) =>
+                setArgs((prev) => ({
+                  ...prev,
+                  location: event.target.value || undefined,
+                }))
+              }
+              placeholder="Jakarta"
+              aria-label="Lokasi lowongan"
+              className="h-9 rounded-[10px] border-field bg-panel text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
+            />
+          </label>
+          <label htmlFor="loker-gaji-min" className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-dim">
+              Gaji min (Rp)
+            </span>
+            <Input
+              id="loker-gaji-min"
+              inputMode="numeric"
+              value={args.salaryMin ?? ""}
+              onChange={(event) =>
+                setArgs((prev) => ({
+                  ...prev,
+                  salaryMin: parseRupiah(event.target.value),
+                }))
+              }
+              placeholder="8000000"
+              aria-label="Gaji minimum"
+              className="tabular h-9 rounded-[10px] border-field bg-panel text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
+            />
+          </label>
+          <label htmlFor="loker-gaji-max" className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-dim">
+              Gaji maks (Rp)
+            </span>
+            <Input
+              id="loker-gaji-max"
+              inputMode="numeric"
+              value={args.salaryMax ?? ""}
+              onChange={(event) =>
+                setArgs((prev) => ({
+                  ...prev,
+                  salaryMax: parseRupiah(event.target.value),
+                }))
+              }
+              placeholder="15000000"
+              aria-label="Gaji maksimum"
+              className="tabular h-9 rounded-[10px] border-field bg-panel text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
+            />
+          </label>
+        </div>
+
         <label
-          htmlFor="loker-lokasi"
-          className="flex flex-col gap-1 text-[10px] text-dim"
+          htmlFor="loker-sembunyikan-ditandai"
+          className="flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-[10px] bg-panel-2/70 px-3 text-[12px] text-txt"
         >
-          Lokasi
-          <Input
-            id="loker-lokasi"
-            value={args.location ?? ""}
-            onChange={(event) =>
-              setArgs((prev) => ({
-                ...prev,
-                location: event.target.value || undefined,
-              }))
+          <Checkbox
+            id="loker-sembunyikan-ditandai"
+            checked={args.hideFlagged ?? false}
+            onCheckedChange={(checked) =>
+              setArgs((prev) => ({ ...prev, hideFlagged: checked === true }))
             }
-            placeholder="Jakarta"
-            aria-label="Lokasi lowongan"
+            className="data-checked:border-brand-strong data-checked:bg-brand-strong"
           />
-        </label>
-        <label
-          htmlFor="loker-gaji-min"
-          className="flex flex-col gap-1 text-[10px] text-dim"
-        >
-          Gaji minimum (Rp)
-          <Input
-            id="loker-gaji-min"
-            inputMode="numeric"
-            value={args.salaryMin ?? ""}
-            onChange={(event) =>
-              setArgs((prev) => ({
-                ...prev,
-                salaryMin: parseRupiah(event.target.value),
-              }))
-            }
-            placeholder="8000000"
-            aria-label="Gaji minimum"
-          />
-        </label>
-        <label
-          htmlFor="loker-gaji-max"
-          className="flex flex-col gap-1 text-[10px] text-dim"
-        >
-          Gaji maksimum (Rp)
-          <Input
-            id="loker-gaji-max"
-            inputMode="numeric"
-            value={args.salaryMax ?? ""}
-            onChange={(event) =>
-              setArgs((prev) => ({
-                ...prev,
-                salaryMax: parseRupiah(event.target.value),
-              }))
-            }
-            placeholder="15000000"
-            aria-label="Gaji maksimum"
-          />
+          Sembunyikan yang ditandai salah satu penilaian
         </label>
       </div>
 
-      <label
-        htmlFor="loker-sembunyikan-ditandai"
-        className="flex min-h-[44px] items-center gap-2 text-[11px] text-txt"
-      >
-        <Checkbox
-          id="loker-sembunyikan-ditandai"
-          checked={args.hideFlagged ?? false}
-          onCheckedChange={(checked) =>
-            setArgs((prev) => ({ ...prev, hideFlagged: checked === true }))
-          }
-        />
-        Sembunyikan yang ditandai salah satu penilaian
-      </label>
-
-      {scan === "failed" ? (
-        <p className="text-[11px] text-danger">
-          Pindai gagal dimulai. Hasil lama tetap ditampilkan.
-        </p>
-      ) : null}
-      {scan === "running" ? (
-        <p className="text-[11px] text-dim">
-          Pindai berjalan di latar belakang; hasil lama tetap ditampilkan.
-        </p>
-      ) : null}
-      {corpus.capped ? (
-        <p className="text-[11px] text-dim">
-          Menampilkan {corpus.postings.length} lowongan terbaru dari{" "}
-          {corpus.total} hasil pindai.
-        </p>
-      ) : null}
-      {lastRun ? (
-        <p className="text-[11px] text-dim">
-          Pindai terakhir: {lastRun.added} ditambahkan, {lastRun.dropped}{" "}
-          dibuang karena data audit tidak lengkap.
-        </p>
-      ) : null}
-      {summaryState === "running" ? (
-        <p className="text-[11px] text-dim">Menyusun ringkasan…</p>
-      ) : null}
-
-      {results.length === 0 ? (
-        <div className="rounded-[10px] border border-line border-dashed px-3 py-6 text-center">
-          <p className="font-medium text-[12px] text-txt">
-            {corpus.total === 0
-              ? "Belum ada hasil pindai"
-              : "Tidak ada lowongan yang cocok"}
-          </p>
-          <p className="mt-1 text-[11px] text-dim">
-            {corpus.total === 0
-              ? canRefresh
-                ? "Tekan Pindai ulang untuk mengambil lowongan terbaru."
-                : "Masuk untuk memindai lowongan."
-              : "Longgarkan kata kunci, lokasi, atau saringan gaji."}
-          </p>
+      {hasNotice ? (
+        <div className="flex flex-col gap-1.5 px-3.5 pb-3">
+          {scan === "failed" ? (
+            <p className="flex items-start gap-1.5 rounded-[8px] bg-danger/5 px-2.5 py-2 text-[11px] text-danger leading-snug">
+              <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+              Pindai gagal dimulai. Hasil lama tetap ditampilkan.
+            </p>
+          ) : null}
+          {scan === "running" ? (
+            <p className="flex items-center gap-1.5 text-[11px] text-dim">
+              <Loader2 aria-hidden className="size-3.5 animate-spin" />
+              Pindai berjalan di latar belakang; hasil lama tetap ditampilkan.
+            </p>
+          ) : null}
+          {summaryState === "running" ? (
+            <p className="flex items-center gap-1.5 text-[11px] text-dim">
+              <Loader2 aria-hidden className="size-3.5 animate-spin" />
+              Menyusun ringkasan…
+            </p>
+          ) : null}
+          {corpus.capped ? (
+            <p className="text-[11px] text-dim leading-snug">
+              Menampilkan {corpus.postings.length} lowongan terbaru dari{" "}
+              {corpus.total} hasil pindai.
+            </p>
+          ) : null}
+          {lastRun ? (
+            <p className="tabular text-[11px] text-dim leading-snug">
+              Pindai terakhir: {lastRun.added} ditambahkan, {lastRun.dropped}{" "}
+              dibuang karena data audit tidak lengkap.
+            </p>
+          ) : null}
         </div>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {results.map((posting) => (
-            <LokerCard
-              key={posting.urlKey}
-              posting={posting}
-              saved={savedIds.has(posting.urlKey)}
-              onToggleSave={onToggleSave}
-            />
-          ))}
-        </ul>
-      )}
+      ) : null}
+
+      <div className="border-t border-line">
+        {results.length === 0 ? (
+          <div className="flex flex-col items-center px-4 py-8 text-center">
+            <span
+              aria-hidden
+              className="flex size-9 items-center justify-center rounded-full bg-panel-2 text-dim"
+            >
+              <Search className="size-4" />
+            </span>
+            <p className="mt-2.5 text-[13px] font-medium text-txt">
+              {corpus.total === 0
+                ? "Belum ada hasil pindai"
+                : "Tidak ada lowongan yang cocok"}
+            </p>
+            <p className="mt-1 max-w-[30ch] text-[11px] text-dim leading-snug">
+              {corpus.total === 0
+                ? canRefresh
+                  ? "Tekan Pindai ulang untuk mengambil lowongan terbaru."
+                  : "Masuk untuk memindai lowongan."
+                : "Longgarkan kata kunci, lokasi, atau saringan gaji."}
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-line">
+            {results.map((posting) => (
+              <LokerCard
+                key={posting.urlKey}
+                posting={posting}
+                saved={savedIds.has(posting.urlKey)}
+                onToggleSave={onToggleSave}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }
