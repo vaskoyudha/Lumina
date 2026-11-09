@@ -58,6 +58,7 @@ export function ChatSurface({
         ref={bodyRef}
         role="log"
         aria-label="Percakapan latihan"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus and scroll the transcript.
         tabIndex={0}
         className="wa-chat__body flex flex-col"
       >

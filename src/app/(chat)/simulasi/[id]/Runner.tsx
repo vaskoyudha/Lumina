@@ -8,7 +8,6 @@ import {
   FileWarning,
   Flag,
   KeyRound,
-  MessageSquare,
   Pause,
   Play,
   ShieldCheck,
@@ -18,6 +17,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ChatBubble, ChatSystem } from "@/components/simulasi/chat/chat-bubble";
+import {
+  ChatComposer,
+  ChatQuickReplies,
+  ChatTyping,
+} from "@/components/simulasi/chat/chat-composer";
+import { ChatSurface } from "@/components/simulasi/chat/chat-surface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +43,7 @@ import { Progress } from "@/components/ui/progress";
 import type { SimulationContent } from "@/lib/content/schema";
 import { submitSimulation } from "@/lib/learning/actions";
 import type { SimulationSubmission } from "@/lib/learning/validation";
+import { messageClock } from "@/lib/simulasi/clock";
 import type {
   ScenarioChoice,
   ScenarioNode,
@@ -1007,6 +1014,12 @@ export function Runner({
       </CardContent>
     </Card>
   );
+  const awaitingMessage =
+    started && !paused && !ended && active.type === "message";
+  const typing =
+    awaitingMessage &&
+    active.type === "message" &&
+    active.speaker === MISSION.contact;
   return (
     <div className="flex flex-col gap-4">
       <h1 className="sr-only">{MISSION.title}</h1>
@@ -1173,175 +1186,119 @@ export function Runner({
           )}
         </aside>
         <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
-          <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <CardHeader className="border-line border-b">
-              <div className="flex items-center gap-2">
-                <MessageSquare aria-hidden className="size-4 text-dim" />
-                <CardTitle role="heading" aria-level={2} className="text-lg">
-                  {MISSION.contact}
-                </CardTitle>
-                <Badge variant="outline">Fiktif</Badge>
-              </div>
-              <CardDescription>{MISSION.contactDetail}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div
-                ref={transcriptRef}
-                role="log"
-                aria-label="Percakapan latihan"
-                // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to focus and scroll the transcript.
-                tabIndex={0}
-                className="flex flex-col gap-3 overflow-visible rounded-2xl px-0.5 py-1 lg:max-h-96 lg:overflow-y-auto"
-              >
-                {transcript.map((entry) =>
-                  entry.kind === "reply" ? (
-                    <div
-                      key={`reply-${entry.id}`}
-                      className="ml-auto flex w-fit max-w-[min(90%,34rem)] shrink-0 flex-col gap-1 rounded-2xl rounded-br-md border border-brand-line bg-brand-soft px-3.5 py-2.5"
-                      data-kind="reply"
-                    >
-                      <p className="appnext-chat-meta">Raka · Kamu</p>
-                      <p className="text-[15px] leading-relaxed">
-                        {entry.text}
-                      </p>
-                    </div>
-                  ) : (
-                    <div
-                      key={entry.node.id}
-                      className="appnext-chat flex w-fit max-w-[min(90%,34rem)] shrink-0 flex-col gap-2"
-                      data-kind={
-                        entry.node.speaker === MISSION.contact
-                          ? "incoming"
-                          : "system"
-                      }
-                    >
-                      <p className="appnext-chat-meta">{entry.node.speaker}</p>
-                      <p className="text-[15px] leading-relaxed text-txt">
-                        {entry.node.text}
-                      </p>
-                      {entry.node.attachment && (
-                        <>
-                          <div className="flex items-start gap-2 rounded-lg bg-panel-2 px-3 py-2.5">
-                            <FileWarning
-                              aria-hidden="true"
-                              className="mt-0.5 size-4 shrink-0 text-danger"
-                            />
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm text-txt">
-                                {entry.node.attachment.name}
-                              </p>
-                              <p className="text-dim text-xs">
-                                {entry.node.attachment.detail}
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            data-pressable
-                            variant="outline"
-                            className="h-auto w-fit whitespace-normal px-3 py-2 text-left"
-                            disabled={paused}
-                            aria-expanded={attachmentOpen.includes(
-                              entry.node.id,
-                            )}
-                            onClick={() =>
-                              setAttachmentOpen(
-                                toggle(attachmentOpen, entry.node.id),
-                              )
-                            }
-                          >
-                            Periksa lampiran · {entry.node.attachment.name}
-                          </Button>
-                          {attachmentOpen.includes(entry.node.id) && (
-                            <div className="flex flex-col gap-1 rounded-lg bg-panel-2 p-3">
-                              <p className="font-medium text-sm text-txt">
-                                {entry.node.attachment.name}
-                              </p>
-                              <p className="text-dim text-sm">
-                                {entry.node.attachment.detail}. Ini contoh,
-                                tidak ada unduhan.
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ),
+          <ChatSurface
+            contactName={MISSION.contact}
+            status={typing ? "mengetik…" : "online"}
+            notice={MISSION.contactDetail}
+            bodyRef={transcriptRef}
+            footer={
+              <>
+                {active.type === "choice" && (
+                  <ChatQuickReplies
+                    prompt={active.prompt}
+                    promptRef={promptRef}
+                    choices={active.choices}
+                    disabled={paused}
+                    onChoose={choose}
+                  />
                 )}
-                {active.type === "message" && !paused && (
-                  <p aria-hidden="true" className="text-dim text-sm">
-                    {active.speaker === MISSION.contact
-                      ? "Pengirim sedang mengetik…"
-                      : "Catatan latihan sedang disiapkan…"}
-                  </p>
-                )}
-              </div>
+                <ChatComposer
+                  hint={
+                    active.type === "choice"
+                      ? "Pilih balasan di atas"
+                      : "Menunggu pesan berikutnya"
+                  }
+                />
+              </>
+            }
+          >
+            {transcript.map((entry, index) =>
+              entry.kind === "reply" ? (
+                <ChatBubble
+                  key={`reply-${entry.id}`}
+                  direction="outgoing"
+                  text={entry.text}
+                  time={messageClock(index)}
+                  ticks
+                />
+              ) : entry.node.speaker === MISSION.contact ? (
+                <ChatBubble
+                  key={entry.node.id}
+                  direction="incoming"
+                  text={entry.node.text}
+                  time={messageClock(index)}
+                  attachment={
+                    entry.node.attachment
+                      ? {
+                          name: entry.node.attachment.name,
+                          detail: entry.node.attachment.detail,
+                          action: (
+                            <>
+                              <button
+                                type="button"
+                                disabled={paused}
+                                aria-expanded={attachmentOpen.includes(
+                                  entry.node.id,
+                                )}
+                                onClick={() =>
+                                  setAttachmentOpen(
+                                    toggle(attachmentOpen, entry.node.id),
+                                  )
+                                }
+                              >
+                                Periksa lampiran · {entry.node.attachment.name}
+                              </button>
+                              {attachmentOpen.includes(entry.node.id) && (
+                                <p className="wa-file__note">
+                                  {entry.node.attachment.detail}. Ini contoh,
+                                  tidak ada unduhan.
+                                </p>
+                              )}
+                            </>
+                          ),
+                        }
+                      : undefined
+                  }
+                />
+              ) : (
+                <ChatSystem
+                  key={entry.node.id}
+                  text={`${entry.node.speaker}: ${entry.node.text}`}
+                  time={messageClock(index)}
+                />
+              ),
+            )}
+            {awaitingMessage && <ChatTyping />}
 
-              {active.type === "message" && (
-                <Button
-                  data-pressable
-                  variant="outline"
+            {active.type === "message" && (
+              <div className="mt-1 flex justify-center">
+                <button
+                  type="button"
                   disabled={paused}
-                  className="h-11 w-fit"
+                  className="wa-reveal"
                   onClick={() => reveal(active)}
                 >
                   Tampilkan pesan sekarang
-                </Button>
-              )}
+                </button>
+              </div>
+            )}
+          </ChatSurface>
 
-              {latest?.rationale && (
-                <Alert
-                  role="status"
-                  data-tone={latest.verdict === "salah" ? "danger" : "safe"}
-                  variant={
-                    latest.verdict === "salah" ? "destructive" : "default"
-                  }
-                  className="border-line"
-                >
-                  <AlertTitle>
-                    {latestTactic
-                      ? `Pelatih · Pola penipuan: ${latestTactic.name}`
-                      : "Pelatih · penjelasan pilihan"}
-                  </AlertTitle>
-                  <AlertDescription>{latest.rationale}</AlertDescription>
-                </Alert>
-              )}
-
-              {active.type === "choice" && (
-                <div className="flex flex-col gap-3 border-line border-t pt-4">
-                  <p className="font-medium text-dim text-xs uppercase tracking-wide">
-                    Giliranmu
-                  </p>
-                  <h2
-                    ref={promptRef}
-                    tabIndex={-1}
-                    className="font-semibold text-lg tracking-tight outline-none"
-                  >
-                    {active.prompt}
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    {active.choices.map((choice, index) => (
-                      <Button
-                        key={choice.label}
-                        data-pressable
-                        variant="outline"
-                        disabled={paused}
-                        className="h-auto justify-start gap-3 whitespace-normal px-4 py-3 text-left"
-                        onClick={() => choose(choice)}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="grid size-6 shrink-0 place-items-center rounded-full bg-panel-2 font-medium text-xs"
-                        >
-                          {String.fromCharCode(65 + index)}
-                        </span>
-                        <span className="min-w-0">{choice.label}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {latest?.rationale && (
+            <Alert
+              role="status"
+              data-tone={latest.verdict === "salah" ? "danger" : "safe"}
+              variant={latest.verdict === "salah" ? "destructive" : "default"}
+              className="border-line"
+            >
+              <AlertTitle>
+                {latestTactic
+                  ? `Pelatih · Pola penipuan: ${latestTactic.name}`
+                  : "Pelatih · penjelasan pilihan"}
+              </AlertTitle>
+              <AlertDescription>{latest.rationale}</AlertDescription>
+            </Alert>
+          )}
 
           {tool}
           {collection}

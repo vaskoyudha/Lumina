@@ -19,7 +19,7 @@ export function ChatQuickReplies({
   onChoose: (choice: ScenarioChoice) => void;
 }) {
   return (
-    <div className="wa-quick" aria-label="Pilihan balasan">
+    <div className="wa-quick">
       <h2 ref={promptRef} tabIndex={-1} className="wa-chat__prompt">
         {prompt}
       </h2>
@@ -82,11 +82,14 @@ export function ChatComposer({ hint }: { hint: string }) {
 export function ChatTyping() {
   return (
     <div className="wa-row is-in" data-typing="true">
-      <div className="wa-bubble wa-typing" aria-label="Pengirim sedang mengetik">
+      <output
+        className="wa-bubble wa-typing"
+        aria-label="Pengirim sedang mengetik"
+      >
         <span />
         <span />
         <span />
-      </div>
+      </output>
     </div>
   );
 }
