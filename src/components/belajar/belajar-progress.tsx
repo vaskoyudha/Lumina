@@ -65,7 +65,7 @@ export function BelajarProgress() {
     .map(([, label]) => label);
 
   return (
-    <output className="mt-5 block max-w-xl rounded-2xl border border-line bg-panel p-3 shadow-[var(--appnext-shadow-ambient)]">
+    <output className="mt-5 block max-w-xl rounded-card border border-line bg-panel p-3 shadow-[var(--appnext-shadow-ambient)]">
       <span className="flex items-center gap-3">
         <ProgressRing pct={pct} />
         <span className="min-w-0">

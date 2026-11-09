@@ -52,7 +52,7 @@ export function BelajarLencana() {
             <Card
               key={badgeId}
               className={cn(
-                "gap-0 rounded-2xl border border-line bg-panel p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all hover:border-brand-line hover:shadow-md",
+                "gap-0 rounded-card border border-line bg-panel p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all hover:border-brand-line hover:shadow-md",
               )}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">

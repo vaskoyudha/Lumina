@@ -40,7 +40,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+    <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
       <div className="p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-bold text-sm text-txt">{title}</h2>
@@ -103,7 +103,7 @@ function ProgressChart({
   const tipY = Math.max(active.y - 36, 4);
 
   return (
-    <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+    <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
       <div className="p-3.5">
         <svg
           viewBox="0 0 352 130"
@@ -239,7 +239,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <Card className="gap-0 rounded-2xl border border-line p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+      <Card className="gap-0 rounded-card border border-line p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)]">
         <div
           aria-hidden
           className="appnext-campaign relative h-20 overflow-hidden rounded-xl"
@@ -379,8 +379,8 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
             total={total}
           />
         ) : (
-          <Card className="gap-0 rounded-2xl border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <div className="h-24 animate-pulse rounded-2xl bg-panel-2" />
+          <Card className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <div className="h-24 animate-pulse rounded-card bg-panel-2" />
           </Card>
         )}
       </div>
@@ -404,7 +404,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
                   key={m.no}
                   href={`/belajar/${m.no}`}
                   data-pressable
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-panel p-3 shadow-[var(--appnext-shadow-ambient)] transition-all hover:border-brand-line hover:shadow-md"
+                  className="flex items-center justify-between gap-3 rounded-card border border-line bg-panel p-3 shadow-[var(--appnext-shadow-ambient)] transition-all hover:border-brand-line hover:shadow-md"
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <span
@@ -437,7 +437,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
               ))}
             </div>
           ) : (
-            <Card className="gap-0 rounded-2xl border border-line py-0 ring-0">
+            <Card className="gap-0 rounded-card border border-line py-0 ring-0">
               <p className="p-4 text-dim text-sm">
                 Semua modul sudah selesai di perangkat ini.
               </p>
