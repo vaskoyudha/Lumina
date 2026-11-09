@@ -2,8 +2,6 @@
 
 **Keputusan produk 9 November 2026:** Darurat, triage, dan ekspor PDF dihapus penuh atas permintaan pemilik produk. Penggantinya `/komunitas`: diskusi publik, posting/balasan dengan akun, PostgreSQL, serta laporan dan peninjauan moderator. Aturan lama tentang mempertahankan `/darurat` tidak berlaku lagi. Kontrak scoring dan privasi pemeriksaan tetap berlaku. Lihat `docs/community.md`.
 
-**Aturan branch (pemilik produk, 9 November 2026):** jangan mengerjakan perubahan langsung di `main`. Buat branch `codex/<nama-pekerjaan>` sebelum menyunting kode.
-
 **Pengecualian database, 9 November 2026:** materi Belajar, kuis, dan skenario Simulasi dibaca dari PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Percakapan dan pesan yang diperiksa tetap tidak disimpan. Lihat `docs/learning-database.md`.
 
 `main` adalah cabang integrasi; branch stream lama sudah di-merge. Aturan di file

@@ -818,7 +818,7 @@ export function SignalPanel({
           : "brand"
       : linkPendingView
         ? "brand"
-        : "muted";
+        : "brand";
 
   const header = (
     <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
