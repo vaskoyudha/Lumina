@@ -8,7 +8,9 @@ import {
   Plus,
   Search,
   ShieldAlert,
+  Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
 import { LuminaLogo } from "@/components/brand/lumina-logo";
@@ -348,11 +350,18 @@ export function SessionSidebar({
         <Button
           onClick={onNew}
           data-pressable
-          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-flame-500 bg-clip-border py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_4px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_6px_0_0_var(--color-flame-600)] active:translate-y-[4px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
+          className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand to-brand-strong py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:brightness-105 active:scale-[0.98]"
         >
-          <span className="flex-1 text-left">Percakapan baru</span>
-          <span className="flex size-7 items-center justify-center rounded-[6px] bg-panel text-ink">
-            <Plus aria-hidden strokeWidth={2} className="size-4" />
+          <span className="flex items-center gap-2">
+            <Sparkles
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-bg/80"
+            />
+            <span>Percakapan baru</span>
+          </span>
+          <span className="flex size-6 items-center justify-center rounded-full bg-bg text-brand-ink shadow-sm">
+            <Plus aria-hidden strokeWidth={2.8} className="size-3.5" />
           </span>
         </Button>
 
@@ -413,6 +422,32 @@ export function SessionSidebar({
         </div>
       </div>
 
+      <div className="relative mt-2.5 flex min-h-[158px] shrink-0 select-none flex-col justify-end overflow-hidden rounded-[20px] p-3.5 shadow-rest">
+        <Image
+          src="/brand/promo-dashboard.png"
+          alt=""
+          fill
+          sizes="204px"
+          className="pointer-events-none object-cover"
+        />
+        <div className="relative z-10 max-w-[115px] pt-7">
+          <p className="font-bold text-[12px] text-txt leading-[1.25]">
+            Butuh bantuan cepat?
+          </p>
+          <p className="mt-1 mb-2.5 text-[9.5px] text-dim leading-[1.35]">
+            Panduan darurat saat sudah terlanjur transfer.
+          </p>
+          <Link
+            href="/darurat"
+            data-pressable
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand to-brand-strong px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
+          >
+            <span>Buka darurat</span>
+            <ChevronRight aria-hidden strokeWidth={2.4} className="size-3" />
+          </Link>
+        </div>
+      </div>
+
       <div className="mt-3 border-t border-line pt-3">
         <p className="mb-2 flex items-start gap-2 px-1.5 text-[11px] text-ink-faint leading-4">
           <Lock
@@ -458,7 +493,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-[10px] border-0 bg-flame-500 bg-clip-border p-0 text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_3px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_5px_0_0_var(--color-flame-600)] active:translate-y-[3px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
+        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand to-brand-strong p-0 text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:brightness-105 active:scale-[0.96]"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>
