@@ -127,6 +127,17 @@
      the peach field instead of a bordered box. */
   --shadow-panel:
     0 8px 26px -6px rgb(150 75 35 / 0.07), 0 2px 6px rgb(150 75 35 / 0.03);
+  /* Primary CTA "slab": a solid darker edge under the button plus a soft
+     contact shadow, so the new-chat button reads as a raised key. The pressed
+     variant shortens the edge when the button is pushed down. */
+  --shadow-slab:
+    0 4px 0 0 var(--lumina-brand-ink),
+    0 14px 24px -12px
+    color-mix(in oklab, var(--lumina-brand-cta-to) 60%, transparent);
+  --shadow-slab-pressed:
+    0 2px 0 0 var(--lumina-brand-ink),
+    0 7px 14px -9px
+    color-mix(in oklab, var(--lumina-brand-cta-to) 45%, transparent);
   /* The floating frame on the lavender field. */
   --shadow-frame:
     0 24px 70px color-mix(in oklab, var(--lumina-page-3) 62%, transparent),

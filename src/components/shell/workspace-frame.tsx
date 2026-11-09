@@ -8,6 +8,7 @@ import {
   type CompanionSession,
 } from "@/components/companion/companion-auth";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
+import { ProfilePopup } from "@/components/profil/profile-popup";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +88,7 @@ export function WorkspaceFrame({
             <PanelLeftOpen aria-hidden strokeWidth={1.6} className="size-4" />
           </Button>
           <span className="truncate font-medium text-sm text-txt">{label}</span>
+          <ProfilePopup className="ml-auto size-8 text-[10px]" />
         </div>
 
         <div

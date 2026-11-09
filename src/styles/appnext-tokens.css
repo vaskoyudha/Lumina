@@ -44,6 +44,13 @@
     /* Success wash (accent at low opacity on white) */
     --appnext-accent-wash: #e9f9f0;
     --appnext-accent-wash-2: #d3f2e1;
+    /* Success is a semantic state, not the brand accent. The warm workspace
+       palette remaps the accent family to orange, so correct-answer states
+       must not ride on --appnext-accent or they turn orange. */
+    --appnext-success: #1bab49;
+    --appnext-success-deep: #0e7c36;
+    --appnext-success-strong: #0b7a34;
+    --appnext-success-wash: #e9f9f0;
     /* Dark chip ground for app mockups in marketing (never a text colour) */
     --appnext-ink-3: #1c1c1c;
 
@@ -531,6 +538,11 @@
     --appnext-accent: #f05a1a;
     --appnext-accent-deep: #e85515;
     --appnext-accent-strong: #c2410c;
+    /* Success stays green here on purpose: correctness is not brand chrome. */
+    --appnext-success: #1bab49;
+    --appnext-success-deep: #0e7c36;
+    --appnext-success-strong: #0b7a34;
+    --appnext-success-wash: #e9f9f0;
     --appnext-tint: #fdece2;
 
     --lumina-bg: #fff9f5;

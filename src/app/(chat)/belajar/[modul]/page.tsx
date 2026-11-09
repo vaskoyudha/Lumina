@@ -13,7 +13,6 @@ import { ModulBody } from "@/components/belajar/modul-body";
 import { LevelSignalBadge } from "@/components/belajar/modul-visual";
 import { ModuleProgressBox } from "@/components/belajar/module-progress-box";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { listModules, moduleSummaries } from "@/lib/content/store";
 
@@ -201,17 +200,6 @@ export async function ModulContent({
           </CardContent>
         </Card>
       )}
-
-      {isi?.scenarioId ? (
-        <Button
-          asChild
-          className="min-h-11 w-fit rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
-        >
-          <Link href={`/simulasi/${isi.scenarioId}`} data-pressable>
-            Latih pola ini di simulasi
-          </Link>
-        </Button>
-      ) : null}
 
       {next && next.no !== entry.no ? (
         <nav aria-label="Modul berikutnya">

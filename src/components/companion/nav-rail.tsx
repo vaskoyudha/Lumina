@@ -11,7 +11,6 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
-import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { cn } from "@/lib/utils";
 
 /**
@@ -94,6 +93,7 @@ function RailItem({
       <Icon
         aria-hidden
         strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
         className={cn(
           "size-4 shrink-0",
           active && !emergency && "text-nav-active-icon",
@@ -152,6 +152,7 @@ function AgentItem({
       <Bot
         aria-hidden
         strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
         className={cn("size-4 shrink-0", active && "text-nav-active-icon")}
       />
       <span
@@ -163,14 +164,6 @@ function AgentItem({
       >
         Agen
       </span>
-      {iconsOnly ? null : (
-        <span
-          aria-hidden
-          className="shrink-0 rounded-full bg-panel-2 px-1.5 py-0.5 font-medium tabular text-[10.5px] text-ink-mute"
-        >
-          {AGENT_SEQUENCE.length}
-        </span>
-      )}
     </button>
   );
 }
