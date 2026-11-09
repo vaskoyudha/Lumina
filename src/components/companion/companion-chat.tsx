@@ -1530,7 +1530,7 @@ export function CompanionChat({
   };
 
   const empty = turns.length === 0;
-  const contentTop = tutorModule ? "pt-4" : "pt-[76px]";
+  const contentTop = "pt-4";
 
   return (
     <div
