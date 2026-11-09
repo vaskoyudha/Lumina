@@ -124,7 +124,7 @@ export function ModulKatalog({
       </p>
 
       {visible.length > 0 ? (
-        <ul className="mt-4 grid list-none gap-5 p-0 md:grid-cols-2 xl:grid-cols-3 min-[1750px]:grid-cols-4">
+        <ul className="mt-4 grid list-none gap-3.5 p-0 md:grid-cols-2 xl:grid-cols-3 min-[1750px]:grid-cols-4">
           {visible.map((m) => (
             <li key={m.no} className="min-w-0">
               <ModuleCard m={m} progress={progress} />

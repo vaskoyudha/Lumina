@@ -49,7 +49,7 @@ export function BelajarDashboard({
 
   return (
     <>
-      <header className="-mx-5 flex flex-wrap items-center gap-2.5 border-field border-b px-5 pb-4 shadow-sm sm:-mx-8 sm:px-8">
+      <header className="-mx-4 flex flex-wrap items-center gap-2.5 border-field border-b px-4 pb-3.5 shadow-sm sm:-mx-5 sm:px-5 lg:-ml-4 lg:mr-0 lg:pl-4 lg:pr-0">
         <div className="relative min-w-0 flex-1 basis-64">
           <Search
             aria-hidden
@@ -120,7 +120,7 @@ export function BelajarDashboard({
           className="absolute inset-0 bg-gradient-to-r from-brand-strong/95 via-brand-strong/55 to-transparent"
         />
 
-        <div className="relative z-10 flex flex-col gap-5 p-6 sm:p-8">
+        <div className="relative z-10 flex flex-col gap-5 px-6 py-5 sm:px-7">
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-bg/25 bg-bg/15 px-3 py-1 font-semibold text-[10px] text-bg uppercase tracking-[0.14em] backdrop-blur-sm">
               <Sparkles aria-hidden className="size-3.5" />
@@ -170,7 +170,7 @@ export function BelajarDashboard({
         </div>
       </section>
 
-      <section aria-labelledby="semua-modul" className="space-y-4">
+      <section aria-labelledby="semua-modul" className="space-y-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-3">
             <h2
