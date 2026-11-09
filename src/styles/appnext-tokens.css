@@ -435,6 +435,12 @@
     outline-offset: 2px;
   }
 
+  /* The deep green ring disappears on the campaign orange (about 1:1).
+     Invert it there so hero CTAs keep a visible keyboard ring. */
+  .appnext-campaign :focus-visible {
+    outline-color: var(--appnext-white);
+  }
+
   /* ---- Legacy utility remap ----------------------------------------------
      Existing components colour themselves with the dark `--lumina-*`
      utilities (`bg-panel`, `text-dim`, `border-line`…). Inside an `.appnext`

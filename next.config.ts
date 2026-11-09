@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  outputFileTracingExcludes: {
+    "*": ["scanner/**", "docs/**", ".superpowers/**"],
+  },
 };
 
 export default nextConfig;

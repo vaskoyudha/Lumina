@@ -68,6 +68,14 @@ APP_IMAGE=lumina:PREVIOUS_RELEASE docker compose --env-file .env.production up -
 
 Use additive, backward-compatible migrations so the previous app image can run against the newer schema. Later rollback restores the prior PostgreSQL-compatible app image; do not downgrade/drop schema. During initial SQLite cutover, switching to SQLite is safe only before PostgreSQL accepts new account changes. After reopening traffic, rollback must stay on PostgreSQL so new accounts are retained.
 
+### Loker scanner
+
+The image carries `scanner/` and creates `/app/.scan-data` owned by UID 1001.
+`LOKER_SCAN_DATA_DIR` defaults to that path; do not mount it read-only. The
+loker tables arrive through `npm run db:migrate` (`002_loker.sql`), like every
+other migration. A scan is triggered from the signed-in companion and runs in
+the background; no extra service or volume is required.
+
 ## Backups and restore drill
 
 Take a daily logical backup, retain at least seven recent copies, and copy one off VPS. A volume or live directory copy is not a logical backup. Protect backup files like credentials; they contain account identities and password hashes.

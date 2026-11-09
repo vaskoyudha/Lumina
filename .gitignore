@@ -57,3 +57,6 @@ next-env.d.ts
 
 # Persistent authentication database (contains personal data).
 /data/*.sqlite*
+
+# career-ops scan data root (runtime user data)
+/.scan-data/

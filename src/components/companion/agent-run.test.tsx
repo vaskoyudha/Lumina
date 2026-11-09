@@ -384,4 +384,55 @@ describe("AgentRun", () => {
     expect(body).not.toBeNull();
     expect(within(body as HTMLElement).getByText(note)).toBeInTheDocument();
   });
+
+  it("renders job-search as a non-detector row", () => {
+    const withSearch: AgentTrace = {
+      ...trace,
+      stages: [
+        ...trace.stages,
+        stage({
+          id: "job-search",
+          label: "Pencari Lowongan",
+          status: "selesai",
+          findings: 0,
+          ms: 3,
+          note: "2 lowongan cocok",
+        }),
+      ],
+      totalMs: 15,
+    };
+    render(<AgentRun trace={withSearch} />);
+    const row = screen.getByTestId("agent-job-search");
+    expect(within(row).getByText("Pencari Lowongan")).toBeInTheDocument();
+    // It searches the scan, it does not inspect the message: no "0 temuan".
+    expect(within(row).queryByText(/0 temuan/)).not.toBeInTheDocument();
+    expect(within(row).getByText("Selesai")).toBeInTheDocument();
+    expect(within(row).getByText("2 lowongan cocok")).toBeInTheDocument();
+  });
+
+  it("subtracts voice and job-search from the engine time", () => {
+    const withSearch: AgentTrace = {
+      stages: [
+        stage({ id: "message", status: "selesai", ms: 1 }),
+        stage({
+          id: "voice",
+          label: "Penyusun bahasa",
+          status: "selesai",
+          ms: 5,
+        }),
+        stage({
+          id: "job-search",
+          label: "Pencari Lowongan",
+          status: "selesai",
+          ms: 2,
+        }),
+      ],
+      totalMs: 8,
+    };
+    render(<AgentRun trace={withSearch} />);
+    // 8 - 5 - 2 = 1 ms of detector work.
+    expect(
+      screen.getByText(/^1 selesai · 0 dilewati · 0 temuan · 1,0 ms$/),
+    ).toBeInTheDocument();
+  });
 });

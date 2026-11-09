@@ -34,7 +34,7 @@ describe("simulation routes", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       /paket sebelum pulang/i,
     );
-    expect(screen.getByText("Level 1 · Misi interaktif")).toBeInTheDocument();
+    expect(screen.getByText("Misi · Level 1")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /pilih cara bermain/i }),
     ).toBeInTheDocument();

@@ -30,7 +30,7 @@ export function BackButton({
       href={href}
       data-pressable
       className={cn(
-        "group inline-flex h-10 w-fit items-center gap-1.5 rounded-full border border-line bg-panel pr-3.5 pl-2.5",
+        "group inline-flex h-11 w-fit items-center gap-1.5 rounded-full border border-line bg-panel pr-3.5 pl-2.5",
         "text-dim text-sm hover:border-line hover:bg-panel-2 hover:text-txt",
         className,
       )}

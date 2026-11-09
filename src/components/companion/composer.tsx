@@ -2,6 +2,7 @@
 
 import {
   ArrowUp,
+  Briefcase,
   ImageIcon,
   Loader2,
   Paperclip,
@@ -99,6 +100,7 @@ export function Composer({
   submitLabel = "Kirim",
   autoFocus = false,
   className,
+  onSearchJobs,
 }: {
   /** Called with the typed text and the attachments for this turn. */
   onSubmit: (text: string, attachments: Attachment[]) => void;
@@ -107,6 +109,8 @@ export function Composer({
   submitLabel?: string;
   autoFocus?: boolean;
   className?: string;
+  /** Opens the job-search card with no query; no model call. */
+  onSearchJobs?: () => void;
 }) {
   const [draft, setDraft] = React.useState("");
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
@@ -288,6 +292,24 @@ export function Composer({
               >
                 <ImageIcon aria-hidden strokeWidth={1.6} className="size-3.5" />
               </Button>
+
+              {onSearchJobs ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onSearchJobs}
+                  aria-label="Cari lowongan"
+                  className="h-11 shrink-0 rounded-[8px] border border-transparent bg-chip px-2.5 text-ink-mute text-[11px] hover:bg-chip-hover hover:text-ink sm:h-[29px]"
+                >
+                  <Briefcase
+                    aria-hidden
+                    strokeWidth={1.6}
+                    className="size-3.5"
+                  />
+                  <span className="hidden sm:inline">Cari lowongan</span>
+                  <span className="sm:hidden">Cari</span>
+                </Button>
+              ) : null}
 
               <span className="hidden truncate text-[10.5px] text-ink-faint sm:inline">
                 Enter mengirim · Shift+Enter baris baru

@@ -32,13 +32,15 @@ describe("halaman misi simulasi", () => {
     expect(screen.getAllByText(/perkiraan 3–5 menit/i).length).toBeGreaterThan(
       0,
     );
-    expect(screen.getByText(/FOTO_PAKET\.apk/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/tanpa menyerahkan kendali ponselmu/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/3 kemungkinan akhir/i)).toBeInTheDocument();
 
     const chapters = screen.getByRole("region", { name: "Alur misi" });
     expect(within(chapters).getAllByRole("listitem")).toHaveLength(3);
 
-    expect(screen.getByRole("link", { name: "Mulai misi" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Buka briefing" })).toHaveAttribute(
       "href",
       "/simulasi/L1-kurir-apk",
     );
