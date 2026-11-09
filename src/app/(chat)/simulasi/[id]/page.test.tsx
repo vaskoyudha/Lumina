@@ -1,4 +1,4 @@
-import { SIMULATION_FIXTURE } from "@/lib/content/fixtures";
+import { CONTENT_FIXTURE, SIMULATION_FIXTURE } from "@/lib/content/fixtures";
 
 jest.mock("@/lib/learning/actions", () => ({
   getAccountProgress: jest.fn(),
@@ -50,9 +50,20 @@ describe("simulation routes", () => {
     expect(screen.getByRole("button", { name: /mulai misi/i })).toBeEnabled();
   });
 
+  it("opens a practice drill for a course without a full mission", async () => {
+    render(await RunnerPage({ params: Promise.resolve({ id: "pola-1" }) }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      /latihan: jual-beli online palsu/i,
+    );
+    expect(
+      screen.getByRole("button", { name: /mulai latihan/i }),
+    ).toBeEnabled();
+  });
+
   it.each([
     "L2-phishing",
     "unknown",
+    "pola-999",
   ])("does not substitute Level 1 for unbuilt scenario %s", async (id) => {
     await expect(
       RunnerPage({ params: Promise.resolve({ id }) }),
@@ -66,5 +77,10 @@ jest.mock("next/server", () => ({
 jest.mock("@/lib/content/store", () => ({
   getSimulation: jest.fn(async (id: string) =>
     id === "L1-kurir-apk" ? SIMULATION_FIXTURE : null,
+  ),
+  getModule: jest.fn(
+    async (no: number) =>
+      CONTENT_FIXTURE.modules.find((module) => module.metadata.no === no) ??
+      null,
   ),
 }));

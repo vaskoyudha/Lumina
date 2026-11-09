@@ -19,6 +19,12 @@ jest.mock("@/lib/auth/actions", () => ({
   logout: jest.fn(),
 }));
 
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
 function mockSession(session: unknown) {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
