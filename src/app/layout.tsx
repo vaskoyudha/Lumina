@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -11,6 +11,18 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+/**
+ * The supplied dashboard reference sets
+ * `fontFamily: "'Plus Jakarta Sans', 'Inter', ..."` on its whole surface.
+ * Load it as a separate variable so only the workspace (sidebar + dashboard)
+ * adopts it, while the rest of the product keeps Inter.
+ */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 
@@ -41,7 +53,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`font-sans ${inter.variable}`}>
+    <html
+      lang="id"
+      className={`font-sans ${inter.variable} ${jakarta.variable}`}
+    >
       <body className="appnext min-h-dvh bg-bg text-txt antialiased">
         {children}
       </body>
