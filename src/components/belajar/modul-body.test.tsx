@@ -10,8 +10,9 @@ jest.mock("@/lib/learning/actions", () => ({
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ModulBody } from "@/components/belajar/modul-body";
+import { MODUL_01 } from "@/data/modul-01";
 import { MODUL_10 } from "@/data/modul-10";
-import { STORAGE_KEY } from "@/lib/progress";
+import { EMPTY_PROGRESS, STORAGE_KEY } from "@/lib/progress";
 
 jest.mock("next/link", () => {
   const Link = ({
@@ -49,8 +50,16 @@ describe("ModulBody — modul 10", () => {
       expect(screen.getByText(step)).toBeInTheDocument();
     }
     expect(
-      screen.getByRole("link", { name: /latih pola ini di simulasi/i }),
+      screen.getByRole("link", { name: /buka simulasi/i }),
     ).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
+  });
+
+  it("offers the practice drill from a course without a full mission", () => {
+    renderAccount(<ModulBody modul={MODUL_01} />);
+
+    expect(
+      screen.getByRole("link", { name: /buka latihan pola/i }),
+    ).toHaveAttribute("href", "/simulasi/pola-1");
   });
 
   it("shows the orientation and key points from the course data", () => {
@@ -103,11 +112,23 @@ describe("ModulBody — modul 10", () => {
       screen.getByRole("button", { name: /tandai modul selesai/i }),
     );
     expect(await screen.findByText(/penjaga apk/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: /lanjut ke simulasi/i }),
+    ).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
 
     expect(submitQuiz).toHaveBeenCalledWith(
       expect.objectContaining({ moduleNo: 10, complete: true }),
     );
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it("opens the practice drill for a course without a full mission", async () => {
+    mockAccount({ ...EMPTY_PROGRESS, completedModules: [1] });
+    renderAccount(<ModulBody modul={MODUL_01} />);
+
+    expect(
+      await screen.findByRole("link", { name: /lanjut ke latihan pola/i }),
+    ).toHaveAttribute("href", "/simulasi/pola-1");
   });
 
   it("records the patterns missed in the quiz instead of discarding them", async () => {
