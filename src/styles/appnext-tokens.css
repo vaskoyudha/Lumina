@@ -512,6 +512,16 @@
    * the peach ground.
    */
   [data-workspace] {
+    /* The supplied dashboard reference runs on Plus Jakarta Sans; scope it to
+       the workspace so the sidebar and dashboard match without touching the
+       marketing, auth, darurat, or admin surfaces. */
+    font-family:
+      var(--font-jakarta), var(--font-sans), ui-sans-serif, system-ui,
+      sans-serif;
+    /* The reference sets these on `*`; inheriting them here keeps Plus Jakarta
+       from rendering heavier than the supplied screenshot on Linux/GTK. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     --appnext-white: #fff9f5;
     --appnext-ink: #231e1b;
     --appnext-ink-2: #1f1b18;

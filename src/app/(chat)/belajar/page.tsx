@@ -81,7 +81,6 @@ export async function BelajarContent() {
       <BelajarDashboard
         items={items}
         featured={featured}
-        complete={complete}
         total={sorted.length}
       />
 
