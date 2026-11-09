@@ -352,7 +352,7 @@ export const L1_KURIR_APK: Scenario = {
       type: "ending",
       variant: "compromised",
       title: "Kode telanjur dibagikan. Masih ada langkah berikutnya.",
-      text: "Dalam jalur latihan ini OTP dibagikan. Menghentikan chat saja belum cukup: hubungi penyedia akun atau bank lewat kanal resmi dari perangkat lain yang aman. Gunakan panduan darurat untuk langkah berikutnya.",
+      text: "Dalam jalur latihan ini OTP dibagikan. Menghentikan chat saja belum cukup: hubungi penyedia akun atau bank lewat kanal resmi dari perangkat lain yang aman. Segera hubungi bank atau penyedia akun melalui kanal resmi dari perangkat lain yang aman.",
       debrief: DEBRIEF,
     },
   ],

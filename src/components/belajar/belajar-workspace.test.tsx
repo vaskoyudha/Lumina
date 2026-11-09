@@ -37,7 +37,7 @@ describe("BelajarWorkspace", () => {
     expect(nav).toHaveTextContent("Companion");
     expect(nav).toHaveTextContent("Belajar");
     expect(nav).toHaveTextContent("Simulasi");
-    expect(nav).toHaveTextContent("Darurat");
+    expect(nav).toHaveTextContent("Komunitas");
     expect(screen.getByRole("link", { name: "Belajar" })).toHaveAttribute(
       "aria-current",
       "page",

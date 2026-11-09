@@ -361,7 +361,7 @@ export function SessionSidebar({
 
         {/* Destinations are a flat block, not a collapsed group: they are the
             primary navigation, so they never hide behind a trigger. Search
-            stays above them so it reads as global, not as part of Darurat;
+            stays above them so it reads as global, not as part of a destination;
             Riwayat sits below as the only collapsible group. */}
         <div className="-ml-3 min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5 pl-3">
           <label className="relative flex h-[38px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
@@ -424,17 +424,17 @@ export function SessionSidebar({
         />
         <div className="relative z-10 max-w-[115px] pt-7">
           <p className="font-bold text-[12px] text-txt leading-[1.25]">
-            Butuh bantuan cepat?
+            Saling jaga, bersama.
           </p>
           <p className="mt-1 mb-2.5 text-[9.5px] text-dim leading-[1.35]">
-            Panduan darurat saat sudah terlanjur transfer.
+            Bagikan pola baru dan belajar dari pengalaman anggota.
           </p>
           <Link
-            href="/darurat"
+            href="/komunitas"
             data-pressable
             className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
           >
-            <span>Buka darurat</span>
+            <span>Buka komunitas</span>
             <ChevronRight aria-hidden strokeWidth={2.4} className="size-3" />
           </Link>
         </div>

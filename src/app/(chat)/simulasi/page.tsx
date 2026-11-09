@@ -108,12 +108,13 @@ function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
           Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif. Latihan
           tidak mengubah perangkatmu dan tidak mengirim laporan ke mana pun.
           Penilaian mengikuti aturan skenario, bukan skor model. Kalau ini
-          sedang terjadi sungguhan, gunakan mode darurat.
+          sedang terjadi sungguhan, segera hubungi penyedia akun melalui kanal
+          resmi.
         </p>
         <div className="mt-3 flex justify-end">
           <Link
-            href="/darurat"
-            aria-label="Buka mode darurat"
+            href="/komunitas"
+            aria-label="Buka komunitas"
             className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel text-brand-strong transition-colors hover:bg-brand-soft hover:text-brand-ink"
           >
             <ArrowRight aria-hidden className="size-4" />
@@ -358,12 +359,12 @@ export async function SimulasiContent() {
         </div>
 
         <p className="text-dim text-xs">
-          Sedang kena sekarang?{" "}
+          Punya pengalaman serupa?{" "}
           <Link
             className="font-semibold text-brand-strong underline-offset-4 hover:underline"
-            href="/darurat"
+            href="/komunitas"
           >
-            Buka mode darurat
+            Buka komunitas
           </Link>
           . Halaman itu tidak memakai skor atau gamifikasi.
         </p>

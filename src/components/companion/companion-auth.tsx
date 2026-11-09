@@ -6,11 +6,11 @@ import {
   Briefcase,
   ChevronsUpDown,
   GraduationCap,
-  LifeBuoy,
   LogIn,
   LogOut,
   ShieldCheck,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -171,9 +171,9 @@ function ProfileMenu({
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/darurat" className="flex items-center gap-2">
-              <LifeBuoy aria-hidden className="size-4 text-danger" />
-              Mode darurat
+            <Link href="/komunitas" className="flex items-center gap-2">
+              <UsersRound aria-hidden className="size-4 text-brand" />
+              Komunitas
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
