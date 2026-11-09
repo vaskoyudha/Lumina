@@ -1,8 +1,10 @@
 "use client";
-import { Loader2, Send } from "lucide-react";
+import { Globe2, Loader2, Send } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -20,6 +22,131 @@ import {
   type CommunityPost,
   type CommunityReply,
 } from "@/lib/community/schema";
+
+/** Port of the clone's Input grid and public composer, using Lumina actions. */
+export function TimelineComposer({
+  canWrite,
+  viewerName,
+}: {
+  canWrite: boolean;
+  viewerName?: string;
+}) {
+  const router = useRouter();
+  const [body, setBody] = useState("");
+  const [category, setCategory] = useState<Category>("modus-baru");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+  return (
+    <form
+      className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3 border-b-2 border-line px-4 py-3"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (pending || !canWrite) return;
+        setPending(true);
+        setError("");
+        try {
+          const text = body.trim();
+          const firstLine = text.split("\n")[0];
+          const result = await publishPost({
+            title: (firstLine.length >= 10 ? firstLine : text).slice(0, 140),
+            body: text,
+            category,
+            sourceUrl: "",
+          });
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          setBody("");
+          router.refresh();
+        } catch {
+          setError("Topik belum tersimpan. Coba lagi.");
+        } finally {
+          setPending(false);
+        }
+      }}
+    >
+      <Avatar className="size-10">
+        <AvatarFallback className="bg-panel-2 text-txt">
+          {viewerName?.trim().charAt(0).toUpperCase() || (
+            <Globe2 aria-hidden className="size-5" />
+          )}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        {canWrite ? (
+          <>
+            <label htmlFor="timeline-body" className="sr-only">
+              Apa yang sedang terjadi?
+            </label>
+            <Textarea
+              id="timeline-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Apa yang sedang terjadi?"
+              required
+              minLength={30}
+              maxLength={6000}
+              rows={2}
+              disabled={pending}
+              className="min-h-20 resize-y rounded-none border-0 bg-transparent px-0 py-2 text-xl shadow-none ring-0 focus-visible:ring-0 md:text-xl"
+            />
+            <p className="flex items-center gap-1.5 border-b border-line pb-3 text-xs font-medium text-brand-ink">
+              <Globe2 aria-hidden className="size-4" />
+              Semua orang dapat membaca
+            </p>
+            <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
+              <label className="min-w-0 text-xs text-brand-ink">
+                <span className="sr-only">Jenis diskusi</span>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as Category)}
+                  disabled={pending}
+                  className="min-h-11 max-w-full rounded-full bg-transparent pr-2 font-medium"
+                >
+                  {Object.entries(CATEGORIES).map(([key, c]) => (
+                    <option key={key} value={key}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                type="submit"
+                disabled={pending || body.trim().length < 30}
+                className="min-h-11 rounded-full px-5 font-bold"
+              >
+                {pending ? "Mengirim…" : "Posting"}
+              </Button>
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-dim">
+              Minimal 30 karakter. Samarkan data pribadi; kiriman dan nama
+              tampil publik.
+            </p>
+          </>
+        ) : (
+          <div className="py-2">
+            <p className="text-xl text-dim">Apa yang sedang terjadi?</p>
+            <p className="mt-2 text-sm text-dim">
+              Masuk untuk berbagi cerita. Semua orang bisa membaca.
+            </p>
+            <Button
+              asChild
+              className="mt-3 min-h-11 rounded-full px-4 font-bold"
+            >
+              <Link href="/masuk">Masuk untuk berdiskusi</Link>
+            </Button>
+          </div>
+        )}
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-danger">
+            {error}
+          </p>
+        )}
+      </div>
+    </form>
+  );
+}
 
 export function PostEditor({
   post,
