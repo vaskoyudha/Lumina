@@ -37,7 +37,6 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
-import { DeviceMemory } from "@/components/companion/device-memory";
 import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
 import { LokerTool } from "@/components/companion/loker-tool";
@@ -107,7 +106,6 @@ import {
 } from "@/lib/contracts/agent-run";
 import type { ScoreResult, Signal } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
-import { LEDGER_EVENT, lookupLedger, recordLedger } from "@/lib/ledger";
 import { filterPostings } from "@/lib/loker/search";
 import type {
   LokerCorpus,
@@ -747,12 +745,6 @@ export function CompanionChat({
           )
           .map((turn) => ({ text: turn.source ?? "" }));
 
-        let deviceSignals: import("@/lib/contracts/score").Signal[] = [];
-        if (!asked && !intent && !followUp && !tutorModule) {
-          try {
-            deviceSignals = await lookupLedger(localStorage, scored);
-          } catch {}
-        }
         const { result, trace } =
           asked || intent || followUp || tutorModule
             ? { result: null, trace: null }
@@ -760,7 +752,6 @@ export function CompanionChat({
                 text: scored,
                 turns: priorTurns,
                 extraSignals: [
-                  ...deviceSignals,
                   ...attachments.flatMap(inspectFileMetadata),
                   ...(transcription.text
                     ? extractedSignals(transcription.text)
@@ -790,13 +781,6 @@ export function CompanionChat({
          * two scam samples and turn a 20/20 claim into 18/20 on stage.
          */
         const checked = lane === "periksa" && result !== null;
-        if (checked) {
-          try {
-            void recordLedger(localStorage, scored, result)
-              .then(() => window.dispatchEvent(new Event(LEDGER_EVENT)))
-              .catch(() => {});
-          } catch {}
-        }
 
         /*
          * The user turn carries the lane too. The chat-lane history is built by
@@ -1795,7 +1779,6 @@ export function CompanionChat({
               ) : null}
             </div>
           </header>
-          <DeviceMemory />
 
           {tutorModule && (
             <div className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm">
