@@ -1,78 +1,53 @@
 import {
   ArrowRight,
-  Briefcase,
   Check,
   Clock,
-  CreditCard,
   Lightbulb,
-  Link2,
   ListChecks,
+  Lock,
   Mail,
-  PhoneCall,
   Route,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
+import {
+  ContentLoading,
+  ContentUnavailable,
+} from "@/components/belajar/content-state";
 import { ProfilePopup } from "@/components/profil/profile-popup";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MODUS } from "@/lib/modus";
-import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
-import { MISSION } from "@/lib/simulasi/scenario";
+import type { LearningSummary } from "@/lib/content/schema";
+import {
+  listModules,
+  listSimulations,
+  moduleSummaries,
+} from "@/lib/content/store";
 
 export const metadata: Metadata = {
-  title: MISSION.title,
+  title: "Simulasi",
   description:
     "Latihan fiktif 3–5 menit tentang pesan kurir, APK, dan cara menjaga kendali ponsel.",
 };
 
-const PLANNED = MODUS.filter(
-  (modus) => modus.scenarioId === null && modus.scenarioPlanned !== null,
-).sort((a, b) =>
-  (a.scenarioPlanned ?? "").localeCompare(b.scenarioPlanned ?? ""),
-);
-
-const scenarioNodes = SCENARIO_CATALOG[0]?.nodes ?? [];
-
-const endingCount = scenarioNodes.filter(
-  (node) => node.type === "ending",
-).length;
-
-const CHAPTER_NOTES = [
-  "Pesan kurir dan lampiran palsu masuk. Kamu memutuskan apakah memercayainya.",
-  "Kalau kendali ponsel mulai lepas, dek perangkat membantu memutus akses.",
-  "Tolak kode rahasia, simpan bukti yang aman, lalu lihat apa yang bisa diperbaiki.",
-];
-
 const CHAPTER_ICONS = [UserRound, Mail, ShieldCheck];
 
-const PLANNED_ICONS: Record<string, typeof ShieldCheck> = {
-  "fake-call": PhoneCall,
-  "lowongan-tugas-berbayar": Briefcase,
-  "phishing-tautan": Link2,
-  "pinjol-fiktif": CreditCard,
+const PLANNED_COPY: Record<string, { title?: string; note: string }> = {
+  "phishing-tautan": {
+    title: "Pengintipan tautan & akun",
+    note: "Mencari tautan mencurigakan",
+  },
+  "lowongan-tugas-berbayar": { note: "Waspadai jebakan kerja palsu" },
+  "pinjol-fiktif": { note: "Pinjaman cepat berisiko tinggi" },
+  "fake-call": { note: "Kenali identitas dengan cermat" },
 };
 
-const TITLE_WORDS = MISSION.title.split(" ");
-const TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" ");
-const TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
-
-const SUMMARY_POINTS = [
-  "Analisis pesan dan pola ancaman yang muncul.",
-  "Amankan akun dan perangkat sebelum terlambat.",
-  "Verifikasi tiap tindakan dengan bukti.",
-];
-
-const TIPS = [
-  "Jangan pernah membagikan kode verifikasi atau informasi pribadi.",
-  "Periksa selalu sumber pesan sebelum mengambil tindakan.",
-  "Berkas .apk memasang aplikasi, bukan membuka foto.",
-];
-
-function SimulasiAside() {
+function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
   return (
     <div className="flex flex-col gap-5">
       <Card
@@ -82,41 +57,41 @@ function SimulasiAside() {
       >
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 id="planned-heading" className="font-bold text-sm text-txt">
+            <h2 id="planned-heading" className="font-bold text-[15px] text-txt">
               Level lain
             </h2>
-            <span className="font-semibold text-[11px] text-brand-strong">
-              Lihat semua →
+            <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-ink-soft">
+              Lihat semua
+              <ArrowRight aria-hidden className="size-3" />
             </span>
           </div>
-          <p className="mt-0.5 text-dim text-xs">
-            Masih direncanakan, belum bisa dimainkan.
-          </p>
-          <ul className="mt-3 space-y-1">
+          <ul className="mt-2.5 divide-y divide-line">
             {PLANNED.map((modus) => {
-              const Icon = PLANNED_ICONS[modus.id] ?? ShieldCheck;
+              const copy = PLANNED_COPY[modus.id];
+              const title = copy?.title ?? modus.nama;
+              const note = copy?.note ?? modus.ciri[0];
               return (
-                <li key={modus.id} className="flex items-start gap-3 py-2">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
-                    <Icon aria-hidden className="size-4" />
+                <li key={modus.id} className="flex items-start gap-3 py-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                    <Lock aria-hidden strokeWidth={1.8} className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p
-                        className="line-clamp-2 font-semibold text-xs text-txt"
-                        title={modus.nama}
+                        className="font-bold text-[12px] text-txt leading-snug"
+                        title={title}
                       >
-                        {modus.nama}
+                        {title}
                       </p>
-                      <span className="shrink-0 rounded-full border border-brand-line bg-brand-soft px-2 py-0.5 text-[10px] text-brand-ink">
+                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 font-semibold text-[9.5px] text-brand-chip-ink">
                         Rencana
                       </span>
                     </div>
                     <p
-                      className="mt-0.5 line-clamp-2 text-[10px] text-dim"
-                      title={modus.ciri[0]}
+                      className="mt-1 text-[10.5px] text-dim leading-snug"
+                      title={note}
                     >
-                      {modus.ciri[0]}
+                      {note}
                     </p>
                   </div>
                 </li>
@@ -126,24 +101,38 @@ function SimulasiAside() {
         </div>
       </Card>
 
-      <Card className="rounded-card border border-line p-4 shadow-[var(--appnext-shadow-ambient)]">
-        <h2 className="font-bold text-sm text-txt">
-          Latihan, bukan pemindaian perangkat
-        </h2>
-        <p className="mt-2 text-dim text-xs leading-relaxed">
-          Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif. Latihan
-          tidak mengubah perangkatmu dan tidak mengirim laporan ke mana pun.
-          Penilaian mengikuti aturan skenario, bukan skor model. Kalau ini
-          sedang terjadi sungguhan, gunakan mode darurat.
-        </p>
-        <div className="mt-3 flex justify-end">
-          <Link
-            href="/darurat"
-            aria-label="Buka mode darurat"
-            className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel text-brand-strong transition-colors hover:bg-brand-soft hover:text-brand-ink"
-          >
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
+      <Card className="relative gap-0 overflow-hidden rounded-card border border-brand-line/60 bg-gradient-to-br from-brand-tint via-brand-soft-2 to-brand-soft py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-0 bottom-0 size-36 translate-x-8 translate-y-8 rounded-full bg-brand-glow/25 blur-2xl"
+        />
+        <div className="relative p-4">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="max-w-[11.25rem] font-bold text-[15px] text-txt leading-snug">
+              Latihan, bukan pemindaian perangkat!
+            </h2>
+            <ShieldCheck
+              aria-hidden
+              strokeWidth={1.6}
+              className="size-10 shrink-0 text-brand"
+            />
+          </div>
+          <p className="mt-2 text-[11.5px] text-dim leading-relaxed">
+            Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif.
+            Latihan ini tidak mengubah perangkatmu dan tidak mengirim laporan ke
+            mana pun. Penilaian mengikuti aturan skenario, bukan skor model.
+            Jika kasus sedang terjadi sungguhan, segera hubungi penyedia akun
+            melalui kanal resmi.
+          </p>
+          <div className="mt-4 flex justify-end">
+            <Link
+              href="/komunitas"
+              aria-label="Buka komunitas"
+              className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel/80 text-brand shadow-sm transition-colors hover:bg-panel hover:text-brand-strong"
+            >
+              <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          </div>
         </div>
       </Card>
     </div>
@@ -152,7 +141,45 @@ function SimulasiAside() {
 
 export default function SimulasiPage() {
   return (
-    <WorkspaceShell label="Simulasi" aside={<SimulasiAside />}>
+    <Suspense fallback={<ContentLoading />}>
+      <SimulasiContent />
+    </Suspense>
+  );
+}
+export async function SimulasiContent() {
+  await connection();
+  let modules: Awaited<ReturnType<typeof listModules>>;
+  let simulations: Awaited<ReturnType<typeof listSimulations>>;
+  try {
+    [modules, simulations] = await Promise.all([
+      listModules(),
+      listSimulations(),
+    ]);
+  } catch {
+    return <ContentUnavailable />;
+  }
+  const featured = simulations[0];
+  if (!featured) return <ContentUnavailable empty />;
+  const {
+    mission: MISSION,
+    chapterNotes: CHAPTER_NOTES,
+    summary: SUMMARY_POINTS,
+    tips: TIPS,
+  } = featured;
+  const PLANNED = moduleSummaries(modules).filter(
+    (m) => m.scenarioPlanned && !simulations.some((s) => s.moduleNo === m.no),
+  );
+  const endingCount = featured.scenario.nodes.filter(
+    (n) => n.type === "ending",
+  ).length;
+  const TITLE_WORDS = MISSION.title.split(" "),
+    TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" "),
+    TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
+  return (
+    <WorkspaceShell
+      label="Simulasi"
+      aside={<SimulasiAside planned={PLANNED} />}
+    >
       <div className="flex w-full flex-col gap-6">
         <section className="relative overflow-hidden rounded-card border border-brand-line shadow-[var(--appnext-shadow-soft)]">
           <div
@@ -168,7 +195,7 @@ export default function SimulasiPage() {
                 <span className="flex size-4 items-center justify-center rounded-full bg-brand text-bg">
                   <ShieldCheck aria-hidden className="size-2.5" />
                 </span>
-                Misi · Level {SCENARIO_CATALOG[0]?.scenario.level ?? 1}
+                Misi · Level {featured.scenario.scenario.level}
               </p>
               <h1
                 id="mission-title"
@@ -198,7 +225,7 @@ export default function SimulasiPage() {
                   className="min-h-11 rounded-xl bg-brand px-5 font-semibold text-bg text-xs shadow-lg hover:bg-brand-strong"
                 >
                   <Link
-                    href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
+                    href={`/simulasi/${featured.scenario.scenario.id}`}
                     data-pressable
                   >
                     Mulai briefing
@@ -210,8 +237,15 @@ export default function SimulasiPage() {
                   variant="outline"
                   className="min-h-11 rounded-xl border-brand-line bg-panel px-4 font-semibold text-txt text-xs hover:bg-brand-soft hover:text-brand-ink"
                 >
-                  <Link href="/belajar/10" data-pressable>
-                    Pelajari pola APK
+                  <Link
+                    href={
+                      featured.moduleNo
+                        ? `/belajar/${featured.moduleNo}`
+                        : "/belajar"
+                    }
+                    data-pressable
+                  >
+                    Pelajari pola ini
                   </Link>
                 </Button>
               </div>
@@ -219,6 +253,25 @@ export default function SimulasiPage() {
           </div>
         </section>
 
+        {simulations.length > 1 && (
+          <section aria-label="Misi lainnya">
+            <h2 className="text-lg">Misi lainnya</h2>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {simulations.slice(1).map((s) => (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-11"
+                  key={s.scenario.scenario.id}
+                >
+                  <Link href={`/simulasi/${s.scenario.scenario.id}`}>
+                    {s.mission.title}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </section>
+        )}
         <section aria-labelledby="chapters-heading" className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2
@@ -279,7 +332,7 @@ export default function SimulasiPage() {
                   Ringkasan Misi
                 </h2>
                 <Link
-                  href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
+                  href={`/simulasi/${featured.scenario.scenario.id}`}
                   className="shrink-0 whitespace-nowrap font-semibold text-[11px] text-brand-strong hover:underline"
                 >
                   Lihat detail →
@@ -323,12 +376,12 @@ export default function SimulasiPage() {
         </div>
 
         <p className="text-dim text-xs">
-          Sedang kena sekarang?{" "}
+          Punya pengalaman serupa?{" "}
           <Link
             className="font-semibold text-brand-strong underline-offset-4 hover:underline"
-            href="/darurat"
+            href="/komunitas"
           >
-            Buka mode darurat
+            Buka komunitas
           </Link>
           . Halaman itu tidak memakai skor atau gamifikasi.
         </p>

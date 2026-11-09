@@ -1,5 +1,7 @@
 # Lumina — Rencana Produk dan Pembagian Kerja
 
+> **Keputusan pemilik produk, 9 November 2026:** fitur Darurat dan PDF dihapus seluruhnya, diganti Komunitas diskusi dengan frontend, backend, dan PostgreSQL. Keputusan ini menggantikan kewajiban Darurat di bagian historis dokumen ini. Publik bisa membaca; akun diperlukan untuk menulis, membalas, memberi reaksi, dan melaporkan. Percakapan Companion tidak otomatis disalin. Spesifikasi aktif: `docs/community.md`.
+
 Empat orang. Enam hari kerja. Satu produk yang bisa dipakai juri dalam lima
 menit. Submission **10 November 2026**.
 
@@ -419,6 +421,8 @@ submission.
 ---
 
 ## 8. Yang tidak dikerjakan siapa pun
+
+> **Pengecualian pemilik produk, 9 November 2026:** materi, kuis, katalog dan skenario boleh disimpan di PostgreSQL. Progres belajar dan hasil simulasi wajib per akun, termasuk pada website deployment, menggantikan penyimpanan progres di localStorage. Implementasi lomba memakai DB yang sama tanpa CMS atau layanan baru. Percakapan tidak disimpan. Lihat `docs/learning-database.md`.
 
 > **Pengecualian pemilik produk, 7 November 2026:** akun email/password sungguhan
 > dan Google OAuth diminta secara eksplisit. Butir (a) dan (b) diizinkan khusus

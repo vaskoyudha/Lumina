@@ -1,3 +1,9 @@
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BelajarWorkspace } from "@/components/belajar/belajar-workspace";
@@ -31,7 +37,7 @@ describe("BelajarWorkspace", () => {
     expect(nav).toHaveTextContent("Companion");
     expect(nav).toHaveTextContent("Belajar");
     expect(nav).toHaveTextContent("Simulasi");
-    expect(nav).toHaveTextContent("Darurat");
+    expect(nav).toHaveTextContent("Komunitas");
     expect(screen.getByRole("link", { name: "Belajar" })).toHaveAttribute(
       "aria-current",
       "page",

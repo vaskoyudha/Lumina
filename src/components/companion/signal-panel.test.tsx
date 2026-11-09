@@ -170,8 +170,8 @@ describe("SignalPanel", () => {
     );
     expect(high.result.risk).toBe("tinggi");
     expect(
-      screen.getByRole("link", { name: /buka mode darurat/i }),
-    ).toHaveAttribute("href", "/darurat");
+      screen.getByRole("link", { name: /buka komunitas/i }),
+    ).toHaveAttribute("href", "/komunitas");
     unmount();
 
     const clean = scoreWithTrace({
@@ -180,7 +180,7 @@ describe("SignalPanel", () => {
     render(<SignalPanel result={clean.result} sequence={AGENT_SEQUENCE} />);
     expect(clean.result.risk).not.toBe("tinggi");
     expect(
-      screen.queryByRole("link", { name: /buka mode darurat/i }),
+      screen.queryByRole("link", { name: /buka komunitas/i }),
     ).not.toBeInTheDocument();
   });
 

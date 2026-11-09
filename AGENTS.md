@@ -1,5 +1,11 @@
 # AGENTS.md — Lumina
 
+**Keputusan produk 9 November 2026:** Darurat, triage, dan ekspor PDF dihapus penuh atas permintaan pemilik produk. Penggantinya `/komunitas`: diskusi publik, posting/balasan dengan akun, PostgreSQL, serta laporan dan peninjauan moderator. Aturan lama tentang mempertahankan `/darurat` tidak berlaku lagi. Kontrak scoring dan privasi pemeriksaan tetap berlaku. Lihat `docs/community.md`.
+
+**Aturan branch (pemilik produk, 9 November 2026):** jangan mengerjakan perubahan langsung di `main`. Buat branch `codex/<nama-pekerjaan>` sebelum menyunting kode.
+
+**Pengecualian database, 9 November 2026:** materi Belajar, kuis, dan skenario Simulasi dibaca dari PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Percakapan dan pesan yang diperiksa tetap tidak disimpan. Lihat `docs/learning-database.md`.
+
 Empat orang, submission 10 November 2026. Branch stream sudah di-merge ke
 `main`; `main` adalah cabang integrasi. Aturan di file ini mengikat semua agent.
 Baca `docs/plan.md` (sumber kebenaran produk) dan `STATUS.md` (status per stream)
@@ -17,7 +23,6 @@ sebelum menyentuh kode.
 | Ikon | `lucide-react` | 1.x |
 | Validasi | `zod` | 4.x |
 | Database | PostgreSQL via `pg` (pool async) | 18.x (Compose 18.6) |
-| PDF | `@react-pdf/renderer` | 4.x |
 | Lint/format | Biome (bukan ESLint) | 2.x |
 | Test | Jest via `next/jest` + React Testing Library | 30.x |
 
@@ -27,7 +32,7 @@ token bisa dideklarasikan sekali di CSS tanpa file config. Radix karena
 `asChild` adalah API yang sudah stabil untuk komponen yang membungkus `Link`.
 Biome karena satu tool untuk format + lint, dan `next lint` sudah deprecated.
 PostgreSQL karena akun, sesi, dan penghitung limit harus bertahan lintas restart
-dan dipakai bersama; progres serta percakapan tetap di perangkat.
+dan dipakai bersama; progres belajar serta hasil simulasi tersimpan per akun, sedangkan percakapan tetap di perangkat.
 
 ## Perintah
 
@@ -150,8 +155,8 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 | Grup | Shell | Token | Isi |
 |---|---|---|---|
 | `(marketing)` | `SiteProvider` + `SiteHeader` + `Footer` + `ThemeSlider` + `SmoothScroll` | `.landing[data-theme]` (`--ls-*`) | `/` landing |
-| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | darurat, profil |
-| `(chat)` | tanpa nav, sidebar sendiri (`WorkspaceShell`) | `--lumina-*` via `.appnext` | `/companion`, `/belajar`, `/simulasi` |
+| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | profil |
+| `(chat)` | tanpa nav, sidebar sendiri (`WorkspaceShell`) | `--lumina-*` via `.appnext` | `/companion`, `/belajar`, `/simulasi`, `/komunitas` |
 | `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
 | `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
 | `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
@@ -177,7 +182,7 @@ controlled, dengan tab Masuk/Daftar dari `AuthPanel`.
 | Permukaan | Komponen | Catatan |
 |---|---|---|
 | `SiteHeader` marketing | `MarketingAuth` | mengikuti token `--ls-*` landing; tetap tanpa sesi |
-| `SiteNav` `(app)` | `AuthNav` | masukan paling kanan setelah Darurat |
+| `SiteNav` `(app)` | `AuthNav` | masukan paling kanan setelah Komunitas |
 | Rail + sidebar companion | `CompanionAuth` | `iconsOnly` memakai tombol ikon saja; nama aksesibel wajib |
 
 Sesudah masuk, ketiganya menampilkan `UserMenu` (atau kartu profil) yang menuju
@@ -212,8 +217,7 @@ src/
 ├── app/
 │   ├── (marketing)/          landing `/` — header, footer, theme slider, smooth scroll
 │   ├── (app)/                SiteNav + footer
-│   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
-│   │   └── profil/           akun + kemajuan perangkat
+│   │   └── profil/           akun + kemajuan akun
 │   ├── (chat)/               tanpa nav; catatan privasi ada di panel/sidebar
 │   │   ├── companion/        A · percakapan + panel bukti
 │   │   ├── belajar/          B · katalog + [modul], sidebar Companion
@@ -237,7 +241,7 @@ src/
 │   ├── companion/            percakapan, panel bukti, kartu lowongan
 │   │   ├── loker-tool.tsx    kartu pencarian lowongan
 │   │   └── loker-card.tsx    satu lowongan + dua penilaian
-│   └── belajar/ darurat/ profil/
+│   └── belajar/ community/ profil/
 ├── lib/
 │   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run
 │   ├── scoring/              engine deterministik + eval.ts + bench-cases.ts
@@ -246,7 +250,7 @@ src/
 │   ├── server/               clientKey/limitAI + pembaca body berbatas
 │   ├── simulasi/             catalog, scenario, validate
 │   ├── loker/                scanner bridge, boards, audit, store, search
-│   ├── darurat/              report, pdf
+│   ├── community/            diskusi, balasan, reaksi, laporan
 │   ├── evidence/             bundle, extract, timeline, narrative
 │   ├── admin/                draft-store, export-course
 │   └── progress.ts, modus.ts, scroll.ts, site.ts, utils.ts
@@ -276,7 +280,7 @@ sesuatu, minta bentuk datanya, bukan filenya.
 | A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner, PDF |
 | B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
 | C | `app/(chat)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
-| D | `app/(app)/darurat/`, `components/darurat/`, `lib/darurat/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
+| D | `app/(chat)/komunitas/`, `components/community/`, `lib/community/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
 | Loker (pasca-submisi) | `scanner/`, `lib/loker/`, `api/loker/`, `api/companion/tools/`, `components/companion/loker-*`, `migrations/002_loker.sql` | engine skor pesan, konten modul, PDF |
 
 `StageId` mendapat entri aditif `"job-search"` untuk jejak agen; `AgentId` tidak

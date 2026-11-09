@@ -26,6 +26,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Migration runner and SQL files are runtime deployment assets.
+# Shared TypeScript validation for the Node 24 content seed/import command.
+COPY --from=builder --chown=nextjs:nodejs /app/content ./content
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/content ./src/lib/content
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/simulasi ./src/lib/simulasi
+COPY --from=builder --chown=nextjs:nodejs /app/src/data/modul-schema.ts ./src/data/modul-schema.ts
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 # The vendored scanner and its writable data root. The engine is a child

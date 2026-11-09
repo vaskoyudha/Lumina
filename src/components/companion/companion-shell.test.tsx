@@ -308,7 +308,9 @@ describe("CompanionChat · shell", () => {
     // The drawer is the navigation: all destinations are inside it.
     expect(screen.getByRole("link", { name: "Belajar" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Simulasi" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Darurat" })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: "Komunitas" }).length,
+    ).toBeGreaterThan(0);
 
     // The scrim is the outside-tap target, separate from the header toggle.
     await user.click(screen.getByRole("button", { name: /tutup navigasi/i }));

@@ -1,3 +1,9 @@
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -45,7 +51,6 @@ describe("ModulKatalog", () => {
   it("lists every module and links even the unwritten ones", () => {
     render(<ModulKatalog items={ITEMS} />);
 
-    expect(screen.getByText("3 dari 3 modul ditampilkan")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /jual-beli online palsu/i }),
     ).toHaveAttribute("href", "/belajar/1");
@@ -60,7 +65,7 @@ describe("ModulKatalog", () => {
     expect(within(card).queryByText("Segera")).not.toBeInTheDocument();
   });
 
-  it("filters by search text and reports the new count", async () => {
+  it("filters by search text", async () => {
     const user = userEvent.setup();
     render(<ModulKatalog items={ITEMS} />);
 
@@ -69,7 +74,6 @@ describe("ModulKatalog", () => {
       "apk",
     );
 
-    expect(screen.getByText("1 dari 3 modul ditampilkan")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /file apk via whatsapp/i }),
     ).toBeInTheDocument();
@@ -88,7 +92,6 @@ describe("ModulKatalog", () => {
     expect(
       within(group).getByRole("button", { name: "Level 3" }),
     ).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("2 dari 3 modul ditampilkan")).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /file apk via whatsapp/i }),
     ).not.toBeInTheDocument();
@@ -111,7 +114,9 @@ describe("ModulKatalog", () => {
       screen.getByRole("button", { name: /atur ulang saringan/i }),
     );
 
-    expect(screen.getByText("3 dari 3 modul ditampilkan")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /file apk via whatsapp/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /cari modul/i })).toHaveValue(
       "",
     );

@@ -1,33 +1,48 @@
 "use client";
 
 import { CheckCircle2, GraduationCap } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import {
   BADGE_LABEL,
+  useAccountProgress,
   useStoredProgress,
 } from "@/components/belajar/belajar-progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  BADGE_FOR_MODULE,
-  completeModule,
-  loadProgress,
-  saveProgress,
-} from "@/lib/progress";
+import { submitQuiz } from "@/lib/learning/actions";
+import { BADGE_FOR_MODULE } from "@/lib/progress";
 
-/**
- * Client island for module completion. Rendered only after the quiz reports
- * a pass (≥60%) — the badge is earned, never shown ahead of the work.
- * `saveProgress` fires PROGRESS_EVENT, so the hook re-reads without local state.
- */
-export function CompleteButton({ moduleNo }: { moduleNo: number }) {
+/** Server grades the submitted answers before awarding account completion. */
+export function CompleteButton({
+  moduleNo,
+  answers,
+}: {
+  moduleNo: number;
+  answers: Record<string, string>;
+}) {
+  const { update, authenticated } = useAccountProgress();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const progress = useStoredProgress();
   const badgeId = BADGE_FOR_MODULE[moduleNo];
   const done = progress?.completedModules.includes(moduleNo) ?? false;
   const earned = badgeId && progress?.badges.includes(badgeId);
 
-  function finish() {
-    saveProgress(completeModule(loadProgress(), moduleNo));
+  async function finish() {
+    setPending(true);
+    setError(null);
+    try {
+      const result = await submitQuiz({ moduleNo, answers, complete: true });
+      if (result.ok) update(result.progress);
+      else setError(result.error);
+    } catch {
+      setError("Progres belum tersimpan. Coba lagi.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -49,7 +64,7 @@ export function CompleteButton({ moduleNo }: { moduleNo: number }) {
             </p>
             <p className="appnext-caption">
               {done
-                ? "Progres dan lencanamu tersimpan di perangkat ini."
+                ? "Progres dan lencanamu tersimpan di akunmu."
                 : "Kuis lulus. Tandai modul untuk menyimpan progres dan membuka lencana."}
             </p>
           </div>
@@ -68,16 +83,26 @@ export function CompleteButton({ moduleNo }: { moduleNo: number }) {
               </Badge>
             ) : null}
           </div>
+        ) : !authenticated ? (
+          <Button asChild variant="outline" className="min-h-11">
+            <Link href="/masuk">Masuk untuk menyimpan progres</Link>
+          </Button>
         ) : (
           <Button
             type="button"
             className="min-h-11 w-fit rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
-            onClick={finish}
+            onClick={() => void finish()}
+            disabled={pending}
           >
-            Tandai modul selesai
+            {pending ? "Menyimpan…" : "Tandai modul selesai"}
           </Button>
         )}
       </CardContent>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
     </Card>
   );
 }

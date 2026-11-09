@@ -116,15 +116,8 @@ export function ModulKatalog({
         </div>
       ) : null}
 
-      <p
-        aria-live="polite"
-        className="appnext-caption tabular mt-4 text-[11px]"
-      >
-        {visible.length} dari {items.length} modul ditampilkan
-      </p>
-
       {visible.length > 0 ? (
-        <ul className="mt-4 grid list-none gap-5 p-0 md:grid-cols-2 xl:grid-cols-3 min-[1750px]:grid-cols-4">
+        <ul className="mt-4 grid list-none gap-3.5 p-0 md:grid-cols-2 xl:grid-cols-3 min-[1750px]:grid-cols-4">
           {visible.map((m) => (
             <li key={m.no} className="min-w-0">
               <ModuleCard m={m} progress={progress} />
@@ -145,7 +138,7 @@ export function ModulKatalog({
               type="button"
               data-pressable
               onClick={resetFilters}
-              className="min-h-11 rounded-full border border-ink-line bg-[var(--appnext-ink-2)] px-4 text-bg hover:bg-[var(--appnext-ink-3)]"
+              className="min-h-11 rounded-full border border-brand-line bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-4 text-bg hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to"
             >
               <RotateCcw aria-hidden className="size-4" />
               Atur ulang saringan
@@ -192,7 +185,7 @@ export function LevelFilter({
     <fieldset
       aria-label="Saring menurut level"
       className={cn(
-        "flex flex-wrap items-center gap-1 rounded-full bg-panel-2 p-1",
+        "inline-flex items-center rounded-full border border-white/80 bg-filter-bg p-1 shadow-sm",
         className,
       )}
     >
@@ -362,10 +355,10 @@ function FilterPill({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center rounded-full px-3 font-semibold text-[11px] transition-colors duration-150 ease-out",
+        "inline-flex items-center rounded-full px-4 py-1.5 font-semibold text-[11.5px] transition-all duration-150 ease-out",
         active
-          ? "bg-brand-strong font-bold text-bg shadow-sm"
-          : "text-dim hover:bg-panel/60 hover:text-txt",
+          ? "bg-brand font-bold text-bg shadow-sm"
+          : "text-filter-ink hover:text-txt",
       )}
     >
       {children}

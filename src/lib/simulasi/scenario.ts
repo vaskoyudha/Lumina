@@ -1,66 +1,14 @@
-export type ToolId = "isolation" | "permissions" | "report";
-export type TacticId = "urgency" | "authority" | "attachment" | "secret";
+import type { Scenario, TacticId } from "@/lib/simulasi/types";
 
-export type ScenarioChoice = {
-  label: string;
-  verdict: "benar" | "salah";
-  rationale?: string;
-  panic?: number;
-  tactic?: TacticId;
-  compromisesDevice?: boolean;
-  sharesOtp?: boolean;
-  next: string;
-};
+export type {
+  Scenario,
+  ScenarioChoice,
+  ScenarioNode,
+  TacticId,
+  ToolId,
+} from "@/lib/simulasi/types";
 
-type Scene = { id: string; chapter?: 1 | 2 | 3 };
-export type ScenarioNode = Scene &
-  (
-    | {
-        type: "message";
-        speaker: string;
-        text: string;
-        next: string;
-        delay_ms?: number;
-        attachment?: { name: string; detail: string };
-      }
-    | { type: "choice"; prompt: string; choices: ScenarioChoice[] }
-    | {
-        type: "tool_task";
-        tool: ToolId;
-        prompt: string;
-        on_success: string;
-      }
-    | {
-        type: "ending";
-        variant: "success" | "recovery" | "compromised";
-        title: string;
-        text: string;
-        debrief: [string, string, string, string];
-      }
-  );
-
-export type Scenario = {
-  scenario: { id: string; level: number; title: string; difficulty: "mudah" };
-  hud: {
-    panic: {
-      start: number;
-      max: number;
-      fail_at: number;
-      fail_message: string;
-    };
-    intrusion: {
-      start: number;
-      max: number;
-      rate_per_second: number;
-      fail_message: string;
-    };
-  };
-  tools: { id: ToolId; name: string; unlocked_at: string }[];
-  start: string;
-  nodes: ScenarioNode[];
-  scoring: { grades: { min: number; label: string }[] };
-};
-
+/** Initial competition fixture, used by tests and seed export only. */
 export const MISSION = {
   title: "Paket sebelum pulang",
   role: "Kamu adalah Raka",
@@ -404,7 +352,7 @@ export const L1_KURIR_APK: Scenario = {
       type: "ending",
       variant: "compromised",
       title: "Kode telanjur dibagikan. Masih ada langkah berikutnya.",
-      text: "Dalam jalur latihan ini OTP dibagikan. Menghentikan chat saja belum cukup: hubungi penyedia akun atau bank lewat kanal resmi dari perangkat lain yang aman. Gunakan panduan darurat untuk langkah berikutnya.",
+      text: "Dalam jalur latihan ini OTP dibagikan. Menghentikan chat saja belum cukup: hubungi penyedia akun atau bank lewat kanal resmi dari perangkat lain yang aman. Segera hubungi bank atau penyedia akun melalui kanal resmi dari perangkat lain yang aman.",
       debrief: DEBRIEF,
     },
   ],

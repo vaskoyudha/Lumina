@@ -12,7 +12,7 @@ import {
 /**
  * Root 404. It lives outside the route groups, so it renders on the token
  * ground from `RootLayout` with no nav; a lost user gets one clear way back and
- * the emergency surface stays one click away.
+ * the community is one click away.
  */
 export default function NotFound() {
   return (
@@ -23,8 +23,8 @@ export default function NotFound() {
             Halaman tidak ditemukan
           </CardTitle>
           <CardDescription>
-            Alamat ini tidak ada di Lumina. Kalau kamu sedang menangani
-            penipuan, mode darurat tetap terbuka.
+            Alamat ini tidak ada di Lumina. Kamu bisa kembali ke beranda atau
+            membaca diskusi komunitas.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -40,8 +40,8 @@ export default function NotFound() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="min-h-11">
-            <Link href="/darurat" data-pressable>
-              Buka mode darurat
+            <Link href="/komunitas" data-pressable>
+              Buka komunitas
             </Link>
           </Button>
         </CardFooter>

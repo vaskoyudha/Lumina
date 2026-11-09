@@ -10,7 +10,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Paperclip,
-  Sparkles,
   SquarePen,
   Workflow,
   X,
@@ -1103,7 +1102,10 @@ export function CompanionChat({
   const empty = turns.length === 0;
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
+    <div
+      data-workspace
+      className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
+    >
       {/*
         One live region for the whole shell, outside the transcript's
         `role="log"`. AgentRun suppresses its own region here so the summary is
@@ -1145,7 +1147,7 @@ export function CompanionChat({
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
           className={cn(
-            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:shadow-rest md:z-10 md:rounded-r-xl md:border-line md:border-r-2 md:shadow-rest",
+            "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:bg-bg max-md:shadow-rest md:z-10 md:bg-transparent",
             showSessions ? "max-md:flex" : "max-md:hidden",
           )}
         />
@@ -1190,19 +1192,7 @@ export function CompanionChat({
                 />
               </Button>
 
-              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-edge bg-panel px-2.5 shadow-rest lg:pl-1">
-                <span
-                  aria-hidden
-                  className="relative hidden size-[22px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 via-brand-glow to-brand-strong lg:grid"
-                >
-                  <Sparkles className="size-2.5 text-white" strokeWidth={2} />
-                </span>
-                <span
-                  aria-hidden
-                  className="relative grid size-4 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-soft-2 to-brand-strong lg:hidden"
-                >
-                  <Sparkles className="size-2 text-white" strokeWidth={2} />
-                </span>
+              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 shadow-rest">
                 <span className="truncate font-medium text-[12px] text-txt">
                   {showAgents
                     ? "Agen pemeriksa"
@@ -1308,7 +1298,7 @@ export function CompanionChat({
                 size="sm"
                 onClick={startNew}
                 aria-label="Percakapan baru"
-                className="h-11 gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-11 max-md:px-0 lg:hidden"
+                className="h-11 gap-1.5 rounded-full bg-brand-soft px-3 text-[12px] font-medium text-brand-ink hover:bg-brand-soft-2 max-md:size-11 max-md:px-0 lg:hidden"
               >
                 <SquarePen aria-hidden strokeWidth={1.6} className="size-3.5" />
                 <span className="max-md:sr-only">Percakapan baru</span>
@@ -1331,7 +1321,7 @@ export function CompanionChat({
                 size="sm"
                 className="hidden h-[32px] bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
               >
-                <Link href="/darurat">Mode darurat</Link>
+                <Link href="/komunitas">Komunitas</Link>
               </Button>
             </div>
           </header>

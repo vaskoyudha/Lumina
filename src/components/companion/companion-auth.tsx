@@ -6,11 +6,11 @@ import {
   Briefcase,
   ChevronsUpDown,
   GraduationCap,
-  LifeBuoy,
   LogIn,
   LogOut,
   ShieldCheck,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -72,18 +72,18 @@ function ProfileMenu({
             type="button"
             data-pressable
             aria-label={`Akun ${session.nama}`}
-            className="group flex w-full items-center gap-2.5 rounded-[12px] border border-hairline bg-panel p-2 text-left shadow-rest transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:border-edge hover:bg-chip"
+            className="group flex w-full items-center gap-2.5 text-left"
           >
             <Avatar className="size-8 shrink-0">
-              <AvatarFallback className="bg-brand-soft font-semibold text-[11.5px] text-brand-ink">
+              <AvatarFallback className="bg-brand-soft font-bold text-[11.5px] text-brand-ink">
                 {initialsFor(session.nama)}
               </AvatarFallback>
             </Avatar>
             <span className="min-w-0 flex-1">
-              <span className="block truncate font-medium text-[13px] leading-5 text-txt">
+              <span className="block truncate font-bold text-[11.5px] leading-4 text-txt">
                 {session.nama}
               </span>
-              <span className="block truncate text-[11px] leading-4 text-ink-faint">
+              <span className="block truncate text-[10px] leading-4 text-ink-faint">
                 {session.email}
               </span>
             </span>
@@ -171,9 +171,9 @@ function ProfileMenu({
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/darurat" className="flex items-center gap-2">
-              <LifeBuoy aria-hidden className="size-4 text-danger" />
-              Mode darurat
+            <Link href="/komunitas" className="flex items-center gap-2">
+              <UsersRound aria-hidden className="size-4 text-brand" />
+              Komunitas
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

@@ -29,6 +29,7 @@ docker compose --env-file .env.production up -d db
 docker compose --env-file .env.production ps db
 # Wait until db reports healthy.
 docker compose --env-file .env.production run --rm --no-deps app npm run db:migrate
+docker compose --env-file .env.production run --rm --no-deps app npm run db:seed
 # Import existing SQLite accounts if needed; see below.
 docker compose --env-file .env.production up -d app proxy
 docker compose --env-file .env.production ps
@@ -36,7 +37,7 @@ docker compose --env-file .env.production logs --tail=100 app proxy
 curl -fsS "https://${DOMAIN}/api/health"
 ```
 
-Health should return 200 only if the app can run `SELECT 1`; it must not depend on AI. Check HTTPS issuance, then test registration, logout/login after restart, Google OAuth if configured, companion streaming, and unauthenticated `/darurat`.
+Health should return 200 only if the app can run `SELECT 1`; it must not depend on AI. Check HTTPS issuance, then test registration, logout/login after restart, Google OAuth if configured, companion streaming, and public `/komunitas` reading, authenticated posting/replies, and moderator access (see `docs/community.md`).
 
 ### First SQLite to PostgreSQL cutover
 

@@ -9,6 +9,7 @@ import {
   Search,
   ShieldAlert,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
 import { LuminaLogo } from "@/components/brand/lumina-logo";
@@ -38,8 +39,10 @@ import { cn } from "@/lib/utils";
  *   a. Session rows are two lines. Cortex prints one line with a timestamp, but
  *      here the second line carries the measured risk band of the last check —
  *      true information that the judge needs before opening a thread.
- *   b. The footer is the privacy promise, not an account card. History lives in
- *      React state only (§11.6), so the bottom slot says exactly that.
+ *   b. The sidebar is two glass cards, matching the reference: the navigation
+ *      block, then the account card as its own surface. The icon rail keeps a
+ *      lock glyph for the tab-only history promise (§11.6) that the expanded
+ *      footer used to spell out.
  *   c. The `⌘K` chip is wired: it focuses the search field, it is not a decal.
  *   d. The "Agen" option in `NavRail` opens the detector overview in the center
  *      column, read straight from `AGENT_SEQUENCE` + `STAGE_LABEL` so that view
@@ -86,11 +89,11 @@ function SessionRow({
         onClick={onSelect}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 py-1.5 text-left",
+          "flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 py-1.5 font-medium text-left",
           "transition-[background-color,color,box-shadow] duration-150 ease-out",
           "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1",
           active
-            ? "bg-panel font-medium text-ink shadow-rest"
+            ? "bg-panel font-semibold text-ink shadow-rest"
             : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
         )}
       >
@@ -117,7 +120,7 @@ function SessionRow({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1 px-1.5 font-medium text-[10.5px] text-ink-mute uppercase tracking-[0.12em]">
+    <p className="mb-1 px-1.5 font-semibold text-[10.5px] text-ink-mute uppercase tracking-[0.12em]">
       {children}
     </p>
   );
@@ -136,7 +139,7 @@ function SectionTrigger({
     <CollapsibleTrigger
       className={cn(
         "group flex w-full items-center gap-1.5 rounded-[7px] px-1.5 py-1.5 text-left",
-        "font-medium text-[10.5px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-150",
+        "font-semibold text-[10.5px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-150",
         "hover:bg-txt/[0.04] hover:text-ink-soft",
       )}
     >
@@ -273,7 +276,7 @@ export function SessionSidebar({
     ) : (
       groups.map((group) => (
         <div key={group.label}>
-          <p className="mb-1.5 px-1.5 font-medium text-[11px] text-ink-mute">
+          <p className="mb-1.5 px-1.5 font-semibold text-[11px] text-ink-mute">
             {group.label}
           </p>
           <ul className="space-y-0.5">
@@ -292,141 +295,159 @@ export function SessionSidebar({
 
   const expanded = (
     <>
-      <div className="flex min-h-0 flex-1 flex-col">
-        {/* Brand row — the squircle is the app mark, not a decorative topper. */}
-        <div className="mb-3.5 flex items-center gap-1.5 px-1.5">
-          <Link
-            href="/"
-            data-pressable
-            aria-label="Lumina — beranda"
-            className="min-w-0 flex-1"
-          >
-            <LuminaLogo className="h-[24px] w-auto" />
-          </Link>
-          {onClose ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              aria-label="Tutup bilah samping"
-              className="size-11 shrink-0 rounded-[6px] text-ink-mute hover:bg-txt/[0.05] hover:text-ink md:hidden"
+      {/* Main panel card. The reference splits the sidebar into two glass
+          cards: the navigation/promo block and the account card below it, so
+          the profile reads as its own surface instead of a footer strip. */}
+      <div className="flex min-h-0 flex-1 flex-col rounded-[24px] border border-white/80 bg-panel/95 px-3 pt-4 pb-2.5 shadow-panel backdrop-blur-md">
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* Brand row — the squircle is the app mark, not a decorative topper. */}
+          <div className="mb-3.5 flex items-center gap-1.5 px-1.5">
+            <Link
+              href="/"
+              data-pressable
+              aria-label="Lumina — beranda"
+              className="min-w-0 flex-1"
             >
-              <svg
-                role="presentation"
-                viewBox="0 0 18 18"
-                className="size-[15px]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              <LuminaLogo className="h-[30px] w-auto" />
+            </Link>
+            {onClose ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                aria-label="Tutup bilah samping"
+                className="size-11 shrink-0 rounded-[6px] text-ink-mute hover:bg-txt/[0.05] hover:text-ink md:hidden"
               >
-                <rect x="2" y="2.5" width="14" height="13" rx="2.5" />
-                <line x1="6.5" y1="2.5" x2="6.5" y2="15.5" />
-                <polyline points="11.5 7 9.2 9 11.5 11" />
-              </svg>
-            </Button>
-          ) : null}
-          {onToggleCollapse ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleCollapse}
-              aria-label="Ciutkan bilah samping"
-              aria-expanded
-              className="hidden size-6 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink md:grid"
-            >
-              <PanelLeftClose
-                aria-hidden
-                strokeWidth={1.7}
-                className="size-4"
-              />
-            </Button>
-          ) : null}
-        </div>
-
-        <Button
-          onClick={onNew}
-          data-pressable
-          className="h-auto w-full gap-2 rounded-[10px] border-0 bg-flame-500 bg-clip-border py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_4px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_6px_0_0_var(--color-flame-600)] active:translate-y-[4px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
-        >
-          <span className="flex-1 text-left">Percakapan baru</span>
-          <span className="flex size-7 items-center justify-center rounded-[6px] bg-panel text-ink">
-            <Plus aria-hidden strokeWidth={2} className="size-4" />
-          </span>
-        </Button>
-
-        <div className="my-2.5 border-t border-txt/[0.06]" />
-
-        {/* Destinations are a flat block, not a collapsed group: they are the
-            primary navigation, so they never hide behind a trigger. Search
-            stays above them so it reads as global, not as part of Darurat;
-            Riwayat sits below as the only collapsible group. */}
-        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5">
-          <label className="relative flex h-[38px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
-            <Search
-              aria-hidden
-              strokeWidth={1.7}
-              className="pointer-events-none size-3.5 shrink-0 text-ink-mute"
-            />
-            <input
-              ref={searchRef}
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Cari percakapan"
-              className="min-w-0 flex-1 bg-transparent px-2 text-[16px] text-txt outline-none placeholder:text-ink-faint sm:text-[13px] [&::-webkit-search-cancel-button]:hidden"
-            />
-            <kbd
-              aria-hidden
-              className="grid h-[20px] min-w-[20px] shrink-0 place-items-center rounded-[5px] border border-hairline bg-panel-2 px-1 font-sans text-[10.5px] text-ink-mute"
-            >
-              ⌘K
-            </kbd>
-            <span className="sr-only">Cari percakapan</span>
-          </label>
-
-          <div>
-            <SectionLabel>Ruang kerja</SectionLabel>
-            <NavRail
-              agentsActive={agentsActive}
-              onShowAgents={onShowAgents}
-              onShowChat={onShowChat}
-            />
+                <svg
+                  role="presentation"
+                  viewBox="0 0 18 18"
+                  className="size-[15px]"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="2" y="2.5" width="14" height="13" rx="2.5" />
+                  <line x1="6.5" y1="2.5" x2="6.5" y2="15.5" />
+                  <polyline points="11.5 7 9.2 9 11.5 11" />
+                </svg>
+              </Button>
+            ) : null}
+            {onToggleCollapse ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleCollapse}
+                aria-label="Ciutkan bilah samping"
+                aria-expanded
+                className="hidden size-6 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink md:grid"
+              >
+                <PanelLeftClose
+                  aria-hidden
+                  strokeWidth={1.7}
+                  className="size-4"
+                />
+              </Button>
+            ) : null}
           </div>
 
-          <Collapsible
-            open={openPanels.history}
-            onOpenChange={(open) =>
-              setOpenPanels((prev) => ({ ...prev, history: open }))
-            }
+          <Button
+            onClick={onNew}
+            data-pressable
+            className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.98]"
           >
-            <SectionTrigger
+            <span>Percakapan baru</span>
+            <span className="flex size-6 items-center justify-center rounded-full bg-bg text-brand-ink shadow-sm">
+              <Plus aria-hidden strokeWidth={2.8} className="size-3.5" />
+            </span>
+          </Button>
+
+          <div className="my-2.5 border-t border-txt/[0.06]" />
+
+          {/* Destinations are a flat block, not a collapsed group: they are the
+            primary navigation, so they never hide behind a trigger. Search
+            stays above them so it reads as global, not as part of a destination;
+            Riwayat sits below as the only collapsible group. */}
+          <div className="-ml-3 min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5 pl-3">
+            <label className="relative flex h-[38px] items-center rounded-[10px] border border-hairline bg-panel pr-2 pl-2.5 shadow-rest focus-within:border-brand-glow">
+              <Search
+                aria-hidden
+                strokeWidth={1.7}
+                className="pointer-events-none size-3.5 shrink-0 text-ink-mute"
+              />
+              <input
+                ref={searchRef}
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Cari percakapan"
+                className="min-w-0 flex-1 bg-transparent px-2 text-[16px] text-txt outline-none placeholder:text-ink-faint sm:text-[13px] [&::-webkit-search-cancel-button]:hidden"
+              />
+              <kbd
+                aria-hidden
+                className="grid h-[20px] min-w-[20px] shrink-0 place-items-center rounded-[5px] border border-hairline bg-panel-2 px-1 font-sans text-[10.5px] text-ink-mute"
+              >
+                ⌘K
+              </kbd>
+              <span className="sr-only">Cari percakapan</span>
+            </label>
+
+            <div>
+              <SectionLabel>Ruang kerja</SectionLabel>
+              <NavRail
+                agentsActive={agentsActive}
+                onShowAgents={onShowAgents}
+                onShowChat={onShowChat}
+              />
+            </div>
+
+            <Collapsible
               open={openPanels.history}
-              label="Riwayat"
-              count={visible.length}
-            />
-            <CollapsibleContent className="space-y-3 pt-1.5">
-              {historyBody}
-            </CollapsibleContent>
-          </Collapsible>
+              onOpenChange={(open) =>
+                setOpenPanels((prev) => ({ ...prev, history: open }))
+              }
+            >
+              <SectionTrigger
+                open={openPanels.history}
+                label="Riwayat"
+                count={visible.length}
+              />
+              <CollapsibleContent className="space-y-3 pt-1.5">
+                {historyBody}
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        </div>
+
+        <div className="relative mt-2.5 flex min-h-[158px] shrink-0 select-none flex-col justify-end overflow-hidden rounded-[20px] p-3.5 shadow-rest">
+          <Image
+            src="/brand/promo-dashboard.png"
+            alt=""
+            fill
+            sizes="204px"
+            className="pointer-events-none object-cover"
+          />
+          <div className="relative z-10 max-w-[115px] pt-7">
+            <p className="font-bold text-[12px] text-txt leading-[1.25]">
+              Saling jaga, bersama.
+            </p>
+            <p className="mt-1 mb-2.5 text-[9.5px] text-dim leading-[1.35]">
+              Bagikan pola baru dan belajar dari pengalaman anggota.
+            </p>
+            <Link
+              href="/komunitas"
+              data-pressable
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
+            >
+              <span>Buka komunitas</span>
+              <ChevronRight aria-hidden strokeWidth={2.4} className="size-3" />
+            </Link>
+          </div>
         </div>
       </div>
 
-      <div className="mt-3 border-t border-line pt-3">
-        <p className="mb-2 flex items-start gap-2 px-1.5 text-[11px] text-ink-faint leading-4">
-          <Lock
-            aria-hidden
-            strokeWidth={1.8}
-            className="mt-0.5 size-3.5 shrink-0 text-ink-mute"
-          />
-          <span>
-            <span className="font-medium text-ink-mute">
-              Riwayat hanya di tab ini.
-            </span>{" "}
-            Tutup tab, hilang.
-          </span>
-        </p>
+      <div className="mt-2.5 shrink-0 rounded-[20px] border border-white/80 bg-panel/95 px-3.5 py-2.5 shadow-panel backdrop-blur-md">
         {auth?.(false)}
       </div>
     </>
@@ -458,7 +479,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-[10px] border-0 bg-flame-500 bg-clip-border p-0 text-espresso-950 shadow-[inset_0_1px_0_0_var(--color-flame-300),0_3px_0_0_var(--color-flame-600)] transition-[background-color,color,transform,translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-flame-500 hover:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_5px_0_0_var(--color-flame-600)] active:translate-y-[3px]! active:transform-none active:bg-[color-mix(in_oklab,var(--color-flame-500)_90%,var(--color-espresso-950))] active:shadow-[inset_0_1px_0_0_var(--color-flame-300),0_0px_0_0_var(--color-flame-600)] active:[--t-approach:80ms] active:duration-75"
+        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to p-0 text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.96]"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>
@@ -496,7 +517,7 @@ export function SessionSidebar({
                   : "text-ink-faint hover:bg-txt/[0.04] hover:text-ink",
               )}
             >
-              <span className="font-medium text-[12.5px] leading-none">
+              <span className="font-semibold text-[12.5px] leading-none">
                 {session.title.trim().charAt(0).toUpperCase()}
               </span>
             </button>
@@ -511,8 +532,6 @@ export function SessionSidebar({
         <Lock aria-hidden strokeWidth={1.8} className="size-3.5" />
         <span className="sr-only">Riwayat di tab ini, tutup tab hilang.</span>
       </span>
-
-      {auth?.(true)}
     </>
   );
 
@@ -522,15 +541,21 @@ export function SessionSidebar({
         "flex shrink-0 select-none flex-col justify-between overflow-hidden",
         "md:transition-[width] md:duration-200 md:ease-[cubic-bezier(0.22,1,0.36,1)]",
         collapsed
-          ? "w-[248px] px-2.5 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-1.5 md:px-2"
-          : "w-[248px] px-2.5 pt-2.5 pb-2",
+          ? "w-[248px] px-3 pt-2.5 pb-2 md:w-[64px] md:items-center md:gap-2.5 md:px-2"
+          : "w-[248px] px-3 pt-2.5 pb-2",
         className,
       )}
     >
       {collapsed ? (
         <>
-          <div className="hidden min-h-0 flex-1 flex-col items-center gap-1.5 md:flex md:animate-in md:fade-in-0 md:duration-150">
+          {/* The rail is the same glass surface as the expanded panel: without
+              it the icons float on the peach field and the white pill that
+              marks the sidebar disappears. The account stays a second card. */}
+          <div className="hidden w-full min-h-0 flex-1 flex-col items-center gap-1.5 rounded-[24px] border border-white/80 bg-panel/95 px-1 py-2 shadow-panel backdrop-blur-md md:flex md:animate-in md:fade-in-0 md:duration-150">
             {rail}
+          </div>
+          <div className="hidden w-full shrink-0 place-items-center rounded-[20px] border border-white/80 bg-panel/95 px-1 py-2 shadow-panel backdrop-blur-md md:grid">
+            {auth?.(true)}
           </div>
           <div className="flex min-h-0 flex-1 flex-col md:hidden">
             {expanded}

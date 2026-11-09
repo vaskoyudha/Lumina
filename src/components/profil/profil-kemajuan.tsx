@@ -18,11 +18,12 @@ import {
 } from "@/components/ui/empty";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { isPublished } from "@/data/kurikulum";
-import { MODUS, MODUS_BY_NO } from "@/lib/modus";
+import type { LearningSummary } from "@/lib/content/schema";
+
 import { BADGE_LABEL } from "@/lib/progress";
 
-export function ProfilKemajuan() {
+export function ProfilKemajuan({ modules }: { modules: LearningSummary[] }) {
+  const MODUS_BY_NO = new Map(modules.map((m) => [m.no, m]));
   const progress = useStoredProgress();
 
   if (!progress) {
@@ -42,9 +43,9 @@ export function ProfilKemajuan() {
   }
 
   const done = progress.completedModules.length;
-  const total = MODUS.length;
+  const total = modules.length;
   const pct = Math.min(100, Math.round((done / total) * 100));
-  const modules = [...progress.completedModules].sort((a, b) => a - b);
+  const completed = [...progress.completedModules].sort((a, b) => a - b);
   const badges = Object.entries(BADGE_LABEL).filter(([id]) =>
     progress.badges.includes(id),
   );
@@ -58,7 +59,7 @@ export function ProfilKemajuan() {
             {done} dari {total} modul selesai
           </p>
           <p className="text-dim text-sm">
-            Progres tersimpan di perangkat ini, bukan di akun.
+            Progres tersimpan di akun dan dapat dibuka dari perangkat lain.
           </p>
         </div>
       </div>
@@ -94,7 +95,7 @@ export function ProfilKemajuan() {
 
       {done > 0 ? (
         <ul className="flex flex-col">
-          {modules.map((no) => {
+          {completed.map((no) => {
             const modus = MODUS_BY_NO.get(no);
             return (
               <li key={no}>
@@ -114,7 +115,7 @@ export function ProfilKemajuan() {
                     {modus?.nama ?? `Modul ${no}`}
                   </span>
                   <span className="shrink-0 text-dim text-xs">
-                    {isPublished(no) ? "Lengkap" : "Segera"}
+                    {modus?.ready ? "Lengkap" : "Segera"}
                   </span>
                 </Link>
               </li>

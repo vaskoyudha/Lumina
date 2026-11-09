@@ -4,7 +4,7 @@ Kenali penipuannya sebelum uangnya hilang.
 
 Empat permukaan, satu loop: **companion** melihat pesan mencurigakan →
 **belajar** menjelaskan polanya → **simulasi** menguji keputusan di bawah
-tekanan → **darurat** menyiapkan laporan untuk dibawa ke bank.
+tekanan → **komunitas** berbagi modus baru dan berdiskusi.
 
 - Rencana produk dan pembagian empat stream: [`docs/plan.md`](docs/plan.md)
 - Aturan teknis yang mengikat (termasuk aturan keras shadcn/ui):
@@ -17,6 +17,7 @@ tekanan → **darurat** menyiapkan laporan untuk dibawa ke bank.
 npm ci
 # Isi DATABASE_URL di .env.local; jalankan PostgreSQL terlebih dahulu.
 npm run db:migrate
+npm run db:seed    # 12 modul + satu skenario, tidak menimpa konten yang sudah ada
 npm run dev        # http://localhost:3000
 ```
 
@@ -44,7 +45,6 @@ npm run lint:fix   # Biome
 | Komponen | shadcn/ui (base **radix**, style `radix-nova`) | CLI 4.x |
 | Ikon | lucide-react | 1.x |
 | Validasi data | zod | 4.x |
-| PDF | @react-pdf/renderer | 4.x |
 | Lint + format | Biome | 2.x |
 | Test | Jest (`next/jest`) + React Testing Library | 30.x |
 
@@ -55,16 +55,16 @@ Alasan tiap pilihan ada di `AGENTS.md` §Stack.
 ```
 src/
 ├── app/
-│   ├── page.tsx                 home, tiga pilar + darurat
+│   ├── page.tsx                 home, pemeriksaan dan pembelajaran
 │   ├── companion/               A · percakapan + panel bukti
 │   ├── belajar/[modul]/         B · daftar + modul
 │   ├── simulasi/[id]/           C · daftar + runner
-│   └── darurat/                 D · triage + PDF
+│   └── komunitas/[id]/          diskusi publik + akun
 ├── components/
 │   ├── ui/                      shadcn — sumber primitive
 │   ├── shell/                   nav + layout
 │   ├── companion/               score card, panel bukti
-│   └── darurat/                 checklist
+│   └── community/               feed, editor, balasan, moderasi
 ├── lib/
 │   ├── contracts/               BEKU — ScoreResult, EvidenceBundle
 │   ├── scoring/                 message.ts, link.ts, score.ts
@@ -72,7 +72,7 @@ src/
 └── data/
     ├── modus.json               12 modus, sumber kebenaran A + B
     ├── official-domains.json    daftar domain resmi
-    └── triage.ts                tiga kasus darurat
+    └── tactics.ts               panduan tindakan per modus
 ```
 
 ## Prinsip yang menentukan
@@ -81,9 +81,7 @@ src/
 `src/lib/scoring/score.ts`, deterministik dan tanpa jaringan. Kalau model bahasa
 mati di venue, deteksi tetap tampil.
 
-**Akun opsional.** Identitas akun dan sesi tersimpan di PostgreSQL. Progres belajar
-tetap di localStorage; percakapan hilang saat tab ditutup. Darurat selalu
-terbuka tanpa akun.
+**Akun opsional untuk membaca.** Identitas, progres belajar, dan hasil simulasi tersimpan di PostgreSQL. Komunitas terbuka untuk dibaca; menulis dan membalas memerlukan akun. Percakapan Companion hilang saat tab ditutup.
 
 **Kejujuran di atas kelengkapan.** Modul yang belum ditulis berstatus `segera`,
 agent yang belum dibangun ditandai `belum aktif`, simulasi yang belum jadi

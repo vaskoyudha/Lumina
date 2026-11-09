@@ -3,10 +3,10 @@
 import {
   Bot,
   GraduationCap,
-  LifeBuoy,
   type LucideIcon,
   MessageSquare,
   Swords,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,7 @@ const DESTINATIONS: {
   { href: "/companion", label: "Companion", icon: MessageSquare },
   { href: "/belajar", label: "Belajar", icon: GraduationCap },
   { href: "/simulasi", label: "Simulasi", icon: Swords },
-  { href: "/darurat", label: "Darurat", icon: LifeBuoy, emergency: true },
+  { href: "/komunitas", label: "Komunitas", icon: UsersRound },
 ];
 
 function RailItem({
@@ -71,22 +71,39 @@ function RailItem({
       aria-current={active ? "page" : undefined}
       onClick={onClick}
       className={cn(
-        "flex min-w-0 items-center rounded-[8px] transition-[background-color,color] duration-150 ease-out",
-        iconsOnly ? "size-10 justify-center" : "min-h-10 gap-2.5 px-2.5 py-2",
+        "relative flex min-w-0 items-center rounded-xl transition-[background-color,color] duration-150 ease-out",
+        iconsOnly ? "size-10 justify-center" : "gap-2.5 px-3 py-2",
         emergency
           ? active
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-chip font-medium text-ink shadow-rest"
-            : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
+            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
+            : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
-      <Icon aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
+      {active && !iconsOnly ? (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full",
+            emergency ? "bg-danger" : "bg-nav-active-icon",
+          )}
+        />
+      ) : null}
+      <Icon
+        aria-hidden
+        strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
+        className={cn(
+          "size-4 shrink-0",
+          active && !emergency && "text-nav-active-icon",
+        )}
+      />
       <span
         className={cn(
-          "truncate font-normal text-[13px] leading-5",
-          active && !emergency && "font-medium",
+          "truncate text-[12.5px]",
+          active ? "font-bold" : "font-semibold",
           iconsOnly && "sr-only",
         )}
       >
@@ -118,20 +135,31 @@ function AgentItem({
       aria-current={active ? "page" : undefined}
       onClick={onShow}
       className={cn(
-        "flex min-w-0 items-center rounded-[8px] transition-[background-color,color] duration-150 ease-out",
+        "relative flex min-w-0 items-center rounded-xl transition-[background-color,color] duration-150 ease-out",
         iconsOnly
           ? "size-10 justify-center"
-          : "min-h-10 w-full gap-2.5 px-2.5 py-2 text-left",
+          : "w-full gap-2.5 px-3 py-2 text-left",
         active
-          ? "bg-chip font-medium text-ink shadow-rest"
-          : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
+          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
+          : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
-      <Bot aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
+      {active && !iconsOnly ? (
+        <span
+          aria-hidden
+          className="absolute -left-3 top-1.5 bottom-1.5 w-1 rounded-r-full bg-nav-active-icon"
+        />
+      ) : null}
+      <Bot
+        aria-hidden
+        strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
+        className={cn("size-4 shrink-0", active && "text-nav-active-icon")}
+      />
       <span
         className={cn(
-          "truncate font-normal text-[13px] leading-5",
-          active && "font-medium",
+          "truncate text-[12.5px]",
+          active ? "font-bold" : "font-semibold",
           iconsOnly ? "sr-only" : "min-w-0 flex-1",
         )}
       >

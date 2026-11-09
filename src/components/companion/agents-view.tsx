@@ -137,7 +137,7 @@ export function AgentsView({
                 size="sm"
                 className="h-10 rounded-xl bg-ink px-3.5 text-xs font-medium text-bg hover:bg-ink-hover"
               >
-                <Link href="/darurat">Mode darurat</Link>
+                <Link href="/komunitas">Komunitas</Link>
               </Button>
             </div>
           </div>
