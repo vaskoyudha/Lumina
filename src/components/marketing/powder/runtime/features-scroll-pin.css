@@ -14,6 +14,12 @@
   width: 100%;
 }
 
+/* The section caps at 1600px; without auto margins it stays flush left once the
+   viewport is wider than that, which the user sees as an off-centre stage. */
+.pw-features-runway > section.framer-95w5xq {
+  margin-inline: auto;
+}
+
 @media (min-width: 810px) {
   .pw-features-runway {
     position: relative;
