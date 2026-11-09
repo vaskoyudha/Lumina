@@ -1,5 +1,7 @@
 # Status — per 8 November 2026
 
+**9 November 2026 — database Belajar dan Simulasi (permintaan pemilik produk).** Materi dan kuis 12 modul serta satu skenario yang benar-benar tersedia dipindahkan ke PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Kuis dinilai ulang di server dan hasil simulasi direkam per percobaan. Migrasi `003_learning_simulation.sql`, kemudian `npm run db:seed`, wajib dijalankan pada deployment. Skenario level lain tetap Rencana. Panduan: `docs/learning-database.md`.
+
 **8 November 2026 — backend PostgreSQL dan paket VPS.** Akun, sesi, transaksi
 OAuth dan limit berpindah ke PostgreSQL dengan pool async, migrasi bernomor,
 impor SQLite read-only, serta cleanup expiry. Endpoint AI memiliki batas body

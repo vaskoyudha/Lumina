@@ -29,6 +29,7 @@ docker compose --env-file .env.production up -d db
 docker compose --env-file .env.production ps db
 # Wait until db reports healthy.
 docker compose --env-file .env.production run --rm --no-deps app npm run db:migrate
+docker compose --env-file .env.production run --rm --no-deps app npm run db:seed
 # Import existing SQLite accounts if needed; see below.
 docker compose --env-file .env.production up -d app proxy
 docker compose --env-file .env.production ps

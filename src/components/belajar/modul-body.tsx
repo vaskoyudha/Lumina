@@ -18,12 +18,14 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { useAccountProgress } from "@/components/belajar/belajar-progress";
 import { CompleteButton } from "@/components/belajar/complete-button";
 import { Quiz } from "@/components/belajar/quiz";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ContohJenis, ModuleContent } from "@/data/modul-schema";
-import { loadProgress, recordMissed, saveProgress } from "@/lib/progress";
+import { submitQuiz } from "@/lib/learning/actions";
 
 /**
  * One frame per example shape. The segments are identical in all four — only
@@ -328,16 +330,39 @@ function KeyPoints({ modul }: { modul: ModuleContent }) {
  */
 export function ModulBody({ modul }: { modul: ModuleContent }) {
   const [passed, setPassed] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { update, authenticated } = useAccountProgress();
   const jenis = modul.contohJenis ?? "pesan";
   const toc = tocFor(modul);
 
   // A pass unlocks completion; the questions that were missed are recorded
   // honestly so the review surface (and Stream C later, §11.4) has real data
   // instead of a fabricated "adaptive" claim.
-  function handleQuizDone(_score: number, _total: number, missed: string[]) {
+  function handleQuizDone(
+    _score: number,
+    _total: number,
+    _missed: string[],
+    latest: Record<string, string>,
+  ) {
     setPassed(true);
-    if (missed.length > 0) {
-      saveProgress(recordMissed(loadProgress(), missed));
+    setAnswers(latest);
+  }
+  async function saveAttempt(latest: Record<string, string>) {
+    setAnswers(latest);
+    if (!authenticated) return;
+    try {
+      const result = await submitQuiz({
+        moduleNo: modul.no,
+        answers: latest,
+        complete: false,
+      });
+      if (result.ok) {
+        update(result.progress);
+        setSaveError(null);
+      } else setSaveError(result.error);
+    } catch {
+      setSaveError("Progres kuis belum tersimpan. Coba lagi.");
     }
   }
 
@@ -410,7 +435,25 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
           lede="Pilih apa yang kamu lakukan sekarang — bukan definisi. Lulus di 60% untuk menyelesaikan modul."
           Icon={FileWarning}
         >
-          <Quiz questions={modul.kuis} onDone={handleQuizDone} />
+          <Quiz
+            questions={modul.kuis}
+            onDone={handleQuizDone}
+            onAttempt={(latest) => void saveAttempt(latest)}
+          />
+          {saveError && (
+            <Alert>
+              <AlertDescription>
+                {saveError}
+                <Button
+                  variant="outline"
+                  className="mt-2 min-h-11"
+                  onClick={() => void saveAttempt(answers)}
+                >
+                  Coba simpan lagi
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
         </LessonSection>
 
         <LessonSection
@@ -435,7 +478,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         <KeyPoints modul={modul} />
 
         {passed ? (
-          <CompleteButton moduleNo={modul.no} />
+          <CompleteButton moduleNo={modul.no} answers={answers} />
         ) : (
           <Card className="gap-0 rounded-card border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
             <CardContent className="py-4 text-dim">

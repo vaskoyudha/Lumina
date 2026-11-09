@@ -108,7 +108,7 @@ export function RegisterForm({ initialEmail = "" }: { initialEmail?: string }) {
           <Checkbox id="consent" name="consent" required className="mt-0.5" />
           <FieldLabel htmlFor="consent" className="font-normal leading-snug">
             Saya setuju nama, email, dan password yang di-hash disimpan untuk
-            akun. Progres belajar tetap di perangkat ini.
+            akun, progres belajar, dan hasil simulasi.
           </FieldLabel>
         </Field>
 

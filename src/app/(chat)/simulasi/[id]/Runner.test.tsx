@@ -1,3 +1,11 @@
+import { SIMULATION_FIXTURE } from "@/lib/content/fixtures";
+
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Runner } from "@/app/(chat)/simulasi/[id]/Runner";
 import {
@@ -61,7 +69,7 @@ describe("Runner misi Paket sebelum pulang", () => {
 
   it("offers relaxed and challenge modes, then reveals delayed messages in sequence", () => {
     jest.useFakeTimers();
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
 
     expect(screen.getByText(/besok ulang tahun ibu/i)).toBeInTheDocument();
     const relaxed = screen.getByRole("button", { name: /santai/i });
@@ -89,7 +97,7 @@ describe("Runner misi Paket sebelum pulang", () => {
 
   it("pauses autoplay when hidden and resumes with the remaining delay", () => {
     jest.useFakeTimers();
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     Object.defineProperty(document, "hidden", {
       configurable: true,
       value: true,
@@ -120,7 +128,7 @@ describe("Runner misi Paket sebelum pulang", () => {
   });
 
   it("lets the safe branch finish without device tools and reveals collected tactics", () => {
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision();
     chooseVerifiedPath();
     click(/hentikan chat dan simpan bukti/i);
@@ -143,7 +151,7 @@ describe("Runner misi Paket sebelum pulang", () => {
   });
 
   it("requires both device permissions and two safe proofs before recovery", () => {
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision();
     click(/periksa lampiran · foto_paket\.apk/i);
     expect(
@@ -189,7 +197,7 @@ describe("Runner misi Paket sebelum pulang", () => {
   });
 
   it("rejects secret evidence and shows the compromised-account ending after OTP is shared", () => {
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision();
     chooseVerifiedPath();
     click(/kirim kode sms yang diminta/i);
@@ -220,7 +228,7 @@ describe("Runner misi Paket sebelum pulang", () => {
 
   it("runs challenge pressure only after compromise, pauses and freezes on isolation", () => {
     jest.useFakeTimers();
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision("tantangan");
 
     act(() => jest.advanceTimersByTime(10_000));
@@ -260,7 +268,7 @@ describe("Runner misi Paket sebelum pulang", () => {
 
   it("keeps santai free of automatic intrusion and allows one breathing action", () => {
     jest.useFakeTimers();
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision("santai");
     click(/pasang berkas agar paket tidak dibawa pergi/i);
 
@@ -279,7 +287,7 @@ describe("Runner misi Paket sebelum pulang", () => {
 
   it("stops at the intrusion limit and still presents all four debrief points", () => {
     jest.useFakeTimers();
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision("tantangan");
     click(/pasang berkas agar paket tidak dibawa pergi/i);
 
@@ -297,7 +305,7 @@ describe("Runner misi Paket sebelum pulang", () => {
   it("cleans the challenge interval when the active mission is unmounted", () => {
     jest.useFakeTimers();
     const clearIntervalSpy = jest.spyOn(window, "clearInterval");
-    const { unmount } = render(<Runner />);
+    const { unmount } = render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision("tantangan");
     click(/pasang berkas agar paket tidak dibawa pergi/i);
     act(() => jest.advanceTimersByTime(1000));
@@ -310,13 +318,13 @@ describe("Runner misi Paket sebelum pulang", () => {
   it("resets the entire run and clears active timers on unmount", () => {
     jest.useFakeTimers();
     const clearTimeoutSpy = jest.spyOn(window, "clearTimeout");
-    const { unmount } = render(<Runner />);
+    const { unmount } = render(<Runner content={SIMULATION_FIXTURE} />);
     start();
     unmount();
     expect(clearTimeoutSpy).toHaveBeenCalled();
     clearTimeoutSpy.mockRestore();
 
-    render(<Runner />);
+    render(<Runner content={SIMULATION_FIXTURE} />);
     reachFirstDecision();
     chooseVerifiedPath();
     click(/hentikan chat dan simpan bukti/i);

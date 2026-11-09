@@ -420,6 +420,8 @@ submission.
 
 ## 8. Yang tidak dikerjakan siapa pun
 
+> **Pengecualian pemilik produk, 9 November 2026:** materi, kuis, katalog dan skenario boleh disimpan di PostgreSQL. Progres belajar dan hasil simulasi wajib per akun, termasuk pada website deployment, menggantikan penyimpanan progres di localStorage. Implementasi lomba memakai DB yang sama tanpa CMS atau layanan baru. Percakapan tidak disimpan. Lihat `docs/learning-database.md`.
+
 > **Pengecualian pemilik produk, 7 November 2026:** akun email/password sungguhan
 > dan Google OAuth diminta secara eksplisit. Butir (a) dan (b) diizinkan khusus
 > untuk identitas akun, hash password, sesi, batas percobaan dan transaksi OAuth.

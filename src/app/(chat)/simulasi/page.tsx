@@ -15,36 +15,27 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
+import {
+  ContentLoading,
+  ContentUnavailable,
+} from "@/components/belajar/content-state";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MODUS } from "@/lib/modus";
-import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
-import { MISSION } from "@/lib/simulasi/scenario";
+import type { LearningSummary } from "@/lib/content/schema";
+import {
+  listModules,
+  listSimulations,
+  moduleSummaries,
+} from "@/lib/content/store";
 
 export const metadata: Metadata = {
-  title: MISSION.title,
+  title: "Simulasi",
   description:
     "Latihan fiktif 3–5 menit tentang pesan kurir, APK, dan cara menjaga kendali ponsel.",
 };
-
-const PLANNED = MODUS.filter(
-  (modus) => modus.scenarioId === null && modus.scenarioPlanned !== null,
-).sort((a, b) =>
-  (a.scenarioPlanned ?? "").localeCompare(b.scenarioPlanned ?? ""),
-);
-
-const scenarioNodes = SCENARIO_CATALOG[0]?.nodes ?? [];
-
-const endingCount = scenarioNodes.filter(
-  (node) => node.type === "ending",
-).length;
-
-const CHAPTER_NOTES = [
-  "Pesan kurir dan lampiran palsu masuk. Kamu memutuskan apakah memercayainya.",
-  "Kalau kendali ponsel mulai lepas, dek perangkat membantu memutus akses.",
-  "Tolak kode rahasia, simpan bukti yang aman, lalu lihat apa yang bisa diperbaiki.",
-];
 
 const CHAPTER_ICONS = [UserRound, Mail, ShieldCheck];
 
@@ -55,23 +46,7 @@ const PLANNED_ICONS: Record<string, typeof ShieldCheck> = {
   "pinjol-fiktif": CreditCard,
 };
 
-const TITLE_WORDS = MISSION.title.split(" ");
-const TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" ");
-const TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
-
-const SUMMARY_POINTS = [
-  "Analisis pesan dan pola ancaman yang muncul.",
-  "Amankan akun dan perangkat sebelum terlambat.",
-  "Verifikasi tiap tindakan dengan bukti.",
-];
-
-const TIPS = [
-  "Jangan pernah membagikan kode verifikasi atau informasi pribadi.",
-  "Periksa selalu sumber pesan sebelum mengambil tindakan.",
-  "Berkas .apk memasang aplikasi, bukan membuka foto.",
-];
-
-function SimulasiAside() {
+function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
   return (
     <div className="flex flex-col gap-5">
       <Card
@@ -151,7 +126,45 @@ function SimulasiAside() {
 
 export default function SimulasiPage() {
   return (
-    <WorkspaceShell label="Simulasi" aside={<SimulasiAside />}>
+    <Suspense fallback={<ContentLoading />}>
+      <SimulasiContent />
+    </Suspense>
+  );
+}
+export async function SimulasiContent() {
+  await connection();
+  let modules: Awaited<ReturnType<typeof listModules>>;
+  let simulations: Awaited<ReturnType<typeof listSimulations>>;
+  try {
+    [modules, simulations] = await Promise.all([
+      listModules(),
+      listSimulations(),
+    ]);
+  } catch {
+    return <ContentUnavailable />;
+  }
+  const featured = simulations[0];
+  if (!featured) return <ContentUnavailable empty />;
+  const {
+    mission: MISSION,
+    chapterNotes: CHAPTER_NOTES,
+    summary: SUMMARY_POINTS,
+    tips: TIPS,
+  } = featured;
+  const PLANNED = moduleSummaries(modules).filter(
+    (m) => m.scenarioPlanned && !simulations.some((s) => s.moduleNo === m.no),
+  );
+  const endingCount = featured.scenario.nodes.filter(
+    (n) => n.type === "ending",
+  ).length;
+  const TITLE_WORDS = MISSION.title.split(" "),
+    TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" "),
+    TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
+  return (
+    <WorkspaceShell
+      label="Simulasi"
+      aside={<SimulasiAside planned={PLANNED} />}
+    >
       <div className="flex w-full flex-col gap-6">
         <section className="relative overflow-hidden rounded-card border border-brand-line shadow-[var(--appnext-shadow-soft)]">
           <div
@@ -164,7 +177,7 @@ export default function SimulasiPage() {
                 <span className="flex size-4 items-center justify-center rounded-full bg-brand text-bg">
                   <ShieldCheck aria-hidden className="size-2.5" />
                 </span>
-                Misi · Level {SCENARIO_CATALOG[0]?.scenario.level ?? 1}
+                Misi · Level {featured.scenario.scenario.level}
               </p>
               <h1
                 id="mission-title"
@@ -194,7 +207,7 @@ export default function SimulasiPage() {
                   className="min-h-11 rounded-xl bg-brand px-5 font-semibold text-bg text-xs shadow-lg hover:bg-brand-strong"
                 >
                   <Link
-                    href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
+                    href={`/simulasi/${featured.scenario.scenario.id}`}
                     data-pressable
                   >
                     Mulai briefing
@@ -206,8 +219,15 @@ export default function SimulasiPage() {
                   variant="outline"
                   className="min-h-11 rounded-xl border-brand-line bg-panel px-4 font-semibold text-txt text-xs hover:bg-brand-soft hover:text-brand-ink"
                 >
-                  <Link href="/belajar/10" data-pressable>
-                    Pelajari pola APK
+                  <Link
+                    href={
+                      featured.moduleNo
+                        ? `/belajar/${featured.moduleNo}`
+                        : "/belajar"
+                    }
+                    data-pressable
+                  >
+                    Pelajari pola ini
                   </Link>
                 </Button>
               </div>
@@ -215,6 +235,25 @@ export default function SimulasiPage() {
           </div>
         </section>
 
+        {simulations.length > 1 && (
+          <section aria-label="Misi lainnya">
+            <h2 className="text-lg">Misi lainnya</h2>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {simulations.slice(1).map((s) => (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-11"
+                  key={s.scenario.scenario.id}
+                >
+                  <Link href={`/simulasi/${s.scenario.scenario.id}`}>
+                    {s.mission.title}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </section>
+        )}
         <section aria-labelledby="chapters-heading" className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2
@@ -275,7 +314,7 @@ export default function SimulasiPage() {
                   Ringkasan Misi
                 </h2>
                 <Link
-                  href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
+                  href={`/simulasi/${featured.scenario.scenario.id}`}
                   className="shrink-0 whitespace-nowrap font-semibold text-[11px] text-brand-strong hover:underline"
                 >
                   Lihat detail →
