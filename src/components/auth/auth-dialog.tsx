@@ -36,7 +36,7 @@ export function AuthDialog({
 
         <SignInPage
           title={<span className="font-light">Selamat datang</span>}
-          description="Masuk dengan Google atau email. Progres belajar tetap tersimpan di perangkat ini."
+          description="Masuk dengan Google atau email. Progres belajar dan hasil simulasi tersimpan di akunmu."
         >
           <AuthPanel
             key={defaultTab}

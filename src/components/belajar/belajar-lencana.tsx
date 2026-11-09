@@ -4,11 +4,12 @@ import { Award, Lock } from "lucide-react";
 import Link from "next/link";
 import {
   BADGE_LABEL,
+  useAccountProgress,
   useStoredProgress,
 } from "@/components/belajar/belajar-progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MODUS_BY_NO } from "@/lib/modus";
+
 import { BADGE_FOR_MODULE } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,9 @@ const ENTRIES = Object.entries(BADGE_FOR_MODULE);
 
 export function BelajarLencana() {
   const progress = useStoredProgress();
+  const MODUS_BY_NO = new Map(
+    useAccountProgress().modules.map((m) => [m.no, m]),
+  );
   const badges = progress?.badges ?? [];
 
   return (
@@ -78,9 +82,9 @@ export function BelajarLencana() {
                     </h4>
                     <p className="mt-0.5 font-medium text-[11px] text-dim">
                       {!progress
-                        ? "Memuat progres di perangkat ini…"
+                        ? "Memuat progres di akunmu…"
                         : earned
-                          ? "Sudah kamu dapatkan di perangkat ini."
+                          ? "Sudah kamu dapatkan di akunmu."
                           : `Selesaikan modul ${no}${
                               modul ? ` — ${modul.nama}` : ""
                             } untuk membukanya.`}

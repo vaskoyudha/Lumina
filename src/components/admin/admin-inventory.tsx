@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { isPublished } from "@/data/kurikulum";
 import {
   blankDraft,
   DRAFT_EVENT,
@@ -21,23 +20,14 @@ import {
   upsertDraft,
   validateDraft,
 } from "@/lib/admin/draft-store";
-import { MODUS } from "@/lib/modus";
+import type { LearningSummary } from "@/lib/content/schema";
 
-/**
- * Admin inventory — plan Task 2.1. Reads drafts from this device and published
- * content from the repo. Nothing here writes to the product; "Buat" only opens
- * an editor for a draft, and the draft becomes a course only after it is
- * published (export + commit, Task 2.4).
- */
-
-/**
- * Every number the catalog already claims. "Course baru" must not reuse these:
- * filling one of them is "Buat" on that row, while a genuinely new course needs
- * a new number (13 onward), which `modus.json` now allows.
- */
-const TAKEN_NUMBERS = MODUS.map((m) => m.no);
-
-export function AdminInventory() {
+export function AdminInventory({
+  modules: MODUS,
+}: {
+  modules: LearningSummary[];
+}) {
+  const TAKEN_NUMBERS = MODUS.map((m) => m.no);
   const router = useRouter();
   const [store, setStore] = useState<DraftStore>(EMPTY_STORE);
   const [hydrated, setHydrated] = useState(false);
@@ -66,8 +56,8 @@ export function AdminInventory() {
     .sort((a, b) => a.no - b.no)
     .map((m) => {
       const draft = store.courses.find((c) => c.no === m.no);
-      const published = isPublished(m.no);
-      // A draft that passes the same validation as export gets a direct route
+      const published = m.ready;
+      // A draft that passes the same validation as import gets a direct route
       // to the publish steps. Invalid drafts keep "Lanjutkan" as the only
       // action, so the button never promises an export that would fail.
       const siap = draft ? validateDraft(draft) === null : false;

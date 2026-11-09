@@ -1,15 +1,22 @@
 import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { BelajarAside } from "@/components/belajar/belajar-aside";
 import {
   BelajarDashboard,
   type FeaturedModule,
 } from "@/components/belajar/belajar-dashboard";
 import { BelajarShell } from "@/components/belajar/belajar-shell";
+import {
+  ContentLoading,
+  ContentUnavailable,
+} from "@/components/belajar/content-state";
 import type { KatalogItem } from "@/components/belajar/modul-katalog";
 import { Card, CardContent } from "@/components/ui/card";
-import { isPublished } from "@/data/kurikulum";
-import { formattedLaporan, MODUS } from "@/lib/modus";
+import { listModules, moduleSummaries } from "@/lib/content/store";
+
+import { formattedLaporan } from "@/lib/modus";
 
 export const metadata: Metadata = {
   title: "Belajar",
@@ -17,24 +24,30 @@ export const metadata: Metadata = {
     "Dua belas modus penipuan di Indonesia, dengan jumlah laporan IASC dan estimasi kerugiannya.",
 };
 
-/**
- * Stream B's catalog — generated from `modus.json` (§4: B must not re-type
- * the list). The visual language follows the supplied course dashboard:
- * a raised white frame, an icon rail, painted cards, a campaign banner and a
- * right rail. Its economy does not come with it: no coins, no streaks, no
- * invented percentages. The only numbers on this page are IASC report counts
- * from `modus.json` and this device's finished modules from `lib/progress.ts`.
- */
+/** Catalog and publication state come from PostgreSQL at request time. */
 
 export default function BelajarPage() {
-  const sorted = [...MODUS].sort((a, b) => a.no - b.no);
+  return (
+    <Suspense fallback={<ContentLoading />}>
+      <BelajarContent />
+    </Suspense>
+  );
+}
+export async function BelajarContent() {
+  await connection();
+  let sorted: ReturnType<typeof moduleSummaries>;
+  try {
+    sorted = moduleSummaries(await listModules());
+  } catch {
+    return <ContentUnavailable />;
+  }
+  if (!sorted.length) return <ContentUnavailable empty />;
   // Feature the module wired to a simulation when one exists, otherwise the
   // first published course. This keeps the demo path (module 10) on the hero.
   const featuredModus =
-    sorted.find((m) => isPublished(m.no) && m.scenarioId) ??
-    sorted.find((m) => isPublished(m.no));
-  const complete = sorted.filter((m) => isPublished(m.no)).length;
-  const readyModules = sorted.filter((m) => isPublished(m.no)).map((m) => m.no);
+    sorted.find((m) => m.ready && m.scenarioId) ?? sorted.find((m) => m.ready);
+  const complete = sorted.filter((m) => m.ready).length;
+  const readyModules = sorted.filter((m) => m.ready).map((m) => m.no);
 
   const laporanLabel = (m: (typeof sorted)[number]) =>
     m.laporan === null ? formattedLaporan(m) : `${formattedLaporan(m)} laporan`;
@@ -46,7 +59,7 @@ export default function BelajarPage() {
     laporanLabel: laporanLabel(m),
     kerugian: m.kerugian,
     level: m.level,
-    ready: isPublished(m.no),
+    ready: m.ready,
   }));
 
   const featured: FeaturedModule | null = featuredModus
@@ -61,7 +74,10 @@ export default function BelajarPage() {
     : null;
 
   return (
-    <BelajarShell aside={<BelajarAside readyModules={readyModules} />}>
+    <BelajarShell
+      modules={sorted}
+      aside={<BelajarAside readyModules={readyModules} />}
+    >
       <BelajarDashboard
         items={items}
         featured={featured}
@@ -72,8 +88,8 @@ export default function BelajarPage() {
       <div className="flex flex-col gap-3">
         <CardNote complete={complete} total={sorted.length} />
         <p className="appnext-caption">
-          Kemajuan belajar disimpan di perangkat ini saja. Tanpa akun, tanpa
-          unggahan.
+          Kemajuan belajar dan hasil simulasi disimpan di akunmu. Masuk agar
+          dapat melanjutkan dari perangkat lain.
         </p>
       </div>
     </BelajarShell>

@@ -4,6 +4,7 @@ import { AdminInventory } from "@/components/admin/admin-inventory";
 import { PUBLISHED_COUNT } from "@/data/kurikulum";
 import { MODUL_10 } from "@/data/modul-10";
 import { blankDraft, loadDrafts, upsertDraft } from "@/lib/admin/draft-store";
+import { MODULE_FIXTURES } from "@/lib/content/fixtures";
 import { MODUS } from "@/lib/modus";
 
 const push = jest.fn();
@@ -31,7 +32,7 @@ describe("AdminInventory", () => {
   });
 
   it("shows the catalog honestly: published vs empty", async () => {
-    render(<AdminInventory />);
+    render(<AdminInventory modules={MODULE_FIXTURES} />);
     expect(
       await screen.findByText(new RegExp(`${PUBLISHED_COUNT} terbit`)),
     ).toBeInTheDocument();
@@ -45,7 +46,7 @@ describe("AdminInventory", () => {
 
   it("marks a stored draft for a new number as a new draft", async () => {
     upsertDraft(blankDraft(13, { nama: "Lowongan kerja palsu" }));
-    render(<AdminInventory />);
+    render(<AdminInventory modules={MODULE_FIXTURES} />);
     expect(
       await screen.findByText(/1 draf di perangkat ini/),
     ).toBeInTheDocument();
@@ -54,7 +55,7 @@ describe("AdminInventory", () => {
 
   it("creates a new course draft after asking for its name", async () => {
     const user = userEvent.setup();
-    render(<AdminInventory />);
+    render(<AdminInventory modules={MODULE_FIXTURES} />);
     await screen.findByText(new RegExp(`${PUBLISHED_COUNT} terbit`));
 
     await user.click(screen.getByRole("button", { name: /course baru/i }));
@@ -74,7 +75,7 @@ describe("AdminInventory", () => {
 
   it("offers the publish shortcut only for a draft that passes validation", async () => {
     upsertDraft(ready(14));
-    render(<AdminInventory />);
+    render(<AdminInventory modules={MODULE_FIXTURES} />);
 
     const terbit = await screen.findByRole("link", { name: /terbitkan/i });
     expect(terbit).toHaveAttribute("href", "/admin/14#terbit");
@@ -82,7 +83,7 @@ describe("AdminInventory", () => {
 
   it("does not offer publish for an incomplete draft", async () => {
     upsertDraft(blankDraft(13, { nama: "Belum jadi" }));
-    render(<AdminInventory />);
+    render(<AdminInventory modules={MODULE_FIXTURES} />);
 
     await screen.findByText(/1 draf di perangkat ini/);
     expect(

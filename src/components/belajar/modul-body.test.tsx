@@ -1,4 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { submitQuiz } from "@/lib/learning/actions";
+import { mockAccount, renderAccount } from "@/test/learning";
+
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ModulBody } from "@/components/belajar/modul-body";
 import { MODUL_10 } from "@/data/modul-10";
@@ -20,10 +29,11 @@ jest.mock("next/link", () => {
 describe("ModulBody — modul 10", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    mockAccount();
   });
 
   it("renders the full agreed structure", () => {
-    render(<ModulBody modul={MODUL_10} />);
+    renderAccount(<ModulBody modul={MODUL_10} />);
 
     for (const step of MODUL_10.anatomi) {
       expect(
@@ -44,7 +54,7 @@ describe("ModulBody — modul 10", () => {
   });
 
   it("shows the orientation and key points from the course data", () => {
-    render(<ModulBody modul={MODUL_10} />);
+    renderAccount(<ModulBody modul={MODUL_10} />);
 
     expect(screen.getAllByText(/tujuan pembelajaran/i).length).toBeGreaterThan(
       0,
@@ -62,7 +72,7 @@ describe("ModulBody — modul 10", () => {
   });
 
   it("does not claim completion before the quiz is passed", () => {
-    render(<ModulBody modul={MODUL_10} />);
+    renderAccount(<ModulBody modul={MODUL_10} />);
 
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
     expect(screen.queryByText(/badge penjaga apk/i)).not.toBeInTheDocument();
@@ -70,7 +80,7 @@ describe("ModulBody — modul 10", () => {
 
   it("writes progress and shows the badge after the quiz is passed", async () => {
     const user = userEvent.setup();
-    render(<ModulBody modul={MODUL_10} />);
+    renderAccount(<ModulBody modul={MODUL_10} />);
 
     // Q1–Q4, all correct. A correct pick locks the question; advance is explicit.
     await user.click(
@@ -94,14 +104,15 @@ describe("ModulBody — modul 10", () => {
     );
     expect(await screen.findByText(/penjaga apk/i)).toBeInTheDocument();
 
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
-    expect(stored.completedModules).toContain(10);
-    expect(stored.badges).toContain("penjaga-apk");
+    expect(submitQuiz).toHaveBeenCalledWith(
+      expect.objectContaining({ moduleNo: 10, complete: true }),
+    );
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
   it("records the patterns missed in the quiz instead of discarding them", async () => {
     const user = userEvent.setup();
-    render(<ModulBody modul={MODUL_10} />);
+    renderAccount(<ModulBody modul={MODUL_10} />);
 
     // Q1 wrong, Q2–Q4 right: 3/4 still passes the 60% bar.
     await user.click(
@@ -121,8 +132,10 @@ describe("ModulBody — modul 10", () => {
     expect(screen.getByText(/3 benar dari 4 soal/i)).toBeInTheDocument();
     expect(screen.getByText(/tinjau yang kamu lewatkan/i)).toBeInTheDocument();
 
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
-    expect(stored.missedPatterns).toContain("apk-q1");
+    expect(submitQuiz).toHaveBeenCalledWith(
+      expect.objectContaining({ moduleNo: 10, complete: false }),
+    );
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 });
 
@@ -132,7 +145,7 @@ describe("ModulBody — bingkai contoh", () => {
   });
 
   it("reads the source line from the course data instead of a hardcoded chat line", () => {
-    render(<ModulBody modul={MODUL_10} />);
+    renderAccount(<ModulBody modul={MODUL_10} />);
 
     expect(
       screen.getByText("Nomor tak dikenal · WhatsApp · baru saja"),
@@ -141,7 +154,7 @@ describe("ModulBody — bingkai contoh", () => {
   });
 
   it("frames a link example as a link, not as a message", () => {
-    render(
+    renderAccount(
       <ModulBody
         modul={{
           ...MODUL_10,
@@ -166,7 +179,7 @@ describe("ModulBody — bingkai contoh", () => {
   });
 
   it("frames a fake-site example as a browser window showing its address", () => {
-    render(
+    renderAccount(
       <ModulBody
         modul={{
           ...MODUL_10,
@@ -187,7 +200,7 @@ describe("ModulBody — bingkai contoh", () => {
   });
 
   it("frames a call example with advice shaped to a phone call", () => {
-    render(
+    renderAccount(
       <ModulBody
         modul={{
           ...MODUL_10,

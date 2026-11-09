@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import { ProfilView } from "@/components/profil/profil-view";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSession } from "@/lib/auth/server-session";
+import { listModules, moduleSummaries } from "@/lib/content/store";
 
 export const metadata: Metadata = {
   title: "Profil",
-  description:
-    "Akun Lumina dan kemajuan belajar yang tersimpan di perangkat ini.",
+  description: "Akun Lumina dan kemajuan belajar yang tersimpan di akun.",
 };
 
 /**
@@ -20,6 +20,7 @@ async function ProfilSession() {
   if (!session) redirect("/masuk");
   return (
     <ProfilView
+      modules={moduleSummaries(await listModules())}
       nama={session.nama}
       email={session.email}
       createdAt={session.created_at}

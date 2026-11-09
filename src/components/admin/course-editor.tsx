@@ -33,7 +33,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { courseFor, isPublished } from "@/data/kurikulum";
 import type { ContohJenis, ModuleContent } from "@/data/modul-schema";
 import {
   blankDraft,
@@ -45,7 +44,7 @@ import {
   validateDraft,
 } from "@/lib/admin/draft-store";
 import { exportCourse } from "@/lib/admin/export-course";
-import { MODUS_BY_NO } from "@/lib/modus";
+import type { LearningModule } from "@/lib/content/schema";
 
 /**
  * Course editor — plans Task 2.2–2.4. Edits a draft on this device, previews it
@@ -136,10 +135,16 @@ function CodeBlock({
   );
 }
 
-export function CourseEditor({ no }: { no: number }) {
+export function CourseEditor({
+  no,
+  module,
+}: {
+  no: number;
+  module: LearningModule | null;
+}) {
   const router = useRouter();
-  const published = isPublished(no);
-  const modus = MODUS_BY_NO.get(no) ?? null;
+  const published = !!module?.content;
+  const modus = module?.metadata ?? null;
 
   const [draft, setDraft] = useState<CourseDraft>(() => blankDraft(no));
   const [hydrated, setHydrated] = useState(false);
@@ -155,7 +160,7 @@ export function CourseEditor({ no }: { no: number }) {
 
   useEffect(() => {
     const existing = loadDrafts().courses.find((c) => c.no === no);
-    const published = courseFor(no);
+    const published = module?.content ?? null;
     const meta = {
       nama: modus?.nama ?? "",
       level: modus?.level ?? 1,
@@ -184,7 +189,7 @@ export function CourseEditor({ no }: { no: number }) {
         : null,
     );
     setHydrated(true);
-  }, [no, modus]);
+  }, [no, modus, module]);
 
   const persist = useCallback((next: CourseDraft) => {
     setDraft(next);
@@ -207,6 +212,24 @@ export function CourseEditor({ no }: { no: number }) {
     [draft, hydrated],
   );
   const bundle = useMemo(() => exportCourse(draft), [draft]);
+  const databaseBundle = JSON.stringify(
+    {
+      modules: [
+        {
+          metadata: {
+            ...(module?.metadata ?? JSON.parse(bundle.modusEntry)),
+            ...draft.meta,
+            no: draft.no,
+            scenarioId: draft.content.scenarioId,
+          },
+          content: draft.content,
+        },
+      ],
+      simulations: [],
+    },
+    null,
+    2,
+  );
 
   const content: ModuleContent = draft.content;
 
@@ -640,52 +663,31 @@ export function CourseEditor({ no }: { no: number }) {
               <Alert>
                 <AlertTitle>Langkah terbit</AlertTitle>
                 <AlertDescription>
-                  Situs ini statis, jadi terbit = tiga potongan di bawah masuk
-                  ke repo lalu di-commit. Begitu entri <code>kurikulum.ts</code>{" "}
-                  ada, course langsung tampil di <code>/belajar</code>.
+                  Unduh JSON, lalu impor ke database deployment dengan perintah
+                  di bawah. Draf di perangkat ini belum mengubah materi publik.
                 </AlertDescription>
               </Alert>
             )}
 
-            {bundle.requiresUnboundedList ? (
-              <Alert>
-                <AlertTitle>Nomor di luar daftar awal</AlertTitle>
-                <AlertDescription>
-                  `modus.json` wajib sudah menerima nomor lebih dari 12 sebelum
-                  potongan di bawah ditempel (commit Task 1.5).
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Card className="gap-0 rounded-[24px] py-0 shadow-[var(--appnext-shadow-ambient)]">
-              <CardContent className="flex flex-col gap-5 py-5">
-                <CodeBlock
-                  label={`1. File baru — src/data/${bundle.fileName}`}
-                  code={bundle.moduleFile}
-                  fileName={bundle.fileName}
-                />
-                <CodeBlock
-                  label="2. Entri di src/data/kurikulum.ts"
-                  code={`${bundle.kurikulumImport}\n\n// di dalam KURIKULUM:\n${bundle.kurikulumEntry}`}
-                />
-                <CodeBlock
-                  label="3. Objek untuk src/data/modus.json"
-                  code={`${bundle.modusEntry}\n\n// karena modulStatus di sini "lengkap",\n// pastikan kurikulum.ts benar-benar berisi nomor ${no}.`}
-                />
-                <div className="flex flex-col gap-2 text-sm">
-                  <p className="font-medium text-txt">4. Verifikasi & commit</p>
-                  <pre className="overflow-auto rounded-[14px] border border-line bg-panel-2 p-3 text-xs leading-relaxed">
-                    <code>npm run verify</code>
-                  </pre>
-                  <p className="text-dim">
-                    Tidak ada tombol publikasi otomatis — halaman statis tidak
-                    bisa menulis ke repo. Yang mengubah status "Draf" menjadi
-                    "Terbit" adalah entri di <code>kurikulum.ts</code> yang ikut
-                    ter-commit.
+            {!error && (
+              <Card className="gap-0 rounded-card py-0">
+                <CardContent className="flex flex-col gap-5 py-5">
+                  <CodeBlock
+                    label="Konten untuk database"
+                    code={databaseBundle}
+                    fileName={`modul-${no}.json`}
+                  />
+                  <CodeBlock
+                    label="Impor di server deployment"
+                    code={`npm run db:seed -- modul-${no}.json --replace`}
+                  />
+                  <p className="text-sm text-dim">
+                    Impor memperbarui modul ini tanpa menghapus akun atau
+                    progres. Skenario yang dirujuk harus sudah tersedia.
                   </p>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
       </Tabs>

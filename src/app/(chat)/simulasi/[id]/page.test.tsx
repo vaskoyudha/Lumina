@@ -1,7 +1,13 @@
+import { SIMULATION_FIXTURE } from "@/lib/content/fixtures";
+
+jest.mock("@/lib/learning/actions", () => ({
+  getAccountProgress: jest.fn(),
+  submitQuiz: jest.fn(),
+  submitSimulation: jest.fn(),
+}));
+
 import { render, screen } from "@testing-library/react";
-import RunnerPage, {
-  generateStaticParams,
-} from "@/app/(chat)/simulasi/[id]/page";
+import { RunnerContent as RunnerPage } from "@/app/(chat)/simulasi/[id]/page";
 
 jest.mock("next/navigation", () => ({
   notFound: () => {
@@ -27,7 +33,6 @@ jest.mock("@/lib/auth/server-session", () => ({
 
 describe("simulation routes", () => {
   it("prerenders only the playable level and opens the real mission briefing", async () => {
-    expect(generateStaticParams()).toEqual([{ id: "L1-kurir-apk" }]);
     render(
       await RunnerPage({ params: Promise.resolve({ id: "L1-kurir-apk" }) }),
     );
@@ -54,3 +59,12 @@ describe("simulation routes", () => {
     ).rejects.toThrow("Scenario not found");
   });
 });
+
+jest.mock("next/server", () => ({
+  connection: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock("@/lib/content/store", () => ({
+  getSimulation: jest.fn(async (id: string) =>
+    id === "L1-kurir-apk" ? SIMULATION_FIXTURE : null,
+  ),
+}));

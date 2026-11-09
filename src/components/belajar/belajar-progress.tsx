@@ -1,64 +1,170 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { MODUS } from "@/lib/modus";
+import type { LearningSummary } from "@/lib/content/schema";
+import { getAccountProgress } from "@/lib/learning/actions";
 import {
   BADGE_LABEL,
-  loadProgress,
-  PROGRESS_EVENT,
+  EMPTY_PROGRESS,
   type Progress as StoredProgress,
 } from "@/lib/progress";
 
 export { BADGE_LABEL };
 
-/**
- * Progress is per-device localStorage, so every read happens after mount.
- * `saveProgress` fires PROGRESS_EVENT; listening for it keeps the header,
- * the catalog marks and the completion card in sync without a provider.
- */
-function subscribe(onChange: () => void) {
-  window.addEventListener(PROGRESS_EVENT, onChange);
-  // Another tab finishing a module should update this one too.
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(PROGRESS_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-/** Current progress, loaded once after mount (null until then). */
-export function useStoredProgress(): StoredProgress | null {
+type AccountProgressState = {
+  modules: LearningSummary[];
+  progress: StoredProgress | null;
+  error: string | null;
+  authenticated: boolean;
+  simulations: {
+    scenarioId: string;
+    mode: string;
+    outcome: string;
+    finishedAt: string;
+  }[];
+  refresh: () => Promise<void>;
+  update: (progress: StoredProgress) => void;
+};
+const AccountProgressContext = createContext<AccountProgressState | null>(null);
+export function AccountProgressProvider({
+  children,
+  modules,
+}: {
+  children: ReactNode;
+  modules: LearningSummary[];
+}) {
+  const pathname = usePathname();
   const [progress, setProgress] = useState<StoredProgress | null>(null);
-
-  useEffect(() => {
-    const read = () => setProgress(loadProgress());
-    read();
-    return subscribe(read);
+  const [error, setError] = useState<string | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [simulations, setSimulations] = useState<
+    AccountProgressState["simulations"]
+  >([]);
+  const requestId = useRef(0);
+  const refresh = useCallback(async () => {
+    const current = ++requestId.current;
+    try {
+      const result = await getAccountProgress();
+      if (current !== requestId.current) return;
+      if (result.ok) {
+        setProgress(result.progress);
+        setSimulations(result.simulations);
+        setError(null);
+        setAuthenticated(true);
+      } else {
+        setProgress(EMPTY_PROGRESS);
+        setSimulations([]);
+        setError(result.error);
+        setAuthenticated(false);
+      }
+    } catch {
+      if (current !== requestId.current) return;
+      setProgress(EMPTY_PROGRESS);
+      setSimulations([]);
+      setAuthenticated(false);
+      setError("Progres belum bisa dimuat. Coba lagi.");
+    }
   }, []);
-
-  return progress;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: route changes must discard the previous account snapshot
+  useEffect(() => {
+    setProgress(null);
+    setSimulations([]);
+    setAuthenticated(false);
+    void refresh();
+    const read = () => {
+      void refresh();
+    };
+    window.addEventListener("focus", read);
+    return () => window.removeEventListener("focus", read);
+  }, [refresh, pathname]);
+  return (
+    <AccountProgressContext.Provider
+      value={{
+        modules,
+        progress,
+        error,
+        authenticated,
+        simulations,
+        refresh,
+        update: setProgress,
+      }}
+    >
+      {children}
+    </AccountProgressContext.Provider>
+  );
+}
+export function useAccountProgress() {
+  const state = useContext(AccountProgressContext);
+  if (!state)
+    return {
+      modules: [],
+      progress: null,
+      error: null,
+      authenticated: false,
+      simulations: [],
+      refresh: async () => {},
+      update: () => {},
+    } as AccountProgressState;
+  return state;
+}
+export function ProgressNotice() {
+  const { error, refresh, authenticated } = useAccountProgress();
+  if (!error) return null;
+  return (
+    <Alert>
+      <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+        <span>{error}</span>
+        <span className="flex flex-wrap gap-2">
+          {!authenticated && (
+            <Button asChild variant="outline" className="min-h-11">
+              <Link href="/masuk">Masuk</Link>
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className="min-h-11"
+            onClick={() => void refresh()}
+          >
+            Muat ulang progres
+          </Button>
+        </span>
+      </AlertDescription>
+    </Alert>
+  );
+}
+export function useStoredProgress(): StoredProgress | null {
+  return useAccountProgress().progress;
 }
 
-/** Module numbers finished on this device — read by the list page rows. */
+/** Progress is loaded from the authenticated account after mount. */
 export function useCompletedModules(): Set<number> {
   const progress = useStoredProgress();
   return new Set(progress?.completedModules ?? []);
 }
 
-/**
- * Client island for the list header. Renders nothing until mounted so the
- * static list never flashes a "0 selesai" claim before local data exists
- * (and never mismatches the server HTML).
- */
+/** Progress is loaded from the authenticated account after mount. */
 export function BelajarProgress() {
   const progress = useStoredProgress();
+  const { modules } = useAccountProgress();
 
   if (!progress) return null;
 
   const done = progress.completedModules.length;
-  const total = MODUS.length;
+  const total = modules.length;
   const pct = Math.min(100, Math.round((done / total) * 100));
   const badgeNames = Object.entries(BADGE_LABEL)
     .filter(([id]) => progress.badges.includes(id))
@@ -75,8 +181,8 @@ export function BelajarProgress() {
           </span>
           <span className="appnext-caption block">
             {done === 0
-              ? "Mulai dari modul yang sudah lengkap di bawah — progresmu tersimpan di perangkat ini."
-              : "Bagus, lanjutkan. Progresmu tersimpan di perangkat ini, tanpa akun."}
+              ? "Mulai dari modul yang sudah lengkap di bawah — progresmu tersimpan di akun."
+              : "Bagus, lanjutkan. Progresmu tersimpan di akun."}
             {badgeNames.length > 0 ? ` Lencana: ${badgeNames.join(", ")}.` : ""}
           </span>
         </span>

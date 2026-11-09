@@ -17,6 +17,7 @@ tekanan → **darurat** menyiapkan laporan untuk dibawa ke bank.
 npm ci
 # Isi DATABASE_URL di .env.local; jalankan PostgreSQL terlebih dahulu.
 npm run db:migrate
+npm run db:seed    # 12 modul + satu skenario, tidak menimpa konten yang sudah ada
 npm run dev        # http://localhost:3000
 ```
 

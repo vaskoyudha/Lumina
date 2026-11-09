@@ -25,7 +25,13 @@ export interface QuizQuestion {
 interface QuizProps {
   questions: QuizQuestion[];
   /** Called once, only when the learner reaches the pass bar (≥60%). */
-  onDone: (score: number, total: number, missed: string[]) => void;
+  onDone: (
+    score: number,
+    total: number,
+    missed: string[],
+    answers: Record<string, string>,
+  ) => void;
+  onAttempt?: (answers: Record<string, string>) => void;
 }
 
 const LETTERS = ["A", "B", "C", "D", "E"] as const;
@@ -37,7 +43,7 @@ const PASS_MARK = 0.6;
  * the simulation uses (§5-C) — then the learner advances with an explicit
  * button. AppNext styling: white option rows, green/red state from tokens.
  */
-export function Quiz({ questions, onDone }: QuizProps) {
+export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<
@@ -69,10 +75,18 @@ export function Quiz({ questions, onDone }: QuizProps) {
   const correctCount = attempts.filter((a) => a.correct).length;
   const passed = correctCount / total >= PASS_MARK;
 
-  function finish(score: number, missedList: string[]) {
+  function finish(
+    score: number,
+    missedList: string[],
+    latest: typeof attempts,
+  ) {
+    const answers = Object.fromEntries(
+      latest.map((a) => [a.questionId, a.optionId]),
+    );
+    onAttempt?.(answers);
     setFinished(true);
     if (score / total >= PASS_MARK) {
-      onDone(score, total, missedList);
+      onDone(score, total, missedList, answers);
     }
   }
 
@@ -91,7 +105,7 @@ export function Quiz({ questions, onDone }: QuizProps) {
     setPicked(optionId);
     // Last question, or a question re-opened from the review: either way the
     // answer closes the round and returns to the score screen.
-    if (isLast || reviewing) finish(newCorrect, newMissed);
+    if (isLast || reviewing) finish(newCorrect, newMissed, newAttempts);
   }
 
   function next() {
