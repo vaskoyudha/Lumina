@@ -304,3 +304,131 @@
     max-width: 85%;
   }
 }
+
+.wa-quick {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 6px;
+  border-top: 1px solid var(--wa-border);
+  background: var(--wa-composer);
+}
+
+.wa-quick__reply {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid #d1d7db;
+  border-radius: 9999px;
+  background: var(--wa-in);
+  color: var(--wa-header-ink);
+  font-size: 14px;
+  text-align: left;
+}
+
+.wa-quick__reply:hover:not(:disabled) {
+  background: #f5f6f6;
+}
+
+.wa-quick__reply:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.wa-quick__letter {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--wa-header);
+  color: var(--wa-meta);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.wa-composer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--wa-border);
+  background: var(--wa-composer);
+}
+
+.wa-composer__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--wa-in);
+  color: var(--wa-header-ink);
+  font-size: 14px;
+}
+
+.wa-composer__input::placeholder {
+  color: var(--wa-meta);
+}
+
+.wa-composer__btn {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 9999px;
+  color: #54656f;
+}
+
+.wa-composer__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.wa-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.wa-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #8696a0;
+  animation: wa-blink 1.2s infinite;
+}
+
+.wa-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.wa-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes wa-blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-typing span {
+    animation: none;
+    opacity: 0.6;
+  }
+}
