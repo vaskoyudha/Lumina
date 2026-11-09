@@ -1,6 +1,14 @@
 "use client";
 
-import { FileText, Layers, RotateCcw, Search, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Bookmark,
+  FileText,
+  Layers,
+  RotateCcw,
+  Search,
+  Wallet,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
@@ -184,7 +192,7 @@ export function LevelFilter({
     <fieldset
       aria-label="Saring menurut level"
       className={cn(
-        "flex flex-wrap items-center gap-1 rounded-xl bg-panel-2 p-1",
+        "flex flex-wrap items-center gap-1 rounded-full bg-panel-2 p-1",
         className,
       )}
     >
@@ -218,74 +226,75 @@ function ModuleCard({
   const art = coverArtFor(m.no);
 
   return (
-    <Card className="group/card h-full gap-0 rounded-card border border-line bg-panel py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-line hover:shadow-[var(--appnext-shadow-soft)]">
+    <Card className="group/card flex h-full gap-0 overflow-hidden rounded-card border-0 bg-panel py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[var(--appnext-shadow-soft)]">
       <Link
         href={`/belajar/${m.no}`}
         data-pressable
-        className="flex h-full flex-col justify-between p-3.5"
+        className="flex h-full flex-col"
       >
-        <div>
-          <div
-            className={cn(
-              "relative h-44 overflow-hidden rounded-[16px] shadow-inner",
-              m.ready || art ? "appnext-campaign" : "appnext-cover--muted",
-            )}
-          >
-            {art ? (
-              <Image
-                src={art}
-                alt=""
-                fill
-                sizes="(min-width: 1750px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                className="object-cover"
-              />
-            ) : null}
-
-            {art || m.ready ? (
-              <span
-                aria-hidden
-                className="appnext-cover-scrim absolute inset-0"
-              />
-            ) : null}
-
+        <div
+          className={cn(
+            "relative w-full overflow-hidden",
+            art
+              ? ""
+              : m.ready
+                ? "appnext-cover aspect-[1200/670]"
+                : "appnext-cover--muted aspect-[1200/670]",
+          )}
+        >
+          {art ? (
+            <Image
+              src={art}
+              alt=""
+              width={1200}
+              height={670}
+              sizes="(min-width: 1750px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+              className="block h-auto w-full"
+            />
+          ) : (
             <span
               aria-hidden
+              className="absolute inset-0 flex items-center justify-center text-brand-ink/35"
+            >
+              <CoverIcon no={m.no} className="size-16" />
+            </span>
+          )}
+
+          {art ? (
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent"
+            />
+          ) : null}
+
+          <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
+            <span
               className={cn(
-                "pointer-events-none absolute inset-x-3 top-2.5 text-center",
-                art || m.ready ? "text-bg" : "text-txt",
+                "font-bold text-[10px] uppercase tracking-wider",
+                art ? "text-bg" : "text-txt",
               )}
             >
-              <span className="block truncate font-black text-[12px] uppercase tracking-wider">
-                Modus {String(m.no).padStart(2, "0")}
-              </span>
-              <span
-                className={cn(
-                  "mt-0.5 block truncate font-medium text-[10px]",
-                  art || m.ready ? "text-bg/80" : "text-dim",
-                )}
-              >
-                {m.ciri[0]}
-              </span>
+              Modus {String(m.no).padStart(2, "0")}
             </span>
-          </div>
-
-          <div className="mt-3.5 flex items-start justify-between gap-2 px-0.5">
-            <h4 className="line-clamp-2 font-bold text-[14px] text-txt leading-snug transition-colors group-hover/card:text-brand-ink">
-              {m.nama}
-            </h4>
             <span
               aria-hidden
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink ring-1 ring-brand-line"
+              className="inline-flex size-8 items-center justify-center rounded-full bg-bg/90 text-brand-strong shadow-sm backdrop-blur-sm"
             >
-              <CoverIcon no={m.no} className="size-4" />
+              <Bookmark className="size-3.5" />
             </span>
           </div>
+        </div>
 
-          <p className="mt-1 px-0.5 font-medium text-[11px] text-dim">
+        <div className="flex flex-1 flex-col p-3.5">
+          <h3 className="line-clamp-2 font-bold text-[14px] text-txt leading-snug transition-colors group-hover/card:text-brand-ink">
+            {m.nama}
+          </h3>
+
+          <p className="mt-0.5 font-medium text-[10.5px] text-dim">
             Modul {String(m.no).padStart(2, "0")} · Level {m.level}
           </p>
 
-          <div className="mt-3 flex items-center justify-between gap-1 border-line border-t px-0.5 pt-2.5 font-semibold text-[10px] text-txt">
+          <div className="mt-2 flex items-center justify-between gap-1 border-line border-t pt-2 font-semibold text-[10px] text-txt">
             <span
               className="inline-flex min-w-0 items-center gap-1.5"
               title="Laporan IASC"
@@ -308,27 +317,27 @@ function ModuleCard({
               <span className="tabular">{m.ciri.length}</span>
             </span>
           </div>
-        </div>
 
-        <div className="mt-3.5 px-0.5">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-panel-2">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-500",
-                done
-                  ? "bg-brand"
-                  : "bg-[var(--appnext-ink-2)] group-hover/card:bg-brand",
-              )}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[11px]">
-            <span className="font-medium text-dim">
-              Selesai :{" "}
-              <strong className="text-txt">{loading ? "—" : `${pct}%`}</strong>
+          <div className="mt-auto flex items-center gap-2 pt-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-panel-2">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  done
+                    ? "bg-brand-strong"
+                    : "bg-[var(--appnext-ink-2)]/25 group-hover/card:bg-brand",
+                )}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="tabular font-bold text-[10px] text-brand-strong">
+              {loading ? "—" : `${pct}%`}
             </span>
-            <span className="font-medium text-dim">
-              Ciri : <strong className="text-txt">{m.ciri.length}</strong>
+            <span
+              aria-hidden
+              className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink ring-1 ring-brand-line transition-colors group-hover/card:bg-brand-strong group-hover/card:text-bg"
+            >
+              <ArrowRight className="size-3.5" />
             </span>
           </div>
         </div>
@@ -353,9 +362,9 @@ function FilterPill({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center rounded-lg px-2.5 font-semibold text-[11px] transition-colors duration-150 ease-out",
+        "inline-flex min-h-9 items-center rounded-full px-3 font-semibold text-[11px] transition-colors duration-150 ease-out",
         active
-          ? "bg-panel font-bold text-txt shadow-sm"
+          ? "bg-brand-strong font-bold text-bg shadow-sm"
           : "text-dim hover:bg-panel/60 hover:text-txt",
       )}
     >
