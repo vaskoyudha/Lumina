@@ -3,6 +3,7 @@
 import { LogOut, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import { ProfilKemajuan } from "@/components/profil/profil-kemajuan";
+import { ProfilLoker } from "@/components/profil/profil-loker";
 import { BackButton } from "@/components/shell/back-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,18 @@ export function ProfilView({
         </CardHeader>
         <CardContent>
           <ProfilKemajuan />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lowongan tersimpan</CardTitle>
+          <CardDescription>
+            Lowongan yang kamu simpan di perangkat ini, bukan di akun.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProfilLoker />
         </CardContent>
       </Card>
 

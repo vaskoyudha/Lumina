@@ -208,7 +208,10 @@ interface DetectorResult {
   note?: string;
 }
 
-type DetectorId = Exclude<StageId, "evidence" | "scoring" | "voice">;
+type DetectorId = Exclude<
+  StageId,
+  "evidence" | "scoring" | "voice" | "job-search"
+>;
 
 /** The pipeline, in evaluation order. Both public functions drive this list. */
 const DETECTORS: readonly {

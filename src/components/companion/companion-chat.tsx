@@ -37,6 +37,7 @@ import {
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
 import { ExplanationCard } from "@/components/companion/explanation-card";
+import { LokerTool } from "@/components/companion/loker-tool";
 import { ScenarioCards } from "@/components/companion/scenario-cards";
 import type { Scenario } from "@/components/companion/scenarios";
 import { ScoreCard } from "@/components/companion/score-card";
@@ -72,6 +73,7 @@ import {
   composeReply,
   suggestedActions,
 } from "@/lib/companion/reply";
+import { requestToolSummary } from "@/lib/companion/tool-client";
 import { isQuestionAbout, type Lane, planTurn } from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
 import {
@@ -83,6 +85,9 @@ import {
 } from "@/lib/contracts/agent-run";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
+import { filterPostings } from "@/lib/loker/search";
+import type { LokerCorpus, LokerSearchArgs } from "@/lib/loker/types";
+import { useSavedLoker } from "@/lib/loker/use-saved";
 import { modusFor } from "@/lib/modus";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
@@ -145,6 +150,17 @@ interface Turn {
   lane?: Lane;
   /** The reader's own words, kept only so the lane chip can re-send them. */
   laneSource?: string;
+  /** The job-search card for this turn, when the tool ran. */
+  tool?: LokerTurnTool;
+}
+
+interface LokerTurnTool {
+  args: LokerSearchArgs;
+  count: number;
+  total: number;
+  capped: boolean;
+  summary: string | null;
+  summaryState: "idle" | "running" | "done" | "failed";
 }
 
 interface Session {
@@ -184,13 +200,33 @@ function titleFor(text: string, attachments: readonly Attachment[]): string {
   return base.length > 42 ? `${base.slice(0, 42).trimEnd()}…` : base;
 }
 
+const EMPTY_CORPUS: LokerCorpus = {
+  postings: [],
+  total: 0,
+  capped: false,
+};
+
+/**
+ * Deterministic copy when the summary route is offline or unconfigured. It
+ * states the count and nothing the card does not already show.
+ */
+function summaryFallback(count: number): string {
+  if (count === 0) {
+    return "Tidak ada lowongan yang cocok dengan saringan itu.";
+  }
+  return `${count} lowongan cocok dengan saringan itu. Buka kartu untuk melihat dua penilaian tiap lowongan.`;
+}
+
 export function CompanionChat({
   session = null,
   initialPanel,
+  corpus = EMPTY_CORPUS,
 }: {
   session?: CompanionSession | null;
   /** Set when another surface links straight into the detector overview. */
   initialPanel?: "agen";
+  /** The capped cumulative scan snapshot; the client filters it locally. */
+  corpus?: LokerCorpus;
 }) {
   const [sessions, setSessions] = React.useState<Session[]>(() => [
     newSession(),
@@ -210,6 +246,7 @@ export function CompanionChat({
   const [copiedThread, setCopiedThread] = React.useState(false);
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const { saved, toggle: toggleSaved } = useSavedLoker();
 
   /*
    * The mobile drawer covers the column but not the window: Escape must close
@@ -786,13 +823,107 @@ export function CompanionChat({
 
         if (answer.outcome === "model") {
           finish(answer.text, "model");
-        } else {
-          finish(
-            composeAnswerFallback(lane),
-            "template",
-            answer.outcome as VoiceOutcome,
+
+          const call = answer.toolCalls[0];
+          if (!call) return;
+
+          const toolStarted = performance.now();
+          const matches = filterPostings(corpus.postings, call.arguments);
+          const toolMs = performance.now() - toolStarted;
+
+          const searchStage: AgentStage = {
+            id: "job-search",
+            ...STAGE_LABEL["job-search"],
+            status: "selesai",
+            findings: 0,
+            ms: toolMs,
+            note: `${matches.length} lowongan cocok`,
+          };
+
+          patchCompanion((turn) => ({
+            ...turn,
+            tool: {
+              args: call.arguments,
+              count: matches.length,
+              total: corpus.total,
+              capped: corpus.capped,
+              summary: null,
+              summaryState: "running",
+            },
+            trace: turn.trace
+              ? {
+                  stages: [...turn.trace.stages, searchStage],
+                  totalMs: turn.trace.totalMs + toolMs,
+                }
+              : { stages: [searchStage], totalMs: toolMs },
+          }));
+
+          /*
+           * Phase 2 carries titles, companies, verdicts, and a count. The
+           * query, descriptions, apply URLs, and the saved list never enter
+           * this object, so the privacy boundary is the payload.
+           */
+          const summaryControl = new AbortController();
+          const summaryTimer = setTimeout(() => summaryControl.abort(), 21000);
+          let summary: string | null = null;
+          try {
+            summary = await requestToolSummary(
+              {
+                count: matches.length,
+                postings: matches.slice(0, 20).map((item) => ({
+                  title: item.title,
+                  company: item.company,
+                  sentinelStatus: item.sentinelStatus,
+                  luminaRisk: item.luminaRisk,
+                })),
+              },
+              summaryControl.signal,
+            );
+          } finally {
+            clearTimeout(summaryTimer);
+          }
+
+          const sentence = summary ?? summaryFallback(matches.length);
+
+          patchCompanion((turn) => ({
+            ...turn,
+            tool: turn.tool
+              ? {
+                  ...turn.tool,
+                  summary: sentence,
+                  summaryState: summary ? "done" : "failed",
+                }
+              : undefined,
+          }));
+
+          /*
+           * The summary is a second companion bubble only while the tool turn
+           * is still the last thing in the thread. If the reader already sent
+           * another message, appending it would answer a question they moved
+           * past.
+           */
+          const summaryTurn: Turn = {
+            id: id(),
+            role: "companion",
+            text: sentence,
+            at: stamp,
+          };
+          setSessions((prev) =>
+            prev.map((item) => {
+              if (item.id !== target) return item;
+              const last = item.turns[item.turns.length - 1];
+              if (last?.id !== companionId) return item;
+              return { ...item, turns: [...item.turns, summaryTurn] };
+            }),
           );
+          return;
         }
+
+        finish(
+          composeAnswerFallback(lane),
+          "template",
+          answer.outcome as VoiceOutcome,
+        );
       } catch {
         finish(
           lane === "periksa"
@@ -808,8 +939,72 @@ export function CompanionChat({
         clearTimeout(abortTimer);
       }
     },
-    [active?.turns, activeId, busy, latestExplanation, latestResult],
+    [active?.turns, activeId, busy, corpus, latestExplanation, latestResult],
   );
+
+  /**
+   * The chip path: open the card with no filters and no model call.
+   *
+   * It still records a `job-search` stage, because the trace is the honest
+   * record of what ran; it simply has no detector and no language stage. The
+   * summary is skipped on purpose.
+   */
+  const openJobSearch = React.useCallback(() => {
+    if (busy) return;
+    const target = activeId;
+    if (target === undefined) return;
+
+    const stamp = new Date().toISOString();
+    const started = performance.now();
+    const matches = filterPostings(corpus.postings, { query: "" });
+    const toolMs = performance.now() - started;
+
+    const searchStage: AgentStage = {
+      id: "job-search",
+      ...STAGE_LABEL["job-search"],
+      status: "selesai",
+      findings: 0,
+      ms: toolMs,
+      note: `${matches.length} lowongan cocok`,
+    };
+
+    const userTurn: Turn = {
+      id: id(),
+      role: "user",
+      text: "Cari lowongan",
+      at: stamp,
+      lane: "obrolan",
+    };
+    const cardTurn: Turn = {
+      id: id(),
+      role: "companion",
+      text: "",
+      at: stamp,
+      tool: {
+        args: { query: "" },
+        count: matches.length,
+        total: corpus.total,
+        capped: corpus.capped,
+        summary: null,
+        summaryState: "idle",
+      },
+      trace: { stages: [searchStage], totalMs: toolMs },
+    };
+
+    setSessions((prev) =>
+      prev.map((item) =>
+        item.id === target
+          ? {
+              ...item,
+              title: item.turns.length === 0 ? "Cari lowongan" : item.title,
+              time: stamp.slice(11, 16),
+              updatedAt: new Date(stamp).getTime(),
+              turns: [...item.turns, userTurn, cardTurn],
+            }
+          : item,
+      ),
+    );
+  }, [activeId, busy, corpus]);
 
   const startNew = () => {
     setShowSessions(false);
@@ -1121,6 +1316,7 @@ export function CompanionChat({
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
+                    onSearchJobs={openJobSearch}
                     autoFocus
                     placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
                   />
@@ -1235,6 +1431,17 @@ export function CompanionChat({
                         </p>
                       ) : null}
 
+                      {turn.tool ? (
+                        <LokerTool
+                          corpus={corpus}
+                          initialArgs={turn.tool.args}
+                          summaryState={turn.tool.summaryState}
+                          canRefresh={session !== null}
+                          saved={saved}
+                          onToggleSave={toggleSaved}
+                        />
+                      ) : null}
+
                       {turn.lane === "tanya" && turn.laneSource ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-dim text-[0.7rem]">
@@ -1285,6 +1492,7 @@ export function CompanionChat({
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
+                    onSearchJobs={openJobSearch}
                     placeholder="Tempel pesan berikutnya…"
                   />
                 </div>

@@ -83,6 +83,8 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 - `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; callback = `AUTH_URL + /api/auth/google/callback`. Lihat `docs/auth.md`.
 - `LUMINA_DEMO_EMAIL`, `LUMINA_DEMO_PASSWORD` — opsional; tombol akun demo di `/masuk` hanya membaca keduanya di server. Kosongkan di lingkungan yang tidak boleh punya akun bersama.
 - `LUMINA_AI_GLOBAL_LIMIT` — batas AI global per menit (template Compose 100; kode jatuh ke 200 bila kosong).
+- `LOKER_SCAN_DATA_DIR` — akar data pemindai lowongan (default `<cwd>/.scan-data`;
+  di container `/app/.scan-data`). Harus bisa ditulis proses aplikasi.
 - `TRUST_PROXY` — hanya `true` di belakang Caddy yang menimpa `X-Lumina-Client-IP`; tanpa itu semua pengguna anonim berbagi satu kunci limit.
 - `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
   OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan
@@ -112,6 +114,11 @@ hanya Caddy yang membuka 80/443. Migrasi selalu langkah rilis terpisah
 (`npm run db:migrate`) — aplikasi tidak membuat tabel. `GET /api/health` hijau
 hanya bila `SELECT 1` lolos dalam dua detik, bukan bila provider AI hidup.
 Backup, rollback, dan cutover SQLite: `docs/deploy.md`.
+
+`scanner/` adalah engine career-ops yang di-vendor utuh dan dijalankan sebagai
+subprocess; `Dockerfile` menyalinnya dan membuat `/app/.scan-data` milik UID
+1001. Migrasi `002_loker.sql` ikut `npm run db:migrate`; aplikasi tidak membuat
+tabel.
 
 ## Skills
 
@@ -150,6 +157,9 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 | `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
 | `api/auth/google/*` | route handler | — | mulai OAuth + callback |
 | `api/health` | route handler | — | `SELECT 1` ke DB; bukan cek provider AI |
+| `api/loker/scan` | route handler | — | mulai pindai (sesi + rate limit + advisory lock) |
+| `api/loker/scan/status` | route handler | — | status run terakhir; `204` bila belum ada |
+| `api/companion/tools/summary` | route handler | — | ringkasan fase 2 (tanpa query/deskripsi) |
 
 Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
 ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
@@ -211,6 +221,8 @@ src/
 │   ├── admin/                workbench kurikulum, AdminNav sendiri
 │   ├── api/
 │   │   ├── companion/        answer, vision, voice
+│   │   ├── loker/            scan + scan/status
+│   │   ├── companion/tools/  summary
 │   │   ├── auth/google/      mulai OAuth + callback
 │   │   └── health/           SELECT 1 ke DB
 │   ├── masuk/ daftar/        auth akun, tanpa chrome
@@ -222,7 +234,10 @@ src/
 │   ├── marketing/            sections landing + powder/ (vendored, Biome-exempt)
 │   ├── brand/                logo + mascot (dipakai shell, marketing, companion)
 │   ├── admin/                admin inventory/nav
-│   └── belajar/ companion/ darurat/ profil/
+│   ├── companion/            percakapan, panel bukti, kartu lowongan
+│   │   ├── loker-tool.tsx    kartu pencarian lowongan
+│   │   └── loker-card.tsx    satu lowongan + dua penilaian
+│   └── belajar/ darurat/ profil/
 ├── lib/
 │   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run
 │   ├── scoring/              engine deterministik + eval.ts + bench-cases.ts
@@ -230,6 +245,7 @@ src/
 │   ├── auth/                 database, accounts, password, google, session, server-session, maintenance
 │   ├── server/               clientKey/limitAI + pembaca body berbatas
 │   ├── simulasi/             catalog, scenario, validate
+│   ├── loker/                scanner bridge, boards, audit, store, search
 │   ├── darurat/              report, pdf
 │   ├── evidence/             bundle, extract, timeline, narrative
 │   ├── admin/                draft-store, export-course
@@ -238,9 +254,16 @@ src/
 └── styles/                   appnext-tokens.css, landing-tokens.css, powder-*.css
 ```
 
-Di akar repo: `migrations/` (SQL bernomor, dijalankan `scripts/migrate.mjs`),
-`scripts/` (migrate/cleanup/import-sqlite), dan `deploy/` (Caddyfile, backup,
-db-init). Jangan menambah tabel lewat kode aplikasi — tambah migrasi bernomor.
+Di akar repo:
+
+```
+├── migrations/               SQL bernomor, dijalankan `scripts/migrate.mjs`
+├── scripts/                  migrate/cleanup/import-sqlite
+├── deploy/                   Caddyfile, backup, db-init
+└── scanner/                  engine career-ops yang di-vendor (jangan diedit)
+```
+
+Jangan menambah tabel lewat kode aplikasi — tambah migrasi bernomor.
 
 ## Batas stream
 
@@ -254,6 +277,10 @@ sesuatu, minta bentuk datanya, bukan filenya.
 | B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
 | C | `app/(chat)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
 | D | `app/(app)/darurat/`, `components/darurat/`, `lib/darurat/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
+| Loker (pasca-submisi) | `scanner/`, `lib/loker/`, `api/loker/`, `api/companion/tools/`, `components/companion/loker-*`, `migrations/002_loker.sql` | engine skor pesan, konten modul, PDF |
+
+`StageId` mendapat entri aditif `"job-search"` untuk jejak agen; `AgentId` tidak
+berubah. Perubahan ini terasa di panel bukti bersama, jadi sebutkan di PR.
 
 `components/brand`, `components/auth`, `components/shell`, `lib/auth`,
 `lib/server`, `app/api`, dan `migrations/` adalah permukaan bersama, bukan milik

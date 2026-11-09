@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { CompanionChat } from "@/components/companion/companion-chat";
+import type { LokerCorpus, LokerView } from "@/lib/loker/types";
 
 /**
  * This suite renders the whole conversation client and runs the full
@@ -29,6 +30,11 @@ jest.mock("next/link", () => {
   );
   return { __esModule: true, default: Link };
 });
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: jest.fn() }),
+  usePathname: () => "/companion",
+}));
 
 /**
  * Paste, not type. Every test here asserts what the engine and the panel do
@@ -397,5 +403,127 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
       expect(voice).toHaveAttribute("data-status", "dilewati"),
     );
     expect(within(voice).getByText(/templat/i)).toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · job search", () => {
+  const realFetch = globalThis.fetch;
+
+  afterEach(() => {
+    if (realFetch) {
+      globalThis.fetch = realFetch;
+    } else {
+      delete (globalThis as { fetch?: unknown }).fetch;
+    }
+    jest.restoreAllMocks();
+  });
+
+  function posting(over: Partial<LokerView> = {}): LokerView {
+    return {
+      urlKey: "https://example.com/1",
+      title: "Frontend Engineer",
+      company: "PT Maju",
+      location: "Jakarta",
+      salaryMin: 10_000_000,
+      salaryMax: 15_000_000,
+      salaryText: "Rp10-15 jt",
+      tags: ["React"],
+      description: "Membangun antarmuka React.",
+      applyUrl: "https://example.com/1",
+      source: "Jobstreet",
+      postedAt: "2026-11-01",
+      fetchedAt: "2026-11-09T00:00:00.000Z",
+      companyEmail: "hr@maju.co.id",
+      domainAgeDays: 400,
+      employerKnown: true,
+      sentinelStatus: "clean",
+      sentinelFlags: [],
+      trustScore: 100,
+      trustLevel: "high",
+      luminaScore: 0,
+      luminaRisk: "bersih",
+      luminaSignals: [],
+      ...over,
+    };
+  }
+
+  const corpus: LokerCorpus = {
+    postings: [posting()],
+    total: 1,
+    capped: false,
+  };
+
+  it("renders the card and the summary when the model calls job_search", async () => {
+    const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/companion/answer")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            text: "",
+            toolCalls: [
+              {
+                id: "call-1",
+                name: "job_search",
+                arguments: { query: "React" },
+              },
+            ],
+          }),
+        } as unknown as Response;
+      }
+      if (url.includes("/api/companion/tools/summary")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, text: "Ada satu lowongan React." }),
+        } as unknown as Response;
+      }
+      return {
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      } as unknown as Response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const user = userEvent.setup();
+    render(<CompanionChat corpus={corpus} />);
+    await enterMessage(user, "cari lowongan React");
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    expect(await screen.findByText("Frontend Engineer")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Ada satu lowongan React."),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("agent-job-search")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    // Privacy: the phase-2 summary carries postings, never the user's query.
+    const [, summaryInit] = fetchMock.mock.calls[1] as unknown as [
+      unknown,
+      { body?: string },
+    ];
+    expect(summaryInit.body).toContain('"postings"');
+    expect(summaryInit.body).not.toContain('"query"');
+    expect(summaryInit.body).not.toContain("cari lowongan React");
+    expect(summaryInit.body).not.toContain('"description"');
+  });
+
+  it("opens the card from the chip without calling the model", async () => {
+    const fetchMock = jest.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const user = userEvent.setup();
+    render(<CompanionChat corpus={corpus} />);
+
+    await user.click(screen.getByRole("button", { name: /cari lowongan/i }));
+
+    expect(await screen.findByText("Frontend Engineer")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText(/ada satu lowongan react/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("agent-job-search")).toBeInTheDocument();
   });
 });
