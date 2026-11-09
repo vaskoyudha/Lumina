@@ -10,11 +10,12 @@ import {
   Plus,
   Sparkles,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   type CSSProperties,
+  Fragment,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
@@ -88,13 +89,11 @@ export function AgentsView({
   onCopyLink: () => void;
   copied?: boolean;
 }) {
-  const reduced = useReducedMotion() ?? false;
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <header className="border-field border-b pt-6 pb-4 shadow-sm">
-        <div className="w-full px-5 sm:px-8">
-          <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto rounded-[22px] bg-brand-tint shadow-lift ring-1 ring-brand-edge/60 lg:overflow-hidden">
+      <header className="sticky top-0 z-20 shrink-0 border-brand-edge/50 border-b bg-brand-tint px-5 py-3">
+        <div className="w-full">
+          <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
             <div className="min-w-0">
               <h1
                 id="agen-pemeriksa-title"
@@ -144,7 +143,7 @@ export function AgentsView({
         </div>
       </header>
 
-      <div className="w-full px-5 pt-4 pb-8 sm:px-8">
+      <div className="min-h-0 flex-1 p-3 sm:p-4 lg:overflow-hidden">
         {/*
          * The diagram lives on its own pannable canvas — drag to move, wheel or
          * the controls to zoom. The field is present at every width so the
@@ -155,30 +154,42 @@ export function AgentsView({
         <DiagramCanvas>
           <LuminaCard />
 
-          <Connector reduced={reduced} size="tall" />
+          <FlowFanOut />
 
           {/*
            * Each column is one channel: the detector and the mechanisms it
            * checks live in the same tall card, so the agents read as parallel
-           * lanes rather than disconnected boxes.
+           * lanes rather than disconnected boxes. Below `lg` the lanes stack and
+           * a solid drop joins each card to the next; on desktop a shared bus
+           * joins row one to row two, and the fan-in closes the tree into the
+           * score. Every mark is solid: a wiring map, not a live flow.
            */}
-          <ul className="mt-1 grid list-none grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-3">
+          <ul className="mt-1 grid list-none grid-cols-1 gap-x-4 sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-4 lg:gap-x-6">
             {AGENT_SEQUENCE.map((agent, index) => (
-              <li key={agent} className="flex min-w-0 flex-col">
-                <AgentLane
-                  agent={agent}
-                  index={index}
-                  onSelect={onSelect}
-                  selected={selected === agent}
-                />
-                <div className="hidden lg:block">
-                  <Connector reduced={reduced} size="card" />
-                </div>
-              </li>
+              <Fragment key={agent}>
+                <li className="flex min-w-0 flex-col">
+                  <AgentLane
+                    agent={agent}
+                    index={index}
+                    onSelect={onSelect}
+                    selected={selected === agent}
+                  />
+                  <div className="flex justify-center lg:hidden">
+                    {index < AGENT_SEQUENCE.length - 1 ? (
+                      <Rail className="h-9" />
+                    ) : null}
+                  </div>
+                </li>
+                {index === 3 ? (
+                  <li aria-hidden className="hidden lg:col-span-4 lg:block">
+                    <RowLink />
+                  </li>
+                ) : null}
+              </Fragment>
             ))}
           </ul>
 
-          <Connector reduced={reduced} size="tall" />
+          <FlowFanIn />
           <ScoreNode />
         </DiagramCanvas>
       </div>
@@ -212,6 +223,7 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
   } | null>(null);
   const didPan = useRef(false);
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
+  const [fitScale, setFitScale] = useState(1);
   const [dragging, setDragging] = useState(false);
 
   const clamp = useCallback((x: number, y: number, scale: number) => {
@@ -253,6 +265,29 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
     };
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const content = contentRef.current;
+    if (!canvas || !content) return;
+
+    const measure = () => {
+      if (!window.matchMedia("(min-width: 1024px)").matches) {
+        setFitScale(1);
+        return;
+      }
+      const margin = 24;
+      const byWidth = (canvas.clientWidth - margin) / content.offsetWidth;
+      const byHeight = (canvas.clientHeight - margin) / content.offsetHeight;
+      setFitScale(Math.max(MIN_SCALE, Math.min(1, byWidth, byHeight)));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    observer.observe(content);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -330,7 +365,7 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
   };
 
   const contentStyle: CSSProperties = {
-    transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
+    transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale * fitScale})`,
     transformOrigin: "center",
   };
 
@@ -341,29 +376,23 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
       onClickCapture={onClickCapture}
       onPointerDown={onPointerDown}
       className={cn(
-        "relative mt-5 overflow-hidden rounded-[26px] border border-brand-edge/60 p-3 sm:p-4 lg:h-[760px] lg:p-0 lg:touch-none",
+        "relative h-auto overflow-hidden rounded-[18px] p-4 sm:p-5 lg:h-full lg:p-0 lg:touch-none",
         dragging ? "lg:cursor-grabbing lg:select-none" : "lg:cursor-grab",
       )}
-      style={{
-        backgroundColor:
-          "color-mix(in oklab, var(--lumina-brand-tint) 66%, var(--lumina-brand-edge-soft))",
-        boxShadow:
-          "0 44px 90px -40px color-mix(in oklab, var(--lumina-brand) 46%, transparent), 0 2px 6px color-mix(in oklab, var(--lumina-ink) 7%, transparent), inset 0 1px 0 var(--lumina-panel), inset 0 0 120px color-mix(in oklab, var(--lumina-brand) 8%, transparent)",
-      }}
     >
-      {/* Warm paper: a bloom behind the core, a lift under the result. */}
+      {/* A light warm wash keeps the sheet soft without flooding it orange. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 60% 42% at 50% -8%, color-mix(in oklab, var(--lumina-brand-edge) 80%, transparent) 0%, transparent 66%), radial-gradient(ellipse 46% 28% at 50% 106%, color-mix(in oklab, var(--lumina-brand-soft) 82%, transparent) 0%, transparent 70%)",
+            "radial-gradient(ellipse 62% 40% at 50% -8%, color-mix(in oklab, var(--lumina-brand-edge) 42%, transparent) 0%, transparent 68%), radial-gradient(ellipse 46% 24% at 50% 106%, color-mix(in oklab, var(--lumina-brand-soft) 44%, transparent) 0%, transparent 72%)",
         }}
       />
       {/* Fine technical grid — the drawing surface, not a texture. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-90"
+        className="pointer-events-none absolute inset-0 opacity-55"
         style={{
           backgroundImage:
             "radial-gradient(circle, var(--lumina-brand-edge) 1px, transparent 1px)",
@@ -372,47 +401,12 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
             "radial-gradient(ellipse 70% 70% at 50% 50%, black 45%, transparent 100%)",
         }}
       />
-      {/* Corner vignette keeps the eye on the pipeline. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 62%, color-mix(in oklab, var(--lumina-brand-edge-soft) 90%, transparent) 100%)",
-        }}
-      />
-      {/* Frame: a light top edge and a hairline inner boundary. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-panel to-transparent"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-3 hidden rounded-[20px] border border-ink/8 lg:block"
-      />
-      {/* Registration marks: a technical sheet, not a screenshot. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute top-3 left-3 hidden size-2 border-brand/40 border-t border-l lg:block"
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute top-3 right-3 hidden size-2 border-brand/40 border-t border-r lg:block"
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute bottom-3 left-3 hidden size-2 border-brand/40 border-b border-l lg:block"
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute right-3 bottom-3 hidden size-2 border-brand/40 border-r border-b lg:block"
-      />
 
       <div className="relative lg:flex lg:h-full lg:items-center lg:justify-center">
         <div
           ref={contentRef}
           className={cn(
-            "w-full lg:px-8 lg:pt-12 lg:pb-8",
+            "mx-auto w-full max-w-[820px] lg:px-8 lg:pt-12 lg:pb-8",
             !dragging &&
               !reduced &&
               "lg:transition-transform lg:duration-200 lg:ease-out",
@@ -466,7 +460,7 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
           01
         </span>
         <span className="font-mono text-[8.5px] text-ink-soft uppercase tracking-[0.18em]">
-          Alur pemeriksaan
+          Alur pekerjaan
         </span>
         <span aria-hidden className="h-px w-8 bg-brand/30" />
       </div>
@@ -484,17 +478,17 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
  */
 function LuminaCard() {
   return (
-    <div className="relative mx-auto w-full">
+    <div className="relative mx-auto w-full max-w-[560px]">
       <div
         aria-hidden
-        className="pointer-events-none absolute -inset-6 rounded-[34px] bg-brand/25 blur-2xl"
+        className="pointer-events-none absolute -inset-5 rounded-[30px] bg-brand/20 blur-2xl"
       />
       <Card
         data-agent="lumina"
-        className="relative gap-0 overflow-hidden rounded-[24px] border-0 bg-brand-strong py-0 ring-1 ring-panel/20"
+        className="relative gap-0 overflow-hidden rounded-[20px] border-0 bg-brand-strong py-0 ring-1 ring-panel/20"
         style={{
           boxShadow:
-            "0 34px 70px -24px color-mix(in oklab, var(--lumina-brand) 66%, transparent), inset 0 1px 0 color-mix(in oklab, var(--lumina-panel) 44%, transparent)",
+            "0 24px 52px -24px color-mix(in oklab, var(--lumina-brand) 58%, transparent), inset 0 1px 0 color-mix(in oklab, var(--lumina-panel) 44%, transparent)",
         }}
       >
         <div
@@ -514,51 +508,51 @@ function LuminaCard() {
             backgroundSize: "14px 14px",
           }}
         />
-        <CardHeader className="relative flex flex-row items-center gap-4 px-5 pt-4 pb-0">
-          <span className="relative grid size-[68px] shrink-0 place-items-center rounded-[20px] bg-panel shadow-lift ring-1 ring-panel/70">
-            <LuminaLogo variant="mark" className="size-[52px]" />
+        <CardHeader className="relative flex flex-row items-center gap-3 px-4 pt-3 pb-0">
+          <span className="relative grid size-12 shrink-0 place-items-center rounded-[14px] bg-panel shadow-lift ring-1 ring-panel/70">
+            <LuminaLogo variant="mark" className="size-9" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="font-semibold text-[22px] text-panel leading-tight tracking-[-0.03em]">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <CardTitle className="font-semibold text-[18px] text-panel leading-tight tracking-[-0.02em]">
                 Lumina
               </CardTitle>
               <Badge
                 variant="outline"
-                className="h-auto rounded-full border-panel/30 bg-panel/15 px-2 py-0.5 font-mono text-[9px] font-normal text-panel uppercase tracking-[0.12em]"
+                className="h-auto rounded-full border-panel/30 bg-panel/15 px-1.5 py-0.5 font-mono text-[8px] font-normal text-panel uppercase tracking-[0.1em]"
               >
                 Orkestrator
               </Badge>
             </div>
-            <p className="mt-1 text-[12.5px] text-panel/85 leading-snug">
+            <p className="mt-0.5 text-[11px] text-panel/85 leading-snug">
               Satu engine deterministik yang menjalankan seluruh agen.
             </p>
           </div>
-          <div className="hidden shrink-0 flex-col items-end gap-2 pr-1 sm:flex">
-            <div className="flex -space-x-2.5">
+          <div className="hidden shrink-0 flex-col items-end gap-1 pr-1 sm:flex">
+            <div className="flex -space-x-2">
               {AGENT_SEQUENCE.map((agent) => (
                 <span
                   key={agent}
-                  className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
+                  className="flex size-6 items-center justify-center overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
                 >
-                  <AgentFace agent={agent} size={32} />
+                  <AgentFace agent={agent} size={24} />
                 </span>
               ))}
             </div>
-            <span className="font-mono text-[8px] text-panel/70 uppercase tracking-[0.18em] leading-none">
+            <span className="font-mono text-[7px] text-panel/70 uppercase tracking-[0.16em] leading-none">
               {String(AGENT_SEQUENCE.length).padStart(2, "0")} agen
             </span>
           </div>
         </CardHeader>
-        <CardContent className="relative mt-3.5 border-panel/25 border-t px-5 py-3">
-          <ol className="flex list-none flex-wrap items-center gap-x-1.5 gap-y-1.5">
+        <CardContent className="relative mt-2.5 border-panel/25 border-t px-4 py-2">
+          <ol className="flex list-none flex-wrap items-center gap-x-1 gap-y-1">
             {LUMINA_STEPS.map((step, index) => (
-              <li key={step} className="flex items-center gap-1.5">
-                <span className="flex items-center gap-1.5 rounded-[9px] border border-panel/20 bg-panel/15 px-2.5 py-1">
-                  <span className="font-mono text-[9.5px] font-semibold text-panel/75 tabular-nums leading-none">
+              <li key={step} className="flex items-center gap-1">
+                <span className="flex items-center gap-1 rounded-[7px] border border-panel/20 bg-panel/15 px-2 py-0.5">
+                  <span className="font-mono text-[8.5px] font-semibold text-panel/75 tabular-nums leading-none">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="text-[11px] font-medium text-panel leading-none">
+                  <span className="text-[10px] font-medium text-panel leading-none">
                     {step}
                   </span>
                 </span>
@@ -566,7 +560,7 @@ function LuminaCard() {
                   <ArrowRight
                     aria-hidden
                     strokeWidth={2.4}
-                    className="size-3 shrink-0 text-panel/50"
+                    className="size-2.5 shrink-0 text-panel/50"
                   />
                 ) : null}
               </li>
@@ -577,7 +571,7 @@ function LuminaCard() {
       <Sparkles
         aria-hidden
         strokeWidth={1.6}
-        className="pointer-events-none absolute top-3.5 right-3.5 size-4 text-panel/50"
+        className="pointer-events-none absolute top-2.5 right-2.5 size-3.5 text-panel/45"
       />
     </div>
   );
@@ -599,19 +593,23 @@ function AgentLane({
   const mechanisms = AGENT_MECHANISM[agent];
 
   return (
-    <div className="relative flex h-full flex-1 flex-col">
+    <div className="group/agent relative flex h-full flex-1 cursor-pointer flex-col">
       <span
         aria-hidden
         className="absolute -top-[6px] left-1/2 z-20 grid size-3 -translate-x-1/2 place-items-center rounded-full border-2 border-brand bg-panel shadow-orb"
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-2 z-0 rounded-[24px] bg-brand/30 opacity-0 blur-xl transition-opacity duration-300 ease-out group-focus-within/agent:opacity-100 group-hover/agent:opacity-100"
       />
       <Card
         data-agent={agent}
         data-selected={selected ? "true" : undefined}
         className={cn(
-          "group/agent relative flex h-full flex-1 flex-col gap-0 overflow-hidden rounded-[18px] border bg-panel py-0 ring-0 transition-[box-shadow,transform,border-color] duration-200",
+          "relative z-10 flex h-full flex-1 flex-col gap-0 overflow-hidden rounded-[16px] border bg-panel py-0 ring-0 transition-[box-shadow,transform,border-color] duration-300 ease-out",
           selected
             ? "border-brand-edge ring-2 ring-brand"
-            : "border-edge hover:-translate-y-0.5 hover:border-brand-edge",
+            : "border-edge group-hover/agent:-translate-y-1 group-hover/agent:border-brand/70 group-hover/agent:ring-2 group-hover/agent:ring-brand/45 group-focus-within/agent:-translate-y-1 group-focus-within/agent:border-brand/70 group-focus-within/agent:ring-2 group-focus-within/agent:ring-brand/45",
         )}
         style={{
           boxShadow: selected
@@ -620,100 +618,85 @@ function AgentLane({
         }}
       >
         {/* The head is the channel identity: a bold brand band over the body. */}
-        <div className="relative overflow-hidden border-brand-strong/50 border-b bg-gradient-to-br from-brand-glow via-brand to-brand-strong px-3 pt-3 pb-3.5">
+        <div className="relative overflow-hidden border-brand-strong/50 border-b bg-gradient-to-br from-brand-glow via-brand to-brand-strong px-3 pt-2 pb-2">
           <span
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-px bg-panel/30"
           />
           <div className="relative flex items-center justify-between">
-            <span className="font-mono text-[11px] font-semibold text-panel tabular-nums leading-none">
+            <span className="font-mono text-[10px] font-semibold text-panel tabular-nums leading-none">
               {String(index + 1).padStart(2, "0")}
             </span>
-            <span className="font-mono text-[6px] text-panel/65 uppercase tracking-[0.18em] leading-none">
+            <span className="font-mono text-[5.5px] text-panel/65 uppercase tracking-[0.18em] leading-none">
               Detektor
             </span>
           </div>
-          <div className="relative mt-2.5 flex items-center gap-2">
+          <div className="relative mt-1.5 flex items-center gap-2">
             <span
               className={cn(
-                "relative size-10 shrink-0 rounded-[11px] bg-panel p-[2px] shadow-lift ring-1 ring-panel/70 transition-[box-shadow,transform] duration-200",
+                "relative size-8 shrink-0 rounded-[9px] bg-panel p-[2px] shadow-lift ring-1 ring-panel/70 transition-[box-shadow,transform] duration-200",
                 selected
                   ? "ring-2 ring-panel"
                   : "group-hover/agent:scale-[1.04]",
               )}
             >
-              <span className="flex size-full items-center justify-center overflow-hidden rounded-[8px]">
-                <AgentFace agent={agent} size={40} />
+              <span className="flex size-full items-center justify-center overflow-hidden rounded-[6px]">
+                <AgentFace agent={agent} size={32} />
               </span>
             </span>
-            <CardTitle className="min-w-0 truncate font-semibold text-[18px] text-panel leading-tight tracking-[-0.02em]">
+            <CardTitle className="min-w-0 truncate font-semibold text-[15.5px] text-panel leading-tight tracking-[-0.02em]">
               {display}
             </CardTitle>
           </div>
-          <span className="relative mt-1.5 block truncate font-mono text-[6.5px] text-panel/80 uppercase leading-[1.35] tracking-[0.06em]">
+          <span className="relative mt-0.5 block truncate font-mono text-[6px] text-panel/80 uppercase leading-[1.35] tracking-[0.06em]">
             {label}
           </span>
         </div>
         {/* The body holds what the detector actually reads, on the rail. */}
-        <div className="flex-1 border-brand-edge/50 border-b bg-brand-tint/60 px-3 py-2.5">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-mono text-[7.5px] text-ink-mute uppercase tracking-[0.14em]">
-              Mekanisme
-            </span>
-            <span className="font-mono text-[7.5px] text-brand-ink tabular-nums">
-              {String(mechanisms.length).padStart(2, "0")}
-            </span>
-          </div>
-          <ul aria-label={`Mekanisme ${display}`} className="list-none">
-            {mechanisms.map((item, itemIndex) => {
-              const last = itemIndex === mechanisms.length - 1;
-
-              return (
-                <li
-                  key={item}
-                  className={cn(
-                    "relative pl-[15px]",
-                    last ? undefined : "pb-1.5",
-                  )}
-                >
-                  {last ? null : (
-                    <span
-                      aria-hidden
-                      className="absolute top-[9px] -bottom-1.5 left-[2.5px] border-l border-dashed border-brand/40"
-                    />
-                  )}
+        <div className="relative flex flex-1 flex-col">
+          <div className="flex-1 border-brand-edge/50 border-b bg-brand-tint/55 px-3 py-2.5">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="font-mono text-[7px] text-ink-mute uppercase tracking-[0.14em]">
+                Mekanisme
+              </span>
+              <span className="font-mono text-[7px] text-brand-ink tabular-nums">
+                {String(mechanisms.length).padStart(2, "0")}
+              </span>
+            </div>
+            <ul
+              aria-label={`Mekanisme ${display}`}
+              className="list-none space-y-1.5"
+            >
+              {mechanisms.map((item) => (
+                <li key={item} className="flex items-start gap-1.5">
                   <span
                     aria-hidden
-                    className="absolute top-[6px] left-0 size-[6px] rounded-full bg-brand ring-2 ring-brand-tint"
+                    className="mt-[4px] size-[5px] shrink-0 rounded-full bg-brand ring-2 ring-brand-tint"
                   />
-                  <span className="inline-flex min-h-[28px] items-center gap-1.5 rounded-[6px] border border-brand-edge/70 bg-panel py-[3px] pr-2 pl-1.5 text-left text-[10px] font-medium text-ink leading-[1.3] whitespace-normal shadow-[0_1px_2px_color-mix(in_oklab,var(--lumina-ink)_6%,transparent)]">
-                    <span
-                      aria-hidden
-                      className="h-3.5 w-[2px] shrink-0 rounded-full bg-brand"
-                    />
+                  <span className="text-[10px] font-medium text-ink leading-snug">
                     {item}
                   </span>
                 </li>
-              );
-            })}
-          </ul>
-        </div>
-        <div className="mt-auto flex items-center justify-between border-edge/70 border-t px-3.5 py-2.5">
-          <span className="font-mono text-[7px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-200 group-hover/agent:text-brand-ink">
-            Lihat peran
-          </span>
-          <ArrowRight
-            aria-hidden
-            strokeWidth={2.2}
-            className="size-3 text-brand transition-[transform] duration-200 group-hover/agent:translate-x-0.5"
-          />
+              ))}
+            </ul>
+          </div>
+          <div className="mt-auto flex items-center justify-between border-edge/70 border-t px-3 py-1.5">
+            <span className="font-mono text-[6.5px] text-ink-mute uppercase tracking-[0.12em] transition-colors duration-300 group-hover/agent:text-brand-ink">
+              Buka detail
+            </span>
+            <ArrowRight
+              aria-hidden
+              strokeWidth={2.2}
+              className="size-2.5 text-brand transition-transform duration-300 group-hover/agent:translate-x-0.5"
+            />
+          </div>
         </div>
       </Card>
 
       {/*
-       * Selecting a lane is a real action: it highlights and scrolls to that
-       * agent's brief in the right pane. An overlay button keeps the whole card
-       * clickable without nesting a button around headings and paragraphs.
+       * Selecting a lane is a real action: it swaps the right pane to that
+       * agent's full brief. An overlay button keeps the whole card clickable
+       * without nesting a button around headings and paragraphs.
        */}
       <Button
         type="button"
@@ -721,26 +704,11 @@ function AgentLane({
         aria-label={`Lihat detail ${display}`}
         aria-pressed={selected}
         onClick={() => onSelect(agent)}
-        className="absolute inset-0 h-full w-full rounded-[18px] p-0 opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-brand/40"
+        className="absolute inset-0 z-20 h-full w-full cursor-pointer rounded-[16px] p-0 opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-brand/40"
       />
     </div>
   );
 }
-
-/** One dash period of the flowing rails: a 1.8px dot every 8px. */
-const RAIL_PERIOD = 8;
-
-/**
- * The shared clock for every flowing rail. Linear because the pattern is
- * periodic: one period per cycle loops without a seam, so the line reads as an
- * endless march rather than a pulse. Identical timing keeps the whole diagram
- * flowing as one system instead of unrelated loops.
- */
-const RAIL_FLOW = {
-  duration: 0.9,
-  ease: "linear",
-  repeat: Number.POSITIVE_INFINITY,
-} as const;
 
 /**
  * The pipeline's output: one deterministic score, not a sixth agent.
@@ -752,17 +720,17 @@ const RAIL_FLOW = {
  */
 function ScoreNode() {
   return (
-    <div className="mt-1 flex justify-center">
-      <div className="relative w-full">
+    <div className="mt-0.5 flex justify-center">
+      <div className="relative mx-auto w-full max-w-[620px]">
         <div
           aria-hidden
-          className="pointer-events-none absolute -inset-5 rounded-[34px] bg-brand/25 blur-2xl"
+          className="pointer-events-none absolute -inset-4 rounded-[30px] bg-brand/20 blur-2xl"
         />
         <div
-          className="relative overflow-hidden rounded-[22px] bg-ink ring-1 ring-panel/10"
+          className="relative overflow-hidden rounded-[18px] bg-ink ring-1 ring-panel/10"
           style={{
             boxShadow:
-              "0 40px 76px -28px color-mix(in oklab, var(--lumina-ink) 78%, transparent), 0 0 0 1px color-mix(in oklab, var(--lumina-brand) 18%, transparent)",
+              "0 30px 60px -28px color-mix(in oklab, var(--lumina-ink) 72%, transparent), 0 0 0 1px color-mix(in oklab, var(--lumina-brand) 16%, transparent)",
           }}
         >
           <span
@@ -777,25 +745,25 @@ function ScoreNode() {
                 "repeating-linear-gradient(0deg, var(--lumina-panel) 0 1px, transparent 1px 4px)",
             }}
           />
-          <div className="relative flex items-center gap-4 px-5 py-5">
-            <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-brand text-panel shadow-orb">
-              <Sparkles aria-hidden strokeWidth={1.9} className="size-6" />
+          <div className="relative flex items-center gap-3 px-4 py-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-[11px] bg-brand text-panel shadow-orb">
+              <Sparkles aria-hidden strokeWidth={1.9} className="size-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <p className="font-semibold text-[16px] text-panel leading-none">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <p className="font-semibold text-[14px] text-panel leading-none">
                   Skor deterministik
                 </p>
-                <span className="font-mono text-[8px] text-panel/45 uppercase tracking-[0.14em] leading-none">
+                <span className="font-mono text-[7.5px] text-panel/45 uppercase tracking-[0.12em] leading-none">
                   engine tunggal · tanpa model
                 </span>
               </div>
               {/* The 0–100 axis, drawn as ticks: a range, never a live value. */}
-              <div className="mt-3.5 flex items-center gap-2.5">
-                <span className="font-mono text-[7.5px] text-panel/40 tabular-nums leading-none">
+              <div className="mt-2.5 flex items-center gap-2">
+                <span className="font-mono text-[7px] text-panel/40 tabular-nums leading-none">
                   0
                 </span>
-                <span aria-hidden className="relative h-3 flex-1">
+                <span aria-hidden className="relative h-2.5 flex-1">
                   <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-panel/15" />
                   <span className="absolute inset-0 flex items-center justify-between">
                     {Array.from({ length: 11 }).map((_, tick) => (
@@ -804,48 +772,48 @@ function ScoreNode() {
                         key={tick}
                         className={cn(
                           "w-px bg-panel/25",
-                          tick === 0 || tick === 10 ? "h-2.5" : "h-1.5",
+                          tick === 0 || tick === 10 ? "h-2" : "h-1",
                         )}
                       />
                     ))}
                   </span>
                 </span>
-                <span className="font-mono text-[7.5px] text-panel/40 tabular-nums leading-none">
+                <span className="font-mono text-[7px] text-panel/40 tabular-nums leading-none">
                   100
                 </span>
               </div>
             </div>
-            <div className="flex shrink-0 flex-col items-end border-panel/10 border-l pl-5">
-              <span className="font-mono text-[7px] text-panel/40 uppercase tracking-[0.16em] leading-none">
+            <div className="flex shrink-0 flex-col items-end border-panel/10 border-l pl-4">
+              <span className="font-mono text-[6.5px] text-panel/40 uppercase tracking-[0.16em] leading-none">
                 Rentang
               </span>
-              <span className="mt-2 font-mono text-[34px] font-semibold text-brand-glow tabular-nums leading-none">
+              <span className="mt-1.5 font-mono text-[26px] font-semibold text-brand-glow tabular-nums leading-none">
                 0–100
               </span>
             </div>
           </div>
-          <div className="relative flex items-center justify-between border-panel/10 border-t px-5 py-3">
-            <div className="flex items-center gap-2.5">
+          <div className="relative flex items-center justify-between border-panel/10 border-t px-4 py-2">
+            <div className="flex items-center gap-2">
               <div className="flex -space-x-1.5">
                 {AGENT_SEQUENCE.map((agent) => (
                   <span
                     key={agent}
-                    className="flex size-5 items-center justify-center overflow-hidden rounded-full ring-1 ring-panel/30"
+                    className="flex size-4 items-center justify-center overflow-hidden rounded-full ring-1 ring-panel/30"
                   >
-                    <AgentFace agent={agent} size={20} />
+                    <AgentFace agent={agent} size={16} />
                   </span>
                 ))}
               </div>
               <ArrowRight
                 aria-hidden
                 strokeWidth={2.4}
-                className="size-3 text-brand/70"
+                className="size-2.5 text-brand/70"
               />
-              <span className="font-mono text-[8px] text-panel/60 uppercase tracking-[0.14em]">
+              <span className="font-mono text-[7px] text-panel/60 uppercase tracking-[0.14em]">
                 1 skor
               </span>
             </div>
-            <span className="font-mono text-[7.5px] text-panel/35 uppercase tracking-[0.12em]">
+            <span className="font-mono text-[7px] text-panel/35 uppercase tracking-[0.12em]">
               {AGENT_SEQUENCE.length} agen · 3 langkah
             </span>
           </div>
@@ -855,100 +823,95 @@ function ScoreNode() {
   );
 }
 
-/**
- * One dotted path whose pattern marches by exactly one dash period — the rail
- * itself flows, with no separate dot and no path-drawing reveal. The pattern is
- * a 1.8px round dot every 8px, so a −8px offset loops seamlessly. A wider,
- * fainter copy underneath gives each dot a soft halo. Under reduced motion the
- * same rail renders, still dotted and still directional, just still.
- */
-function FlowingPath({ d, reduced }: { d: string; reduced: boolean }) {
-  const animate = reduced ? undefined : { strokeDashoffset: [0, -RAIL_PERIOD] };
+/** The lane centres used by the desktop bus; the card grid has four columns. */
+const LANES = [0, 1, 2, 3] as const;
 
+/**
+ * A solid rail segment. The diagram is a wiring map, so the connectors are drawn
+ * once and stay still: every line visibly joins the node above to the node
+ * below, with no marching dots and no broken gaps.
+ */
+function Rail({ className }: { className?: string }) {
   return (
-    <g>
-      {/* A continuous glowing trace under the marching dots binds the lane. */}
-      <path
-        d={d}
-        stroke="var(--lumina-brand)"
-        strokeLinecap="round"
-        strokeOpacity={0.18}
-        strokeWidth={8}
-      />
-      <path
-        d={d}
-        stroke="var(--lumina-brand)"
-        strokeLinecap="round"
-        strokeOpacity={0.5}
-        strokeWidth={2.2}
-      />
-      <motion.path
-        animate={animate}
-        d={d}
-        stroke="var(--lumina-brand)"
-        strokeDasharray="0.1 7.9"
-        strokeLinecap="round"
-        strokeOpacity={0.28}
-        strokeWidth={7}
-        transition={RAIL_FLOW}
-      />
-      <motion.path
-        animate={animate}
-        d={d}
-        stroke="var(--lumina-brand-strong)"
-        strokeDasharray="0.1 7.9"
-        strokeLinecap="round"
-        strokeOpacity={1}
-        strokeWidth={2.5}
-        transition={RAIL_FLOW}
-      />
-    </g>
+    <span aria-hidden className={cn("block w-px bg-brand/55", className)} />
+  );
+}
+
+/** The horizontal collector shared by the fan-out, the row link and the fan-in. */
+function RailBus() {
+  return (
+    <span aria-hidden className="relative block h-px">
+      <span className="absolute right-[11.7%] left-[11.7%] h-px bg-brand/55" />
+    </span>
+  );
+}
+
+/** Four drops landing on the lane dots, laid out with the card grid. */
+function LaneDrops({ height }: { height: string }) {
+  return (
+    <div className="grid grid-cols-4 gap-6">
+      {LANES.map((lane) => (
+        <div className="flex justify-center" key={lane}>
+          <Rail className={height} />
+        </div>
+      ))}
+    </div>
   );
 }
 
 /**
- * A vertical dotted connector that flows downward.
- *
- * `tall` is the single entry arrow under Lumina when the agent grid wraps;
- * `card` is one of the fan-out drops onto a detector, or the link from a
- * detector to its mechanism lane. The dash pattern itself marches; the chevron
- * stays put as the destination marker. Under reduced motion nothing moves.
+ * The orchestrator's fan-out: one stem leaves Lumina, a collector spreads it
+ * across the four lanes, and four drops land on the detector dots.
  */
-function Connector({
-  reduced,
-  size,
-}: {
-  reduced: boolean;
-  size: "tall" | "card";
-}) {
-  const tall = size === "tall";
-  const height = tall ? 34 : 26;
-  const lineEnd = tall ? 27 : 19;
-
+function FlowFanOut() {
   return (
-    <div
-      aria-hidden
-      className={cn(
-        "flex items-center justify-center",
-        tall ? "h-[34px]" : "h-[26px]",
-      )}
-    >
-      <svg
-        aria-hidden="true"
-        fill="none"
-        height={height}
-        viewBox={`0 0 14 ${height}`}
-        width="14"
-      >
-        <FlowingPath d={`M7 0v${lineEnd}`} reduced={reduced} />
-        <path
-          d={`m2.5 ${lineEnd - 3.5} 4.5 5 4.5-5`}
-          stroke="var(--lumina-brand)"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.7"
-        />
-      </svg>
+    <>
+      <div className="flex justify-center py-1 lg:hidden">
+        <Rail className="h-8" />
+      </div>
+      <div aria-hidden className="hidden lg:block">
+        <div className="flex justify-center">
+          <Rail className="h-4" />
+        </div>
+        <RailBus />
+        <LaneDrops height="h-4" />
+      </div>
+    </>
+  );
+}
+
+/**
+ * The horizontal collector between the two detector rows. Each lane drops out
+ * of the first row, meets the shared bus, and drops again into the row below,
+ * so the two rows read as one continuous tree.
+ */
+function RowLink() {
+  return (
+    <div aria-hidden>
+      <LaneDrops height="h-4" />
+      <RailBus />
+      <LaneDrops height="h-4" />
     </div>
+  );
+}
+
+/**
+ * The output side of the tree: the four lanes meet on one collector and a
+ * single stem drops into the deterministic score.
+ */
+function FlowFanIn() {
+  return (
+    <>
+      <div className="flex justify-center py-1 lg:hidden">
+        <Rail className="h-8" />
+      </div>
+      <div aria-hidden className="hidden lg:block">
+        <LaneDrops height="h-4" />
+        <RailBus />
+        <div className="flex justify-center">
+          <Rail className="h-4" />
+        </div>
+      </div>
+    </>
   );
 }
