@@ -117,14 +117,17 @@ export function LokerCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
-            <Badge variant={tone(posting)}>
+            <Badge variant={tone(posting)} className="rounded-md">
               Sentinel: {SENTINEL_LABEL[posting.sentinelStatus]}
             </Badge>
-            <Badge variant={flagged(posting) ? "secondary" : "outline"}>
+            <Badge
+              variant={flagged(posting) ? "secondary" : "outline"}
+              className="rounded-md"
+            >
               Lumina: {RISK_LABEL[posting.luminaRisk]}
             </Badge>
             {posting.tags.slice(0, 4).map((tag) => (
-              <Badge key={tag} variant="outline">
+              <Badge key={tag} variant="outline" className="rounded-md">
                 {tag}
               </Badge>
             ))}
