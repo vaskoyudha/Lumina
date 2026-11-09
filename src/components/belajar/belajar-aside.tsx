@@ -115,12 +115,12 @@ function ProgressChart({
             <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="0%"
-                stopColor="var(--appnext-ink-2)"
+                stopColor="var(--lumina-brand-strong)"
                 stopOpacity="0.16"
               />
               <stop
                 offset="100%"
-                stopColor="var(--appnext-ink-2)"
+                stopColor="var(--lumina-brand-strong)"
                 stopOpacity="0"
               />
             </linearGradient>
@@ -137,14 +137,14 @@ function ProgressChart({
             width="16"
             height={yBottom - active.y}
             rx="6"
-            fill="var(--appnext-ink-2)"
+            fill="var(--lumina-brand)"
             fillOpacity="0.12"
           />
 
           <path
             d={d}
             fill="none"
-            stroke="var(--appnext-ink-2)"
+            stroke="var(--lumina-brand-strong)"
             strokeWidth="2.6"
             strokeLinecap="round"
           />
@@ -158,16 +158,23 @@ function ProgressChart({
                 cy={point.y}
                 r={isActive ? 5 : 3.5}
                 fill={
-                  isActive ? "var(--appnext-ink-2)" : "var(--appnext-white)"
+                  isActive
+                    ? "var(--lumina-brand-strong)"
+                    : "var(--appnext-white)"
                 }
-                stroke="var(--appnext-ink-2)"
+                stroke="var(--lumina-brand-strong)"
                 strokeWidth="2"
               />
             );
           })}
 
           <g transform={`translate(${tipX}, ${tipY})`}>
-            <rect width="116" height="24" rx="12" fill="var(--appnext-ink-2)" />
+            <rect
+              width="116"
+              height="24"
+              rx="12"
+              fill="var(--lumina-brand-strong)"
+            />
             <text
               x="58"
               y="15.5"
@@ -330,7 +337,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
                     isCompleted
                       ? "bg-brand-strong text-bg shadow-sm"
                       : isNext
-                        ? "bg-[var(--appnext-ink-2)] text-bg shadow-sm"
+                        ? "bg-brand text-bg shadow-sm"
                         : isReady
                           ? "bg-brand-soft text-brand-ink ring-1 ring-brand-line"
                           : "bg-panel-2 text-dim hover:bg-line",
@@ -349,10 +356,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
             Selesai
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="size-2 rounded-full bg-[var(--appnext-ink-2)]"
-            />
+            <span aria-hidden className="size-2 rounded-full bg-brand" />
             Berikutnya
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -368,7 +372,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-sm text-txt">Progres kumulatif</h2>
-          <span className="rounded-lg bg-[var(--appnext-ink-2)] px-3 py-1.5 font-semibold text-[11px] text-bg shadow-sm">
+          <span className="rounded-lg bg-brand-strong px-3 py-1.5 font-semibold text-[11px] text-bg shadow-sm">
             {progress ? `${done}/${total}` : "—"}
           </span>
         </div>

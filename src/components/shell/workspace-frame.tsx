@@ -106,7 +106,7 @@ export function WorkspaceFrame({
           {aside ? (
             <aside
               aria-label="Ringkasan halaman"
-              className="min-w-0 border-line border-t bg-panel px-5 py-6 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-7"
+              className="min-w-0 border-line border-t px-5 py-6 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-7"
             >
               {aside}
             </aside>

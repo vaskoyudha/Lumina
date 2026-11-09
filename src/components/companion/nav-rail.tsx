@@ -71,17 +71,26 @@ function RailItem({
       aria-current={active ? "page" : undefined}
       onClick={onClick}
       className={cn(
-        "flex min-w-0 items-center rounded-[7px] transition-[background-color,color] duration-150 ease-out",
-        iconsOnly ? "size-9 justify-center" : "gap-2.5 px-2 py-[7px]",
+        "relative flex min-w-0 items-center rounded-xl transition-[background-color,color] duration-150 ease-out",
+        iconsOnly ? "size-9 justify-center" : "gap-2.5 px-3 py-2",
         emergency
           ? active
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-chip font-medium text-ink"
-            : "text-ink-soft hover:bg-txt/6 hover:text-ink",
+            ? "bg-gradient-to-r from-brand-soft to-brand-soft-2 font-semibold text-brand-ink"
+            : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
+      {active && !iconsOnly ? (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute -left-2 top-1.5 bottom-1.5 w-1 rounded-r-full",
+            emergency ? "bg-danger" : "bg-brand",
+          )}
+        />
+      ) : null}
       <Icon aria-hidden strokeWidth={1.75} className="size-[15px] shrink-0" />
       <span
         className={cn(
@@ -117,15 +126,21 @@ function AgentItem({
       aria-current={active ? "page" : undefined}
       onClick={onShow}
       className={cn(
-        "flex min-w-0 items-center rounded-[7px] transition-[background-color,color] duration-150 ease-out",
+        "relative flex min-w-0 items-center rounded-xl transition-[background-color,color] duration-150 ease-out",
         iconsOnly
           ? "size-11 justify-center"
-          : "min-h-11 w-full gap-2.5 px-2 py-[7px] text-left",
+          : "min-h-11 w-full gap-2.5 px-3 py-2 text-left",
         active
-          ? "bg-chip font-medium text-ink"
-          : "text-ink-soft hover:bg-txt/6 hover:text-ink",
+          ? "bg-gradient-to-r from-brand-soft to-brand-soft-2 font-semibold text-brand-ink"
+          : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
+      {active && !iconsOnly ? (
+        <span
+          aria-hidden
+          className="absolute -left-2 top-1.5 bottom-1.5 w-1 rounded-r-full bg-brand"
+        />
+      ) : null}
       <Bot aria-hidden strokeWidth={1.75} className="size-[15px] shrink-0" />
       <span
         className={cn(
