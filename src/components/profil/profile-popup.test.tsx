@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfilePopup } from "@/components/profil/profile-popup";
 
@@ -64,7 +64,7 @@ describe("ProfilePopup", () => {
     await user.click(trigger);
 
     expect(await screen.findByText("siti@lumina.id")).toBeInTheDocument();
-    expect(screen.getByText(/kemajuan belajar/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/kemajuan belajar/i).length).toBeGreaterThan(0);
     expect(screen.getByText("0/12 modul")).toBeInTheDocument();
     expect(screen.getAllByText(/lowongan tersimpan/i).length).toBeGreaterThan(
       0,
@@ -76,5 +76,32 @@ describe("ProfilePopup", () => {
       screen.getByRole("menuitem", { name: /ganti akun/i }),
     ).toHaveAttribute("href", "/masuk");
     expect(screen.getByRole("button", { name: /keluar/i })).toBeInTheDocument();
+  });
+
+  it("opens profile details as floating cards from the dashboard menu", async () => {
+    mockSession({
+      nama: "Siti Rahma",
+      email: "siti@lumina.id",
+      createdAt: "2026-01-02T00:00:00.000Z",
+    });
+    const user = userEvent.setup();
+    render(<ProfilePopup />);
+
+    const trigger = await screen.findByRole("button", {
+      name: /akun siti rahma/i,
+    });
+    await user.click(trigger);
+    await user.click(
+      await screen.findByRole("menuitem", { name: /^profil saya$/i }),
+    );
+
+    const dialog = await screen.findByRole("dialog", {
+      name: /profil saya/i,
+    });
+    expect(
+      within(dialog).getAllByText("siti@lumina.id").length,
+    ).toBeGreaterThan(0);
+    expect(within(dialog).getByText("2 Januari 2026")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /profil saya/i })).toBeNull();
   });
 });
