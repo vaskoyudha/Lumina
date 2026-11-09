@@ -131,11 +131,12 @@ describe("ProcessTrace", () => {
     expect(
       screen.getByRole("region", { name: /agen di bawah komando lumina/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/sub-agen/i)).toBeInTheDocument();
+    expect(screen.getByText(/agen dipanggil · 1/i)).toBeInTheDocument();
     expect(
       screen.getByText(/saya melihat pola permintaan otp/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Rencana agen")).toBeInTheDocument();
+    expect(screen.queryByText("Rencana agen")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ruru")).not.toBeInTheDocument();
     expect(screen.getByText("Alasan rencana")).toBeInTheDocument();
     expect(
       screen.getByText(/pesan meminta otp, jadi periksa narasi/i),
@@ -162,6 +163,46 @@ describe("ProcessTrace", () => {
     expect(process?.hasAttribute("open")).toBe(true);
     const thoughts = screen.getByText("Pemikiran agen").closest("details");
     expect(thoughts?.hasAttribute("open")).toBe(false);
+  });
+
+  it("does not list agents skipped by the deadline", () => {
+    render(
+      <ProcessTrace
+        events={[
+          ...events,
+          event({
+            type: "agent_start",
+            runId: "run-1",
+            seq: 10,
+            at: 10,
+            agent: "qris",
+            label: "QRIS Agent",
+            task: "Periksa jalur pembayaran.",
+            skills: [],
+            tools: [],
+          }),
+          event({
+            type: "agent_result",
+            runId: "run-1",
+            seq: 11,
+            at: 11,
+            agent: "qris",
+            label: "QRIS Agent",
+            status: "dilewati",
+            summary: "Dilewati karena batas waktu pemeriksaan.",
+            findings: [],
+            points: [],
+            ms: 0,
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/agen dipanggil · 1/i)).toBeInTheDocument();
+    expect(screen.queryByText("Ruru")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/dilewati karena batas waktu/i),
+    ).not.toBeInTheDocument();
   });
 
   it("paints Lumina before the plan arrives", () => {
