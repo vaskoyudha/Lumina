@@ -438,7 +438,7 @@ export function SessionSidebar({
             <Link
               href="/komunitas"
               data-pressable
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
             >
               <span>Buka komunitas</span>
               <ChevronRight aria-hidden strokeWidth={2.4} className="size-3" />
