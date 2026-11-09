@@ -4,12 +4,9 @@ import { Suspense } from "react";
 import { ContentLoading } from "@/components/belajar/content-state";
 import {
   CommunityFeed,
-  CommunityRules,
   CommunityUnavailable,
 } from "@/components/community/community-view";
-import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import { getSession } from "@/lib/auth/server-session";
-import { isCommunityModerator } from "@/lib/community/access";
 import { QuerySchema } from "@/lib/community/schema";
 import { listPosts } from "@/lib/community/store";
 export const metadata: Metadata = {
@@ -38,15 +35,11 @@ export async function CommunityContent({ searchParams }: Props) {
     return <CommunityUnavailable />;
   }
   return (
-    <WorkspaceShell
-      label="Komunitas"
-      aside={
-        <CommunityRules
-          moderator={session ? isCommunityModerator(session.id) : false}
-        />
-      }
-    >
-      <CommunityFeed {...result} query={query} canWrite={!!session} />
-    </WorkspaceShell>
+    <CommunityFeed
+      {...result}
+      query={query}
+      canWrite={!!session}
+      viewerName={session?.nama}
+    />
   );
 }

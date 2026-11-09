@@ -41,6 +41,15 @@ if (typeof window !== "undefined") {
     value: () => {},
   });
 
+  /* jsdom does not implement scrolling; the community filter panel scrolls the
+     disclosure into view when the rail link targets it. */
+  if (!window.Element.prototype.scrollIntoView) {
+    Object.defineProperty(window.Element.prototype, "scrollIntoView", {
+      writable: true,
+      value: () => {},
+    });
+  }
+
   /*
     Object URLs. jsdom does not implement them, and the composer mints one per
     attachment — without these the attachment path throws in tests and the one
