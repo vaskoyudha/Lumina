@@ -38,8 +38,7 @@ import {
 import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
 import { LokerTool } from "@/components/companion/loker-tool";
-import { ScenarioCards } from "@/components/companion/scenario-cards";
-import type { Scenario } from "@/components/companion/scenarios";
+import { CompanionQuickCards } from "@/components/companion/quick-cards";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
@@ -250,6 +249,11 @@ export function CompanionChat({
   const [showSessions, setShowSessions] = React.useState(false);
   /** The center column's second view; the turns stay in state while it is away. */
   const [showAgents, setShowAgents] = React.useState(initialPanel === "agen");
+  /** Seed for the empty-state composer: a nonce remounts it with new text. */
+  const [composerSeed, setComposerSeed] = React.useState({
+    text: "",
+    nonce: 0,
+  });
   /** Which agent's brief the right pane shows while the overview is open. */
   const [selectedAgent, setSelectedAgent] =
     React.useState<DetectorAgent | null>(AGENT_SEQUENCE[0]);
@@ -284,6 +288,11 @@ export function CompanionChat({
   const selectEvidence = React.useCallback((evidence: string) => {
     setShowEvidence(false);
     setActiveEvidence((current) => (current === evidence ? null : evidence));
+  }, []);
+
+  /** Loads a prompt into the empty-state composer without sending it. */
+  const prefillComposer = React.useCallback((text: string) => {
+    setComposerSeed((prev) => ({ text, nonce: prev.nonce + 1 }));
   }, []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on session change
@@ -1343,7 +1352,7 @@ export function CompanionChat({
             </div>
           ) : empty ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
-              <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
+              <div className="mx-auto my-auto flex w-full max-w-[840px] flex-col items-center py-2">
                 <div className="mb-2 flex items-center justify-center">
                   <Mascot
                     className="pointer-events-none h-[94px] w-[129px] select-none"
@@ -1360,8 +1369,10 @@ export function CompanionChat({
                   kamu percaya.
                 </h2>
 
-                <div className="mt-5 w-full">
+                <div className="mt-5 w-full max-w-[520px]">
                   <Composer
+                    key={composerSeed.nonce}
+                    initialDraft={composerSeed.text}
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
                     onSearchJobs={openJobSearch}
@@ -1370,8 +1381,14 @@ export function CompanionChat({
                   />
                 </div>
 
-                <div className="mt-3.5 w-full">
-                  <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
+                <div className="mt-4 w-full">
+                  <CompanionQuickCards
+                    onFeature={prefillComposer}
+                    onOpenHistory={() => setShowAgents(true)}
+                    onResume={(title) =>
+                      prefillComposer(`Lanjutkan sesi ${title}`)
+                    }
+                  />
                 </div>
               </div>
             </div>
