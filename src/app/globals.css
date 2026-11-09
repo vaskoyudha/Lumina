@@ -122,6 +122,11 @@
     color-mix(in oklab, var(--lumina-txt) 8%, transparent);
   --shadow-lift: 0 10px 32px
     color-mix(in oklab, var(--lumina-txt) 11%, transparent);
+  /* Reference glass cards in the workspace sidebar: a warm, wide ambient
+     shadow plus a tight contact shadow, so the card reads as paper floating on
+     the peach field instead of a bordered box. */
+  --shadow-panel:
+    0 8px 26px -6px rgb(150 75 35 / 0.07), 0 2px 6px rgb(150 75 35 / 0.03);
   /* The floating frame on the lavender field. */
   --shadow-frame:
     0 24px 70px color-mix(in oklab, var(--lumina-page-3) 62%, transparent),

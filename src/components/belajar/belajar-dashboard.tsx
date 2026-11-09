@@ -33,12 +33,10 @@ export type FeaturedModule = {
 export function BelajarDashboard({
   items,
   featured,
-  complete,
   total,
 }: {
   items: KatalogItem[];
   featured: FeaturedModule | null;
-  complete: number;
   total: number;
 }) {
   const [query, setQuery] = useState("");
@@ -171,26 +169,15 @@ export function BelajarDashboard({
       </section>
 
       <section aria-labelledby="semua-modul" className="space-y-3.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2
-              id="semua-modul"
-              className="flex items-center gap-2.5 font-bold text-[18px] text-txt"
-            >
-              <span aria-hidden className="h-5 w-1.5 rounded-full bg-brand" />
-              Modul belajarmu
-            </h2>
-            <LevelFilter
-              items={items}
-              level={level}
-              onChange={setLevel}
-              className="hidden md:flex"
-            />
-          </div>
-          <p className="tabular font-semibold text-dim text-xs">
-            {complete} lengkap · {total - complete} segera
-          </p>
-        </div>
+        <h2
+          id="semua-modul"
+          className="flex items-center gap-2.5 font-bold text-[18px] text-txt"
+        >
+          <span aria-hidden className="h-5 w-1.5 rounded-full bg-brand" />
+          Modul belajarmu
+        </h2>
+
+        <LevelFilter items={items} level={level} onChange={setLevel} />
 
         <ModulKatalog
           items={items}
