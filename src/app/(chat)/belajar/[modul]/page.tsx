@@ -2,63 +2,63 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { BelajarShell } from "@/components/belajar/belajar-shell";
+import {
+  ContentLoading,
+  ContentUnavailable,
+} from "@/components/belajar/content-state";
 import { ModulBody } from "@/components/belajar/modul-body";
 import { LevelSignalBadge } from "@/components/belajar/modul-visual";
 import { ModuleProgressBox } from "@/components/belajar/module-progress-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { courseFor, isPublished } from "@/data/kurikulum";
-import { formattedLaporan, MODUS, MODUS_BY_NO } from "@/lib/modus";
-import { cn } from "@/lib/utils";
+import { listModules, moduleSummaries } from "@/lib/content/store";
 
-/**
- * Stream B's module detail route. Module 10 is fully written (anatomy,
- * example, checklist, quiz, reporting steps); the other eleven say "segera"
- * honestly instead of rendering fake lesson text (§5, §9d).
- *
- * The header is the reference dashboard's course modal promoted to a page:
- * a painted cover with the title overlaid, a difficulty signal, the real IASC
- * figure and a live completion box. `ModulBody` brings its own table of
- * contents at `lg`, so this page passes no aside.
- */
+import { formattedLaporan } from "@/lib/modus";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Modul" };
 
-/**
- * Prerender the twelve catalog modules. Admin-added courses (13+) are not
- * known at build time, so they render on demand instead of 404-ing.
- */
-export function generateStaticParams() {
-  return MODUS.map((m) => ({ modul: String(m.no) }));
-}
-
-/**
- * Admin-added courses (13+) are not in the catalog at build time. Without this
- * the route would 404 for them; with it, an exported course renders on demand.
- */
+// Module numbers are loaded from PostgreSQL, including courses added after build.
 export const instant = false;
 
-export default async function ModulPage({
+export default function ModulPage(props: {
+  params: Promise<{ modul: string }>;
+}) {
+  return (
+    <Suspense fallback={<ContentLoading />}>
+      <ModulContent {...props} />
+    </Suspense>
+  );
+}
+export async function ModulContent({
   params,
 }: {
   params: Promise<{ modul: string }>;
 }) {
+  await connection();
   const { modul } = await params;
-  const no = Number.parseInt(modul, 10);
-  const entry = Number.isNaN(no) ? null : (MODUS_BY_NO.get(no) ?? null);
-
-  if (!entry) notFound();
-
-  const ready = isPublished(entry.no);
-  const isi = courseFor(entry.no);
-  const sorted = [...MODUS].sort((a, b) => a.no - b.no);
+  if (!/^[1-9]\d?$/.test(modul)) notFound();
+  const no = Number(modul);
+  let modules: Awaited<ReturnType<typeof listModules>>;
+  try {
+    modules = await listModules();
+  } catch {
+    return <ContentUnavailable />;
+  }
+  const found = modules.find((m) => m.metadata.no === no);
+  if (!found) notFound();
+  const { metadata: entry, content: isi } = found;
+  const ready = !!isi;
+  const sorted = moduleSummaries(modules);
   const idx = sorted.findIndex((m) => m.no === entry.no);
   const next = sorted[(idx + 1) % sorted.length];
 
   return (
-    <BelajarShell>
+    <BelajarShell modules={sorted}>
       <Link
         href="/belajar"
         data-pressable
@@ -202,12 +202,12 @@ export default async function ModulPage({
         </Card>
       )}
 
-      {entry.scenarioId && isi ? (
+      {isi?.scenarioId ? (
         <Button
           asChild
           className="min-h-11 w-fit rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 text-bg hover:bg-brand-strong"
         >
-          <Link href={`/simulasi/${entry.scenarioId}`} data-pressable>
+          <Link href={`/simulasi/${isi.scenarioId}`} data-pressable>
             Latih pola ini di simulasi
           </Link>
         </Button>
@@ -236,7 +236,7 @@ export default async function ModulPage({
                     {next.nama}
                   </span>
                   <span className="mt-0.5 block text-[10px] text-dim">
-                    {isPublished(next.no)
+                    {next.ready
                       ? "Sudah lengkap — lanjutkan belajarmu."
                       : "Belum ditulis (segera). Kamu tetap bisa melihat ringkasannya."}
                   </span>

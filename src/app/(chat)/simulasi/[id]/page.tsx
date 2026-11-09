@@ -1,29 +1,43 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { Runner } from "@/app/(chat)/simulasi/[id]/Runner";
+import {
+  ContentLoading,
+  ContentUnavailable,
+} from "@/components/belajar/content-state";
 import { BackButton } from "@/components/shell/back-button";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
-import { SCENARIO_CATALOG } from "@/lib/simulasi/catalog";
-import { MISSION } from "@/lib/simulasi/scenario";
+import { getSimulation } from "@/lib/content/store";
 
 export const metadata: Metadata = {
-  title: MISSION.title,
+  title: "Simulasi",
   description: "Misi simulasi Level 1: Paket sebelum pulang.",
 };
 
-export function generateStaticParams() {
-  return SCENARIO_CATALOG.map(({ scenario }) => ({
-    id: scenario.id,
-  }));
-}
+export const instant = false;
 
-export default async function RunnerPage({
+export default function RunnerPage(props: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<ContentLoading />}>
+      <RunnerContent {...props} />
+    </Suspense>
+  );
+}
+export async function RunnerContent({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await connection();
   const { id } = await params;
-  const scenario = SCENARIO_CATALOG.find((item) => item.scenario.id === id);
+  let scenario: Awaited<ReturnType<typeof getSimulation>>;
+  try {
+    scenario = await getSimulation(id);
+  } catch {
+    return <ContentUnavailable />;
+  }
 
   if (!scenario) notFound();
 
@@ -31,7 +45,7 @@ export default async function RunnerPage({
     <WorkspaceShell label="Simulasi">
       <div className="flex w-full flex-col gap-6">
         <BackButton href="/simulasi" label="Kembali ke misi" />
-        <Runner />
+        <Runner key={id} content={scenario} />
       </div>
     </WorkspaceShell>
   );

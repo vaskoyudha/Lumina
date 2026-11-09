@@ -1,0 +1,2689 @@
+{
+  "modules": [
+    {
+      "metadata": {
+        "id": "jual-beli-palsu",
+        "no": 1,
+        "nama": "Jual-beli online palsu",
+        "laporan": 53928,
+        "laporanNote": null,
+        "kerugian": "±Rp988 M",
+        "ciri": [
+          "Harga jauh di bawah pasar",
+          "Transfer di luar marketplace",
+          "Minta DP dulu"
+        ],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 1,
+        "ringkasan": "Toko palsu memakai foto dan ulasan curian, memasang harga jauh di bawah pasar, lalu mengarahkan pembeli keluar marketplace. Setelah DP atau pembayaran penuh masuk ke rekening pribadi, barang tidak pernah dikirim dan penjual memblokir pembeli.",
+        "tujuan": [
+          "Membedakan toko resmi dari toko yang hanya menumpang foto dan ulasan.",
+          "Menjelaskan mengapa pembayaran di luar marketplace menghapus perlindungan pembeli.",
+          "Menyusun bukti yang berguna saat mengajukan sengketa atau laporan."
+        ],
+        "poinKunci": [
+          "Harga jauh di bawah pasar adalah umpan, bukan keberuntungan.",
+          "Rekening pribadi atas nama orang lain adalah tanda berhenti paling jelas.",
+          "Marketplace hanya melindungi transaksi yang diselesaikan di dalamnya.",
+          "Jangan pernah mengirim biaya tambahan setelah pembayaran pertama gagal."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Toko dibuat mendadak dengan foto curian",
+            "teks": "Akun toko baru muncul, foto produk diambil dari penjual lain, dan deskripsi disalin apa adanya. Ulasan bisa dipenuhi akun-akun palsu dengan kalimat yang seragam."
+          },
+          {
+            "judul": "Harga dipotong jauh di bawah pasar",
+            "teks": "Barang populer ditawarkan setengah harga atau lebih murah. Selisih besar itulah umpan: calon korban dibuat merasa menemukan penawaran langka yang harus segera diambil."
+          },
+          {
+            "judul": "Pembeli diarahkan keluar marketplace",
+            "teks": "Penjual meminta pindah ke WhatsApp atau menawarkan diskon tambahan bila transaksi dilakukan langsung. Tujuannya satu: keluar dari sistem yang menahan pembayaran sampai barang diterima."
+          },
+          {
+            "judul": "Pembayaran masuk ke rekening pribadi",
+            "teks": "Korban diminta transfer DP atau harga penuh ke rekening pribadi, kadang atas nama pihak ketiga. Tidak ada escrow, tidak ada penahanan dana, dan tidak ada jalur sengketa yang bisa dipakai."
+          },
+          {
+            "judul": "Barang tidak dikirim dan penjual menghilang",
+            "teks": "Setelah dana masuk, penjual memblokir nomor korban atau terus meminta biaya tambahan: ongkir, bea, asuransi. Rekening penerima biasanya cepat dikosongkan."
+          }
+        ],
+        "contohJudul": "Contoh halaman toko (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "situs",
+        "contohSumber": "https://toko-gadget-murah.example/checkout",
+        "contohIsi": [
+          {
+            "text": "Toko Resmi Gadget — ponsel flagship hanya ",
+            "berbahaya": false
+          },
+          {
+            "text": "Rp4.999.000, stok terakhir 2 unit",
+            "berbahaya": true
+          },
+          {
+            "text": ". Untuk mengunci pesanan, ",
+            "berbahaya": false
+          },
+          {
+            "text": "transfer DP 50% ke rekening pribadi a.n. A. sebelum barang dikirim",
+            "berbahaya": true
+          },
+          {
+            "text": ". Chat admin di WhatsApp untuk konfirmasi.",
+            "berbahaya": false
+          }
+        ],
+        "checklist": [
+          "Harga jauh di bawah pasaran untuk barang yang sedang dicari banyak orang",
+          "Penjual meminta transaksi dipindahkan ke chat pribadi atau di luar marketplace",
+          "Rekening tujuan atas nama pribadi, bukan nama badan usaha yang tertera di toko",
+          "Toko baru dengan ulasan seragam, singkat, dan tidak menjelaskan pengalaman nyata",
+          "Desakan stok terakhir atau DP sekarang untuk menutup celah berpikir"
+        ],
+        "kuis": [
+          {
+            "id": "market-q1",
+            "prompt": "Toko menawarkan ponsel setengah harga dan meminta DP ke rekening pribadi. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Transfer DP cepat sebelum stok habis"
+              },
+              {
+                "id": "b",
+                "label": "Minta nomor rekening toko resmi lalu transfer"
+              },
+              {
+                "id": "c",
+                "label": "Batalkan, cari penjual di marketplace resmi dengan perlindungan pembeli"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Rekening pribadi untuk pembelian toko menghapus perlindungan pembeli. Harga setengah pasar adalah umpan; transaksi aman tetap di dalam marketplace yang menahan dana sampai barang diterima."
+          },
+          {
+            "id": "market-q2",
+            "prompt": "Penjual meminta pindah ke WhatsApp agar katanya lebih cepat. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Pindah ke WhatsApp dan lanjutkan transaksi"
+              },
+              {
+                "id": "b",
+                "label": "Tetap di marketplace dan selesaikan pembayaran di sana"
+              },
+              {
+                "id": "c",
+                "label": "Kirim DP lewat WhatsApp supaya dianggap serius"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Pindah ke chat pribadi memindahkan transaksi keluar dari sistem sengketa. Penjual yang menolak transaksi di marketplace biasanya menolak karena riwayatnya bisa diperiksa."
+          },
+          {
+            "id": "market-q3",
+            "prompt": "Nama rekening penerima berbeda dari nama toko yang kamu lihat. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Tetap transfer, mungkin itu rekening pemilik"
+              },
+              {
+                "id": "b",
+                "label": "Minta transfer ke rekening lain yang juga pribadi"
+              },
+              {
+                "id": "c",
+                "label": "Berhenti dan laporkan toko ke marketplace sebagai penipuan"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Rekening yang tidak cocok dengan identitas toko adalah tanda paling jelas. Jangan menebak alasannya; hentikan transaksi dan laporkan supaya akun itu diperiksa."
+          },
+          {
+            "id": "market-q4",
+            "prompt": "Kamu sudah transfer DP, lalu penjual meminta biaya ongkir tambahan. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kirim biaya tambahan agar paket segera dikirim"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti mengirim uang, simpan bukti, dan ajukan sengketa"
+              },
+              {
+                "id": "c",
+                "label": "Negosiasi supaya biaya tambahan dipotong setengah"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Permintaan biaya berulang setelah pembayaran pertama adalah pola pemerasan bertahap. Setiap transfer tambahan memperbesar kerugian tanpa mendekatkan barang."
+          },
+          {
+            "id": "market-q5",
+            "prompt": "Barang tidak datang dan penjual memblokir nomor kamu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kumpulkan tangkapan layar, lapor marketplace dan bank, lalu laporkan ke IASC"
+              },
+              {
+                "id": "b",
+                "label": "Buat akun baru untuk mengejar penjual"
+              },
+              {
+                "id": "c",
+                "label": "Diamkan karena uangnya kecil"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Bukti chat, nomor rekening, dan waktu transfer adalah dasar sengketa dan laporan. Diam membuat pola yang sama terus menimpa korban lain."
+          }
+        ],
+        "lapor": [
+          "Hentikan semua pembayaran. Jangan kirim biaya tambahan apa pun, sekecil apa pun.",
+          "Simpan tangkapan layar toko, percakapan, nomor rekening, dan bukti transfer.",
+          "Laporkan akun dan transaksi ke marketplace serta bank penerima untuk meminta penelusuran.",
+          "Laporkan ke IASC (iasc.ojk.go.id) dan polisi setempat dengan bukti yang sudah dikumpulkan."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "fake-call",
+        "no": 2,
+        "nama": "Mengaku pihak lain (fake call)",
+        "laporan": 31299,
+        "laporanNote": null,
+        "kerugian": "±Rp1,31 T",
+        "ciri": [
+          "Mengaku bank/polisi/kurir/keluarga",
+          "Minta OTP",
+          "Melarang verifikasi"
+        ],
+        "level": 2,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": "L4",
+        "detectors": ["message", "identity", "conversation"]
+      },
+      "content": {
+        "no": 2,
+        "ringkasan": "Penelepon mengaku dari bank, polisi, kurir, atau keluarga, lalu membangun cerita darurat agar kamu tetap di telepon. Tujuannya bukan membuatmu panik saja, tetapi membuatmu menyerahkan OTP, PIN, atau transfer ke rekening yang mereka sebut aman.",
+        "tujuan": [
+          "Mengenali pola panggilan palsu yang mengaku institusi resmi.",
+          "Menjelaskan mengapa tetap di telepon dan merahasiakan panggilan adalah taktik kontrol.",
+          "Memutus panggilan dengan aman lalu memverifikasi lewat nomor resmi."
+        ],
+        "poinKunci": [
+          "Bank, polisi, dan kurir tidak pernah meminta OTP atau PIN lewat telepon.",
+          "Tidak ada rekening aman untuk menampung uangmu; rekening aman adalah rekening pelaku.",
+          "Tutup telepon, lalu hubungi nomor resmi dari kartu atau situs lembaga itu.",
+          "Jangan pernah memasang aplikasi remote karena diminta seseorang di telepon."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Penelepon mengaku institusi yang kamu percaya",
+            "teks": "Nomor bisa tampak mirip nomor resmi, dan penelepon menyebut jabatan serta nama yang terdengar meyakinkan. Tujuannya membuatmu berhenti memeriksa dan mulai menurut."
+          },
+          {
+            "judul": "Data pribadi disebut sebagian untuk membangun kepercayaan",
+            "teks": "Pelaku menyebut nama, empat digit terakhir kartu, atau alamat. Data itu bisa berasal dari kebocoran lama, jadi kesesuaiannya bukan bukti bahwa panggilan itu asli."
+          },
+          {
+            "judul": "Cerita darurat membuat kamu tidak sempat berpikir",
+            "teks": "Transaksi mencurigakan, paket ilegal, atau keluarga kecelakaan dipakai untuk menciptakan rasa urgensi. Korban diarahkan mengambil keputusan dalam hitungan menit."
+          },
+          {
+            "judul": "Kamu diminta tetap di telepon dan tidak memberi tahu siapa pun",
+            "teks": "Pelaku melarang menutup telepon atau bertanya ke keluarga. Isolasi ini memutus akses korban ke orang lain yang bisa melihat polanya dengan lebih tenang."
+          },
+          {
+            "judul": "Permintaan terakhir: OTP, PIN, transfer, atau aplikasi remote",
+            "teks": "Setelah kepercayaan terbangun, pelaku meminta kode OTP, PIN, transfer ke rekening tertentu, atau pemasangan aplikasi remote. Di titik ini pencurian benar-benar terjadi."
+          }
+        ],
+        "contohJudul": "Contoh panggilan (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "panggilan",
+        "contohSumber": "Panggilan masuk · nomor tak dikenal · mengaku bagian keamanan bank",
+        "contohIsi": [
+          {
+            "text": "Selamat siang, saya dari bagian keamanan bank. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Ada transaksi mencurigakan di rekening Bapak/Ibu. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Sebutkan kode OTP yang kami kirim ke SMS sekarang, atau rekening diblokir. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Jangan tutup telepon, ini prosedur resmi.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Penelepon tak dikenal mengaku dari bank, polisi, kurir, atau keluarga",
+          "Diminta menyebutkan OTP, PIN, atau password",
+          "Diminta tetap di telepon dan tidak memberi tahu orang lain",
+          "Diminta transfer ke rekening yang disebut aman atau rekening baru",
+          "Diminta memasang aplikasi remote atau membagikan layar"
+        ],
+        "kuis": [
+          {
+            "id": "call-q1",
+            "prompt": "Penelepon mengaku dari bank dan meminta kode OTP yang baru masuk. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Sebutkan OTP karena penelepon tahu nama kamu"
+              },
+              {
+                "id": "b",
+                "label": "Tutup telepon, lalu hubungi bank lewat nomor resmi di kartu"
+              },
+              {
+                "id": "c",
+                "label": "Kirim OTP lewat SMS supaya lebih aman"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Bank tidak pernah meminta OTP. Menutup telepon dan menelepon nomor resmi memutus kontrol pelaku, sekaligus memastikan apakah transaksi itu benar ada."
+          },
+          {
+            "id": "call-q2",
+            "prompt": "Penelepon melarangmu menutup telepon dan bilang ini prosedur rahasia. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Tetap di telepon sampai urusan selesai"
+              },
+              {
+                "id": "b",
+                "label": "Minta izin keluarga dulu, tetap di telepon"
+              },
+              {
+                "id": "c",
+                "label": "Tutup telepon dan bicarakan dengan orang yang kamu percaya"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Larangan menutup telepon adalah tanda kontrol, bukan prosedur resmi. Institusi sungguhan tidak melarang kamu memverifikasi atau meminta pendapat orang lain."
+          },
+          {
+            "id": "call-q3",
+            "prompt": "Penelepon meminta transfer ke rekening aman milik kepolisian. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Transfer karena rekeningnya katanya atas nama negara"
+              },
+              {
+                "id": "b",
+                "label": "Tolak dan verifikasi ke kantor polisi atau bank lewat nomor resmi"
+              },
+              {
+                "id": "c",
+                "label": "Transfer sebagian dulu sebagai bukti itikad baik"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Tidak ada rekening aman untuk menampung uang korban. Transfer sekali pun tidak bisa ditarik kembali; verifikasi lewat kanal resmi adalah satu-satunya langkah aman."
+          },
+          {
+            "id": "call-q4",
+            "prompt": "Penelepon meminta kamu memasang aplikasi agar bisa membantu memeriksa HP. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Tolak, tutup telepon, dan jangan pasang aplikasi apa pun"
+              },
+              {
+                "id": "b",
+                "label": "Pasang aplikasinya karena dikirim oleh bank"
+              },
+              {
+                "id": "c",
+                "label": "Pasang lalu hapus setelah panggilan selesai"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Aplikasi remote memberi pelaku kendali atas layar dan kode yang muncul di HP. Menghapusnya setelah panggilan tidak membatalkan data yang sudah terkirim."
+          },
+          {
+            "id": "call-q5",
+            "prompt": "Kamu sudah menyebutkan OTP dan saldo mulai berkurang. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Hubungi bank lewat nomor resmi, minta blokir, lalu laporkan ke IASC"
+              },
+              {
+                "id": "b",
+                "label": "Tunggu sampai penelepon menelepon lagi"
+              },
+              {
+                "id": "c",
+                "label": "Transfer sisa saldo ke rekening keluarga"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Langkah pertama adalah menghentikan akses: blokir kartu dan rekening lewat bank resmi. Setelah itu kumpulkan bukti dan laporkan; jangan menunggu pelaku menghubungi lagi."
+          }
+        ],
+        "lapor": [
+          "Tutup panggilan dan jangan menghubungi balik nomor pelaku.",
+          "Hubungi bank atau e-wallet lewat nomor resmi, minta blokir sementara dan cek mutasi.",
+          "Ubah PIN dan password akun yang mungkin sudah disebutkan atau dikirim lewat OTP.",
+          "Laporkan nomor dan kronologi ke IASC (iasc.ojk.go.id) serta polisi setempat."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "investasi-bodong",
+        "no": 3,
+        "nama": "Investasi bodong & kripto",
+        "laporan": 19850,
+        "laporanNote": null,
+        "kerugian": "±Rp1,09 T",
+        "ciri": [
+          "Janji untung pasti",
+          "Penarikan dipersulit",
+          "Diminta setor lagi"
+        ],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 3,
+        "ringkasan": "Investasi palsu menjanjikan untung tetap atau pasti, lalu membayar sedikit di awal agar korban percaya. Setelah modal membesar, penarikan dikunci dengan alasan pajak, verifikasi, atau biaya admin sampai platform dan adminnya menghilang.",
+        "tujuan": [
+          "Mengenali janji imbal hasil yang tidak masuk akal sebagai tanda bahaya utama.",
+          "Menjelaskan mengapa pembayaran kecil di awal adalah alat pembangun kepercayaan.",
+          "Memeriksa legalitas platform sebelum menyetor dana apa pun."
+        ],
+        "poinKunci": [
+          "Tidak ada investasi yang menjamin untung tetap setiap hari.",
+          "Pembayaran awal yang lancar adalah umpan, bukan bukti keaslian.",
+          "Biaya pajak atau verifikasi untuk menarik dana adalah pola penipuan.",
+          "Cek izin OJK sebelum menyetor; tautan pendek dan aplikasi luar store bukan bukti."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Iklan untung besar muncul di grup dan media sosial",
+            "teks": "Konten menampilkan keuntungan harian, tangkapan layar saldo, dan testimoni. Sumbernya sering akun baru atau grup yang dimasuki tanpa diminta."
+          },
+          {
+            "judul": "Korban diberi untung kecil agar percaya",
+            "teks": "Setoran awal dibayar tepat waktu, kadang dengan bunga besar. Uang itu berasal dari setoran orang lain, bukan dari investasi nyata, sehingga korban mengira platformnya benar-benar bekerja."
+          },
+          {
+            "judul": "Modal diminta ditambah atau anggota baru direkrut",
+            "teks": "Setelah percaya, korban didorong menambah modal atau mengajak orang lain. Semakin besar dana yang masuk, semakin lama skema bisa bertahan sebelum runtuh."
+          },
+          {
+            "judul": "Penarikan dipersulit dengan biaya baru",
+            "teks": "Saat korban ingin menarik dana, muncul syarat pajak, biaya verifikasi, atau saldo minimum. Setiap pembayaran baru membuka syarat berikutnya, bukan mencairkan uang."
+          },
+          {
+            "judul": "Platform hilang dan admin memblokir korban",
+            "teks": "Aplikasi atau situs tiba-tiba tidak bisa diakses, grup dibubarkan, dan admin tidak lagi membalas. Dana yang sudah masuk tidak bisa dilacak lewat platform."
+          }
+        ],
+        "contohJudul": "Contoh tautan investasi (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "tautan",
+        "contohSumber": "Tautan dari grup WhatsApp · bit.ly/untungpasti",
+        "contohIsi": [
+          {
+            "text": "Investasi emas digital, untung tetap 2% per hari, ",
+            "berbahaya": true
+          },
+          {
+            "text": "modal aman 100% dijamin. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Daftar lewat tautan ini: ",
+            "berbahaya": false
+          },
+          {
+            "text": "bit.ly/untungpasti",
+            "berbahaya": true
+          },
+          {
+            "text": " — slot terbatas hari ini.",
+            "berbahaya": false
+          }
+        ],
+        "checklist": [
+          "Imbal hasil tetap atau pasti, apalagi harian, tanpa risiko yang dijelaskan",
+          "Penarikan dana diminta biaya tambahan: pajak, verifikasi, atau admin",
+          "Platform tidak punya izin OJK atau tidak bisa ditemukan di situs resmi",
+          "Diminta merekrut anggota baru untuk menambah penghasilan",
+          "Tautan pendek, aplikasi di luar toko resmi, dan admin hanya lewat chat pribadi"
+        ],
+        "kuis": [
+          {
+            "id": "invest-q1",
+            "prompt": "Grup menawarkan untung tetap 2% per hari dan modal dijamin. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Ikut dengan modal kecil dulu"
+              },
+              {
+                "id": "b",
+                "label": "Abaikan, lalu periksa izin platform di situs OJK"
+              },
+              {
+                "id": "c",
+                "label": "Minta bukti transfer dari anggota grup lain"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Untung tetap harian yang dijamin tidak ada dalam investasi sah. Tangkapan layar anggota grup bisa dibuat atau berasal dari korban lain; satu-satunya pemeriksaan yang berguna adalah izin resmi."
+          },
+          {
+            "id": "invest-q2",
+            "prompt": "Setoran awalmu dibayar untung tepat waktu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Tambah modal karena platformnya terbukti membayar"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti, karena pembayaran awal adalah umpan kepercayaan"
+              },
+              {
+                "id": "c",
+                "label": "Ajak teman supaya komisi bertambah"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Pembayaran awal dibiayai setoran berikutnya, bukan keuntungan nyata. Semakin besar modal yang masuk, semakin besar kerugian saat skema berhenti membayar."
+          },
+          {
+            "id": "invest-q3",
+            "prompt": "Untuk menarik saldo, kamu diminta membayar pajak 10% lebih dulu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bayar pajaknya karena saldo sudah besar"
+              },
+              {
+                "id": "b",
+                "label": "Tolak, karena biaya penarikan adalah tanda skema penipuan"
+              },
+              {
+                "id": "c",
+                "label": "Bayar sebagian dan minta saldo dicairkan bertahap"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Biaya baru untuk mencairkan dana adalah inti penipuan investasi. Setelah satu biaya dibayar, akan muncul biaya berikutnya; saldo di layar hanyalah angka."
+          },
+          {
+            "id": "invest-q4",
+            "prompt": "Admin meminta kamu merekrut lima orang agar komisi naik. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Rekrut karena ini peluang penghasilan tambahan"
+              },
+              {
+                "id": "b",
+                "label": "Rekrut hanya keluarga dekat supaya aman"
+              },
+              {
+                "id": "c",
+                "label": "Berhenti dan ingatkan orang yang sudah kamu ajak"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Skema yang membayar dari anggota baru adalah piramida. Merekrut orang memperbesar kerugian mereka dan memindahkan masalah, bukan menyelesaikannya."
+          },
+          {
+            "id": "invest-q5",
+            "prompt": "Aplikasi investasi tiba-tiba tidak bisa dibuka dan admin memblokir kamu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kumpulkan bukti setoran, lapor OJK dan polisi, lalu hubungi bank"
+              },
+              {
+                "id": "b",
+                "label": "Cari admin lewat akun baru dan minta refund"
+              },
+              {
+                "id": "c",
+                "label": "Tunggu aplikasinya kembali normal"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Bukti setoran dan identitas rekening tujuan adalah dasar pelaporan. Menghubungi pelaku lagi hanya membuka permintaan uang baru."
+          }
+        ],
+        "lapor": [
+          "Hentikan semua setoran dan jangan bayar biaya penarikan apa pun.",
+          "Simpan bukti transfer, tangkapan layar platform, tautan, dan percakapan dengan admin.",
+          "Laporkan platform ke OJK dan IASC; sertakan nama rekening tujuan serta kronologi.",
+          "Hubungi bank untuk meminta penelusuran transaksi dan laporkan ke polisi setempat."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "lowongan-tugas-berbayar",
+        "no": 4,
+        "nama": "Lowongan kerja & tugas berbayar",
+        "laporan": 18220,
+        "laporanNote": null,
+        "kerugian": "±Rp656 M",
+        "ciri": [
+          "Tugas like/subscribe",
+          "Dibayar kecil dulu",
+          "Top-up membesar"
+        ],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": "L3",
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 4,
+        "ringkasan": "Tawaran kerja mudah dengan gaji tidak wajar berubah menjadi tugas like dan subscribe yang dibayar kecil. Setelah korban percaya, ia diminta top-up untuk membuka tugas lebih besar; saldo di aplikasi bertambah, tetapi penarikan selalu tertahan biaya baru.",
+        "tujuan": [
+          "Membedakan lowongan sah dari skema tugas berbayar.",
+          "Menjelaskan mengapa pembayaran kecil di awal adalah bagian dari umpan.",
+          "Mengenali permintaan top-up sebagai titik berhenti, bukan peluang."
+        ],
+        "poinKunci": [
+          "Pekerjaan sah tidak meminta kamu membayar untuk mulai bekerja.",
+          "Saldo di aplikasi bukan uang nyata sampai bisa ditarik tanpa syarat baru.",
+          "Top-up untuk membuka tugas adalah pola kerugian, bukan promosi.",
+          "Rekrutmen resmi memakai kanal perusahaan, bukan akun chat pribadi."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Tawaran kerja mudah dengan gaji tidak wajar",
+            "teks": "Pesan menawarkan admin online, penerjemah, atau penguji aplikasi dengan gaji besar tanpa pengalaman. Syaratnya dibuat sangat ringan agar korban merasa ini kesempatan langka."
+          },
+          {
+            "judul": "Tugas ringan dibayar kecil di awal",
+            "teks": "Korban diminta like, subscribe, atau memberi rating, lalu dibayar beberapa puluh ribu. Pembayaran kecil ini membangun keyakinan bahwa sistemnya benar-benar membayar."
+          },
+          {
+            "judul": "Top-up diminta untuk membuka tugas lebih besar",
+            "teks": "Muncul paket tugas dengan komisi lebih tinggi, tetapi korban harus menyetor saldo lebih dulu. Setoran itu disebut deposit yang akan kembali bersama komisi."
+          },
+          {
+            "judul": "Saldo tampak bertambah, penarikan tertahan",
+            "teks": "Angka di aplikasi naik, tetapi saat ditarik muncul biaya pajak, verifikasi, atau target tugas yang belum selesai. Setiap syarat baru meminta setoran berikutnya."
+          },
+          {
+            "judul": "Korban terus menyetor sampai admin menghilang",
+            "teks": "Pelaku memakai harapan agar modal kembali. Semakin besar dana yang sudah masuk, semakin sulit korban berhenti; akhirnya grup dibubarkan dan admin memblokir."
+          }
+        ],
+        "contohJudul": "Contoh pesan rekrutmen (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "WhatsApp · nomor tak dikenal · mengaku HRD",
+        "contohIsi": [
+          {
+            "text": "Lowongan admin online, gaji Rp8 juta, tanpa pengalaman. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Tugasnya hanya like dan subscribe, dibayar Rp50 ribu per tugas. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Untuk mulai, ",
+            "berbahaya": false
+          },
+          {
+            "text": "top-up saldo Rp300 ribu dulu",
+            "berbahaya": true
+          },
+          {
+            "text": ". Saldo kembali plus komisi.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Gaji besar untuk pekerjaan yang syaratnya hampir tidak ada",
+          "Diminta membayar, top-up, atau menyetor deposit sebelum bekerja",
+          "Komunikasi hanya lewat chat pribadi, tanpa kanal perusahaan",
+          "Aplikasi atau situs tugas tidak jelas dan di luar toko resmi",
+          "Penarikan saldo selalu muncul biaya atau syarat baru"
+        ],
+        "kuis": [
+          {
+            "id": "job-q1",
+            "prompt": "Lowongan menawarkan gaji besar tanpa pengalaman dan meminta top-up untuk mulai. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Top-up karena akan kembali bersama komisi"
+              },
+              {
+                "id": "b",
+                "label": "Tolak, karena pekerjaan sah tidak meminta uang muka"
+              },
+              {
+                "id": "c",
+                "label": "Top-up setengah dulu untuk mencoba"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Pekerjaan yang meminta kamu membayar untuk mulai adalah skema, bukan lowongan. Uang muka adalah modal pelaku, bukan biaya administrasi."
+          },
+          {
+            "id": "job-q2",
+            "prompt": "Kamu dibayar Rp50 ribu setelah menyelesaikan tugas like. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Ambil paket tugas lebih besar dengan top-up"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti, karena pembayaran kecil adalah umpan kepercayaan"
+              },
+              {
+                "id": "c",
+                "label": "Ajak teman supaya dapat bonus rekrutmen"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Pembayaran kecil dirancang agar kamu percaya dan mau menyetor lebih besar. Berhenti saat untung kecil lebih baik daripada mengejar saldo yang tidak bisa ditarik."
+          },
+          {
+            "id": "job-q3",
+            "prompt": "Saldo di aplikasi bertambah, tetapi penarikan diminta biaya pajak. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bayar pajak agar saldo bisa dicairkan"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti dan anggap saldo itu tidak nyata"
+              },
+              {
+                "id": "c",
+                "label": "Pinjam uang untuk membayar pajak"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Saldo yang hanya bisa keluar setelah biaya baru adalah tampilan, bukan aset. Membayar biaya berikutnya memperbesar kerugian tanpa pernah mencairkan dana."
+          },
+          {
+            "id": "job-q4",
+            "prompt": "Admin meminta data rekening dan foto KTP untuk mengirim gaji. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kirim semuanya karena itu syarat gaji"
+              },
+              {
+                "id": "b",
+                "label": "Jangan kirim; hentikan komunikasi dan laporkan akunnya"
+              },
+              {
+                "id": "c",
+                "label": "Kirim KTP saja tanpa rekening"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Data pribadi bisa dipakai untuk pinjaman atau penipuan lanjutan. Perusahaan sah tidak meminta KTP dan rekening lewat chat pribadi sebelum ada kontrak yang jelas."
+          },
+          {
+            "id": "job-q5",
+            "prompt": "Grup tugas dibubarkan dan admin memblokir kamu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Simpan bukti transfer dan chat, lalu lapor ke IASC dan polisi"
+              },
+              {
+                "id": "b",
+                "label": "Cari admin lewat akun baru"
+              },
+              {
+                "id": "c",
+                "label": "Diamkan karena malu"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Bukti transfer dan percakapan adalah dasar laporan. Rasa malu membuat pola yang sama terus berulang pada korban lain."
+          }
+        ],
+        "lapor": [
+          "Hentikan semua top-up dan jangan mengejar saldo dengan setoran baru.",
+          "Simpan tangkapan layar lowongan, percakapan, bukti transfer, dan nama rekening tujuan.",
+          "Laporkan akun dan aplikasi ke platform tempat pesan diterima serta ke IASC.",
+          "Laporkan ke polisi setempat dan beri tahu orang lain yang mungkin sudah kamu ajak."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "undian-hadiah-palsu",
+        "no": 5,
+        "nama": "Undian & hadiah palsu",
+        "laporan": 15477,
+        "laporanNote": null,
+        "kerugian": "±Rp189,9 M",
+        "ciri": ["\"Anda menang\"", "Wajib bayar admin/pajak dulu"],
+        "level": 2,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 5,
+        "ringkasan": "Pesan mengabarkan kamu menang hadiah besar meskipun tidak pernah ikut undian. Untuk mencairkan hadiah, kamu diminta membayar pajak atau biaya admin lebih dulu, lalu mengirim data pribadi; hadiahnya tidak pernah ada dan permintaan uang berulang.",
+        "tujuan": [
+          "Mengenali undian palsu dari syarat biaya di muka.",
+          "Menjelaskan mengapa menang tanpa pernah ikut adalah tanda bahaya mutlak.",
+          "Melindungi data pribadi dan rekening dari permintaan klaim hadiah."
+        ],
+        "poinKunci": [
+          "Hadiah sah tidak meminta pemenang membayar untuk menerimanya.",
+          "Kalau kamu tidak pernah ikut undian, tidak ada hadiah yang bisa diklaim.",
+          "Nama institusi besar mudah dicatut; periksa kanal resminya, bukan pesannya.",
+          "Jangan pernah mengirim foto KTP, kartu, atau kode OTP untuk klaim hadiah."
+        ],
+        "estimasiMenit": 7,
+        "anatomi": [
+          {
+            "judul": "Pesan menang datang dari sumber tak dikenal",
+            "teks": "Pesan mengabarkan nomor atau akunmu menang mobil, uang tunai, atau perjalanan. Pengirimnya bukan kanal resmi dan sering memakai nama institusi besar."
+          },
+          {
+            "judul": "Nama institusi dicatut untuk kredibilitas",
+            "teks": "Logo dan nama perusahaan dipakai agar pesan terlihat resmi. Namun tautan, nomor kontak, dan rekeningnya tidak pernah cocok dengan kanal resmi institusi itu."
+          },
+          {
+            "judul": "Hadiah besar, syaratnya biaya kecil di muka",
+            "teks": "Korban diminta membayar pajak, biaya admin, atau ongkir agar hadiah dikirim. Nominalnya sengaja dibuat lebih kecil dari hadiah supaya terasa masuk akal."
+          },
+          {
+            "judul": "Data pribadi dan rekening diminta untuk klaim",
+            "teks": "Formulir klaim meminta KTP, nomor kartu, dan kode OTP. Data ini dipakai untuk mengambil alih akun atau menguras rekening, bukan untuk mengirim hadiah."
+          },
+          {
+            "judul": "Setelah bayar, hadiah tidak ada dan biaya bertambah",
+            "teks": "Pelaku meminta biaya berikutnya: bea cukai, asuransi, atau verifikasi. Korban yang sudah mengeluarkan uang merasa harus melanjutkan sampai sadar tidak ada hadiah sama sekali."
+          }
+        ],
+        "contohJudul": "Contoh pesan undian (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "WhatsApp · nomor tak dikenal · mengaku panitia undian",
+        "contohIsi": [
+          {
+            "text": "Selamat! Nomor Anda terpilih menang mobil. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Untuk klaim, transfer pajak Rp2,5 juta ke rekening panitia. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Hadiah dikirim setelah pembayaran diterima.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Mengaku kamu menang padahal tidak pernah mengikuti undian",
+          "Diminta membayar pajak, admin, ongkir, atau bea cukai lebih dulu",
+          "Batas waktu klaim sangat mendesak dan tidak masuk akal",
+          "Formulir meminta KTP, nomor kartu, PIN, atau kode OTP",
+          "Pengirim bukan kanal resmi institusi yang namanya dicatut"
+        ],
+        "kuis": [
+          {
+            "id": "prize-q1",
+            "prompt": "Pesan mengabarkan kamu menang mobil dan meminta pajak Rp2,5 juta. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bayar pajak karena hadiahnya jauh lebih besar"
+              },
+              {
+                "id": "b",
+                "label": "Abaikan; hadiah sah tidak meminta pemenang membayar dulu"
+              },
+              {
+                "id": "c",
+                "label": "Minta bukti undian lalu bayar"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Biaya di muka untuk menerima hadiah adalah inti penipuan undian. Bukti yang dikirim pelaku juga bisa dibuat; tidak ada hadiah tanpa undian yang kamu ikuti."
+          },
+          {
+            "id": "prize-q2",
+            "prompt": "Kamu tidak pernah ikut undian, tetapi pesan menyebut nomormu terpilih. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Ikuti instruksi karena mungkin ini hadiah otomatis"
+              },
+              {
+                "id": "b",
+                "label": "Hapus pesan dan blokir pengirimnya"
+              },
+              {
+                "id": "c",
+                "label": "Balas untuk menanyakan asal undian"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Undian sah mensyaratkan partisipasi yang bisa dilacak. Membalas hanya memberi pelaku konfirmasi bahwa nomormu aktif."
+          },
+          {
+            "id": "prize-q3",
+            "prompt": "Formulir klaim meminta foto KTP dan kode OTP. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kirim karena itu syarat pencairan hadiah"
+              },
+              {
+                "id": "b",
+                "label": "Tutup formulir; data itu bisa dipakai mengambil alih akun"
+              },
+              {
+                "id": "c",
+                "label": "Kirim KTP tanpa OTP"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Tidak ada klaim hadiah sah yang membutuhkan OTP. Data pribadi yang lengkap bisa dipakai untuk pinjaman, pembukaan akun, atau penipuan berikutnya."
+          },
+          {
+            "id": "prize-q4",
+            "prompt": "Setelah membayar pajak, panitia meminta biaya bea cukai tambahan. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bayar agar hadiah tidak tertahan"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti, simpan bukti, dan laporkan sebagai penipuan"
+              },
+              {
+                "id": "c",
+                "label": "Negosiasi supaya biaya berikutnya lebih kecil"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Biaya yang terus bertambah adalah pola pemerasan bertahap. Setiap pembayaran baru hanya memperpanjang rangkaian permintaan."
+          },
+          {
+            "id": "prize-q5",
+            "prompt": "Kamu sudah terlanjur mengirim data dan uang. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Blokir kartu/rekening, ubah PIN, lalu lapor bank, IASC, dan polisi"
+              },
+              {
+                "id": "b",
+                "label": "Tunggu panitia menghubungi lagi"
+              },
+              {
+                "id": "c",
+                "label": "Hubungi pelaku dan memohon uangnya kembali"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Menghentikan akses ke rekening lebih mendesak daripada mengejar uang kembali. Laporan resmi membuat transaksi tercatat dan menghambat pelaku memakai data yang sama."
+          }
+        ],
+        "lapor": [
+          "Hentikan semua pembayaran dan jangan kirim data pribadi tambahan.",
+          "Blokir pengirim, simpan tangkapan layar pesan, formulir, dan bukti transfer.",
+          "Hubungi bank untuk memblokir kartu atau rekening yang datanya sudah kamu berikan.",
+          "Laporkan ke IASC (iasc.ojk.go.id) dan polisi setempat dengan bukti lengkap."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "love-scam",
+        "no": 6,
+        "nama": "Media sosial & love scam",
+        "laporan": 14229,
+        "laporanNote": null,
+        "kerugian": "±Rp491 M",
+        "ciri": ["Kenalan online", "Paket tertahan", "Pemerasan video call"],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message", "identity", "conversation"]
+      },
+      "content": {
+        "no": 6,
+        "ringkasan": "Kenalan online membangun kedekatan dengan cepat memakai identitas dan foto palsu. Setelah korban percaya, muncul kebutuhan darurat: paket tertahan, biaya medis, atau tiket perjalanan. Uang dikirim ke rekening pihak ketiga, lalu pelaku menghilang atau memeras.",
+        "tujuan": [
+          "Mengenali pola love scam dari kecepatan kedekatan dan permintaan uang.",
+          "Menjelaskan mengapa menolak video call dan bertemu adalah tanda bahaya.",
+          "Memutus hubungan finansial tanpa menyalahkan diri sendiri."
+        ],
+        "poinKunci": [
+          "Kedekatan yang dipaksakan cepat adalah taktik, bukan takdir.",
+          "Orang yang benar-benar peduli tidak meminta uang ke rekening pihak ketiga.",
+          "Foto profil bisa dicuri; verifikasi lewat video call dan pertemuan nyata.",
+          "Pemerasan setelah hubungan berakhir tetap harus dilaporkan, bukan dibayar."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Kontak pertama datang dengan pujian berlebihan",
+            "teks": "Akun baru menyukai dan mengomentari semua unggahan, lalu mengajak chat pribadi. Perhatiannya intens dan cepat, jauh sebelum ada alasan untuk percaya."
+          },
+          {
+            "judul": "Identitas dibangun dari foto dan cerita curian",
+            "teks": "Foto profil diambil dari orang lain, profesi dibuat menarik, dan cerita hidup disusun agar simpati tumbuh. Akun sering menghindari video call dengan alasan sinyal atau pekerjaan."
+          },
+          {
+            "judul": "Hubungan dijalin tanpa pertemuan nyata",
+            "teks": "Hubungan berjalan berbulan-bulan lewat chat, tetapi selalu ada alasan untuk tidak bertemu. Komunikasi diarahkan ke satu kanal agar pelaku bisa mengontrol cerita."
+          },
+          {
+            "judul": "Kebutuhan darurat muncul tepat saat kepercayaan tinggi",
+            "teks": "Paket hadiah tertahan di bea cukai, biaya rumah sakit, atau tiket pulang. Nominalnya besar, waktunya mendesak, dan korban merasa harus menolong orang yang dicintainya."
+          },
+          {
+            "judul": "Uang dikirim, lalu pelaku menghilang atau memeras",
+            "teks": "Pembayaran diminta ke rekening teman atau agen, bukan nama pelaku. Setelah uang masuk, pelaku menghilang; bila korban menolak, ancaman menyebarkan foto atau percakapan dipakai."
+          }
+        ],
+        "contohJudul": "Contoh percakapan (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "DM Instagram · akun baru · foto profil tidak konsisten",
+        "contohIsi": [
+          {
+            "text": "Hai, aku lihat profilmu, kita cocok. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Aku sedang di luar negeri, butuh bantuan biaya bea cukai paket untukmu. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Kirim ke rekening temanku dulu ya.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Mengaku sayang atau serius terlalu cepat, sebelum pernah bertemu",
+          "Menolak video call, bertemu, atau memperlihatkan wajah secara langsung",
+          "Meminta uang untuk paket, biaya medis, tiket, atau bea cukai",
+          "Rekening tujuan atas nama pihak ketiga, bukan nama orang yang kamu kenal",
+          "Cerita berubah-ubah dan selalu ada alasan untuk menunda pertemuan"
+        ],
+        "kuis": [
+          {
+            "id": "love-q1",
+            "prompt": "Kenalan online mengaku sayang setelah dua hari dan meminta uang untuk paket. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kirim uang karena hubungannya terasa tulus"
+              },
+              {
+                "id": "b",
+                "label": "Tolak, berhenti mengirim uang, dan verifikasi identitasnya"
+              },
+              {
+                "id": "c",
+                "label": "Kirim setengahnya sebagai tanda percaya"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Kedekatan yang dipaksakan cepat adalah bagian dari taktik. Permintaan uang untuk paket adalah pola love scam yang paling sering dilaporkan."
+          },
+          {
+            "id": "love-q2",
+            "prompt": "Orang itu selalu menolak video call dengan alasan sinyal buruk. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Percaya saja karena chat-nya konsisten"
+              },
+              {
+                "id": "b",
+                "label": "Anggap identitasnya belum terverifikasi dan jangan kirim uang"
+              },
+              {
+                "id": "c",
+                "label": "Minta foto baru sebagai bukti"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Foto bisa dicuri dan cerita bisa dilatih. Video call bukan jaminan mutlak, tetapi penolakan berulang adalah alasan kuat untuk tidak mempercayai permintaan finansial."
+          },
+          {
+            "id": "love-q3",
+            "prompt": "Rekening yang diminta atas nama teman pelaku, bukan namanya sendiri. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Kirim karena katanya rekening pribadinya bermasalah"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti; rekening pihak ketiga adalah tanda bahaya"
+              },
+              {
+                "id": "c",
+                "label": "Minta rekening lain yang juga atas nama teman"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Rekening pihak ketiga mempersulit penelusuran dan melindungi identitas pelaku. Tidak ada alasan sah untuk meminta uangmu masuk ke nama orang lain."
+          },
+          {
+            "id": "love-q4",
+            "prompt": "Setelah kamu menolak mengirim uang, pelaku mengancam menyebarkan fotomu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Jangan bayar; simpan bukti ancaman dan laporkan ke platform serta polisi"
+              },
+              {
+                "id": "b",
+                "label": "Bayar supaya ancamannya berhenti"
+              },
+              {
+                "id": "c",
+                "label": "Hapus akun dan berharap masalahnya hilang"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Membayar pemerasan tidak menghentikan ancaman; ia menandakan korban masih bisa ditekan. Bukti ancaman adalah dasar laporan dan penghapusan konten."
+          },
+          {
+            "id": "love-q5",
+            "prompt": "Kamu sudah mengirim uang ke rekening pihak ketiga. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Simpan semua bukti, lapor bank, IASC, dan polisi; jangan kirim lagi"
+              },
+              {
+                "id": "b",
+                "label": "Cari pelaku lewat akun lain untuk meminta kembali"
+              },
+              {
+                "id": "c",
+                "label": "Diamkan karena takut diketahui keluarga"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Bukti chat, rekening, dan transfer adalah dasar penelusuran. Rasa takut membuat pelaku bebas mengulangi pola yang sama pada orang lain."
+          }
+        ],
+        "lapor": [
+          "Hentikan semua transfer dan jangan menuruti permintaan uang atau ancaman.",
+          "Simpan tangkapan layar percakapan, profil, rekening tujuan, dan bukti transfer.",
+          "Laporkan akun ke platform media sosial dan bank penerima untuk penelusuran.",
+          "Laporkan ke IASC dan polisi setempat; sertakan bukti pemerasan bila ada."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "phishing-tautan",
+        "no": 7,
+        "nama": "Phishing tautan & akun",
+        "laporan": 13386,
+        "laporanNote": null,
+        "kerugian": "±Rp507 M",
+        "ciri": [
+          "Tautan tiruan login bank/e-wallet",
+          "Domain mirip merek resmi"
+        ],
+        "level": 2,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": "L2",
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 7,
+        "ringkasan": "Pesan meniru bank atau e-wallet dengan nada darurat dan mengarahkanmu ke halaman login palsu. Begitu nomor, PIN, dan OTP dimasukkan, pelaku memakai kredensial itu untuk masuk dan memindahkan dana sebelum kamu sadar.",
+        "tujuan": [
+          "Membaca domain tautan sebelum mengetuknya.",
+          "Menjelaskan mengapa halaman login tiruan bisa terlihat identik dengan aslinya.",
+          "Menghentikan kebocoran akun setelah kredensial terlanjur dimasukkan."
+        ],
+        "poinKunci": [
+          "Bank tidak meminta login lewat tautan yang dikirim ke pesan.",
+          "Periksa domain, bukan tampilan; halaman tiruan bisa menyalin logo dan warna.",
+          "PIN dan OTP tidak pernah diisi di halaman yang dibuka dari chat atau SMS.",
+          "Kalau sudah masuk, ubah password dan hubungi bank lewat nomor resmi segera."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Pesan meniru bank dengan nada darurat",
+            "teks": "Pesan mengabarkan akun diblokir, transaksi mencurigakan, atau hadiah, lalu meminta verifikasi dalam waktu singkat. Nama dan logo bank dipakai agar korban tidak memeriksa lagi."
+          },
+          {
+            "judul": "Tautan mengarah ke halaman login tiruan",
+            "teks": "Alamatnya mirip, tetapi tidak persis sama dengan domain resmi: huruf ditukar, tambahan kata, atau domain lain sekali pandang. Halaman menyalin tampilan asli dengan sangat rapi."
+          },
+          {
+            "judul": "Korban memasukkan nomor, PIN, dan OTP",
+            "teks": "Formulir meminta data yang tidak seharusnya diketik di halaman mana pun. Kode OTP yang masuk justru diteruskan ke pelaku secara real time."
+          },
+          {
+            "judul": "Pelaku masuk dan memindahkan dana",
+            "teks": "Dengan kredensial yang sudah dikumpulkan, pelaku login dari perangkat lain, mengubah kontak, dan mengirim dana sebelum korban menyadari ada yang salah."
+          },
+          {
+            "judul": "Notifikasi asli sengaja tidak sampai",
+            "teks": "Pelaku bisa mengubah nomor atau email pemulihan agar peringatan transaksi tidak diterima korban. Keterlambatan menyadari membuat dana sulit ditarik kembali."
+          }
+        ],
+        "contohJudul": "Contoh tautan phishing (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "tautan",
+        "contohSumber": "SMS · pengirim tak dikenal · tautan login",
+        "contohIsi": [
+          {
+            "text": "Akun Anda diblokir sementara. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Verifikasi sekarang di ",
+            "berbahaya": false
+          },
+          {
+            "text": "https://bank-anda.example/login",
+            "berbahaya": true
+          },
+          {
+            "text": " sebelum 24 jam.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Domain tidak persis sama dengan situs resmi yang biasa kamu pakai",
+          "Diminta login lewat tautan yang dikirim di pesan, bukan aplikasi resmi",
+          "Nada darurat dengan batas waktu yang menekan",
+          "Halaman meminta PIN atau OTP di luar aplikasi resmi",
+          "Alamat situs memakai tambahan kata, tanda hubung, atau ejaan yang aneh"
+        ],
+        "kuis": [
+          {
+            "id": "phish-q1",
+            "prompt": "SMS mengabarkan akun diblokir dan meminta login lewat tautan. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Ketuk tautan dan login supaya akun aktif lagi"
+              },
+              {
+                "id": "b",
+                "label": "Buka aplikasi resmi langsung, tanpa mengetuk tautan"
+              },
+              {
+                "id": "c",
+                "label": "Balas SMS untuk memastikan pengirimnya"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Bank tidak meminta login lewat tautan di SMS. Membuka aplikasi resmi memutus jalur phishing tanpa harus menebak apakah tautannya asli."
+          },
+          {
+            "id": "phish-q2",
+            "prompt": "Halaman login menampilkan logo bank yang sama persis. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Masukkan data karena tampilannya identik"
+              },
+              {
+                "id": "b",
+                "label": "Periksa domain di address bar sebelum mengetik apa pun"
+              },
+              {
+                "id": "c",
+                "label": "Masukkan PIN saja tanpa OTP"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Logo dan warna mudah disalin; domain tidak. Alamat yang tidak persis sama dengan situs resmi berarti halaman itu bukan milik bank."
+          },
+          {
+            "id": "phish-q3",
+            "prompt": "Halaman meminta kode OTP yang baru masuk ke SMS. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Masukkan OTP untuk menyelesaikan verifikasi"
+              },
+              {
+                "id": "b",
+                "label": "Tutup halaman; OTP tidak pernah diisi di situs yang dibuka dari pesan"
+              },
+              {
+                "id": "c",
+                "label": "Kirim OTP ke nomor yang tertera di halaman"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "OTP adalah kunci transaksi. Halaman phishing memintanya justru untuk meneruskannya ke pelaku; tidak ada verifikasi sah yang membutuhkan OTP di halaman web."
+          },
+          {
+            "id": "phish-q4",
+            "prompt": "Kamu terlanjur mengetik password dan OTP di halaman itu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Ubah password, hubungi bank lewat nomor resmi, dan minta blokir"
+              },
+              {
+                "id": "b",
+                "label": "Tunggu apakah ada transaksi aneh"
+              },
+              {
+                "id": "c",
+                "label": "Hapus riwayat browser saja"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Setelah kredensial bocor, kecepatan menentukan. Mengubah password dan memblokir akses lewat bank resmi menghentikan pelaku sebelum dana dipindahkan."
+          },
+          {
+            "id": "phish-q5",
+            "prompt": "Kamu menerima tautan login dari nomor yang mengaku bank. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Hapus pesan, blokir pengirim, lalu laporkan nomornya ke bank dan IASC"
+              },
+              {
+                "id": "b",
+                "label": "Teruskan ke teman supaya mereka waspada"
+              },
+              {
+                "id": "c",
+                "label": "Simpan tautannya untuk dicek nanti"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Melaporkan nomor membantu bank memblokir kampanye yang sama. Meneruskan tautan memperluas risiko; menyimpannya membuatmu bisa mengetuknya tanpa sengaja."
+          }
+        ],
+        "lapor": [
+          "Jangan mengetuk tautan lagi dan hapus pesannya dari perangkat.",
+          "Buka aplikasi resmi atau ketik alamat bank sendiri, lalu ubah password dan PIN.",
+          "Hubungi bank lewat nomor resmi untuk meminta blokir dan memeriksa transaksi terakhir.",
+          "Laporkan nomor dan tautan ke IASC, bank terkait, dan polisi setempat."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "social-engineering",
+        "no": 8,
+        "nama": "Social engineering & share screen",
+        "laporan": 9436,
+        "laporanNote": null,
+        "kerugian": "±Rp361 M",
+        "ciri": ["\"CS\" palsu", "Diminta share screen / remote app"],
+        "level": 2,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message", "conversation"]
+      },
+      "content": {
+        "no": 8,
+        "ringkasan": "Pelaku mengaku customer service resmi dan menawarkan bantuan atas transaksi yang katanya gagal. Korban diarahkan memasang aplikasi remote atau membagikan layar, lalu membuka m-banking. Dari layar itulah pelaku melihat OTP dan PIN, kemudian menjalankan transaksi.",
+        "tujuan": [
+          "Mengenali social engineering yang mengaku customer service.",
+          "Menjelaskan mengapa share screen dan aplikasi remote berbahaya.",
+          "Menolak remote access tanpa harus bersikap kasar atau panik."
+        ],
+        "poinKunci": [
+          "Customer service resmi tidak menghubungi lewat chat pribadi untuk meminta remote access.",
+          "Share screen memperlihatkan semua yang muncul di layar, termasuk OTP.",
+          "Tidak ada prosedur bank yang meminta kamu membuka m-banking saat layar dibagikan.",
+          "Tutup aplikasi remote, putus koneksi, lalu hubungi bank lewat nomor resmi."
+        ],
+        "estimasiMenit": 7,
+        "anatomi": [
+          {
+            "judul": "Pelaku mengaku customer service resmi",
+            "teks": "Pesan datang dari akun yang memakai nama dan logo perusahaan. Nadanya membantu dan sopan, seolah mereka sudah tahu masalah yang kamu alami."
+          },
+          {
+            "judul": "Korban diarahkan memasang aplikasi remote",
+            "teks": "Pelaku mengirim tautan atau file aplikasi yang katanya alat bantu resmi. Setelah dipasang, aplikasi itu memberi akses ke layar dan terkadang ke ketukan tombol."
+          },
+          {
+            "judul": "Layar dibagikan dan semua terlihat",
+            "teks": "Korban diminta share screen agar masalahnya bisa diperiksa. Di layar itu muncul notifikasi, kode OTP, saldo, dan aplikasi perbankan yang sedang dibuka."
+          },
+          {
+            "judul": "Korban diarahkan membuka m-banking dan mengetik PIN",
+            "teks": "Pelaku memandu langkah demi langkah, sering sambil meminta korban tetap tenang. Setiap ketukan dan kode yang muncul direkam atau dilihat langsung."
+          },
+          {
+            "judul": "Transaksi dijalankan dari layar korban",
+            "teks": "Dengan akses yang sudah diberikan, pelaku memindahkan dana atau mengubah pengaturan. Korban baru sadar setelah saldo berkurang dan akses remote ditutup."
+          }
+        ],
+        "contohJudul": "Contoh pesan CS palsu (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "WhatsApp · akun mengaku CS e-wallet",
+        "contohIsi": [
+          {
+            "text": "Halo, saya CS resmi. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Ada transaksi gagal, kami bantu perbaiki. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Silakan unduh aplikasi remote dan bagikan layar, lalu buka m-banking.",
+            "berbahaya": true
+          },
+          {
+            "text": "Jangan tutup, ini prosedur.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Customer service menghubungi lewat chat pribadi, bukan kanal resmi",
+          "Diminta memasang aplikasi remote atau alat bantu yang dikirim lewat chat",
+          "Diminta membagikan layar saat membuka m-banking",
+          "Diminta mengetik PIN atau menyebut OTP saat layar dibagikan",
+          "Diminta tetap di telepon atau chat agar tidak memeriksa sendiri"
+        ],
+        "kuis": [
+          {
+            "id": "screen-q1",
+            "prompt": "Akun mengaku CS meminta kamu memasang aplikasi remote. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Pasang karena aplikasinya dikirim CS resmi"
+              },
+              {
+                "id": "b",
+                "label": "Tolak, tutup chat, lalu hubungi CS lewat aplikasi resmi"
+              },
+              {
+                "id": "c",
+                "label": "Pasang sebentar lalu hapus setelah selesai"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "CS resmi tidak mengirim aplikasi remote lewat chat. Menghapus setelahnya tidak membatalkan akses yang sudah diberikan selama sesi berlangsung."
+          },
+          {
+            "id": "screen-q2",
+            "prompt": "Pelaku meminta kamu membagikan layar saat membuka m-banking. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bagikan layar supaya masalahnya cepat selesai"
+              },
+              {
+                "id": "b",
+                "label": "Hentikan share screen dan tutup m-banking"
+              },
+              {
+                "id": "c",
+                "label": "Bagikan hanya bagian atas layar"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Share screen memperlihatkan OTP dan saldo secara utuh. Tidak ada dukungan sah yang membutuhkan akses ke layar perbankanmu."
+          },
+          {
+            "id": "screen-q3",
+            "prompt": "Pelaku meminta kode OTP yang muncul saat layar dibagikan. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Sebutkan OTP karena mereka sedang membantu"
+              },
+              {
+                "id": "b",
+                "label": "Tolak, tutup aplikasi remote, dan putus koneksi"
+              },
+              {
+                "id": "c",
+                "label": "Kirim OTP lewat chat supaya lebih jelas"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "OTP tidak pernah diberikan kepada siapa pun, termasuk yang mengaku CS. Menutup remote access menghentikan penglihatan pelaku atas kode berikutnya."
+          },
+          {
+            "id": "screen-q4",
+            "prompt": "Kamu sudah memasang aplikasi remote dan melihat layar bergerak sendiri. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Matikan data/Wi-Fi, hapus aplikasi remote, lalu hubungi bank resmi"
+              },
+              {
+                "id": "b",
+                "label": "Tunggu sampai pelaku selesai membantu"
+              },
+              {
+                "id": "c",
+                "label": "Kirim pesan untuk bertanya apa yang sedang dilakukan"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Layar yang bergerak sendiri berarti kendali sudah berpindah. Memutus koneksi adalah cara tercepat menghentikan transmisi data dan transaksi."
+          },
+          {
+            "id": "screen-q5",
+            "prompt": "Saldo berkurang setelah sesi share screen. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Hubungi bank lewat nomor resmi, minta blokir, lalu laporkan ke IASC"
+              },
+              {
+                "id": "b",
+                "label": "Hubungi kembali akun CS palsu itu"
+              },
+              {
+                "id": "c",
+                "label": "Tunggu notifikasi berikutnya"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Langkah pertama adalah menghentikan akses dan mencatat transaksi. Menghubungi pelaku lagi hanya memberi mereka kesempatan meminta uang tambahan."
+          }
+        ],
+        "lapor": [
+          "Putus koneksi, hapus aplikasi remote, dan cabut izin aksesibilitas yang mungkin diberikan.",
+          "Hubungi bank atau e-wallet lewat nomor resmi untuk memblokir akses dan memeriksa mutasi.",
+          "Ubah password dan PIN dari perangkat yang bersih, bukan dari sesi yang pernah dibagikan.",
+          "Laporkan akun pelaku ke platform, IASC, dan polisi setempat dengan bukti tangkapan layar."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "pinjol-fiktif",
+        "no": 9,
+        "nama": "Pinjol fiktif & teror data",
+        "laporan": 4793,
+        "laporanNote": null,
+        "kerugian": "±Rp40,6 M",
+        "ciri": ["Pinjaman cepat", "Biaya di muka", "Ancaman sebar data"],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": "L3",
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 9,
+        "ringkasan": "Pinjaman cepat tanpa syarat ditawarkan lewat SMS atau WhatsApp. Sebelum dana cair, korban diminta biaya admin dan menyerahkan KTP, selfie, serta akses kontak. Pinjaman tidak pernah datang, tetapi data itu dipakai untuk meneror dan memeras korban.",
+        "tujuan": [
+          "Mengenali pinjol ilegal dari biaya di muka dan permintaan data berlebihan.",
+          "Menjelaskan mengapa akses kontak dan galeri adalah senjata pemerasan.",
+          "Menghentikan teror data dengan bukti dan pelaporan, bukan dengan membayar."
+        ],
+        "poinKunci": [
+          "Pinjaman sah tidak meminta biaya admin sebelum dana cair.",
+          "Akses kontak dan galeri dipakai untuk meneror, bukan untuk menilai kredit.",
+          "Membayar sekali hanya membuka permintaan berikutnya.",
+          "Cek izin OJK dan laporkan ancaman sebar data sebagai pemerasan."
+        ],
+        "estimasiMenit": 7,
+        "anatomi": [
+          {
+            "judul": "Iklan pinjaman cepat datang tanpa diminta",
+            "teks": "SMS atau WhatsApp menawarkan dana cair dalam hitungan menit, tanpa cek BI, dan tanpa syarat rumit. Nomor pengirim tidak bisa diverifikasi sebagai perusahaan resmi."
+          },
+          {
+            "judul": "Data pribadi diminta sebelum pinjaman disetujui",
+            "teks": "Korban diminta foto KTP, selfie memegang KTP, nomor kontak, dan kadang akses galeri. Permintaan ini jauh lebih besar dari yang dibutuhkan pinjaman sah."
+          },
+          {
+            "judul": "Biaya admin diminta lebih dulu",
+            "teks": "Sebelum dana cair, korban harus mentransfer biaya admin, asuransi, atau verifikasi. Setelah dibayar, muncul syarat baru atau pinjaman tidak pernah dikirim."
+          },
+          {
+            "judul": "Data dipakai untuk meneror korban",
+            "teks": "Pelaku menghubungi kontak yang tersimpan, menyebarkan foto, atau mengancam membuka data pribadi. Tekanan ini membuat korban merasa tidak punya pilihan selain membayar."
+          },
+          {
+            "judul": "Korban ditekan membayar berkali-kali",
+            "teks": "Setiap pembayaran dianggap sebagai kesediaan membayar lebih. Ancaman meningkat, sementara pinjaman yang dijanjikan tidak pernah ada."
+          }
+        ],
+        "contohJudul": "Contoh SMS pinjol (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "SMS · nomor tak dikenal · pinjaman cepat",
+        "contohIsi": [
+          {
+            "text": "Pinjaman cair 5 menit, ",
+            "berbahaya": false
+          },
+          {
+            "text": "tanpa cek BI. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Cukup kirim foto KTP dan kontak. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Biaya admin Rp250 ribu ditransfer dulu.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Pinjol tidak terdaftar OJK atau menawarkan tanpa cek BI",
+          "Diminta biaya admin, asuransi, atau verifikasi sebelum dana cair",
+          "Diminta akses kontak, galeri, atau lokasi yang tidak relevan",
+          "Ancaman menyebarkan data pribadi atau menghubungi kontak",
+          "Bunga dan biaya tidak dijelaskan sejak awal"
+        ],
+        "kuis": [
+          {
+            "id": "pinjol-q1",
+            "prompt": "SMS menawarkan pinjaman cair dan meminta biaya admin lebih dulu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Transfer biaya admin agar pinjaman segera cair"
+              },
+              {
+                "id": "b",
+                "label": "Abaikan; pinjaman sah tidak meminta biaya di muka"
+              },
+              {
+                "id": "c",
+                "label": "Transfer setengah biaya sebagai percobaan"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Biaya di muka adalah inti pinjol fiktif. Pinjaman yang sah memotong biaya dari dana yang dicairkan, bukan meminta transfer terpisah lebih dulu."
+          },
+          {
+            "id": "pinjol-q2",
+            "prompt": "Aplikasi pinjaman meminta akses kontak dan galeri. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Izinkan karena itu syarat penilaian kredit"
+              },
+              {
+                "id": "b",
+                "label": "Tolak dan hapus aplikasinya; akses itu dipakai meneror"
+              },
+              {
+                "id": "c",
+                "label": "Izinkan hanya kontak, tanpa galeri"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Penilaian kredit tidak membutuhkan seluruh daftar kontak atau galeri. Akses itu adalah bahan pemerasan yang dipakai setelah pinjaman gagal cair."
+          },
+          {
+            "id": "pinjol-q3",
+            "prompt": "Setelah kamu menolak membayar, pelaku mengancam menyebarkan fotomu. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Simpan bukti ancaman, laporkan ke polisi dan OJK, jangan membayar"
+              },
+              {
+                "id": "b",
+                "label": "Bayar supaya data tidak disebarkan"
+              },
+              {
+                "id": "c",
+                "label": "Hapus semua akun dan berhenti berkomunikasi"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Membayar pemerasan tidak menghapus data dan justru menandakan korban masih bisa ditekan. Bukti ancaman adalah dasar laporan pidana dan pengaduan OJK."
+          },
+          {
+            "id": "pinjol-q4",
+            "prompt": "Pinjaman tidak cair, tetapi pelaku meminta biaya verifikasi kedua. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bayar agar pinjaman pertama ikut cair"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti mengirim uang dan anggap pinjaman itu tidak ada"
+              },
+              {
+                "id": "c",
+                "label": "Pinjam dari tempat lain untuk membayar biaya itu"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Biaya kedua menandakan tidak akan ada pencairan. Berutang di tempat lain untuk membayar biaya palsu memperbesar kerugian."
+          },
+          {
+            "id": "pinjol-q5",
+            "prompt": "Kamu sudah menyerahkan KTP dan data kontak. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Lapor OJK dan polisi, beri tahu kontak terdekat, dan pantau pinjaman atas namamu"
+              },
+              {
+                "id": "b",
+                "label": "Tunggu sampai ada yang menghubungi"
+              },
+              {
+                "id": "c",
+                "label": "Ganti nomor tanpa memberi tahu siapa pun"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Data yang sudah bocor bisa dipakai untuk pinjaman atas namamu. Melapor dan memantau membuat penyalahgunaan tercatat lebih cepat."
+          }
+        ],
+        "lapor": [
+          "Hentikan semua pembayaran dan jangan menuruti ancaman pelaku.",
+          "Simpan bukti SMS, aplikasi, transfer, dan ancaman yang diterima.",
+          "Laporkan pinjol ke OJK dan IASC; sertakan nama aplikasi serta nomor pelaku.",
+          "Laporkan pemerasan ke polisi dan beri tahu kontak terdekat agar tidak panik."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "apk-whatsapp",
+        "no": 10,
+        "nama": "File APK via WhatsApp",
+        "laporan": 3684,
+        "laporanNote": null,
+        "kerugian": "±Rp134 M",
+        "ciri": [
+          "APK di luar Play Store",
+          "Pengirim tak dikenal",
+          "Curi SMS/OTP/m-banking"
+        ],
+        "level": 1,
+        "modulStatus": "lengkap",
+        "scenarioId": "L1-kurir-apk",
+        "scenarioPlanned": null,
+        "detectors": ["message", "link", "conversation"]
+      },
+      "content": {
+        "no": 10,
+        "ringkasan": "File .apk yang dikirim lewat chat bukan dokumen, melainkan aplikasi Android. Begitu dipasang dan diberi izin SMS, ia membaca kode OTP dan membuka jalan bagi pelaku untuk menguras rekening tanpa pernah menyentuh HP-mu.",
+        "tujuan": [
+          "Mengenali file .apk yang menyamar sebagai undangan, resi, atau surat resmi.",
+          "Menjelaskan mengapa izin SMS dan aksesibilitas adalah kunci pencurian OTP.",
+          "Mengambil langkah aman saat file sudah terlanjur dibuka atau dipasang."
+        ],
+        "poinKunci": [
+          "Dokumen resmi tidak pernah berupa aplikasi .apk yang dikirim lewat chat.",
+          "Izin SMS dan aksesibilitas memberi malware akses ke kode OTP, bukan sekadar notifikasi.",
+          "Konfirmasi lewat kanal lain bila file datang dari nomor yang kamu kenal.",
+          "Kalau sudah terpasang: putus koneksi, hapus aplikasi, lalu hubungi bank lewat nomor resmi."
+        ],
+        "estimasiMenit": 8,
+        "anatomi": [
+          {
+            "judul": "Kontak awal dari nomor tak dikenal",
+            "teks": "Pesan masuk dari nomor yang tidak ada di kontak, sering dengan foto profil kosong atau logo instansi. Sapaan umum: “Yth. Bapak/Ibu”, tanpa menyebut nama kamu."
+          },
+          {
+            "judul": "Umpan berupa file .apk",
+            "teks": "Pesan berisi lampiran berekstensi .apk yang menyamar sebagai undangan pernikahan, bukti pengiriman paket, surat tilang, atau dokumen resmi. File itu bukan dokumen — itu aplikasi Android."
+          },
+          {
+            "judul": "Korban diminta instal dan memberi izin",
+            "teks": "Pelaku mengarahkan korban menginstal file itu lalu mengizinkan akses SMS, notifikasi, dan aksesibilitas. Izin itulah kuncinya: sekali diberikan, aplikasi bisa membaca kode OTP yang masuk lewat SMS."
+          },
+          {
+            "judul": "Data dicuri dari dalam HP korban sendiri",
+            "teks": "Malware membaca SMS OTP, notifikasi perbankan, dan kadang layar m-banking. Pelaku tidak perlu membobol bank — mereka memakai HP korban sebagai jembatan masuk."
+          },
+          {
+            "judul": "Uang bergerak tanpa terasa",
+            "teks": "Pelaku mentransfer atau mengubah data rekening dari sesi yang sudah terautentikasi. Korban baru sadar ketika saldo berkurang atau ada notifikasi transaksi yang tidak ia lakukan."
+          }
+        ],
+        "contohJudul": "Contoh pesan (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "Nomor tak dikenal · WhatsApp · baru saja",
+        "contohIsi": [
+          {
+            "text": "Selamat siang Bapak/Ibu, kami dari ekspedisi. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Paket Anda tertahan, silakan cek resi di aplikasi ini: ",
+            "berbahaya": true
+          },
+          {
+            "text": "Bukti-Pengiriman.apk (18 MB)",
+            "berbahaya": true
+          },
+          {
+            "text": ". Instal untuk melihat foto paket Anda. Terima kasih.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "File berekstensi .apk dikirim lewat chat, bukan dari Play Store",
+          "Pengirim nomor tak dikenal, tidak bisa ditelepon balik, atau mengaku instansi",
+          "Diminta menginstal lalu mengizinkan akses SMS / notifikasi / aksesibilitas",
+          "Bahasa mendesak: “sekarang”, “hari ini juga”, “kalau tidak, paket hangus”",
+          "Nama file tidak masuk akal — undangan atau resi kok berupa aplikasi?"
+        ],
+        "kuis": [
+          {
+            "id": "apk-q1",
+            "prompt": "Nomor asing mengirim Undangan-Pernikahan.apk. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Buka, mungkin dari kerabat yang nomornya baru"
+              },
+              {
+                "id": "b",
+                "label": "Instal dan buka undangannya"
+              },
+              {
+                "id": "c",
+                "label": "Hapus tanpa instal, lalu konfirmasi ke pengirim lewat nomor yang kamu kenal"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Undangan asli tidak pernah berupa aplikasi. File .apk di luar Play Store bisa membaca SMS OTP begitu izin diberikan — hapus, jangan pernah instal dari chat."
+          },
+          {
+            "id": "apk-q2",
+            "prompt": "“Kurir” mengirim Paket-Kurir.apk supaya kamu bisa melacak paket. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Instal, supaya paket cepat sampai"
+              },
+              {
+                "id": "b",
+                "label": "Cek resi lewat aplikasi resmi ekspedisi atau marketplace, abaikan file itu"
+              },
+              {
+                "id": "c",
+                "label": "Balas chat dan minta kurir datang langsung"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Ekspedisi resmi tidak membagikan aplikasi lewat chat. Pelacakan selalu lewat aplikasi resmi atau situs resmi — file .apk dari “kurir” adalah malware yang menyamar."
+          },
+          {
+            "id": "apk-q3",
+            "prompt": "Kakakmu sendiri mengirim file APK itu lewat WhatsApp. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Langsung instal, ini dari keluarga"
+              },
+              {
+                "id": "b",
+                "label": "Teruskan ke grup keluarga supaya semua tahu"
+              },
+              {
+                "id": "c",
+                "label": "Telepon kakakmu lewat nomor biasa dan tanya dulu sebelum menyentuh file itu"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Nomor keluarga bisa dibajak dan dipakai menyebar file yang sama. Konfirmasi lewat kanal berbeda (telepon biasa) memutus rantai itu — jangan instal hanya karena pengirimnya dikenal."
+          },
+          {
+            "id": "apk-q4",
+            "prompt": "Kamu sudah terlanjur menginstal APK itu dan sempat memberi izin SMS. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Diamkan saja, mungkin tidak terjadi apa-apa"
+              },
+              {
+                "id": "b",
+                "label": "Terus pakai HP seperti biasa sambil menunggu"
+              },
+              {
+                "id": "c",
+                "label": "Matikan data/Wi-Fi, hapus aplikasi itu, cek mutasi rekening, lalu hubungi bank lewat nomor resmi"
+              }
+            ],
+            "correctId": "c",
+            "rationale": "Mematikan koneksi menghentikan malware mengirim data keluar. Setelah aplikasi dihapus, periksa mutasi dan hubungi bank lewat nomor resmi di kartu atau situs bank — jangan pakai nomor dari chat pelaku."
+          }
+        ],
+        "lapor": [
+          "Hapus file .apk itu dari chat dan dari folder unduhan — jangan dibuka.",
+          "Kalau sempat terinstal: matikan data/Wi-Fi, hapus aplikasinya, cabut semua izin SMS dan aksesibilitas.",
+          "Hubungi bank atau e-wallet lewat nomor resmi, minta blokir sementara dan cek mutasi terakhir.",
+          "Laporkan nomor pelaku ke IASC (iasc.ojk.go.id) dan blokir nomornya di WhatsApp."
+        ],
+        "scenarioId": "L1-kurir-apk"
+      }
+    },
+    {
+      "metadata": {
+        "id": "quishing-qris",
+        "no": 11,
+        "nama": "Quishing QRIS & QR palsu",
+        "laporan": null,
+        "laporanNote": "Peringatan OJK",
+        "kerugian": "—",
+        "ciri": [
+          "Stiker QRIS palsu",
+          "Nama penerima tidak sesuai (prinsip PASTI)"
+        ],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message"]
+      },
+      "content": {
+        "no": 11,
+        "ringkasan": "Stiker QRIS palsu ditempel di atas QRIS asli di meja kasir atau tempat umum. Korban memindai tanpa memeriksa nama penerima, dana masuk ke rekening pelaku, dan merchant tidak pernah menerima pembayaran.",
+        "tujuan": [
+          "Membaca nama penerima pada konfirmasi QRIS sebelum membayar.",
+          "Mengenali stiker QRIS yang ditimpa atau ditempel ulang.",
+          "Memastikan pembayaran sampai ke merchant yang benar."
+        ],
+        "poinKunci": [
+          "Nama penerima di layar konfirmasi harus cocok dengan nama merchant.",
+          "Stiker yang mudah mengelupas atau ditempel di atas stiker lain patut dicurigai.",
+          "Merchant tidak pernah meminta transfer ke rekening pribadi sebagai ganti QRIS.",
+          "Simpan bukti transaksi dan laporkan ke penyedia QRIS serta bank."
+        ],
+        "estimasiMenit": 7,
+        "anatomi": [
+          {
+            "judul": "QRIS asli ditimpa atau ditempel ulang",
+            "teks": "Pelaku menempelkan stiker QRIS baru di atas kode asli. Dari luar tampak seperti QRIS biasa, tetapi arah pembayarannya sudah dialihkan."
+          },
+          {
+            "judul": "Korban memindai tanpa memeriksa nama penerima",
+            "teks": "Layar konfirmasi menampilkan nama penerima, tetapi banyak orang langsung menekan bayar. Nama yang tidak cocok dengan merchant adalah satu-satunya peringatan yang muncul."
+          },
+          {
+            "judul": "Dana masuk ke rekening pelaku",
+            "teks": "Pembayaran diterima oleh rekening yang terdaftar pada QRIS palsu, bukan rekening merchant. Uang berpindah dalam hitungan detik."
+          },
+          {
+            "judul": "Merchant tidak menerima pembayaran",
+            "teks": "Kasir tetap menagih karena sistemnya tidak mencatat transaksi. Korban sudah membayar dua kali atau berselisih tanpa bukti yang jelas."
+          },
+          {
+            "judul": "Pelaku memindahkan dana dengan cepat",
+            "teks": "Dana diteruskan ke rekening lain sebelum dilaporkan. Karena itu, bukti transaksi dan nama penerima harus disimpan segera setelah pembayaran."
+          }
+        ],
+        "contohJudul": "Contoh pembayaran QRIS (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "pesan",
+        "contohSumber": "Stiker QRIS di meja kasir · nama penerima tidak sesuai",
+        "contohIsi": [
+          {
+            "text": "Scan QRIS ini untuk bayar. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Nama penerima: TOKO MAJU JAYA, bukan nama merchant yang kamu lihat. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Konfirmasi pembayaran sekarang.",
+            "berbahaya": false
+          }
+        ],
+        "checklist": [
+          "Nama penerima pada konfirmasi tidak cocok dengan nama merchant",
+          "Stiker QRIS ditempel di atas stiker lain atau mudah terkelupas",
+          "Nominal tidak muncul otomatis dan diminta mengetik manual",
+          "Merchant tidak mengenali kode QRIS yang kamu pindai",
+          "Diminta buru-buru menyelesaikan pembayaran tanpa memeriksa layar"
+        ],
+        "kuis": [
+          {
+            "id": "qris-q1",
+            "prompt": "Layar konfirmasi QRIS menampilkan nama penerima yang berbeda dari nama toko. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Tetap bayar karena QRIS ada di meja kasir"
+              },
+              {
+                "id": "b",
+                "label": "Batalkan pembayaran dan tanyakan langsung ke kasir"
+              },
+              {
+                "id": "c",
+                "label": "Bayar lalu tunjukkan bukti ke kasir"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Nama penerima adalah pemeriksaan utama pada QRIS. Membatalkan sebelum membayar mencegah dana masuk ke rekening pelaku."
+          },
+          {
+            "id": "qris-q2",
+            "prompt": "Stiker QRIS di meja terlihat ditempel di atas stiker lama. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Pindai saja, semua QRIS sama"
+              },
+              {
+                "id": "b",
+                "label": "Jangan pindai; minta kasir menunjukkan QRIS resmi"
+              },
+              {
+                "id": "c",
+                "label": "Pindai lalu periksa nama setelah membayar"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Stiker yang ditimpa adalah cara paling umum menyisipkan QRIS palsu. Memeriksa setelah membayar sudah terlambat karena dana langsung berpindah."
+          },
+          {
+            "id": "qris-q3",
+            "prompt": "Kasir meminta kamu transfer ke rekening pribadi karena QRIS sedang bermasalah. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Transfer karena kasirnya yang meminta"
+              },
+              {
+                "id": "b",
+                "label": "Minta QRIS resmi atau bayar tunai, jangan ke rekening pribadi"
+              },
+              {
+                "id": "c",
+                "label": "Transfer lalu minta struk manual"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Pembayaran resmi tidak dialihkan ke rekening pribadi tanpa alasan yang bisa diverifikasi. Minta kanal resmi atau bayar tunai di tempat."
+          },
+          {
+            "id": "qris-q4",
+            "prompt": "Kamu sudah membayar dan kasir bilang pembayaran tidak masuk. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Simpan bukti dan nama penerima, lalu hubungi penyedia QRIS dan bank"
+              },
+              {
+                "id": "b",
+                "label": "Bayar lagi supaya tidak menghambat antrean"
+              },
+              {
+                "id": "c",
+                "label": "Tinggalkan tempat tanpa bukti"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Bukti transaksi dan nama penerima adalah dasar sengketa. Membayar lagi tanpa menyimpan bukti membuat kerugian bertambah tanpa jejak."
+          },
+          {
+            "id": "qris-q5",
+            "prompt": "Kamu menemukan QRIS palsu di tempat umum. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Laporkan ke merchant, penyedia QRIS, dan bank; jangan pindai lagi"
+              },
+              {
+                "id": "b",
+                "label": "Pindai untuk melihat siapa penerimanya"
+              },
+              {
+                "id": "c",
+                "label": "Diamkan karena bukan uangmu"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Melapor membantu merchant mencabut kode palsu dan mencegah korban berikutnya. Memindai hanya untuk memeriksa tetap berisiko membuka halaman pembayaran."
+          }
+        ],
+        "lapor": [
+          "Batalkan pembayaran bila nama penerima belum cocok; jangan menekan bayar.",
+          "Simpan tangkapan layar konfirmasi, nama penerima, dan bukti transaksi.",
+          "Laporkan ke merchant dan penyedia QRIS agar kode palsu dicabut.",
+          "Hubungi bank penerima dan laporkan ke IASC bila dana sudah berpindah."
+        ],
+        "scenarioId": null
+      }
+    },
+    {
+      "metadata": {
+        "id": "musiman-catut-institusi",
+        "no": 12,
+        "nama": "Musiman & catut institusi",
+        "laporan": null,
+        "laporanNote": "Ikut momen tahunan",
+        "kerugian": "—",
+        "ciri": [
+          "Momen Ramadan/pajak/bansos/CPNS",
+          "Bayar ke rekening pribadi"
+        ],
+        "level": 3,
+        "modulStatus": "segera",
+        "scenarioId": null,
+        "scenarioPlanned": null,
+        "detectors": ["message", "link"]
+      },
+      "content": {
+        "no": 12,
+        "ringkasan": "Momen tahunan seperti Ramadan, musim pajak, bantuan sosial, atau penerimaan CPNS dipakai untuk mencatut nama institusi. Korban diminta mengisi data pribadi lengkap dan membayar biaya administrasi ke rekening pribadi; bantuan tidak pernah ada.",
+        "tujuan": [
+          "Mengenali penipuan yang menumpang momen resmi.",
+          "Memeriksa kanal resmi sebelum mengisi data atau membayar biaya.",
+          "Melindungi data pribadi dari formulir bantuan palsu."
+        ],
+        "poinKunci": [
+          "Program resmi tidak memungut biaya administrasi ke rekening pribadi.",
+          "Domain pemerintah memakai kanal resmi yang bisa diperiksa, bukan tautan pendek.",
+          "Data berlebihan pada formulir bantuan adalah tanda bahaya.",
+          "Konfirmasi ke kantor atau kanal resmi sebelum mengirim uang atau dokumen."
+        ],
+        "estimasiMenit": 7,
+        "anatomi": [
+          {
+            "judul": "Momen tahunan dipakai untuk menciptakan urgensi",
+            "teks": "Ramadan, musim pajak, bantuan sosial, atau pembukaan CPNS dipakai sebagai latar. Korban merasa ini kesempatan yang hanya datang sekali dan harus segera diambil."
+          },
+          {
+            "judul": "Situs atau akun meniru institusi resmi",
+            "teks": "Nama, logo, dan istilah resmi disalin, tetapi alamatnya bukan domain pemerintah. Tautan disebar lewat grup chat dan media sosial, bukan kanal pengumuman resmi."
+          },
+          {
+            "judul": "Korban diminta mengisi data pribadi lengkap",
+            "teks": "Formulir meminta KTP, kartu keluarga, nomor rekening, dan kadang foto selfie. Data ini jauh lebih lengkap dari yang dibutuhkan pendaftaran yang bisa diverifikasi."
+          },
+          {
+            "judul": "Biaya administrasi diminta ke rekening pribadi",
+            "teks": "Setelah mengisi formulir, korban diminta membayar biaya verifikasi atau administrasi. Rekening tujuan atas nama pribadi, bukan nama instansi."
+          },
+          {
+            "judul": "Bantuan tidak ada dan data dipakai lagi",
+            "teks": "Program yang dijanjikan tidak pernah cair. Data yang sudah dikumpulkan dipakai untuk penipuan berikutnya atau pinjaman atas nama korban."
+          }
+        ],
+        "contohJudul": "Contoh situs bantuan (dianonimkan) — bagian merah yang berbahaya",
+        "contohJenis": "situs",
+        "contohSumber": "https://bansos-resmi.example/daftar",
+        "contohIsi": [
+          {
+            "text": "Pendaftaran bantuan sosial pemerintah dibuka. ",
+            "berbahaya": false
+          },
+          {
+            "text": "Isi data KTP, KK, dan nomor rekening. ",
+            "berbahaya": true
+          },
+          {
+            "text": "Biaya administrasi Rp150 ribu untuk verifikasi.",
+            "berbahaya": true
+          }
+        ],
+        "checklist": [
+          "Momen resmi dipakai untuk mendesak pendaftaran hari ini juga",
+          "Alamat situs bukan domain resmi pemerintah atau instansi",
+          "Diminta membayar biaya administrasi ke rekening pribadi",
+          "Formulir meminta data pribadi berlebihan, termasuk foto selfie",
+          "Pengumuman hanya beredar lewat grup chat, bukan kanal resmi"
+        ],
+        "kuis": [
+          {
+            "id": "season-q1",
+            "prompt": "Situs bantuan sosial meminta biaya administrasi ke rekening pribadi. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Bayar karena bantuannya lebih besar"
+              },
+              {
+                "id": "b",
+                "label": "Tutup situs; program resmi tidak memungut biaya ke pribadi"
+              },
+              {
+                "id": "c",
+                "label": "Bayar sebagian lalu minta nomor resmi"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Biaya administrasi ke rekening pribadi adalah tanda penipuan. Program resmi punya kanal dan rekening yang bisa diverifikasi, bukan instruksi transfer pribadi."
+          },
+          {
+            "id": "season-q2",
+            "prompt": "Formulir bantuan meminta KTP, KK, rekening, dan selfie. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Isi semuanya karena syarat pencairan"
+              },
+              {
+                "id": "b",
+                "label": "Berhenti dan verifikasi program lewat kanal resmi dulu"
+              },
+              {
+                "id": "c",
+                "label": "Isi KTP saja tanpa rekening"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Data berlebihan adalah bahan penipuan lanjutan. Verifikasi program lewat kanal resmi memastikan formulir itu memang ada sebelum data diserahkan."
+          },
+          {
+            "id": "season-q3",
+            "prompt": "Tautan pendaftaran beredar di grup chat dan bukan domain pemerintah. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Buka karena dikirim oleh teman"
+              },
+              {
+                "id": "b",
+                "label": "Jangan buka; cari pengumuman di situs resmi instansinya"
+              },
+              {
+                "id": "c",
+                "label": "Buka lalu periksa setelah mengisi data"
+              }
+            ],
+            "correctId": "b",
+            "rationale": "Teman bisa meneruskan tanpa memeriksa. Kanal resmi instansi adalah satu-satunya sumber yang bisa memastikan program dan alamat pendaftarannya."
+          },
+          {
+            "id": "season-q4",
+            "prompt": "Kamu sudah mengisi formulir dan membayar biaya verifikasi. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Simpan bukti, hubungi bank, dan laporkan situs ke IASC serta instansi resmi"
+              },
+              {
+                "id": "b",
+                "label": "Tunggu bantuan cair"
+              },
+              {
+                "id": "c",
+                "label": "Kirim data tambahan bila diminta"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Setelah data dan uang keluar, kecepatan pelaporan menentukan. Menunggu hanya memberi pelaku waktu memakai data untuk penipuan lain."
+          },
+          {
+            "id": "season-q5",
+            "prompt": "Kamu menerima pengumuman bantuan yang mendesak dan meminta transfer. Apa yang kamu lakukan sekarang?",
+            "options": [
+              {
+                "id": "a",
+                "label": "Abaikan, verifikasi ke kantor resmi, dan ingatkan pengirim agar tidak menyebar"
+              },
+              {
+                "id": "b",
+                "label": "Teruskan ke grup keluarga supaya cepat diketahui"
+              },
+              {
+                "id": "c",
+                "label": "Transfer kecil untuk mengetes keasliannya"
+              }
+            ],
+            "correctId": "a",
+            "rationale": "Verifikasi ke kantor resmi memutus rantai tanpa menyebarkan tautan. Transfer kecil tetap memberi pelaku dana dan konfirmasi bahwa kamu bisa ditekan."
+          }
+        ],
+        "lapor": [
+          "Hentikan pengisian data dan jangan transfer biaya apa pun.",
+          "Simpan tangkapan layar situs, tautan, formulir, dan bukti transfer.",
+          "Laporkan situs dan nomor pelaku ke instansi yang namanya dicatut serta ke IASC.",
+          "Hubungi bank bila data rekening sudah diberikan, lalu laporkan ke polisi setempat."
+        ],
+        "scenarioId": null
+      }
+    }
+  ],
+  "simulations": [
+    {
+      "moduleNo": 10,
+      "scenario": {
+        "scenario": {
+          "id": "L1-kurir-apk",
+          "level": 1,
+          "title": "Paket sebelum pulang",
+          "difficulty": "mudah"
+        },
+        "hud": {
+          "panic": {
+            "start": 25,
+            "max": 100,
+            "fail_at": 100,
+            "fail_message": "Tekanan sudah terlalu tinggi. Berhenti sejenak, lalu coba lagi dengan langkah yang berbeda."
+          },
+          "intrusion": {
+            "start": 0,
+            "max": 100,
+            "rate_per_second": 2,
+            "fail_message": "Dalam skenario ini, akses aplikasi dibiarkan terbuka terlalu lama. Gunakan perangkat lain yang aman untuk mencari bantuan."
+          }
+        },
+        "tools": [
+          {
+            "id": "isolation",
+            "name": "Isolasi perangkat",
+            "unlocked_at": "isolate"
+          },
+          {
+            "id": "permissions",
+            "name": "Inspektur izin",
+            "unlocked_at": "inspect"
+          },
+          {
+            "id": "report",
+            "name": "Berkas bukti",
+            "unlocked_at": "intro"
+          }
+        ],
+        "start": "intro",
+        "nodes": [
+          {
+            "id": "intro",
+            "chapter": 1,
+            "type": "message",
+            "speaker": "Dimas · Pengantaran",
+            "text": "Sore, Kak Raka. Saya di depan alamat pengiriman. Paket hadiah buat Ibu, ya?",
+            "delay_ms": 900,
+            "next": "file"
+          },
+          {
+            "id": "file",
+            "chapter": 1,
+            "type": "message",
+            "speaker": "Dimas · Pengantaran",
+            "text": "Alamatnya kurang jelas. Ini foto paketnya, pasang dulu supaya fotonya terbuka. Saya tunggu sebentar sebelum lanjut antar yang lain.",
+            "attachment": {
+              "name": "FOTO_PAKET.apk",
+              "detail": "Aplikasi Android · 4,2 MB · contoh fiktif"
+            },
+            "delay_ms": 1100,
+            "next": "decision"
+          },
+          {
+            "id": "decision",
+            "chapter": 1,
+            "type": "choice",
+            "prompt": "Hadiah Ibu ada di ujung chat. Apa balasanmu?",
+            "choices": [
+              {
+                "label": "Cek pesanan lewat aplikasi belanja sendiri",
+                "verdict": "benar",
+                "rationale": "Kamu memeriksa melalui kanal yang kamu pilih sendiri. Orang yang tahu nama atau detail pesanan belum tentu kurir sungguhan.",
+                "tactic": "authority",
+                "next": "verified"
+              },
+              {
+                "label": "Tanya dulu: ini benar dari kurir?",
+                "verdict": "salah",
+                "rationale": "Bertanya kepada orang yang sama belum memverifikasi identitasnya. Kamu masih bisa beralih ke kanal resmi.",
+                "panic": 10,
+                "tactic": "urgency",
+                "next": "reassure"
+              },
+              {
+                "label": "Pasang berkas agar paket tidak dibawa pergi",
+                "verdict": "salah",
+                "rationale": "Dalam latihan ini APK terpasang dan izin sensitif telanjur diberikan. Akses aplikasi mulai terbuka; kamu masih bisa mengambil langkah pemulihan.",
+                "panic": 20,
+                "tactic": "attachment",
+                "compromisesDevice": true,
+                "next": "installed"
+              }
+            ]
+          },
+          {
+            "id": "reassure",
+            "chapter": 1,
+            "type": "message",
+            "speaker": "Dimas · Pengantaran",
+            "text": "Betul, Kak. Nama Kakak sudah ada di sistem saya. Cuma sebentar kok. Kalau tidak, paketnya saya bawa kembali, ya.",
+            "delay_ms": 900,
+            "next": "second-decision"
+          },
+          {
+            "id": "second-decision",
+            "chapter": 1,
+            "type": "choice",
+            "prompt": "Dia tahu namamu dan terus mendesak. Apa langkahmu?",
+            "choices": [
+              {
+                "label": "Tetap cek lewat aplikasi belanja sendiri",
+                "verdict": "benar",
+                "rationale": "Kamu memberi ruang untuk memeriksa. Mengetahui nama seseorang bukan bukti identitas pengirim.",
+                "tactic": "authority",
+                "next": "verified"
+              },
+              {
+                "label": "Pasang APK supaya urusannya cepat selesai",
+                "verdict": "salah",
+                "rationale": "Desakan waktu membuat pemasangan terasa seperti jalan tercepat. Dalam latihan ini APK dan izin sensitifnya sudah aktif; pulihkan kendali lewat dek perangkat.",
+                "panic": 20,
+                "tactic": "attachment",
+                "compromisesDevice": true,
+                "next": "installed"
+              }
+            ]
+          },
+          {
+            "id": "verified",
+            "chapter": 2,
+            "type": "message",
+            "speaker": "Aplikasi belanja · kamu buka sendiri",
+            "text": "Pesanan masih berada di pusat sortir. Tidak ada permintaan memasang aplikasi. Nomor pengantar pada detail pesanan berbeda dari pengirim chat. Di percakapan tadi, pengirim juga meminta kode SMS sebagai konfirmasi paket.",
+            "delay_ms": 1000,
+            "next": "safe-decision"
+          },
+          {
+            "id": "safe-decision",
+            "chapter": 2,
+            "type": "choice",
+            "prompt": "Ceritanya tidak cocok. Bagaimana kamu menutup percakapan?",
+            "choices": [
+              {
+                "label": "Hentikan chat dan simpan bukti tanpa membuka berkas",
+                "verdict": "benar",
+                "rationale": "Kamu menghentikan interaksi dan menjaga bukti yang aman. Tidak ada alasan melakukan isolasi atau mencabut izin aplikasi yang tidak pernah dipasang.",
+                "tactic": "attachment",
+                "next": "report-safe"
+              },
+              {
+                "label": "Kirim kode SMS yang diminta supaya dia berhenti",
+                "verdict": "salah",
+                "rationale": "Kode rahasia tetap berbahaya walau APK tidak dipasang. Dalam latihan ini kode telanjur dibagikan; akun perlu diamankan lewat kanal resmi.",
+                "panic": 40,
+                "tactic": "secret",
+                "sharesOtp": true,
+                "next": "report-compromised"
+              }
+            ]
+          },
+          {
+            "id": "installed",
+            "chapter": 2,
+            "type": "message",
+            "speaker": "Perangkat latihan",
+            "text": "Berkas tadi memasang aplikasi, bukan membuka foto. Pada ponsel latihan, akses SMS dan aksesibilitas sudah aktif. Putuskan komunikasinya sebelum memeriksa izin.",
+            "delay_ms": 700,
+            "next": "isolate"
+          },
+          {
+            "id": "isolate",
+            "chapter": 2,
+            "type": "tool_task",
+            "tool": "isolation",
+            "prompt": "Ambil kendali: hentikan koneksi aplikasi di dek perangkat.",
+            "on_success": "inspect"
+          },
+          {
+            "id": "inspect",
+            "chapter": 2,
+            "type": "tool_task",
+            "tool": "permissions",
+            "prompt": "Dua izin memberi aplikasi akses sensitif. Cabut keduanya pada perangkat latihan.",
+            "on_success": "evidence"
+          },
+          {
+            "id": "evidence",
+            "chapter": 3,
+            "type": "message",
+            "speaker": "Catatan percakapan sebelum koneksi diputus",
+            "text": "Ada pesan lanjutan dari pengirim: kalau aplikasi sudah dipasang, sebutkan kode SMS-nya supaya paket bisa dilepas. Bagaimana kamu akan menanggapi permintaan itu?",
+            "delay_ms": 800,
+            "next": "otp-decision"
+          },
+          {
+            "id": "otp-decision",
+            "chapter": 3,
+            "type": "choice",
+            "prompt": "Kode rahasia bukan bukti terima paket. Apa keputusanmu?",
+            "choices": [
+              {
+                "label": "Tolak permintaan OTP dan siapkan bukti",
+                "verdict": "benar",
+                "rationale": "Kamu menutup permintaan kode rahasia. Isolasi membantu membatasi komunikasi, tetapi pemulihan perangkat dan akun tetap perlu dituntaskan.",
+                "tactic": "secret",
+                "next": "report"
+              },
+              {
+                "label": "Bagikan OTP agar paket segera diproses",
+                "verdict": "salah",
+                "rationale": "Dalam latihan ini OTP telanjur dibagikan. Memutus koneksi perangkat tidak membatalkan kode yang sudah diberikan; segera cari bantuan melalui kanal resmi dari perangkat aman.",
+                "panic": 40,
+                "tactic": "secret",
+                "sharesOtp": true,
+                "next": "report-compromised"
+              }
+            ]
+          },
+          {
+            "id": "report-safe",
+            "chapter": 3,
+            "type": "tool_task",
+            "tool": "report",
+            "prompt": "Susun berkas bukti: pilih sedikitnya dua hal yang aman disimpan.",
+            "on_success": "ending-safe"
+          },
+          {
+            "id": "report",
+            "chapter": 3,
+            "type": "tool_task",
+            "tool": "report",
+            "prompt": "Susun berkas bukti tanpa menyertakan kode rahasia. Pilih sedikitnya dua bukti.",
+            "on_success": "ending"
+          },
+          {
+            "id": "report-compromised",
+            "chapter": 3,
+            "type": "tool_task",
+            "tool": "report",
+            "prompt": "Simpan sedikitnya dua bukti yang aman, lalu lanjutkan ke panduan mengamankan akun.",
+            "on_success": "ending-compromised"
+          },
+          {
+            "id": "ending-safe",
+            "chapter": 3,
+            "type": "ending",
+            "variant": "success",
+            "title": "Hadiah boleh terlambat. Kendali tetap di tanganmu.",
+            "text": "Kamu memverifikasi kabar paket tanpa memasang APK atau membagikan OTP. Dalam jalur latihan ini, akses perangkat dan kode rahasia tetap terjaga.",
+            "debrief": [
+              "Verifikasi kabar paket lewat aplikasi atau kanal resmi yang kamu buka sendiri, bukan dari petunjuk pengirim.",
+              "Berkas .apk memasang aplikasi Android. Foto paket tidak memerlukan pemasangan aplikasi dari chat.",
+              "Jika aplikasi mencurigakan terpasang, putuskan koneksi dan cari bantuan untuk mengamankan perangkat serta akun; mencabut izin saja belum memastikan perangkat bersih.",
+              "Jangan bagikan OTP, PIN, atau kata sandi. Jika terlanjur, hubungi penyedia akun atau bank melalui kanal resmi dari perangkat lain yang aman."
+            ]
+          },
+          {
+            "id": "ending",
+            "chapter": 3,
+            "type": "ending",
+            "variant": "recovery",
+            "title": "Kamu sempat terjebak, lalu mengambil kendali.",
+            "text": "Dalam latihan ini APK sempat terpasang. Kamu memutus koneksi, mencabut dua izin sensitif, dan menolak OTP. Ini langkah awal pemulihan, bukan jaminan perangkat sudah bersih.",
+            "debrief": [
+              "Verifikasi kabar paket lewat aplikasi atau kanal resmi yang kamu buka sendiri, bukan dari petunjuk pengirim.",
+              "Berkas .apk memasang aplikasi Android. Foto paket tidak memerlukan pemasangan aplikasi dari chat.",
+              "Jika aplikasi mencurigakan terpasang, putuskan koneksi dan cari bantuan untuk mengamankan perangkat serta akun; mencabut izin saja belum memastikan perangkat bersih.",
+              "Jangan bagikan OTP, PIN, atau kata sandi. Jika terlanjur, hubungi penyedia akun atau bank melalui kanal resmi dari perangkat lain yang aman."
+            ]
+          },
+          {
+            "id": "ending-compromised",
+            "chapter": 3,
+            "type": "ending",
+            "variant": "compromised",
+            "title": "Kode telanjur dibagikan. Masih ada langkah berikutnya.",
+            "text": "Dalam jalur latihan ini OTP dibagikan. Menghentikan chat saja belum cukup: hubungi penyedia akun atau bank lewat kanal resmi dari perangkat lain yang aman. Segera hubungi bank atau penyedia akun melalui kanal resmi dari perangkat lain yang aman.",
+            "debrief": [
+              "Verifikasi kabar paket lewat aplikasi atau kanal resmi yang kamu buka sendiri, bukan dari petunjuk pengirim.",
+              "Berkas .apk memasang aplikasi Android. Foto paket tidak memerlukan pemasangan aplikasi dari chat.",
+              "Jika aplikasi mencurigakan terpasang, putuskan koneksi dan cari bantuan untuk mengamankan perangkat serta akun; mencabut izin saja belum memastikan perangkat bersih.",
+              "Jangan bagikan OTP, PIN, atau kata sandi. Jika terlanjur, hubungi penyedia akun atau bank melalui kanal resmi dari perangkat lain yang aman."
+            ]
+          }
+        ],
+        "scoring": {
+          "grades": [
+            {
+              "min": 70,
+              "label": "mantap"
+            },
+            {
+              "min": 0,
+              "label": "terus belajar"
+            }
+          ]
+        }
+      },
+      "mission": {
+        "title": "Paket sebelum pulang",
+        "role": "Kamu adalah Raka",
+        "context": "Besok ulang tahun Ibu. Hadiah yang kamu pesan belum datang, sementara kamu harus segera pulang kerja. Sebuah pesan kurir masuk. Kebetulan, atau jebakan?",
+        "objective": "Pastikan kabar paket tanpa menyerahkan kendali ponselmu.",
+        "duration": "3–5 menit",
+        "contact": "Dimas · Pengantaran",
+        "contactDetail": "Nomor tidak tersimpan · identitas belum terverifikasi",
+        "chapters": ["Pesan masuk", "Ambil kendali", "Tutup celah"]
+      },
+      "tactics": [
+        {
+          "id": "urgency",
+          "name": "Diburu waktu",
+          "quote": "Kalau tidak, paketnya saya bawa kembali, ya.",
+          "lesson": "Batas waktu buatan membuat kita berhenti memeriksa. Ambil jeda sebelum memutuskan."
+        },
+        {
+          "id": "authority",
+          "name": "Meminjam kepercayaan",
+          "quote": "Sore, Kak Raka. Saya di depan alamat pengiriman.",
+          "lesson": "Nama dan foto profil bukan verifikasi. Buka aplikasi atau kanal resmi yang kamu cari sendiri."
+        },
+        {
+          "id": "attachment",
+          "name": "File menyamar",
+          "quote": "Ini foto paketnya, pasang dulu supaya fotonya terbuka.",
+          "lesson": "Berkas .apk memasang aplikasi Android, bukan membuka foto. Periksa jenis berkas sebelum bertindak."
+        },
+        {
+          "id": "secret",
+          "name": "Memancing kode rahasia",
+          "quote": "sebutkan kode SMS-nya supaya paket bisa dilepas.",
+          "lesson": "OTP adalah rahasia akun atau transaksi. Jangan kirimkan kepada pengirim pesan, termasuk yang mengaku petugas."
+        }
+      ],
+      "permissions": [
+        {
+          "id": "sms",
+          "label": "Baca SMS",
+          "detail": "Dapat membaca pesan dan kode verifikasi."
+        },
+        {
+          "id": "accessibility",
+          "label": "Layanan aksesibilitas",
+          "detail": "Dapat mengamati layar dan melakukan tindakan atas namamu."
+        }
+      ],
+      "reportArtifacts": [
+        {
+          "id": "pesan",
+          "label": "Tangkapan layar percakapan",
+          "safe": true
+        },
+        {
+          "id": "pengirim",
+          "label": "Identitas pengirim yang terlihat",
+          "safe": true
+        },
+        {
+          "id": "nama-file",
+          "label": "Nama berkas yang dikirim",
+          "safe": true
+        },
+        {
+          "id": "otp",
+          "label": "Kode OTP dan PIN akun",
+          "safe": false
+        }
+      ],
+      "chapterNotes": [
+        "Pesan kurir dan lampiran palsu masuk. Kamu memutuskan apakah memercayainya.",
+        "Kalau kendali ponsel mulai lepas, dek perangkat membantu memutus akses.",
+        "Tolak kode rahasia, simpan bukti yang aman, lalu lihat apa yang bisa diperbaiki."
+      ],
+      "summary": [
+        "Analisis pesan dan pola ancaman yang muncul.",
+        "Amankan akun dan perangkat sebelum terlambat.",
+        "Verifikasi tiap tindakan dengan bukti."
+      ],
+      "tips": [
+        "Jangan pernah membagikan kode verifikasi atau informasi pribadi.",
+        "Periksa selalu sumber pesan sebelum mengambil tindakan.",
+        "Berkas .apk memasang aplikasi, bukan membuka foto."
+      ]
+    }
+  ]
+}

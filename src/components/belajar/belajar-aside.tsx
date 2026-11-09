@@ -12,17 +12,18 @@ import Link from "next/link";
 import { useId } from "react";
 import {
   ProgressRing,
+  useAccountProgress,
   useStoredProgress,
 } from "@/components/belajar/belajar-progress";
 import { CoverIcon } from "@/components/belajar/modul-visual";
 import { Card } from "@/components/ui/card";
-import { MODUS } from "@/lib/modus";
+
 import { cn } from "@/lib/utils";
 
 /**
  * Right rail of the catalog, shaped like the supplied dashboard's profile,
  * calendar, activity and task column. Every number is real: completion comes
- * from `lib/progress.ts`, the module map from `modus.json`, and `readyModules`
+ * from the account snapshot, the module map from PostgreSQL, and `readyModules`
  * is the list the server says is actually written. There is no streak, no XP
  * and no invented activity chart.
  *
@@ -78,6 +79,7 @@ function ProgressChart({
   focusNo: number;
   total: number;
 }) {
+  const { modules: MODUS } = useAccountProgress();
   const fillId = `chart-fill-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const x0 = 20;
   const x1 = 332;
@@ -115,12 +117,12 @@ function ProgressChart({
             <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="0%"
-                stopColor="var(--appnext-ink-2)"
+                stopColor="var(--lumina-brand-strong)"
                 stopOpacity="0.16"
               />
               <stop
                 offset="100%"
-                stopColor="var(--appnext-ink-2)"
+                stopColor="var(--lumina-brand-strong)"
                 stopOpacity="0"
               />
             </linearGradient>
@@ -137,14 +139,14 @@ function ProgressChart({
             width="16"
             height={yBottom - active.y}
             rx="6"
-            fill="var(--appnext-ink-2)"
+            fill="var(--lumina-brand)"
             fillOpacity="0.12"
           />
 
           <path
             d={d}
             fill="none"
-            stroke="var(--appnext-ink-2)"
+            stroke="var(--lumina-brand-strong)"
             strokeWidth="2.6"
             strokeLinecap="round"
           />
@@ -158,16 +160,23 @@ function ProgressChart({
                 cy={point.y}
                 r={isActive ? 5 : 3.5}
                 fill={
-                  isActive ? "var(--appnext-ink-2)" : "var(--appnext-white)"
+                  isActive
+                    ? "var(--lumina-brand-strong)"
+                    : "var(--appnext-white)"
                 }
-                stroke="var(--appnext-ink-2)"
+                stroke="var(--lumina-brand-strong)"
                 strokeWidth="2"
               />
             );
           })}
 
           <g transform={`translate(${tipX}, ${tipY})`}>
-            <rect width="116" height="24" rx="12" fill="var(--appnext-ink-2)" />
+            <rect
+              width="116"
+              height="24"
+              rx="12"
+              fill="var(--lumina-brand-strong)"
+            />
             <text
               x="58"
               y="15.5"
@@ -198,6 +207,7 @@ function ProgressChart({
 }
 
 export function BelajarAside({ readyModules }: { readyModules: number[] }) {
+  const { modules: MODUS } = useAccountProgress();
   const progress = useStoredProgress();
   const ready = new Set(readyModules);
   const total = MODUS.length;
@@ -238,7 +248,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3.5">
       <Card className="gap-0 rounded-card border border-line p-3.5 py-3.5 ring-0 shadow-[var(--appnext-shadow-ambient)]">
         <div
           aria-hidden
@@ -274,9 +284,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
           </div>
 
           <h2 className="mt-2 font-bold text-sm text-txt">Belajar</h2>
-          <p className="font-medium text-[11px] text-dim">
-            Data di perangkat ini
-          </p>
+          <p className="font-medium text-[11px] text-dim">Data di akunmu</p>
         </div>
 
         <div className="mt-4 grid grid-cols-5 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
@@ -330,7 +338,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
                     isCompleted
                       ? "bg-brand-strong text-bg shadow-sm"
                       : isNext
-                        ? "bg-[var(--appnext-ink-2)] text-bg shadow-sm"
+                        ? "bg-brand text-bg shadow-sm"
                         : isReady
                           ? "bg-brand-soft text-brand-ink ring-1 ring-brand-line"
                           : "bg-panel-2 text-dim hover:bg-line",
@@ -349,10 +357,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
             Selesai
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="size-2 rounded-full bg-[var(--appnext-ink-2)]"
-            />
+            <span aria-hidden className="size-2 rounded-full bg-brand" />
             Berikutnya
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -368,7 +373,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-sm text-txt">Progres kumulatif</h2>
-          <span className="rounded-lg bg-[var(--appnext-ink-2)] px-3 py-1.5 font-semibold text-[11px] text-bg shadow-sm">
+          <span className="rounded-lg bg-brand-strong px-3 py-1.5 font-semibold text-[11px] text-bg shadow-sm">
             {progress ? `${done}/${total}` : "—"}
           </span>
         </div>
@@ -439,7 +444,7 @@ export function BelajarAside({ readyModules }: { readyModules: number[] }) {
           ) : (
             <Card className="gap-0 rounded-card border border-line py-0 ring-0">
               <p className="p-4 text-dim text-sm">
-                Semua modul sudah selesai di perangkat ini.
+                Semua modul sudah selesai di akunmu.
               </p>
             </Card>
           )

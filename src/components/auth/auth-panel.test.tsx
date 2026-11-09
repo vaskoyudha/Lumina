@@ -58,8 +58,8 @@ describe("AuthPanel", () => {
       "/masuk",
     );
     expect(
-      screen.getByRole("link", { name: /bantuan darurat/i }),
-    ).toHaveAttribute("href", "/darurat");
+      screen.getByRole("link", { name: /komunitas diskusi/i }),
+    ).toHaveAttribute("href", "/komunitas");
   });
 
   it("can show and hide the password", async () => {

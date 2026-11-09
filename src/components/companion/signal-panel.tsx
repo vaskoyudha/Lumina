@@ -60,7 +60,7 @@ import { cn } from "@/lib/utils";
  * by data we actually have: a branch turns green only when its detector ran, a
  * skipped branch keeps its reason (`dilewati — …`) instead of a green tick, and
  * the finding count in the synthesis node is the engine's, never a static
- * label. The only interactive chrome is real: the canvas zoom and the emergency
+ * label. The only interactive chrome is real: the canvas zoom and the community
  * link. There is no simulated pipeline to drift out of date.
  *
  * Honesty rule (§5 · A): a stage that did not run says so, and never wears a
@@ -1219,7 +1219,7 @@ export function SignalPanel({
               </ul>
               {artifactGroups.length > 3 ? (
                 <p className="mt-1.5 text-[10.5px] text-dim">
-                  +{artifactGroups.length - 3} jenis bukti lain di laporan
+                  +{artifactGroups.length - 3} jenis bukti lain dalam bundel
                 </p>
               ) : null}
             </section>
@@ -1243,8 +1243,8 @@ export function SignalPanel({
             size="sm"
             variant="outline"
           >
-            <Link data-pressable href="/darurat">
-              Buka mode darurat
+            <Link data-pressable href="/komunitas">
+              Buka komunitas
             </Link>
           </Button>
         ) : null}

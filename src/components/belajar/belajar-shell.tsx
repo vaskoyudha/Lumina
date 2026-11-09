@@ -1,4 +1,8 @@
 import type { ReactNode } from "react";
+import {
+  AccountProgressProvider,
+  ProgressNotice,
+} from "@/components/belajar/belajar-progress";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
 
 /**
@@ -13,14 +17,19 @@ export function BelajarShell({
   children,
   aside,
   className,
+  modules,
 }: {
   children: ReactNode;
   aside?: ReactNode;
   className?: string;
+  modules: import("@/lib/content/schema").LearningSummary[];
 }) {
   return (
-    <WorkspaceShell label="Belajar" aside={aside} className={className}>
-      {children}
-    </WorkspaceShell>
+    <AccountProgressProvider modules={modules}>
+      <WorkspaceShell label="Belajar" aside={aside} className={className}>
+        <ProgressNotice />
+        {children}
+      </WorkspaceShell>
+    </AccountProgressProvider>
   );
 }

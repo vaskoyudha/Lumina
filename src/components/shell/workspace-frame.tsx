@@ -70,7 +70,7 @@ export function WorkspaceFrame({
           <CompanionAuth session={session} iconsOnly={iconsOnly} />
         )}
         className={cn(
-          "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:shadow-rest md:z-10 md:rounded-r-xl md:border-line md:border-r-2 md:shadow-rest",
+          "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:rounded-r-xl max-md:border-line max-md:border-r-2 max-md:bg-bg max-md:shadow-rest md:z-10 md:bg-transparent",
           mobileOpen ? "max-md:flex" : "max-md:hidden",
         )}
       />
@@ -93,14 +93,14 @@ export function WorkspaceFrame({
 
         <div
           data-workspace-scroll
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:gap-4 lg:overflow-hidden"
         >
           <div
             id="workspace-content"
             tabIndex={-1}
             className="flex min-w-0 flex-1 flex-col outline-none lg:overflow-y-auto"
           >
-            <div className="flex min-w-0 flex-col gap-6 px-5 py-6 sm:px-8 lg:py-7">
+            <div className="flex min-w-0 flex-col gap-3.5 px-4 py-3.5 sm:px-5 lg:py-4 lg:pl-4 lg:pr-0">
               {children}
             </div>
           </div>
@@ -108,7 +108,7 @@ export function WorkspaceFrame({
           {aside ? (
             <aside
               aria-label="Ringkasan halaman"
-              className="min-w-0 border-line border-t bg-panel px-5 py-6 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-7"
+              className="min-w-0 border-line border-t px-4 py-3.5 sm:px-5 lg:w-[340px] lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l lg:py-4 lg:pl-0 lg:pr-4"
             >
               {aside}
             </aside>

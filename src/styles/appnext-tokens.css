@@ -500,6 +500,116 @@
     --sidebar-ring: #ea580c;
   }
 
+  /*
+   * Workspace warm palette — the supplied Lumina dashboard reference.
+   *
+   * The chat/learning workspace (`WorkspaceFrame` sets `data-workspace`) is the
+   * one surface that reads as warm paper with a flame accent. Scoping the remap
+   * here keeps the marketing, darurat, admin and auth surfaces on the neutral
+   * AppNext palette while the dashboard, sidebar and companion share the same
+   * colour contract. Both the legacy `--lumina-*` names and the shadcn aliases
+   * are remapped, otherwise `Card` keeps its pure-white `--card` and floats on
+   * the peach ground.
+   */
+  [data-workspace] {
+    /* The supplied dashboard reference runs on Plus Jakarta Sans; scope it to
+       the workspace so the sidebar and dashboard match without touching the
+       marketing, auth, darurat, or admin surfaces. */
+    font-family:
+      var(--font-jakarta), var(--font-sans), ui-sans-serif, system-ui,
+      sans-serif;
+    /* The reference sets these on `*`; inheriting them here keeps Plus Jakarta
+       from rendering heavier than the supplied screenshot on Linux/GTK. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    --appnext-white: #fff9f5;
+    --appnext-ink: #231e1b;
+    --appnext-ink-2: #1f1b18;
+    --appnext-muted: #7a6f68;
+    --appnext-surface: #f8ece4;
+    --appnext-line: #f3e5dc;
+    --appnext-accent: #f05a1a;
+    --appnext-accent-deep: #e85515;
+    --appnext-accent-strong: #c2410c;
+    --appnext-tint: #fdece2;
+
+    --lumina-bg: #fff9f5;
+    --lumina-panel: #fff9f5;
+    --lumina-panel-2: #f8ece4;
+    --lumina-line: #f3e5dc;
+    --lumina-field: #f8ece4;
+    --lumina-txt: #231e1b;
+    --lumina-dim: #7a6f68;
+
+    --lumina-ink: #231e1b;
+    --lumina-ink-hover: #3a2f28;
+    --lumina-ink-soft: #4a433e;
+    --lumina-ink-mute: #6c635d;
+    --lumina-ink-faint: #857971;
+    --lumina-ink-line: color-mix(in oklab, var(--lumina-txt) 12%, transparent);
+    --lumina-chip: #fde6d8;
+    --lumina-chip-hover: #fbd9c6;
+    --lumina-edge: #f3e5dc;
+    --lumina-hairline: #efe3da;
+    --lumina-hairline-strong: #e6d4c8;
+
+    --lumina-brand: #f05a1a;
+    --lumina-brand-strong: #e85515;
+    --lumina-brand-soft: #fde6d8;
+    --lumina-brand-soft-2: #fce8dc;
+    --lumina-brand-tint: #fdece2;
+    --lumina-brand-line: #f6cfb8;
+    --lumina-brand-glow: #f97316;
+    --lumina-brand-ink: #c2410c;
+    --lumina-brand-ink-soft: #9a3412;
+    --lumina-brand-chip: #fde6d8;
+    --lumina-brand-chip-ink: #ea580c;
+    --lumina-brand-edge: #f6cfb8;
+    --lumina-brand-edge-soft: #fdece2;
+
+    --background: #fff9f5;
+    --foreground: #231e1b;
+    --card: #fff9f5;
+    --card-foreground: #231e1b;
+    --popover: #fff9f5;
+    --popover-foreground: #231e1b;
+    --primary: #231e1b;
+    --primary-foreground: #fff9f5;
+    --secondary: #f8ece4;
+    --secondary-foreground: #231e1b;
+    --muted: #f8ece4;
+    --muted-foreground: #7a6f68;
+    --accent: #f8ece4;
+    --accent-foreground: #231e1b;
+    --destructive: #b91c1c;
+    --border: #f3e5dc;
+    --input: #f3e5dc;
+    --ring: #f05a1a;
+    --sidebar: #fff9f5;
+    --sidebar-foreground: #231e1b;
+    --sidebar-primary: #f05a1a;
+    --sidebar-primary-foreground: #fff9f5;
+    --sidebar-accent: #f8ece4;
+    --sidebar-accent-foreground: #231e1b;
+    --sidebar-border: #f3e5dc;
+    --sidebar-ring: #f05a1a;
+
+    /* The reference ground is a peach field that gets deeper at the bottom,
+       so the cream cards read as lifted instead of outlined. */
+    background-image:
+      radial-gradient(
+        circle at 34% 6%,
+        color-mix(in oklab, #fff3ec 92%, transparent) 0%,
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at 100% 0%,
+        color-mix(in oklab, #f6ad85 34%, transparent) 0%,
+        transparent 42%
+      ),
+      linear-gradient(165deg, #fdf1e8 0%, #fce5d7 60%, #fad9c6 100%);
+  }
+
   .appnext :where(.bg-bg) {
     background-color: var(--appnext-white);
   }

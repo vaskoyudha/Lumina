@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * destinations stay inside the admin area.
  *
  * That split is intentional: `/admin` is a different area, not a page in the
- * learner app, so its nav must not offer Companion/Belajar/Simulasi/Darurat.
+ * learner app, so its nav must not offer Companion/Belajar/Simulasi/Komunitas.
  * Shared layout classes are duplicated from `site-nav.tsx` rather than
  * refactored there, because `components/shell/` belongs to Stream D.
  */

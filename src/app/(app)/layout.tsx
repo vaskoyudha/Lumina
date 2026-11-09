@@ -3,7 +3,7 @@ import { NavWithSession } from "@/components/shell/nav-with-session";
 
 /**
  * (app) shell — Lumina light tokens, product chrome.
- * `/darurat` lives here and is never gated (AGENTS.md).
+ * Profile lives here; community uses the shared workspace.
  *
  * The session read is inside the Suspense boundary, so routes that do not need
  * it keep prerendering statically.
@@ -32,8 +32,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
       <footer className="shrink-0 border-line border-t px-4 py-6 text-dim text-sm sm:px-6">
         <p className="mx-auto max-w-6xl">
-          Akun bersifat opsional. Progres belajar tetap di perangkat ini. Tutup
-          tab, riwayat percakapannya hilang.
+          Akun bersifat opsional. Masuk untuk menyimpan progres belajar dan
+          hasil simulasi di akunmu. Tutup tab, riwayat percakapannya hilang.
         </p>
       </footer>
     </div>

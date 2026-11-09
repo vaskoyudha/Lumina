@@ -589,7 +589,7 @@ export default function Integrations() {
                       </p>
                     </div>
                     <div className="framer-1ae0od6" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Lanjut ke modul, simulasi, atau laporan darurat yang relevan.</p>
+                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Lanjut ke modul, simulasi, atau diskusi komunitas yang relevan.</p>
                     </div>
                   </div>
                   <div className="framer-1rwh6i2" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -610,7 +610,7 @@ export default function Integrations() {
                       </p>
                     </div>
                     <div className="framer-1ae0od6" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Lanjut ke modul, simulasi, atau laporan darurat yang relevan.</p>
+                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Lanjut ke modul, simulasi, atau diskusi komunitas yang relevan.</p>
                     </div>
                   </div>
                   <div className="framer-1rwh6i2" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -631,7 +631,7 @@ export default function Integrations() {
                       </p>
                     </div>
                     <div className="framer-1ae0od6" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Lanjut ke modul, simulasi, atau laporan darurat yang relevan.</p>
+                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Lanjut ke modul, simulasi, atau diskusi komunitas yang relevan.</p>
                     </div>
                   </div>
                   <div className="framer-1rwh6i2" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -715,7 +715,7 @@ export default function Integrations() {
                       </p>
                     </div>
                     <div className="framer-1ae0od6" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Jejak kemajuan tersimpan di perangkat, bukan di server.</p>
+                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Jejak kemajuan belajar tersimpan di akunmu.</p>
                     </div>
                   </div>
                   <div className="framer-1rwh6i2" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -736,7 +736,7 @@ export default function Integrations() {
                       </p>
                     </div>
                     <div className="framer-1ae0od6" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Jejak kemajuan tersimpan di perangkat, bukan di server.</p>
+                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Jejak kemajuan belajar tersimpan di akunmu.</p>
                     </div>
                   </div>
                   <div className="framer-1rwh6i2" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -757,7 +757,7 @@ export default function Integrations() {
                       </p>
                     </div>
                     <div className="framer-1ae0od6" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Jejak kemajuan tersimpan di perangkat, bukan di server.</p>
+                      <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Jejak kemajuan belajar tersimpan di akunmu.</p>
                     </div>
                   </div>
                   <div className="framer-1rwh6i2" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>

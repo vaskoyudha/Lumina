@@ -123,7 +123,7 @@ export default function Why() {
                                 <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240)))"}}>Langkah langsung</p>
                               </div>
                               <div className="framer-1ax6n1f" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Ubah temuan menjadi modul belajar, simulasi, atau laporan darurat.</p>
+                                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Ubah temuan menjadi modul belajar, simulasi, atau diskusi komunitas.</p>
                               </div>
                             </div>
                           </div>
@@ -279,7 +279,7 @@ export default function Why() {
                                 <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240)))"}}>Langkah langsung</p>
                               </div>
                               <div className="framer-1ax6n1f" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Ubah temuan menjadi modul belajar, simulasi, atau laporan darurat.</p>
+                                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Ubah temuan menjadi modul belajar, simulasi, atau diskusi komunitas.</p>
                               </div>
                             </div>
                           </div>
@@ -435,7 +435,7 @@ export default function Why() {
                                 <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240)))"}}>Langkah langsung</p>
                               </div>
                               <div className="framer-1ax6n1f" data-framer-name="Title" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))", willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Ubah temuan menjadi modul belajar, simulasi, atau laporan darurat.</p>
+                                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65)))"}}>Ubah temuan menjadi modul belajar, simulasi, atau diskusi komunitas.</p>
                               </div>
                             </div>
                           </div>

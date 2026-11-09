@@ -114,7 +114,7 @@ export default function Blog() {
               </div>
               <div className="ssr-variant">
                 <div className="framer-zw63dc-container">
-                  <a className="framer-geAt5 framer-oaAu6 framer-knjRQ framer-kidu5w framer-v-10av0h5 framer-1mhpsyd" data-framer-name="Snippet" href="/darurat" style={{width: "100%"}}>
+                  <a className="framer-geAt5 framer-oaAu6 framer-knjRQ framer-kidu5w framer-v-10av0h5 framer-1mhpsyd" data-framer-name="Snippet" href="/komunitas" style={{width: "100%"}}>
                     <div className="framer-wdgh5m">
                       <div className="framer-8b5o5i-container">
                         <div style={{height: "100%", width: "100%", position: "relative", borderRadius: "16px 16px 16px 16px", overflow: "hidden", background: "var(--token-aecd04de-bd30-4743-90e2-2b56d3d58e1b, var(--pw-line, rgba(255, 255, 255, 0.1)))"}}>
@@ -137,7 +137,7 @@ export default function Blog() {
                         </div>
                         <div className="framer-1ei1fo3" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
                           <div className="framer-14w1deo" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(250, 230, 225, 0.65))", "--framer-link-text-color": "var(--pw-link, rgb(0, 153, 255))", "--framer-link-text-decoration": "underline", transform: "none"}}>
-                            <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(250, 230, 225, 0.65)))"}}>Darurat</p>
+                            <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--extracted-r6o4lv, var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(250, 230, 225, 0.65)))"}}>Komunitas</p>
                           </div>
                           <div className="framer-e7mzk" style={{backgroundColor: "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(250, 230, 225, 0.65))", borderBottomLeftRadius: "710px", borderBottomRightRadius: "710px", borderTopLeftRadius: "710px", borderTopRightRadius: "710px"}} />
                           <div className="framer-ouqc69" data-framer-component-type="RichTextContainer" style={{"--extracted-r6o4lv": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(250, 230, 225, 0.65))", "--framer-link-text-color": "var(--pw-link, rgb(0, 153, 255))", "--framer-link-text-decoration": "underline", transform: "none"}}>

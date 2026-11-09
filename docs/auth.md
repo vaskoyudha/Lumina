@@ -1,10 +1,10 @@
 # Autentikasi Lumina
 
-Akun email/password dan Google OAuth disimpan di PostgreSQL. Progres belajar di localStorage; percakapan tidak disimpan di database. Pertanyaan obrolan dan gambar OCR dapat dikirim ke provider yang dikonfigurasi; isi pesan yang diperiksa tetap diskor di perangkat. Node 24 diperlukan.
+Akun email/password dan Google OAuth disimpan di PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun di PostgreSQL; percakapan tidak disimpan di database. Postingan dan balasan yang sengaja diterbitkan di Komunitas disimpan sebagai konten publik; nama tampilan terlihat, email tidak. Pertanyaan obrolan dan gambar OCR dapat dikirim ke provider yang dikonfigurasi; isi pesan yang diperiksa tetap diskor di perangkat. Node 24 diperlukan.
 
 ## Menjalankan
 
-Siapkan PostgreSQL dan database aplikasi, lalu isi `DATABASE_URL` di `.env.local`. Jalankan `npm ci`, `npm run db:migrate`, dan `npm run dev`. Migrasi harus dijalankan sebelum aplikasi menerima trafik; aplikasi tidak membuat tabel otomatis. Pool dibuka saat dibutuhkan, maksimal lima koneksi per proses. `npm run db:cleanup` menghapus sesi, state OAuth, dan penghitung kedaluwarsa; jalankan berkala melalui cron.
+Siapkan PostgreSQL dan database aplikasi, lalu isi `DATABASE_URL` di `.env.local`. Jalankan `npm ci`, `npm run db:migrate`, `npm run db:seed`, dan `npm run dev`. Migrasi harus dijalankan sebelum aplikasi menerima trafik; aplikasi tidak membuat tabel otomatis. Pool dibuka saat dibutuhkan, maksimal lima koneksi per proses. `npm run db:cleanup` menghapus sesi, state OAuth, dan penghitung kedaluwarsa; jalankan berkala melalui cron.
 
 Database menyimpan identitas akun, hash password scrypt, hash token sesi, state OAuth sementara dan penghitung limit. Password dan token sesi mentah tidak disimpan. Cookie sesi HttpOnly, SameSite=Lax, Secure di production, berlaku 24 jam. Login merotasi sesi lama secara atomik; logout mencabut sesi. Email dinormalisasi dan unik. Akun Google diikat ke `sub`; email yang sama tidak otomatis menggabungkan akun. Pemulihan password dan verifikasi email belum tersedia.
 
@@ -18,7 +18,7 @@ Halaman `/masuk` menampilkan tombol "Masuk dengan akun demo" yang dapat dipakai 
 
 ## Batas dan ketersediaan
 
-Login dibatasi 10 percobaan per email dan daftar 5 per email per 15 menit, ditambah batas global. Endpoint AI dibatasi 10 teks dan 3 vision per IP per menit, serta batas global `LUMINA_AI_GLOBAL_LIMIT` per menit (default 200). `TRUST_PROXY=true` hanya boleh dipasang saat app hanya dapat dicapai melalui Caddy yang menimpa header `X-Lumina-Client-IP`. Tanpa itu semua pengguna anonim berbagi satu kunci; `X-Forwarded-For` tidak dipercaya. Jika DB tidak tersedia, login dan AI yang membutuhkan limit tidak tersedia; pemeriksaan lokal dan `/darurat` tetap tersedia. `GET /api/health` memeriksa DB, bukan provider AI.
+Login dibatasi 10 percobaan per email dan daftar 5 per email per 15 menit, ditambah batas global. Endpoint AI dibatasi 10 teks dan 3 vision per IP per menit, serta batas global `LUMINA_AI_GLOBAL_LIMIT` per menit (default 200). `TRUST_PROXY=true` hanya boleh dipasang saat app hanya dapat dicapai melalui Caddy yang menimpa header `X-Lumina-Client-IP`. Tanpa itu semua pengguna anonim berbagi satu kunci; `X-Forwarded-For` tidak dipercaya. Jika DB tidak tersedia, login dan AI yang membutuhkan limit tidak tersedia; pemeriksaan lokal tetap tersedia; Komunitas memerlukan database. `GET /api/health` memeriksa DB, bukan provider AI.
 
 ## Impor SQLite lama
 

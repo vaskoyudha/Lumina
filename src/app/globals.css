@@ -77,6 +77,19 @@
   --color-brand-edge-soft: var(--lumina-brand-edge-soft);
   --color-brand-soft-2: var(--lumina-brand-soft-2);
 
+  /* Reference dashboard action + selected-row stops. Named so the buttons use
+     the supplied hexes without literals in JSX. */
+  --color-brand-cta-from: var(--lumina-brand-cta-from);
+  --color-brand-cta-to: var(--lumina-brand-cta-to);
+  --color-brand-cta-hover-from: var(--lumina-brand-cta-hover-from);
+  --color-brand-cta-hover-to: var(--lumina-brand-cta-hover-to);
+  --color-nav-active-from: var(--lumina-nav-active-from);
+  --color-nav-active-to: var(--lumina-nav-active-to);
+  --color-nav-active-ink: var(--lumina-nav-active-ink);
+  --color-nav-active-icon: var(--lumina-nav-active-icon);
+  --color-filter-bg: var(--lumina-filter-bg);
+  --color-filter-ink: var(--lumina-filter-ink);
+
   /* Agent identity -> border/tint utilities (never status). */
   --color-agent-message: var(--lumina-agent-message);
   --color-agent-message-soft: var(--lumina-agent-message-soft);
@@ -109,6 +122,11 @@
     color-mix(in oklab, var(--lumina-txt) 8%, transparent);
   --shadow-lift: 0 10px 32px
     color-mix(in oklab, var(--lumina-txt) 11%, transparent);
+  /* Reference glass cards in the workspace sidebar: a warm, wide ambient
+     shadow plus a tight contact shadow, so the card reads as paper floating on
+     the peach field instead of a bordered box. */
+  --shadow-panel:
+    0 8px 26px -6px rgb(150 75 35 / 0.07), 0 2px 6px rgb(150 75 35 / 0.03);
   /* The floating frame on the lavender field. */
   --shadow-frame:
     0 24px 70px color-mix(in oklab, var(--lumina-page-3) 62%, transparent),
@@ -393,6 +411,25 @@
   --lumina-brand-edge: #fbd7b4;
   --lumina-brand-edge-soft: #fde3c9;
   --lumina-brand-soft-2: #ffe5cc;
+
+  /* Reference dashboard action and selected-row colours. The CTA uses the
+     supplied #F66B1E -> #EC5310 gradient (#F9752B -> #E04809 on hover); the
+     selected sidebar row uses #FDE2D2 -> #FCE8DC with a #E85515 label and
+     #F05A1A icon. Kept separate from the structural brand ramp so the rest of
+     the product does not inherit the reference's exact stops. */
+  --lumina-brand-cta-from: #f66b1e;
+  --lumina-brand-cta-to: #ec5310;
+  --lumina-brand-cta-hover-from: #f9752b;
+  --lumina-brand-cta-hover-to: #e04809;
+  --lumina-nav-active-from: #fde2d2;
+  --lumina-nav-active-to: #fce8dc;
+  --lumina-nav-active-ink: #e85515;
+  --lumina-nav-active-icon: #f05a1a;
+
+  /* Reference level-filter track: #F9EFEA ground with #5C534E inactive
+     labels; the active pill reuses the #F05A1A selected-icon orange. */
+  --lumina-filter-bg: #f9efea;
+  --lumina-filter-ink: #5c534e;
 
   /* Agent identity ramp. Eight hues at one lightness and chroma; the line
      token paints a 2px border, the soft tint fills the bubble. Brand orange
@@ -685,35 +722,4 @@ html {
 button.bg-primary,
 a.bg-primary {
   border-color: var(--lumina-ink-line);
-}
-
-/*
- * Print. The app shell is a fixed-viewport document with `main` as its only
- * scroll container, so the browser would otherwise print one clipped screen.
- * Only the requested content (e.g. the triage checklist) is printed: chrome,
- * the site footer, and anything marked `data-print="hide"` are removed, and
- * every clipping ancestor is released for the page flow.
- */
-@media print {
-  [data-print="hide"],
-  header,
-  footer {
-    display: none !important;
-  }
-
-  [data-app-shell] {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  [data-app-shell] > main {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  body {
-    background: #ffffff;
-  }
 }

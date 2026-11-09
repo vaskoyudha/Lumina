@@ -59,7 +59,7 @@ const SLIDES: Slide[] = [
   },
   {
     quote:
-      "Mode darurat membantu saat pesan penipuan sudah masuk. Langkah aman dan laporan PDF bisa langsung dipakai.",
+      "Komunitas menjadi tempat berbagi pola mencurigakan dan belajar dari pengalaman anggota lain.",
     name: "Nadia",
     role: "Ibu rumah tangga · Skenario ilustrasi",
     file: "pepH1APN2yML7ExisXYWgAZwSH0.jpg",

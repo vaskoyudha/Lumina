@@ -70,7 +70,7 @@ export function ScoreCard({
   result: ScoreResult;
   /** What the pipeline actually did; the coverage line is read from it. */
   trace?: AgentTrace | null;
-  /** Off in the chat: an action button below already offers mode darurat. */
+  /** Off in the chat: the conversation already includes immediate next steps. */
   showEscalation?: boolean;
   /** Off in the chat: ActionRow below the card is the single source of links. */
   showLinks?: boolean;
@@ -255,12 +255,9 @@ export function ScoreCard({
             <TriangleAlert aria-hidden />
             <AlertTitle>Ini sedang terjadi?</AlertTitle>
             <AlertDescription>
-              Kalau uang sudah terkirim atau OTP sudah diberikan, berhenti
-              membaca dan buka{" "}
-              <Link href="/darurat" className="underline underline-offset-4">
-                mode darurat
-              </Link>
-              .
+              Kalau uang sudah terkirim atau OTP sudah diberikan, hentikan
+              komunikasi dan segera hubungi bank atau penyedia akun melalui
+              kanal resmi dari perangkat lain yang aman.
             </AlertDescription>
           </Alert>
         ) : null}

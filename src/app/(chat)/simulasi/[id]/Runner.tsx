@@ -34,16 +34,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
-import {
-  MISSION,
-  PERMISSIONS,
-  REPORT_ARTIFACTS,
-  type ScenarioChoice,
-  type ScenarioNode,
-  L1_KURIR_APK as scenario,
-  TACTICS,
-  type TacticId,
-} from "@/lib/simulasi/scenario";
+import type { SimulationContent } from "@/lib/content/schema";
+import { submitSimulation } from "@/lib/learning/actions";
+import type { SimulationSubmission } from "@/lib/learning/validation";
+import type {
+  ScenarioChoice,
+  ScenarioNode,
+  TacticId,
+} from "@/lib/simulasi/types";
 import { cn } from "@/lib/utils";
 
 type Message = Extract<ScenarioNode, { type: "message" }>;
@@ -52,10 +50,6 @@ type Mode = "santai" | "tantangan";
 type TranscriptEntry =
   | { kind: "message"; node: Message }
   | { kind: "reply"; id: string; text: string };
-
-const defaultEnding = scenario.nodes.find(
-  (node): node is Ending => node.type === "ending",
-) as Ending;
 
 function Meter({
   label,
@@ -104,7 +98,23 @@ function Meter({
   );
 }
 
-export function Runner() {
+export function Runner({ content }: { content: SimulationContent }) {
+  const {
+    scenario,
+    mission: MISSION,
+    tactics: TACTICS,
+    permissions: PERMISSIONS,
+    reportArtifacts: REPORT_ARTIFACTS,
+  } = content;
+  const defaultEnding = scenario.nodes.find(
+    (node): node is Ending => node.type === "ending",
+  ) as Ending;
+  const [attemptId, setAttemptId] = useState("");
+  const [steps, setSteps] = useState<SimulationSubmission["steps"]>([]);
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [saveError, setSaveError] = useState("");
   const [mode, setMode] = useState<Mode>("santai");
   const [started, setStarted] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -116,6 +126,7 @@ export function Runner() {
   const [compromised, setCompromised] = useState(false);
   const [isolated, setIsolated] = useState(false);
   const [breathingUsed, setBreathingUsed] = useState(false);
+  const [breathingAt, setBreathingAt] = useState<number | undefined>();
   const [revoked, setRevoked] = useState<string[]>([]);
   const [proof, setProof] = useState<string[]>([]);
   const [unsafeNotice, setUnsafeNotice] = useState(false);
@@ -132,6 +143,71 @@ export function Runner() {
   activeRef.current = activeId;
   pausedRef.current = paused;
   const ended = !!failure || active?.type === "ending";
+  const saveResult = useCallback(async () => {
+    if (!ended || !attemptId) return;
+    setSaveState("saving");
+    try {
+      const result = await submitSimulation({
+        attemptId,
+        scenarioId: scenario.scenario.id,
+        mode,
+        outcome: failure
+          ? "failed"
+          : active?.type === "ending"
+            ? active.variant
+            : "failed",
+        steps,
+        breathingAt,
+      });
+      if (result.ok) {
+        setSaveState("saved");
+        setSaveError("");
+      } else {
+        setSaveState("error");
+        setSaveError(result.error);
+      }
+    } catch {
+      setSaveState("error");
+      setSaveError("Hasil belum tersimpan. Coba lagi.");
+    }
+  }, [
+    ended,
+    attemptId,
+    scenario.scenario.id,
+    mode,
+    failure,
+    active,
+    steps,
+    breathingAt,
+  ]);
+  useEffect(() => {
+    if (ended) void saveResult();
+  }, [ended, saveResult]);
+  const resultNotice = (
+    <Alert className="mb-4">
+      <AlertDescription>
+        {saveState === "saved"
+          ? "Hasil simulasi tersimpan di akunmu."
+          : saveState === "saving"
+            ? "Menyimpan hasil simulasi…"
+            : saveError || "Hasil belum tersimpan."}
+        {saveState === "error" && (
+          <span className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="min-h-11"
+              onClick={() => void saveResult()}
+            >
+              Coba simpan lagi
+            </Button>
+            <Button asChild variant="outline" className="min-h-11">
+              <Link href="/masuk">Masuk</Link>
+            </Button>
+          </span>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
   const tactics = [
     ...new Set(
       decisions
@@ -201,11 +277,26 @@ export function Runner() {
       1000,
     );
     return () => window.clearInterval(interval);
-  }, [started, paused, ended, mode, compromised, isolated]);
+  }, [
+    started,
+    paused,
+    ended,
+    mode,
+    compromised,
+    isolated,
+    scenario.hud.intrusion.max,
+    scenario.hud.intrusion.rate_per_second,
+  ]);
   useEffect(() => {
     if (started && !ended && intrusion >= scenario.hud.intrusion.max)
       setFailure(scenario.hud.intrusion.fail_message);
-  }, [started, ended, intrusion]);
+  }, [
+    started,
+    ended,
+    intrusion,
+    scenario.hud.intrusion.max,
+    scenario.hud.intrusion.fail_message,
+  ]);
   useEffect(() => {
     if (!started || ended) return;
     function onVisibility() {
@@ -236,6 +327,10 @@ export function Runner() {
       activeRef.current !== active.id
     )
       return;
+    setSteps((current) => [
+      ...current,
+      { nodeId: active.id, choiceIndex: active.choices.indexOf(choice) },
+    ]);
     activeRef.current = choice.next;
     setTranscript((current) => [
       ...current,
@@ -256,11 +351,17 @@ export function Runner() {
   }
   function advance(next: string) {
     if (!paused && !ended) {
+      if (active?.type === "tool_task")
+        setSteps((current) => [...current, { nodeId: active.id }]);
       activeRef.current = next;
       setActiveId(next);
     }
   }
   function reset() {
+    setAttemptId("");
+    setSteps([]);
+    setSaveState("idle");
+    setSaveError("");
     activeRef.current = scenario.start;
     pausedRef.current = false;
     revealClock.current = null;
@@ -274,6 +375,7 @@ export function Runner() {
     setCompromised(false);
     setIsolated(false);
     setBreathingUsed(false);
+    setBreathingAt(undefined);
     setRevoked([]);
     setProof([]);
     setUnsafeNotice(false);
@@ -418,7 +520,10 @@ export function Runner() {
                 <Button
                   data-pressable
                   className="h-11 rounded-xl px-5"
-                  onClick={() => setStarted(true)}
+                  onClick={() => {
+                    setAttemptId(crypto.randomUUID());
+                    setStarted(true);
+                  }}
                 >
                   Mulai misi <ArrowRight aria-hidden="true" />
                 </Button>
@@ -428,7 +533,15 @@ export function Runner() {
                   className="h-11 rounded-xl"
                   data-pressable
                 >
-                  <Link href="/belajar/10">Baca pola APK dulu</Link>
+                  <Link
+                    href={
+                      content.moduleNo
+                        ? `/belajar/${content.moduleNo}`
+                        : "/belajar"
+                    }
+                  >
+                    Pelajari polanya dulu
+                  </Link>
                 </Button>
               </div>
 
@@ -514,212 +627,228 @@ export function Runner() {
     const ending = active.type === "ending" ? active : defaultEnding;
     const emergency = Boolean(failure) || ending.variant === "compromised";
     return (
-      <div
-        className="flex flex-col gap-5"
-        data-outcome={failure ? "failure" : ending.variant}
-      >
-        <header>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant={failure ? "destructive" : "secondary"}
-              data-tone={failure ? "danger" : undefined}
+      <>
+        {resultNotice}
+        <div
+          className="flex flex-col gap-5"
+          data-outcome={failure ? "failure" : ending.variant}
+        >
+          <header>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant={failure ? "destructive" : "secondary"}
+                data-tone={failure ? "danger" : undefined}
+              >
+                {failure ? "Misi dihentikan" : "Misi selesai"}
+              </Badge>
+              <Badge variant="outline">
+                {failure
+                  ? "Jalur berhenti"
+                  : ending.variant === "success"
+                    ? "Kamu aman"
+                    : ending.variant === "recovery"
+                      ? "Awal pemulihan"
+                      : "Akun perlu diamankan"}
+              </Badge>
+            </div>
+            <h1
+              ref={endingRef}
+              tabIndex={-1}
+              className="mt-2 font-bold text-2xl text-txt tracking-tight outline-none sm:text-[30px]"
             >
-              {failure ? "Misi dihentikan" : "Misi selesai"}
-            </Badge>
-            <Badge variant="outline">
-              {failure
-                ? "Jalur berhenti"
-                : ending.variant === "success"
-                  ? "Kamu aman"
-                  : ending.variant === "recovery"
-                    ? "Awal pemulihan"
-                    : "Akun perlu diamankan"}
-            </Badge>
-          </div>
-          <h1
-            ref={endingRef}
-            tabIndex={-1}
-            className="mt-2 font-bold text-2xl text-txt tracking-tight outline-none sm:text-[30px]"
-          >
-            {failure ? "Berhenti dan ambil langkah aman" : ending.title}
-          </h1>
-          <p className="mt-1 max-w-2xl text-dim text-sm leading-relaxed">
-            {failure ?? ending.text}
-          </p>
-        </header>
+              {failure ? "Berhenti dan ambil langkah aman" : ending.title}
+            </h1>
+            <p className="mt-1 max-w-2xl text-dim text-sm leading-relaxed">
+              {failure ?? ending.text}
+            </p>
+          </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-          <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
-            <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
-              <CardContent className="flex flex-col gap-6 pt-6">
-                {latest?.rationale && (
-                  <Alert
-                    role="status"
-                    data-tone={latest.verdict === "salah" ? "danger" : "safe"}
-                    variant={
-                      latest.verdict === "salah" ? "destructive" : "default"
-                    }
-                    className="border-line"
-                  >
-                    <AlertTitle>
-                      {failure
-                        ? "Penjelasan pilihan"
-                        : latestTactic
-                          ? `Pola terakhir: ${latestTactic.name}`
-                          : "Penjelasan pilihan terakhir"}
-                    </AlertTitle>
-                    <AlertDescription>{latest.rationale}</AlertDescription>
-                  </Alert>
-                )}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+            <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
+              <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
+                <CardContent className="flex flex-col gap-6 pt-6">
+                  {latest?.rationale && (
+                    <Alert
+                      role="status"
+                      data-tone={latest.verdict === "salah" ? "danger" : "safe"}
+                      variant={
+                        latest.verdict === "salah" ? "destructive" : "default"
+                      }
+                      className="border-line"
+                    >
+                      <AlertTitle>
+                        {failure
+                          ? "Penjelasan pilihan"
+                          : latestTactic
+                            ? `Pola terakhir: ${latestTactic.name}`
+                            : "Penjelasan pilihan terakhir"}
+                      </AlertTitle>
+                      <AlertDescription>{latest.rationale}</AlertDescription>
+                    </Alert>
+                  )}
 
-                <section className="flex flex-col gap-2">
-                  <h2 className="font-bold text-[15px] text-txt">
-                    Empat hal untuk diingat
-                  </h2>
-                  <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm leading-relaxed">
-                    {ending.debrief.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ol>
-                </section>
+                  <section className="flex flex-col gap-2">
+                    <h2 className="font-bold text-[15px] text-txt">
+                      Empat hal untuk diingat
+                    </h2>
+                    <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm leading-relaxed">
+                      {ending.debrief.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ol>
+                  </section>
 
-                <section className="flex flex-col gap-2 border-line border-t pt-5">
-                  <h2 className="font-bold text-[15px] text-txt">
-                    Jejak keputusan
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    {decisions.map((choice, index) => (
-                      <div
-                        key={`${index}-${choice.label}`}
-                        className="rounded-xl bg-panel-2 p-3"
-                      >
-                        <p className="text-sm">
-                          <strong className="font-medium">
-                            {choice.verdict === "benar"
-                              ? "Langkah aman"
-                              : "Langkah berisiko"}
-                            :
-                          </strong>{" "}
-                          {choice.label}
-                        </p>
-                        <p className="mt-1 text-dim text-sm">
-                          {choice.rationale}
-                        </p>
-                      </div>
-                    ))}
-                    {decisions.length === 0 && (
-                      <p className="text-sm">Belum ada keputusan.</p>
-                    )}
-                  </div>
-                </section>
-
-                {proof.length > 0 && (
                   <section className="flex flex-col gap-2 border-line border-t pt-5">
                     <h2 className="font-bold text-[15px] text-txt">
-                      Bukti latihan yang dipilih
+                      Jejak keputusan
                     </h2>
-                    <ul className="list-disc pl-5 text-sm leading-relaxed">
-                      {REPORT_ARTIFACTS.filter((item) =>
-                        proof.includes(item.id),
-                      ).map((item) => (
-                        <li key={item.id}>{item.label}</li>
+                    <div className="flex flex-col gap-2">
+                      {decisions.map((choice, index) => (
+                        <div
+                          key={`${index}-${choice.label}`}
+                          className="rounded-xl bg-panel-2 p-3"
+                        >
+                          <p className="text-sm">
+                            <strong className="font-medium">
+                              {choice.verdict === "benar"
+                                ? "Langkah aman"
+                                : "Langkah berisiko"}
+                              :
+                            </strong>{" "}
+                            {choice.label}
+                          </p>
+                          <p className="mt-1 text-dim text-sm">
+                            {choice.rationale}
+                          </p>
+                        </div>
                       ))}
-                    </ul>
+                      {decisions.length === 0 && (
+                        <p className="text-sm">Belum ada keputusan.</p>
+                      )}
+                    </div>
                   </section>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
-          <aside
-            aria-label="Ringkasan hasil misi"
-            className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
-          >
-            <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
-                <span className="rounded-md bg-brand-soft px-2 py-0.5 font-semibold text-[10px] text-brand-ink">
-                  LEVEL {scenario.scenario.level}
-                </span>
-              </div>
-              <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
-                {[
-                  ["Keputusan", decisions.length],
-                  ["Pola", tactics.length],
-                  ["Bukti", proof.length],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex flex-col items-center py-1.5"
+                  {proof.length > 0 && (
+                    <section className="flex flex-col gap-2 border-line border-t pt-5">
+                      <h2 className="font-bold text-[15px] text-txt">
+                        Bukti latihan yang dipilih
+                      </h2>
+                      <ul className="list-disc pl-5 text-sm leading-relaxed">
+                        {REPORT_ARTIFACTS.filter((item) =>
+                          proof.includes(item.id),
+                        ).map((item) => (
+                          <li key={item.id}>{item.label}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            <aside
+              aria-label="Ringkasan hasil misi"
+              className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
+            >
+              <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
+                  <span className="rounded-md bg-brand-soft px-2 py-0.5 font-semibold text-[10px] text-brand-ink">
+                    LEVEL {scenario.scenario.level}
+                  </span>
+                </div>
+                <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
+                  {[
+                    ["Keputusan", decisions.length],
+                    ["Pola", tactics.length],
+                    ["Bukti", proof.length],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex flex-col items-center py-1.5"
+                    >
+                      <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
+                        {label}
+                      </dt>
+                      <dd className="order-1 tabular font-bold text-sm text-txt">
+                        {value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-3 text-dim text-[11px] leading-relaxed">
+                  {tactics.length > 0
+                    ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
+                    : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
+                </p>
+              </Card>
+
+              <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+                <h2 className="font-bold text-sm text-txt">
+                  Langkah berikutnya
+                </h2>
+                <div className="mt-3 flex flex-col gap-2">
+                  {emergency && (
+                    <Button asChild className="h-11 rounded-xl" data-pressable>
+                      <Link href="/komunitas">Diskusikan pola ini</Link>
+                    </Button>
+                  )}
+                  <Button
+                    data-pressable
+                    variant={emergency ? "outline" : "default"}
+                    className="h-11 rounded-xl"
+                    onClick={reset}
                   >
-                    <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
-                      {label}
-                    </dt>
-                    <dd className="order-1 tabular font-bold text-sm text-txt">
-                      {value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-3 text-dim text-[11px] leading-relaxed">
-                {tactics.length > 0
-                  ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
-                  : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
-              </p>
-            </Card>
-
-            <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-              <h2 className="font-bold text-sm text-txt">Langkah berikutnya</h2>
-              <div className="mt-3 flex flex-col gap-2">
-                {emergency && (
-                  <Button asChild className="h-11 rounded-xl" data-pressable>
-                    <Link href="/darurat">Buka mode darurat</Link>
+                    Coba jalur lain
                   </Button>
-                )}
-                <Button
-                  data-pressable
-                  variant={emergency ? "outline" : "default"}
-                  className="h-11 rounded-xl"
-                  onClick={reset}
-                >
-                  Coba jalur lain
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-11 rounded-xl"
-                  data-pressable
-                >
-                  <Link href="/belajar/10">Pelajari pola ini</Link>
-                </Button>
-                {!emergency && (
                   <Button
                     asChild
                     variant="outline"
                     className="h-11 rounded-xl"
                     data-pressable
                   >
-                    <Link href="/darurat">Buka mode darurat</Link>
+                    <Link
+                      href={
+                        content.moduleNo
+                          ? `/belajar/${content.moduleNo}`
+                          : "/belajar"
+                      }
+                    >
+                      Pelajari pola ini
+                    </Link>
                   </Button>
-                )}
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="h-11 rounded-xl text-dim hover:text-txt"
-                  data-pressable
-                >
-                  <Link href="/simulasi">Semua simulasi</Link>
-                </Button>
-              </div>
-              <p className="mt-2 text-dim text-[11px] leading-relaxed">
-                Mode darurat untuk kejadian nyata, bukan bagian dari latihan
-                ini.
-              </p>
-              <div className="mt-3 border-line border-t pt-2">{collection}</div>
-            </Card>
-          </aside>
+                  {!emergency && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="h-11 rounded-xl"
+                      data-pressable
+                    >
+                      <Link href="/komunitas">Diskusikan pola ini</Link>
+                    </Button>
+                  )}
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="h-11 rounded-xl text-dim hover:text-txt"
+                    data-pressable
+                  >
+                    <Link href="/simulasi">Semua simulasi</Link>
+                  </Button>
+                </div>
+                <p className="mt-2 text-dim text-[11px] leading-relaxed">
+                  Diskusi adalah tempat berbagi pengalaman. Bila kasus sedang
+                  berlangsung, hubungi bank atau penyedia akun melalui kanal
+                  resmi.
+                </p>
+                <div className="mt-3 border-line border-t pt-2">
+                  {collection}
+                </div>
+              </Card>
+            </aside>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
   const task = active.type === "tool_task" ? active : null;
@@ -925,6 +1054,7 @@ export function Runner() {
                     title="Tarik napas · kurangi panik 15"
                     disabled={paused || breathingUsed}
                     onClick={() => {
+                      setBreathingAt(steps.length);
                       setPanic(Math.max(0, panic - 15));
                       setBreathingUsed(true);
                     }}
@@ -987,6 +1117,7 @@ export function Runner() {
                   className="h-11 sm:h-10"
                   disabled={paused || breathingUsed}
                   onClick={() => {
+                    setBreathingAt(steps.length);
                     setPanic(Math.max(0, panic - 15));
                     setBreathingUsed(true);
                   }}

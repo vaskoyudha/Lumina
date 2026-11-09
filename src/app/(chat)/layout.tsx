@@ -9,8 +9,7 @@ import type { ReactNode } from "react";
  * chrome the user never needs, and it costs vertical space on the exact
  * screens that need it most.
  *
- * Route group only: the URLs stay `/companion` and `/belajar`. `/darurat` keeps
- * its own nav-bearing shell in `(app)` and is never gated (AGENTS.md §8).
+ * Route group only: Companion, Belajar, Simulasi, and Komunitas share this workspace ground.
  */
 export default function ChatLayout({ children }: { children: ReactNode }) {
   return <div className="h-dvh overflow-hidden bg-bg text-txt">{children}</div>;
