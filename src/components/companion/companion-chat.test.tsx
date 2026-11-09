@@ -49,12 +49,20 @@ async function enterMessage(
   await user.paste(text);
 }
 
+const APK_MESSAGE =
+  "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim, isinya lengkap dengan lokasi acara.";
+
+async function sendApk(user: ReturnType<typeof userEvent.setup>) {
+  await enterMessage(user, APK_MESSAGE);
+  await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+}
+
 describe("CompanionChat · evidence panel", () => {
   it("shows the extracted artifact without faking a detector", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     // The artifact label is the panel's, not the score card's: it names the
     // file the message asked the user to open.
@@ -74,7 +82,7 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     const highlights = await screen.findAllByRole("button", {
       name: /^Temuan:/i,
@@ -96,7 +104,7 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     const panelLinks = await screen.findAllByRole("button", {
       name: /lihat di pesan/i,
@@ -152,7 +160,7 @@ describe("CompanionChat · evidence panel", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     // The score card names it and the panel repeats it, on purpose: the panel
     // is read on its own when the transcript has scrolled away.
@@ -276,7 +284,7 @@ describe("CompanionChat · a question is not a bad message", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     const log = await screen.findByRole("log", { name: /percakapan/i });
     expect(
@@ -308,7 +316,7 @@ describe("CompanionChat · verdict before voice", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     const log = await screen.findByRole("log", { name: /percakapan/i });
     expect(
@@ -329,7 +337,7 @@ describe("CompanionChat · verdict before voice", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
     // The verdict is already on screen; the voice model is still pending.
     await screen.findAllByText("File APK via WhatsApp");
 
@@ -396,7 +404,7 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
 
     // The result card is the signal that the check finished and `busy` is back
     // to false, so the follow-up can be sent.
@@ -436,7 +444,7 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendApk(user);
     await screen.findAllByText("File APK via WhatsApp");
 
     const log = await screen.findByRole("log", { name: /percakapan/i });
@@ -561,7 +569,7 @@ describe("CompanionChat · job search", () => {
     const user = userEvent.setup();
     render(<CompanionChat corpus={corpus} />);
 
-    await user.click(screen.getByRole("button", { name: /cari lowongan/i }));
+    await user.click(screen.getByRole("button", { name: /^cari lowongan$/i }));
 
     expect(await screen.findByText("Frontend Engineer")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
