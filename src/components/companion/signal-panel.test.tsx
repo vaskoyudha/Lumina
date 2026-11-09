@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
@@ -9,8 +10,7 @@ import { scoreWithTrace } from "@/lib/scoring/score";
 /**
  * The panel is the product's honesty display, so these assert what a judge can
  * point at: the verdict reads first, every finding names the words that fired
- * it, and a stage that did not inspect anything says so instead of wearing a
- * green tick.
+ * it, and an agent with no object says so without being called skipped.
  */
 
 jest.mock("next/link", () => {
@@ -32,6 +32,23 @@ const APK_MESSAGE =
 const PRIZE_MESSAGE =
   "Selamat Anda menang hadiah utama Rp25.000.000. Untuk pencairan, bayar biaya admin Rp350.000 lebih dulu ya.";
 
+function withEvidenceStage(trace: ReturnType<typeof scoreWithTrace>["trace"]) {
+  return {
+    ...trace,
+    stages: [
+      ...trace.stages,
+      {
+        id: "evidence" as const,
+        ...STAGE_LABEL.evidence,
+        status: "dilewati" as const,
+        findings: 0,
+        ms: 0,
+        note: "Tidak ada kutipan yang bisa dicatat.",
+      },
+    ],
+  };
+}
+
 describe("SignalPanel", () => {
   it("states nothing was checked before a result exists", () => {
     render(<SignalPanel result={null} sequence={AGENT_SEQUENCE} />);
@@ -45,8 +62,12 @@ describe("SignalPanel", () => {
 
   it("leads with the verdict and never invents a finding", () => {
     const { result, trace } = scoreWithTrace({ text: APK_MESSAGE });
-    render(
-      <SignalPanel result={result} sequence={AGENT_SEQUENCE} trace={trace} />,
+    const { container } = render(
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
     );
 
     // The number and the band are the engine's; the panel only prints them.
@@ -59,8 +80,9 @@ describe("SignalPanel", () => {
       screen.getByText(/pesan lengkap tetap di perangkat/i),
     ).toBeInTheDocument();
 
-    // Identity Agent is real now, so no stage may claim to be unbuilt.
-    expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
+    // The result ledger is not the teaching graph: no Q-codes or fake ports.
+    expect(screen.queryByText(/Q4/)).not.toBeInTheDocument();
+    expect(container.querySelector("[data-port]")).toBeNull();
 
     const findings = within(
       screen.getByRole("list", { name: /temuan terdeteksi/i }),
@@ -71,7 +93,11 @@ describe("SignalPanel", () => {
   it("credits each finding to the agent that produced it, with its quote", () => {
     const { result, trace } = scoreWithTrace({ text: PRIZE_MESSAGE });
     render(
-      <SignalPanel result={result} sequence={AGENT_SEQUENCE} trace={trace} />,
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
     );
 
     const findings = within(
@@ -84,30 +110,32 @@ describe("SignalPanel", () => {
     ).toBeInTheDocument();
 
     // A weight-0 placeholder is not a finding: the badge counts real ones only.
-    expect(screen.getByText(/^\d+ temuan$/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^\d+ temuan$/i).length).toBeGreaterThan(0);
   });
 
-  it("names a skipped stage and its reason instead of a green tick", () => {
+  it("names an agent with no object and keeps its reason behind a group", async () => {
+    const user = userEvent.setup();
     const { result, trace } = scoreWithTrace({ text: PRIZE_MESSAGE });
     render(
-      <SignalPanel result={result} sequence={AGENT_SEQUENCE} trace={trace} />,
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
     );
 
     // The prize message carries no link, so the Link Agent has nothing to read.
-    // It must appear as skipped, with the trace's own note. Address the row by
-    // its agent name: other stages may be skipped for their own reasons.
-    const linkRow = screen.getByText("Link Agent").closest("p");
-    expect(linkRow).not.toBeNull();
-    expect(linkRow).toHaveTextContent(/dilewati/i);
-    expect(linkRow).toHaveTextContent(/tidak ada tautan pada pesan ini/i);
+    const trigger = screen.getByRole("button", { name: /tanpa objek/i });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Link Agent")).not.toBeInTheDocument();
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Link Agent")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        new RegExp(
-          `\\d+ dari ${AGENT_SEQUENCE.length} agen memeriksa pesan ini`,
-          "i",
-        ),
-      ),
+      screen.getByText(/tidak ada tautan pada pesan ini/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/\d+ diperiksa/i)).toBeInTheDocument();
   });
 
   it("records artifacts as proof rather than repeating the findings", () => {
@@ -159,7 +187,11 @@ describe("SignalPanel", () => {
   it("lights only the stage whose trace is actually running", () => {
     const { result, trace } = scoreWithTrace({ text: APK_MESSAGE });
     const done = render(
-      <SignalPanel result={result} sequence={AGENT_SEQUENCE} trace={trace} />,
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
     );
 
     // Every detector has finished, so nothing may wear the live state.
@@ -167,9 +199,9 @@ describe("SignalPanel", () => {
     done.unmount();
 
     const liveTrace = {
-      ...trace,
+      ...withEvidenceStage(trace),
       stages: [
-        ...trace.stages,
+        ...withEvidenceStage(trace).stages,
         {
           id: "voice" as const,
           ...STAGE_LABEL.voice,
@@ -199,10 +231,9 @@ describe("SignalPanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("gives every node exactly one port of each direction", () => {
-    const { result, trace } = scoreWithTrace({ text: APK_MESSAGE });
+  it("keeps the teaching graph's ports in the empty state", () => {
     const { container } = render(
-      <SignalPanel result={result} sequence={AGENT_SEQUENCE} trace={trace} />,
+      <SignalPanel result={null} sequence={AGENT_SEQUENCE} />,
     );
 
     const keys = [...container.querySelectorAll("[data-port]")].map(

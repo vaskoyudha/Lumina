@@ -1,6 +1,5 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { CompanionChat } from "@/components/companion/companion-chat";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
 
@@ -46,7 +45,7 @@ async function enterMessage(
   user: ReturnType<typeof userEvent.setup>,
   text: string,
 ) {
-  await user.click(screen.getByLabelText(/pesan/i));
+  await user.click(screen.getByPlaceholderText(/tempel pesan/i));
   await user.paste(text);
 }
 
@@ -68,14 +67,59 @@ describe("CompanionChat · evidence panel", () => {
     // gone. Honesty moved to the coverage line: a stage with nothing to inspect
     // is named as skipped, with the reason, rather than wearing a green tick.
     expect(screen.queryByText(/belum aktif/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/\d+ diperiksa/i)).toBeInTheDocument();
+  });
+
+  it("highlights the phrase that triggered a finding", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+
+    const highlights = await screen.findAllByRole("button", {
+      name: /^Temuan:/i,
+    });
+    expect(highlights.length).toBeGreaterThan(0);
+
+    const first = highlights[0];
+    if (!first) throw new Error("expected at least one evidence highlight");
+    expect(first).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(first);
+    expect(first).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("links a panel finding back to the message quote", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+
+    const panelLinks = await screen.findAllByRole("button", {
+      name: /lihat di pesan/i,
+    });
+    const panelLink = panelLinks[0];
+    if (!panelLink) throw new Error("expected a panel finding link");
+
+    await user.click(panelLink);
+    const highlights = await screen.findAllByRole("button", {
+      name: /^Temuan:/i,
+    });
     expect(
-      screen.getByText(
-        new RegExp(
-          `\\d+ dari ${AGENT_SEQUENCE.length} agen memeriksa pesan ini`,
-          "i",
-        ),
+      highlights.some(
+        (button) => button.getAttribute("aria-pressed") === "true",
       ),
-    ).toBeInTheDocument();
+    ).toBe(true);
+
+    await user.click(panelLink);
+    expect(
+      highlights.every(
+        (button) => button.getAttribute("aria-pressed") === "false",
+      ),
+    ).toBe(true);
   });
 
   it("surfaces the combination finding when two vectors agree", async () => {
@@ -168,11 +212,11 @@ describe("CompanionChat · an honest zero", () => {
     ).toBeInTheDocument();
     expect(within(card as HTMLElement).getByText("/100")).toBeInTheDocument();
     expect(
-      within(card as HTMLElement).getByText(/^0 temuan$/),
-    ).toBeInTheDocument();
+      within(card as HTMLElement).getAllByText(/^0 temuan$/).length,
+    ).toBeGreaterThan(0);
     expect(
-      within(card as HTMLElement).queryByText(/^1 temuan$/),
-    ).not.toBeInTheDocument();
+      within(card as HTMLElement).queryAllByText(/^1 temuan$/),
+    ).toHaveLength(0);
 
     // A bundle with no quote is a skipped stage, not a finished one.
     const log = await screen.findByRole("log", { name: /percakapan/i });
