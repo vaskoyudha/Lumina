@@ -262,9 +262,9 @@ export function SessionSidebar({
       href="/"
       data-pressable
       aria-label="Lumina — beranda"
-      className="grid size-[26px] shrink-0 place-items-center"
+      className="grid size-[30px] shrink-0 place-items-center"
     >
-      <LuminaLogo variant="mark" className="h-[26px] w-auto" />
+      <LuminaLogo variant="mark" className="h-[30px] w-auto" />
     </Link>
   );
 
@@ -308,7 +308,7 @@ export function SessionSidebar({
               aria-label="Lumina — beranda"
               className="min-w-0 flex-1"
             >
-              <LuminaLogo className="h-[30px] w-auto" />
+              <LuminaLogo className="h-[36px] w-auto" />
             </Link>
             {onClose ? (
               <Button
@@ -355,7 +355,7 @@ export function SessionSidebar({
           <Button
             onClick={onNew}
             data-pressable
-            className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.98]"
+            className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-slab transition-[filter,transform,box-shadow] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:translate-y-[2px] active:shadow-slab-pressed"
           >
             <span>Percakapan baru</span>
             <span className="flex size-6 items-center justify-center rounded-full bg-bg text-brand-ink shadow-sm">
@@ -479,7 +479,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to p-0 text-bg shadow-rest transition-[filter,transform] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:scale-[0.96]"
+        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to p-0 text-bg shadow-slab transition-[filter,transform,box-shadow] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:translate-y-[2px] active:shadow-slab-pressed"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>

@@ -33,6 +33,9 @@ const COVER_ART: Record<number, string> = {
   7: "/images/belajar/modul-07.jpg",
   8: "/images/belajar/modul-08.jpg",
   9: "/images/belajar/modul-09.jpg",
+  10: "/images/belajar/modul-10.jpg",
+  11: "/images/belajar/modul-11.jpg",
+  12: "/images/belajar/modul-12.jpg",
 };
 
 export function coverArtFor(no: number): string | null {
