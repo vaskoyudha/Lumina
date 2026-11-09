@@ -1,8 +1,21 @@
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  Check,
+  Clock,
+  CreditCard,
+  Lightbulb,
+  Link2,
+  ListChecks,
+  Mail,
+  PhoneCall,
+  Route,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MODUS } from "@/lib/modus";
@@ -33,6 +46,31 @@ const CHAPTER_NOTES = [
   "Tolak kode rahasia, simpan bukti yang aman, lalu lihat apa yang bisa diperbaiki.",
 ];
 
+const CHAPTER_ICONS = [UserRound, Mail, ShieldCheck];
+
+const PLANNED_ICONS: Record<string, typeof ShieldCheck> = {
+  "fake-call": PhoneCall,
+  "lowongan-tugas-berbayar": Briefcase,
+  "phishing-tautan": Link2,
+  "pinjol-fiktif": CreditCard,
+};
+
+const TITLE_WORDS = MISSION.title.split(" ");
+const TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" ");
+const TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
+
+const SUMMARY_POINTS = [
+  "Analisis pesan dan pola ancaman yang muncul.",
+  "Amankan akun dan perangkat sebelum terlambat.",
+  "Verifikasi tiap tindakan dengan bukti.",
+];
+
+const TIPS = [
+  "Jangan pernah membagikan kode verifikasi atau informasi pribadi.",
+  "Periksa selalu sumber pesan sebelum mengambil tindakan.",
+  "Berkas .apk memasang aplikasi, bukan membuka foto.",
+];
+
 function SimulasiAside() {
   return (
     <div className="flex flex-col gap-5">
@@ -46,52 +84,67 @@ function SimulasiAside() {
             <h2 id="planned-heading" className="font-bold text-sm text-txt">
               Level lain
             </h2>
-            <span className="tabular font-semibold text-[11px] text-dim">
-              {PLANNED.length} rencana
+            <span className="font-semibold text-[11px] text-brand-strong">
+              Lihat semua →
             </span>
           </div>
           <p className="mt-0.5 text-dim text-xs">
             Masih direncanakan, belum bisa dimainkan.
           </p>
-          <ul className="mt-2 divide-y divide-line">
-            {PLANNED.map((modus) => (
-              <li key={modus.id} className="flex items-center gap-3 py-2.5">
-                <span className="tabular w-6 shrink-0 font-semibold text-dim text-[11px]">
-                  {modus.scenarioPlanned}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className="line-clamp-2 font-semibold text-xs text-txt"
-                    title={modus.nama}
-                  >
-                    {modus.nama}
-                  </p>
-                  <p
-                    className="mt-0.5 truncate text-[10px] text-dim"
-                    title={modus.ciri[0]}
-                  >
-                    {modus.ciri[0]}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-md bg-panel-2 px-1.5 py-0.5 text-[10px] text-dim">
-                  Rencana
-                </span>
-              </li>
-            ))}
+          <ul className="mt-3 space-y-1">
+            {PLANNED.map((modus) => {
+              const Icon = PLANNED_ICONS[modus.id] ?? ShieldCheck;
+              return (
+                <li key={modus.id} className="flex items-start gap-3 py-2">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
+                    <Icon aria-hidden className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p
+                        className="line-clamp-2 font-semibold text-xs text-txt"
+                        title={modus.nama}
+                      >
+                        {modus.nama}
+                      </p>
+                      <span className="shrink-0 rounded-full border border-brand-line bg-brand-soft px-2 py-0.5 text-[10px] text-brand-ink">
+                        Rencana
+                      </span>
+                    </div>
+                    <p
+                      className="mt-0.5 line-clamp-2 text-[10px] text-dim"
+                      title={modus.ciri[0]}
+                    >
+                      {modus.ciri[0]}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </Card>
 
-      <Alert className="rounded-2xl border-line">
-        <ShieldCheck aria-hidden />
-        <AlertTitle>Latihan, bukan pemindaian perangkat</AlertTitle>
-        <AlertDescription>
+      <Card className="rounded-card border border-line p-4 shadow-[var(--appnext-shadow-ambient)]">
+        <h2 className="font-bold text-sm text-txt">
+          Latihan, bukan pemindaian perangkat
+        </h2>
+        <p className="mt-2 text-dim text-xs leading-relaxed">
           Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif. Latihan
           tidak mengubah perangkatmu dan tidak mengirim laporan ke mana pun.
           Penilaian mengikuti aturan skenario, bukan skor model. Kalau ini
           sedang terjadi sungguhan, gunakan mode darurat.
-        </AlertDescription>
-      </Alert>
+        </p>
+        <div className="mt-3 flex justify-end">
+          <Link
+            href="/darurat"
+            aria-label="Buka mode darurat"
+            className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel text-brand-strong transition-colors hover:bg-brand-soft hover:text-brand-ink"
+          >
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -100,84 +153,64 @@ export default function SimulasiPage() {
   return (
     <WorkspaceShell label="Simulasi" aside={<SimulasiAside />}>
       <div className="flex w-full flex-col gap-6">
-        <section className="appnext-campaign relative overflow-hidden rounded-card p-6 text-bg shadow-[var(--appnext-shadow-soft)] sm:p-7">
-          {/* Keeps white copy at AA over the lighter campaign gradient. */}
+        <section className="relative overflow-hidden rounded-card border border-brand-line shadow-[var(--appnext-shadow-soft)]">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-ink/25"
+            className="absolute inset-0 bg-brand-tint bg-[url('/simulasi/hero-gift.webp')] bg-cover bg-[position:72%_50%] bg-no-repeat [mask-image:linear-gradient(90deg,transparent_0%,black_40%)]"
           />
-          <svg
-            aria-hidden
-            role="presentation"
-            viewBox="0 0 800 220"
-            preserveAspectRatio="none"
-            className="pointer-events-none absolute inset-0 size-full opacity-45"
-          >
-            <path
-              d="M-40 180 C 140 90, 290 230, 480 140 C 640 65, 720 150, 840 95 L 840 240 L -40 240 Z"
-              className="fill-bg/10"
-            />
-            <path
-              d="M-20 205 C 180 120, 340 215, 530 145 C 670 95, 760 165, 850 130"
-              fill="none"
-              strokeWidth="2.5"
-              className="stroke-bg/25"
-            />
-            <path
-              d="M40 220 C 240 135, 390 200, 590 125 C 700 85, 770 120, 850 90"
-              fill="none"
-              strokeWidth="1.75"
-              className="stroke-bg/20"
-            />
-          </svg>
-
-          <div className="relative z-10 max-w-2xl">
-            <p className="inline-flex items-center rounded-full border border-bg/25 bg-ink/30 px-2.5 py-1 font-semibold text-[11px] backdrop-blur-sm">
-              Misi · Level {SCENARIO_CATALOG[0]?.scenario.level ?? 1}
-            </p>
-            <h1
-              id="mission-title"
-              className="mt-3 font-bold text-2xl text-bg leading-tight tracking-tight sm:text-[30px]"
-            >
-              {MISSION.title}
-            </h1>
-            <p className="mt-2 max-w-xl text-bg text-sm leading-relaxed">
-              {MISSION.context}
-            </p>
-            <p className="mt-3 max-w-xl text-bg text-sm leading-relaxed">
-              <span className="font-semibold">Tujuanmu: </span>
-              {MISSION.objective}
-            </p>
-            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-bg">
-              <span>Perkiraan {MISSION.duration}</span>
-              <span aria-hidden>·</span>
-              <span>{MISSION.chapters.length} babak</span>
-              <span aria-hidden>·</span>
-              <span>{endingCount} kemungkinan akhir</span>
-            </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Button
-                asChild
-                className="min-h-11 rounded-xl border border-ink-line bg-[var(--appnext-ink-2)] px-5 font-semibold text-bg text-xs shadow-lg hover:bg-[var(--appnext-ink-3)]"
+          <div className="relative">
+            <div className="min-w-0 max-w-xl p-6 sm:p-8">
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 py-1 font-semibold text-[11px] text-brand-ink shadow-sm">
+                <span className="flex size-4 items-center justify-center rounded-full bg-brand text-bg">
+                  <ShieldCheck aria-hidden className="size-2.5" />
+                </span>
+                Misi · Level {SCENARIO_CATALOG[0]?.scenario.level ?? 1}
+              </p>
+              <h1
+                id="mission-title"
+                className="mt-3 font-bold text-2xl text-txt leading-tight tracking-tight sm:text-[32px]"
               >
-                <Link
-                  href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
-                  data-pressable
+                {TITLE_LEAD} <span className="text-brand">{TITLE_TAIL}</span>
+              </h1>
+              <p className="mt-3 max-w-xl text-sm text-txt leading-relaxed">
+                {MISSION.context}
+              </p>
+              <p className="mt-3 max-w-xl rounded-xl border border-brand-line bg-panel/80 px-3 py-2 text-sm text-txt leading-relaxed">
+                <span className="font-semibold">Tujuanmu: </span>
+                {MISSION.objective}
+              </p>
+              <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-dim">
+                <Clock aria-hidden className="size-3.5 text-brand" />
+                <span>Perkiraan {MISSION.duration}</span>
+                <span aria-hidden>·</span>
+                <span>{MISSION.chapters.length} babak</span>
+                <span aria-hidden>·</span>
+                <span>{endingCount} kemungkinan akhir</span>
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Button
+                  asChild
+                  className="min-h-11 rounded-xl bg-brand px-5 font-semibold text-bg text-xs shadow-lg hover:bg-brand-strong"
                 >
-                  Buka briefing
-                  <ArrowRight aria-hidden />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="min-h-11 rounded-xl border-bg/40 bg-bg px-4 font-semibold text-brand-ink text-xs hover:bg-bg/90 hover:text-brand-ink"
-              >
-                <Link href="/belajar/10" data-pressable>
-                  Pelajari pola APK
-                </Link>
-              </Button>
+                  <Link
+                    href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
+                    data-pressable
+                  >
+                    Mulai briefing
+                    <ArrowRight aria-hidden />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-11 rounded-xl border-brand-line bg-panel px-4 font-semibold text-txt text-xs hover:bg-brand-soft hover:text-brand-ink"
+                >
+                  <Link href="/belajar/10" data-pressable>
+                    Pelajari pola APK
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -186,28 +219,104 @@ export default function SimulasiPage() {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2
               id="chapters-heading"
-              className="font-bold text-[18px] text-txt"
+              className="flex items-center gap-2 font-bold text-[18px] text-txt"
             >
+              <Route aria-hidden className="size-4 text-brand" />
               Alur misi
             </h2>
             <p className="text-dim text-xs">Satu keputusan per babak.</p>
           </div>
-          <ol className="list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-panel p-0 shadow-[var(--appnext-shadow-ambient)]">
-            {MISSION.chapters.map((chapter, index) => (
-              <li key={chapter} className="flex gap-4 p-4 sm:p-5">
-                <span className="tabular flex size-8 shrink-0 items-center justify-center rounded-xl bg-brand-soft font-black text-[11px] text-brand-ink">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-bold text-sm text-txt">{chapter}</p>
-                  <p className="mt-0.5 text-dim text-xs leading-relaxed">
-                    {CHAPTER_NOTES[index]}
-                  </p>
-                </div>
-              </li>
-            ))}
+          <ol className="grid list-none gap-3 p-0 md:grid-cols-3">
+            {MISSION.chapters.map((chapter, index) => {
+              const Icon = CHAPTER_ICONS[index] ?? ShieldCheck;
+              return (
+                <li
+                  key={chapter}
+                  className="relative flex flex-col gap-3 rounded-card border border-line bg-panel p-4 shadow-[var(--appnext-shadow-ambient)]"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex size-10 items-center justify-center rounded-xl bg-brand-soft text-brand-ink ring-1 ring-brand-line">
+                      <Icon aria-hidden className="size-4" />
+                    </span>
+                    <span className="tabular flex size-5 items-center justify-center rounded-full bg-brand font-bold text-[9px] text-bg">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-txt">{chapter}</p>
+                    <p className="mt-1 text-dim text-xs leading-relaxed">
+                      {CHAPTER_NOTES[index]}
+                    </p>
+                  </div>
+                  {index < MISSION.chapters.length - 1 ? (
+                    <span
+                      aria-hidden
+                      className="absolute top-1/2 right-[-13px] z-10 hidden size-5 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-bg shadow md:flex"
+                    >
+                      <ArrowRight className="size-3" />
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
           </ol>
         </section>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
+            <div
+              aria-hidden="true"
+              className="aspect-[2048/869] w-full bg-[url('/simulasi/card-laptop.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
+            />
+            <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:right-0 min-[1680px]:ml-auto min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-bold text-[15px] text-txt">
+                  <ListChecks aria-hidden className="size-4 text-brand" />
+                  Ringkasan Misi
+                </h2>
+                <Link
+                  href={`/simulasi/${SCENARIO_CATALOG[0].scenario.id}`}
+                  className="shrink-0 whitespace-nowrap font-semibold text-[11px] text-brand-strong hover:underline"
+                >
+                  Lihat detail →
+                </Link>
+              </div>
+              <ul className="mt-3 list-none space-y-2.5 p-0">
+                {SUMMARY_POINTS.map((point) => (
+                  <li key={point} className="flex gap-2.5">
+                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-brand text-bg">
+                      <Check aria-hidden className="size-2.5" />
+                    </span>
+                    <p className="text-dim text-xs leading-relaxed">{point}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+
+          <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
+            <div
+              aria-hidden="true"
+              className="aspect-[2048/869] w-full bg-[url('/simulasi/card-shield.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
+            />
+            <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:left-0 min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
+              <h2 className="flex items-center gap-2 font-bold text-[15px] text-txt">
+                <Lightbulb aria-hidden className="size-4 text-brand" />
+                Tips Penting
+              </h2>
+              <ul className="mt-3 list-none space-y-2.5 p-0">
+                {TIPS.map((tip) => (
+                  <li key={tip} className="flex gap-2.5">
+                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-brand text-bg">
+                      <Check aria-hidden className="size-2.5" />
+                    </span>
+                    <p className="text-dim text-xs leading-relaxed">{tip}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+        </div>
 
         <p className="text-dim text-xs">
           Sedang kena sekarang?{" "}
