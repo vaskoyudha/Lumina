@@ -167,6 +167,14 @@ describe("CompanionChat · an honest zero", () => {
     expect(
       within(card as HTMLElement).queryByText(/^1 temuan$/),
     ).not.toBeInTheDocument();
+
+    // A bundle with no quote is a skipped stage, not a finished one.
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+    const evidence = within(log).getByTestId("agent-evidence");
+    expect(evidence).toHaveAttribute("data-status", "dilewati");
+    expect(
+      within(evidence).getByText(/tidak ada kutipan yang bisa dicatat/i),
+    ).toBeInTheDocument();
   });
 });
 
@@ -258,6 +266,42 @@ describe("CompanionChat · verdict before voice", () => {
     ).toBeInTheDocument();
     expect(within(log).getByText(/menyusun jawaban/i)).toBeInTheDocument();
   });
+
+  it("announces the settled summary after opening the Agents view mid-run", async () => {
+    let resolveReply: (value: unknown) => void = () => undefined;
+    fetchMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveReply = resolve;
+        }),
+    );
+
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    // The verdict is already on screen; the voice model is still pending.
+    await screen.findAllByText("File APK via WhatsApp");
+
+    await user.click(screen.getByRole("button", { name: /^agen/i }));
+    expect(
+      screen.getByRole("heading", { name: "Agen pemeriksa" }),
+    ).toBeInTheDocument();
+
+    resolveReply({
+      ok: false,
+      status: 503,
+      body: null,
+      json: async () => ({ error: "not-configured" }),
+    });
+
+    // The transcript is unmounted, so the shell must own this announcement.
+    await waitFor(() =>
+      expect(screen.getByTestId("run-announcement")).toHaveTextContent(
+        /jawaban disusun dari templat/i,
+      ),
+    );
+  });
 });
 
 describe("CompanionChat · privacy copy matches the wire", () => {
@@ -327,5 +371,31 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
     expect(body.digest).not.toBeNull();
     expect(typeof body.digest?.score).toBe("number");
     expect(typeof body.digest?.risk).toBe("string");
+  });
+
+  it("settles the language stage as skipped when the model returns 503", async () => {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve({
+        ok: false,
+        status: 503,
+        body: null,
+        json: async () => ({ error: "not-configured" }),
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await screen.findAllByText("File APK via WhatsApp");
+
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+    const voice = within(log).getByTestId("agent-voice");
+
+    // The row must stop saying "Berjalan" and name the template fallback.
+    await waitFor(() =>
+      expect(voice).toHaveAttribute("data-status", "dilewati"),
+    );
+    expect(within(voice).getByText(/templat/i)).toBeInTheDocument();
   });
 });

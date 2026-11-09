@@ -89,6 +89,34 @@ describe("export course", () => {
     expect(bundle.moduleFile).not.toContain("Judul */");
   });
 
+  it("exports the professional layer when the draft has it", () => {
+    const uji = draft(15, "Musiman");
+    uji.content.ringkasan =
+      "Ringkasan singkat yang menjelaskan pola penipuan ini dengan jelas.";
+    uji.content.tujuan = [
+      "Mengenali tanda bahaya utama dari pola ini.",
+      "Mengambil langkah aman sebelum uang berpindah.",
+    ];
+    uji.content.poinKunci = [
+      "Jangan pernah membayar untuk menerima hadiah.",
+      "Verifikasi lewat kanal resmi, bukan tautan di pesan.",
+    ];
+    uji.content.estimasiMenit = 7;
+
+    const bundle = exportCourse(uji);
+
+    expect(bundle.moduleFile).toContain("ringkasan:");
+    expect(bundle.moduleFile).toContain("tujuan: [");
+    expect(bundle.moduleFile).toContain("poinKunci: [");
+    expect(bundle.moduleFile).toContain("estimasiMenit: 7");
+  });
+
+  it("does not invent the professional layer for an older draft", () => {
+    const bundle = exportCourse(draft(16, "Lama"));
+    expect(bundle.moduleFile).not.toContain("ringkasan:");
+    expect(bundle.moduleFile).not.toContain("estimasiMenit:");
+  });
+
   it("flags courses past the original twelve", () => {
     expect(exportCourse(draft(13, "Baru")).requiresUnboundedList).toBe(true);
     expect(exportCourse(draft(7, "Lama")).requiresUnboundedList).toBe(false);

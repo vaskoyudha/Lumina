@@ -6,6 +6,7 @@ import {
   Download,
   History,
   Link2,
+  PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
   Paperclip,
@@ -17,7 +18,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 import { Mascot } from "@/components/brand/mascot";
-import { AgentRun } from "@/components/companion/agent-run";
+import { AgentRun, runAnnouncement } from "@/components/companion/agent-run";
 import {
   AGENT_SEQUENCE,
   type DetectorAgent,
@@ -207,11 +208,47 @@ export function CompanionChat({
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
+  const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  /*
+   * The mobile drawer covers the column but not the window: Escape must close
+   * it, exactly like the close button and the scrim. Without this the only exit
+   * was the 44px button inside the drawer, which a keyboard user cannot reach.
+   */
+  React.useEffect(() => {
+    if (!showSessions) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowSessions(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showSessions]);
 
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
+
+  /*
+   * Opening the Agents view unmounts the transcript, and with it AgentRun's
+   * live region. Keep announcing the settled summary here while that view is
+   * on screen instead of letting the run finish silently.
+   */
+  const wasBusy = React.useRef(busy);
+  React.useEffect(() => {
+    const was = wasBusy.current;
+    wasBusy.current = busy;
+    if (busy) {
+      // Clear on start so two identical runs still announce the second time.
+      if (!was) setAgentsAnnouncement("");
+      return;
+    }
+    if (!was) return;
+    // Only the turn that just settled may announce; an older checked turn must
+    // not be re-announced after a plain chat reply.
+    const latest = turns[turns.length - 1];
+    setAgentsAnnouncement(latest?.trace ? runAnnouncement(latest.trace) : "");
+  }, [busy, turns]);
 
   /**
    * History is a list of conversations that happened. A blank new-chat screen
@@ -838,6 +875,18 @@ export function CompanionChat({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none">
+      {/*
+        One live region for the whole shell, outside the transcript's
+        `role="log"`. AgentRun suppresses its own region here so the summary is
+        announced once, whether the Agents view or the transcript is on screen.
+      */}
+      <output
+        data-testid="run-announcement"
+        className="sr-only"
+        aria-live="polite"
+      >
+        {agentsAnnouncement}
+      </output>
       <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-0 overflow-hidden md:flex-row">
         <SessionSidebar
           sessions={conversations}
@@ -857,6 +906,7 @@ export function CompanionChat({
             setShowAgents(true);
             setSelectedAgent(null);
             setShowSessions(false);
+            setAgentsAnnouncement("");
           }}
           onShowChat={() => {
             setShowAgents(false);
@@ -866,10 +916,25 @@ export function CompanionChat({
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
           className={cn(
-            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:border-line max-md:border-r md:border-line md:border-r",
+            "bg-bg max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:border-line max-md:border-r md:border-line md:border-r",
             showSessions ? "max-md:flex" : "max-md:hidden",
           )}
         />
+
+        {/*
+         * The drawer is 220px wide, so the remaining 100–200px of the page is
+         * still on screen. Without a scrim that strip stays tappable and the
+         * chat behind the drawer scrolls; the drawer stops reading as an
+         * overlay. It sits above the header (z-20) and below the sidebar (z-40).
+         */}
+        {showSessions ? (
+          <button
+            type="button"
+            aria-label="Tutup navigasi"
+            onClick={() => setShowSessions(false)}
+            className="fixed inset-0 z-30 bg-ink/25 md:hidden"
+          />
+        ) : null}
 
         {/* Main panel: the white conversation column of the frame. */}
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-panel">
@@ -884,11 +949,16 @@ export function CompanionChat({
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowSessions((v) => !v)}
-                aria-label="Riwayat percakapan"
+                aria-label="Buka navigasi"
+                title="Buka navigasi"
                 aria-expanded={showSessions}
-                className="size-8 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink md:hidden"
+                className="size-11 shrink-0 rounded-full bg-chip text-ink-mute hover:bg-chip-hover hover:text-ink md:hidden"
               >
-                <History aria-hidden strokeWidth={1.6} className="size-4" />
+                <PanelLeftOpen
+                  aria-hidden
+                  strokeWidth={1.6}
+                  className="size-4"
+                />
               </Button>
 
               <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-edge bg-panel px-2.5 shadow-rest lg:pl-1">
@@ -992,7 +1062,7 @@ export function CompanionChat({
                 size="sm"
                 onClick={startNew}
                 aria-label="Percakapan baru"
-                className="h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-8 max-md:px-0 lg:hidden"
+                className="h-11 gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink max-md:size-11 max-md:px-0 lg:hidden"
               >
                 <SquarePen aria-hidden strokeWidth={1.6} className="size-3.5" />
                 <span className="max-md:sr-only">Percakapan baru</span>
@@ -1003,7 +1073,7 @@ export function CompanionChat({
                 onClick={() => setShowEvidence((v) => !v)}
                 aria-label={showAgents ? "Detail agen" : "Panel bukti"}
                 aria-expanded={showEvidence}
-                className="h-[32px] gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong lg:hidden"
+                className="h-11 gap-1.5 rounded-full border border-brand-line bg-brand-soft px-2.5 text-[11.5px] text-brand-ink hover:bg-brand-soft-2 hover:text-brand-strong max-sm:w-11 max-sm:justify-center max-sm:px-0 lg:hidden"
               >
                 <Workflow aria-hidden strokeWidth={1.6} className="size-3.5" />
                 <span aria-hidden className="hidden sm:inline">
@@ -1140,6 +1210,7 @@ export function CompanionChat({
                           trace={turn.trace}
                           result={turn.result}
                           live={turn.streaming === true}
+                          announce={false}
                         />
                       ) : null}
 
@@ -1209,7 +1280,7 @@ export function CompanionChat({
                 )}
               </div>
 
-              <div className="shrink-0 px-4 pt-1 pb-3 sm:px-6">
+              <div className="shrink-0 px-4 pt-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6">
                 <div className="mx-auto w-full max-w-[640px]">
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}
@@ -1238,7 +1309,7 @@ export function CompanionChat({
                 }
                 aria-expanded={false}
                 onClick={() => setEvidenceCollapsed(false)}
-                className="size-6 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink"
+                className="size-9 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink"
               >
                 <PanelRightOpen
                   aria-hidden
@@ -1268,7 +1339,7 @@ export function CompanionChat({
                   aria-label="Ciutkan panel detail"
                   aria-expanded
                   onClick={() => setEvidenceCollapsed(true)}
-                  className="size-6 rounded-full text-dim hover:text-txt"
+                  className="size-8 rounded-full text-dim hover:text-txt"
                 >
                   <PanelRightClose
                     aria-hidden
@@ -1288,7 +1359,7 @@ export function CompanionChat({
                   aria-label="Ciutkan panel bukti"
                   aria-expanded
                   onClick={() => setEvidenceCollapsed(true)}
-                  className="size-6 rounded-full text-dim hover:text-txt"
+                  className="size-8 rounded-full text-dim hover:text-txt"
                 >
                   <PanelRightClose
                     aria-hidden
@@ -1327,7 +1398,7 @@ export function CompanionChat({
                   <SheetClose asChild>
                     <Button
                       aria-label="Tutup detail agen"
-                      className="size-6 rounded-full text-dim hover:text-txt"
+                      className="size-11 rounded-full text-dim hover:text-txt"
                       size="icon-xs"
                       variant="ghost"
                     >
@@ -1345,7 +1416,7 @@ export function CompanionChat({
                   <SheetClose asChild>
                     <Button
                       aria-label="Tutup panel bukti"
-                      className="size-6 rounded-full text-dim hover:text-txt"
+                      className="size-11 rounded-full text-dim hover:text-txt"
                       size="icon-xs"
                       variant="ghost"
                     >

@@ -10,7 +10,7 @@ import type { Signal } from "@/lib/contracts/score";
  */
 
 const SHOP_CONTEXT =
-  /\b(?:jual|dijual|harga|murah|beli|barang|toko|seller|penjual|pembeli|ongkir|paket|kiriman|stok|pre\s*order|dp|cod|marketplace|shopee|tokopedia|lazada|bukalapak|blibli|tiktok\s*shop|refund|pengembalian\s+dana|qris)\b/i;
+  /\b(?:jual|dijual|harga|murah|beli|barang|toko|seller|penjual|pembeli|ongkir|paket|kiriman|stok|pre\s*order|dp|uang\s+muka|booking\s+fee|cod|marketplace|shopee|tokopedia|lazada|bukalapak|blibli|tiktok\s*shop|refund|pengembalian\s+dana|qris)\b/i;
 
 const PAID_ON_PLATFORM =
   /\b(?:shopee|tokopedia|lazada|bukalapak|blibli|tiktok\s*shop)\b[^.!?]{0,60}\b(?:dibayar|bayar|checkout|pesanan|pesan)\b|\b(?:dibayar|bayar|checkout|pesanan|pesan)\b[^.!?]{0,60}\b(?:shopee|tokopedia|lazada|bukalapak|blibli|tiktok\s*shop)\b/i;
@@ -66,7 +66,7 @@ const SHOP_RULES: readonly ShopRule[] = [
     weight: 0.45,
     label: "Meminta DP/uang muka lewat transfer sebelum barang dikirim",
     pattern:
-      /\b(?:dp|uang\s+muka|booking\s+fee)\b[^.!?]{0,20}\b(?:\d{1,3}\s*%|rp\s*\d+)\b[^.!?]{0,30}\b(?:transfer|bayar)\b/i,
+      /\b(?:dp|uang\s+muka|booking\s+fee)\b[^.!?]{0,20}(?<!\d)(?:rp\s*0*[1-9][\d.]*|[1-9]\d{0,2}\s*(?:%|persen)|[1-9]\d{0,2}\s*(?:rb|ribu|juta)\b|\d{1,3}(?:\.\d{3})+)[^.!?]{0,30}\b(?:transfer|bayar|dibayar|ditransfer|membayar|mentransfer)\b|\b(?:transfer|bayar|dibayar|ditransfer|membayar|mentransfer)\b[^.!?]{0,20}\b(?:dp|uang\s+muka|booking\s+fee)\b[^.!?]{0,20}(?<!\d)(?:rp\s*0*[1-9][\d.]*|[1-9]\d{0,2}\s*(?:%|persen)|[1-9]\d{0,2}\s*(?:rb|ribu|juta)\b|\d{1,3}(?:\.\d{3})+)/i,
   },
   {
     id: "mkt-fake-resi",
@@ -100,14 +100,40 @@ export function marketplaceSignals(text: string): MarketplaceResult {
   const signals: Signal[] = [];
   for (const rule of SHOP_RULES) {
     const match = text.match(rule.pattern);
-    if (match) {
-      signals.push({
-        label: rule.label,
-        weight: rule.weight,
-        evidence: match[0].trim(),
-        agent: "marketplace",
-      });
+    if (!match) continue;
+    /*
+     * A down-payment that the buyer says is already paid is not a demand.
+     * Judged inside the matched words only, so a later "sudah dibayar" in the
+     * same message does not hide a real "DP transfer dulu".
+     */
+    if (rule.id === "mkt-dp") {
+      const matched = match[0];
+      const start = match.index ?? 0;
+      const before = text.slice(Math.max(0, start - 24), start);
+      // "transfer dulu, sudah saya transfer" is a demand followed by talk of a
+      // past transfer, not an already-paid down payment.
+      const forwardPaid =
+        /\b(?:sudah|lunas)\b[^.!?]{0,30}\b(?:dibayar|transfer|lunas|berhasil)\b/i.exec(
+          matched,
+        );
+      const demand = /\b(?:dulu|segera|wajib|harus)\b/i.exec(matched);
+      const paidForward =
+        forwardPaid !== null && (!demand || forwardPaid.index < demand.index);
+      // Reversed wording puts the paid marker before the verb: "saya sudah
+      // transfer DP 50%".
+      const paidBefore = /\b(?:sudah|telah)\b\s*(?:saya|aku|gue)?\s*$/i.test(
+        before,
+      );
+      if (paidForward || paidBefore || /\bcashback\b/i.test(matched)) {
+        continue;
+      }
     }
+    signals.push({
+      label: rule.label,
+      weight: rule.weight,
+      evidence: match[0].trim(),
+      agent: "marketplace",
+    });
   }
   return { signals };
 }

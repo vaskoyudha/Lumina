@@ -1,5 +1,25 @@
 import { render, screen, within } from "@testing-library/react";
-import SimulasiPage from "@/app/(app)/simulasi/page";
+import SimulasiPage from "@/app/(chat)/simulasi/page";
+
+// The page now lives under the shared workspace shell, whose session read pulls
+// `next/server`; jsdom has no `Request`. The session is irrelevant to the
+// rendered briefing, so stub it before the module graph loads.
+jest.mock("@/lib/auth/server-session", () => ({
+  getSession: jest.fn().mockResolvedValue(null),
+}));
+
+// `WorkspaceFrame` is a client shell; there is no Next router inside jsdom.
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+  }),
+  usePathname: () => "/simulasi",
+}));
 
 describe("halaman misi simulasi", () => {
   it("menampilkan cerita fiktif, tiga babak, tiga akhir, dan jalur L1 yang hidup", () => {
@@ -9,7 +29,9 @@ describe("halaman misi simulasi", () => {
       screen.getByRole("heading", { level: 1, name: "Paket sebelum pulang" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/besok ulang tahun ibu/i)).toBeInTheDocument();
-    expect(screen.getByText(/perkiraan 3–5 menit/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/perkiraan 3–5 menit/i).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText(/FOTO_PAKET\.apk/)).toBeInTheDocument();
     expect(screen.getByText(/3 kemungkinan akhir/i)).toBeInTheDocument();
 

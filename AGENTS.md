@@ -5,71 +5,6 @@ Empat orang, submission 10 November 2026. Branch stream sudah di-merge ke
 Baca `docs/plan.md` (sumber kebenaran produk) dan `STATUS.md` (status per stream)
 sebelum menyentuh kode.
 
-## Aturan keras — palang pintu
-
-**1. shadcn/ui dulu, selalu.**
-
-`src/components/ui/` berisi primitive yang sudah terpasang. Pakai dan susun.
-Menulis `div` bergaya sendiri padahal komponennya ada adalah defect, bukan gaya.
-
-```tsx
-// BENAR — pakai komponen
-<Card><CardHeader><CardTitle>…</CardTitle></CardHeader><CardContent>…</CardContent></Card>
-
-// SALAH — markup sendiri
-<div className="rounded-xl border bg-slate-900 p-4"><h3>…</h3></div>
-```
-
-Komponen yang belum ada: `npx shadcn@latest add <nama> --yes`, lalu **baca file
-yang dihasilkan** dan perbaiki (lihat skill `shadcn-ui`). Jangan pernah menjawab
-"tidak ada komponennya" sebelum menjalankan `npx shadcn@latest info --json`.
-
-**2. Base-nya Radix, jadi `asChild`, bukan `render`.**
-
-```tsx
-<Button asChild variant="outline"><Link href="/darurat">…</Link></Button>
-```
-
-`render={<Link/>}` adalah API Base UI dan gagal di typecheck proyek ini.
-
-**3. Warna hanya dari token.** `--lumina-*` di `src/app/globals.css`. Hex
-literal, `bg-red-500`, `text-emerald-600` dilarang. Aksen tunggal Lumina adalah
-jingga `--lumina-brand` / `bg-brand` — `--accent` adalah surface hover shadcn,
-bukan warna merek. Status memakai `bg-brand-soft` / `text-brand-ink`, bukan hijau.
-Aksen tindakan tetap `--lumina-brand`. Identitas agen memakai ramp
-`--lumina-agent-*`, hanya untuk border/tint bubble agen; status tetap memakai token
-status (`brand`, `warn`, `danger`, netral).
-
-**4. Skor, `risk`, dan `signals` hanya lahir dari `src/lib/scoring/score.ts`.**
-`scoreText()` adalah entrypoint; `scoreWithTrace()` menambahkan jejak agent. LLM
-adalah suara, bukan hakim. Routing giliran (`periksa`/`tanya`/`lanjutan`/`obrolan`)
-ada di `src/lib/companion/turn.ts` dan deterministik — model tidak boleh memutuskan
-apakah engine berjalan. Tidak ada jalur di `companion/` yang boleh menghitung atau
-menggeser skor. Angka akurasi yang dikutip lahir dari `runEval()`
-(`src/lib/scoring/eval.ts`) atas `bench-cases.ts`, bukan dari angka yang diketik
-tangan; menambah aturan berarti menambah kasus bench di commit yang sama.
-
-**5. Kontrak di `src/lib/contracts/` dibekukan** (`score.ts`, `evidence.ts`,
-`answer.ts`, `vision.ts`, `agent-run.ts`). Mengubah satu field berarti memberi
-tahu tiga orang lain **sebelum** commit, bukan sesudah (§9).
-
-**6. Jangan memblokir menunggu stream lain.** Hardcode, tinggalkan
-`TODO(stream-X)`, lanjut.
-
-**7. Tidak ada dependensi baru setelah hari ke-3** (§9).
-
-**8. `/darurat` tidak pernah dijaga login.** Mode darurat harus terbuka tanpa
-akun, sekarang dan setelah perubahan akses apa pun. Kalau middleware ditambahkan
-nanti, pengecualian `/darurat` masuk di commit yang sama.
-
-**9. Auth menyimpan akun sungguhan.** Keputusan pemilik produk 7 November 2026
-mengizinkan database akun dan Google OAuth, menggantikan fasad demo. PostgreSQL
-menyimpan identitas, hash scrypt password, hash token sesi, dan transaksi OAuth
-sementara. Progres dan percakapan tidak masuk database akun. Node 24 dan
-volume PostgreSQL persisten wajib; konfigurasi serta batas hosting ada di `docs/auth.md`.
-`google-auth-library`, `pg`, dan `@types/pg` adalah tambahan dependensi yang diizinkan untuk perubahan
-ini. Jangan mengembalikan password literal atau sesi demo.
-
 ## Stack — jangan diganti tanpa kesepakatan
 
 | Lapisan | Pilihan | Versi terpasang |
@@ -208,8 +143,8 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 | Grup | Shell | Token | Isi |
 |---|---|---|---|
 | `(marketing)` | `SiteProvider` + `SiteHeader` + `Footer` + `ThemeSlider` + `SmoothScroll` | `.landing[data-theme]` (`--ls-*`) | `/` landing |
-| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | simulasi, darurat, profil |
-| `(chat)` | tanpa nav, sidebar sendiri | `--lumina-*` via `.appnext` | `/companion`, `/belajar` |
+| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | darurat, profil |
+| `(chat)` | tanpa nav, sidebar sendiri (`WorkspaceShell`) | `--lumina-*` via `.appnext` | `/companion`, `/belajar`, `/simulasi` |
 | `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
 | `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
 | `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
@@ -267,12 +202,12 @@ src/
 ├── app/
 │   ├── (marketing)/          landing `/` — header, footer, theme slider, smooth scroll
 │   ├── (app)/                SiteNav + footer
-│   │   ├── simulasi/         C · daftar + [id] + layout runner
 │   │   ├── darurat/          D · triage + PDF (tidak pernah dijaga login)
 │   │   └── profil/           akun + kemajuan perangkat
 │   ├── (chat)/               tanpa nav; catatan privasi ada di panel/sidebar
 │   │   ├── companion/        A · percakapan + panel bukti
-│   │   └── belajar/          B · katalog + [modul], sidebar Companion
+│   │   ├── belajar/          B · katalog + [modul], sidebar Companion
+│   │   └── simulasi/         C · daftar + [id] + layout runner, sidebar bersama
 │   ├── admin/                workbench kurikulum, AdminNav sendiri
 │   ├── api/
 │   │   ├── companion/        answer, vision, voice
@@ -282,7 +217,7 @@ src/
 │   └── layout.tsx            `body.appnext`, font, token ground
 ├── components/
 │   ├── ui/                   shadcn — jangan diedit kecuali perbaikan registry
-│   ├── shell/                nav + AuthNav + pembaca sesi
+│   ├── shell/                nav + AuthNav + pembaca sesi + WorkspaceShell
 │   ├── auth/                 AuthDialog, AuthPanel, UserMenu
 │   ├── marketing/            sections landing + powder/ (vendored, Biome-exempt)
 │   ├── brand/                logo + mascot (dipakai shell, marketing, companion)
@@ -317,7 +252,7 @@ sesuatu, minta bentuk datanya, bukan filenya.
 |---|---|---|
 | A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner, PDF |
 | B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
-| C | `app/(app)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
+| C | `app/(chat)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
 | D | `app/(app)/darurat/`, `components/darurat/`, `lib/darurat/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
 
 `components/brand`, `components/auth`, `components/shell`, `lib/auth`,
