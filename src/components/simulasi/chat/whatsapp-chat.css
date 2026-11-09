@@ -128,10 +128,26 @@
   padding: 14px 12px 18px;
   background-color: var(--wa-wallpaper);
   background-image:
-    radial-gradient(circle at 20% 30%, var(--wa-doodle) 0 1.5px, transparent 2px),
-    radial-gradient(circle at 70% 65%, var(--wa-doodle) 0 1px, transparent 1.6px),
-    linear-gradient(115deg, transparent 46%, var(--wa-doodle) 47%, transparent 48%);
-  background-size: 46px 46px, 63px 63px, 120px 120px;
+    radial-gradient(
+      circle at 20% 30%,
+      var(--wa-doodle) 0 1.5px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 70% 65%,
+      var(--wa-doodle) 0 1px,
+      transparent 1.6px
+    ),
+    linear-gradient(
+      115deg,
+      transparent 46%,
+      var(--wa-doodle) 47%,
+      transparent 48%
+    );
+  background-size:
+    46px 46px,
+    63px 63px,
+    120px 120px;
 }
 
 .wa-row {
@@ -298,6 +314,10 @@
 @media (max-width: 480px) {
   .wa-chat {
     height: min(32rem, 72dvh);
+  }
+
+  .wa-chat__fake {
+    display: none;
   }
 
   .wa-bubble {

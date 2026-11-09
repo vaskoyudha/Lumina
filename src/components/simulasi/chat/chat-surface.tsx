@@ -42,7 +42,9 @@ export function ChatSurface({
           {initials}
         </span>
         <div className="wa-chat__identity">
-          <p className="wa-chat__name">{contactName}</p>
+          <p className="wa-chat__name" title={contactName}>
+            {contactName}
+          </p>
           <p className="wa-chat__status" aria-live="polite">
             {status}
           </p>
