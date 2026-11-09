@@ -11,6 +11,7 @@ import {
   LevelFilter,
   ModulKatalog,
 } from "@/components/belajar/modul-katalog";
+import { ProfilePopup } from "@/components/profil/profile-popup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -104,6 +105,8 @@ export function BelajarDashboard({
             />
           ) : null}
         </Link>
+
+        <ProfilePopup className="size-11" />
       </header>
 
       <section className="relative isolate overflow-hidden rounded-card text-bg shadow-[var(--appnext-shadow-soft)]">
