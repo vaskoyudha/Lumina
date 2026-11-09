@@ -65,7 +65,7 @@ export function CommanderCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-semibold text-[12px] text-txt">Lumina</span>
-            <span className="rounded-full border border-line bg-panel-2 px-1.5 py-0.5 font-normal text-[9.5px] text-dim">
+            <span className="nav-active-tint rounded-full px-2.5 py-0.5 font-bold text-[11.5px] text-nav-active-ink">
               Komandan
             </span>
             <span className="ml-auto flex items-center gap-1 text-[10px] text-dim">
