@@ -3,7 +3,7 @@ import { NavWithSession } from "@/components/shell/nav-with-session";
 
 /**
  * (app) shell — Lumina light tokens, product chrome.
- * `/darurat` lives here and is never gated (AGENTS.md).
+ * Profile lives here; community uses the shared workspace.
  *
  * The session read is inside the Suspense boundary, so routes that do not need
  * it keep prerendering statically.

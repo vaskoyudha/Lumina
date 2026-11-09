@@ -162,7 +162,7 @@ export function composeReply(
   // showed nothing to click.
   const next =
     result.risk === "tinggi"
-      ? " Kalau uang sudah terkirim atau kode OTP sudah kamu berikan, berhenti di sini dan buka mode darurat."
+      ? " Kalau uang sudah terkirim atau kode OTP sudah kamu berikan, hentikan komunikasi dan hubungi bank atau penyedia akun melalui kanal resmi dari perangkat lain yang aman."
       : modus
         ? " Kalau mau, saya bisa jelaskan polanya lebih jauh lewat modul yang terkait."
         : " Kalau ada pesan lain dari pengirim yang sama, tempel juga — beberapa pesan sekaligus sering lebih jelas daripada satu.";
@@ -185,7 +185,7 @@ export function suggestedActions(result: ScoreResult | null) {
     });
   }
   if (result.risk === "tinggi") {
-    actions.push({ label: "Ini sedang terjadi", href: "/darurat" });
+    actions.push({ label: "Diskusikan pola ini", href: "/komunitas" });
   }
   const modus = modusFor(result.relatedModule);
   if (modus?.scenarioId) {

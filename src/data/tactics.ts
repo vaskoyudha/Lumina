@@ -271,8 +271,7 @@ export const VERIFY_STEPS: Readonly<
 /**
  * Where to report, per scheme.
  *
- * Labels and URLs come from `src/data/triage.ts` so the chat and the Darurat
- * surface cannot drift apart. Nothing here is invented: no hotline numbers we
+ * Channels are shared by the Companion explanations. Nothing here is invented: no hotline numbers we
  * cannot verify offline, no addresses.
  */
 export interface ReportChannel {

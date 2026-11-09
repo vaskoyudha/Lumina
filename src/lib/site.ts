@@ -132,7 +132,7 @@ export const transformationPairs = [
   { left: "Pesan terasa aneh", right: "Pola yang dikenali" },
   { left: "Takut salah tuduh", right: "Alasan yang bisa dibaca" },
   { left: "Tautan sudah diklik", right: "Langkah pertama jelas" },
-  { left: "OTP sudah diberikan", right: "Jalur darurat terbuka" },
+  { left: "OTP sudah diberikan", right: "Arahan ke kanal resmi" },
   { left: "Uang sudah terkirim", right: "Kanal resmi tersedia" },
   { left: "Bingung harus lapor ke mana", right: "Urutan laporan tersusun" },
   { left: "Data pribadi terasa bocor", right: "Data tetap di perangkat" },
@@ -159,7 +159,7 @@ export const plans = [
       "Pemeriksaan pesan & tautan tanpa batas",
       "Skor 0–100 dengan kutipan alasan",
       "Dua belas modus, dibaca bebas",
-      "Jalur darurat lima kondisi",
+      "Komunitas berbagi modus dan diskusi",
       "Kanal resmi OJK & Komdigi",
       "Tanpa simpan teks di server",
       "Bahasa Indonesia sehari-hari",
@@ -273,7 +273,7 @@ export const faqData: Record<FaqCategory, { q: string; a: string }[]> = {
     },
     {
       q: "Apakah Lumina menggantikan laporan resmi?",
-      a: "Tidak. Lumina membantumu memahami dan menyiapkan langkah, tetapi laporan resmi tetap dibuat lewat kanal bank, IASC OJK, Komdigi, atau Polri. Di jalur darurat, Lumina mengarahkan ke kanal yang tepat.",
+      a: "Tidak. Lumina membantumu memahami dan menyiapkan langkah, tetapi laporan resmi tetap dibuat lewat kanal bank, IASC OJK, Komdigi, atau Polri. Companion menampilkan kanal yang relevan.",
     },
     {
       q: "Apakah ini hanya untuk orang yang sudah pernah tertipu?",
@@ -285,7 +285,7 @@ export const faqData: Record<FaqCategory, { q: string; a: string }[]> = {
     },
     {
       q: "Bagaimana kalau saya sudah terlanjur percaya?",
-      a: "Buka jalur darurat. Pilih kondisi yang paling dekat — OTP sudah diberikan, uang sudah terkirim, tautan sudah diklik, atau APK sudah terpasang — lalu ikuti satu tindakan per langkah.",
+      a: "Hentikan komunikasi dengan pengirim. Hubungi bank atau penyedia akun melalui kanal resmi dari perangkat lain yang aman. Jangan bagikan OTP, PIN, atau password.",
     },
   ],
   Pemeriksaan: [

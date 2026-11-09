@@ -29,7 +29,7 @@ melanjutkan pertanyaan/node di tengah percobaan belum dibuat.
 Katalog dan detail dibaca saat permintaan masuk, sehingga impor perubahan konten
 tidak membutuhkan rebuild. Build tidak membutuhkan database aktif. Jika database
 konten gagal, halaman menampilkan keterangan belum bisa dimuat, bukan materi
-hardcoded tersembunyi. `/darurat` tetap publik dan mandiri.
+hardcoded tersembunyi. Komunitas diskusi membaca database yang sama; panduannya ada di `docs/community.md`.
 
 ## Menjalankan lokal
 
@@ -100,7 +100,7 @@ berakhiran `_test`. Jangan arahkan ke database akun nyata. Suite memeriksa perub
 konten DB, penilaian kuis, isolasi akun, validasi alur, dan retry tanpa duplikasi.
 Tanpa URL tes khusus, suite integrasi dilewati.
 
-Bukti lokal 9 November 2026: `npm run verify` lulus (872 tes, 22 tes integrasi
+Bukti lokal sebelum penggantian Darurat oleh Komunitas (9 November 2026): `npm run verify` lulus (872 tes, 22 tes integrasi
 dilewati pada gate default), kemudian suite PostgreSQL Belajar/Simulasi dijalankan
 terpisah pada `lumina_learning_test` dan 3 tesnya lulus. Migrasi dan seed lokal
 berhasil; seed diulang tanpa konflik. `/belajar`, `/belajar/10`, `/simulasi`,

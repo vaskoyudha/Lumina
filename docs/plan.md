@@ -1,5 +1,7 @@
 # Lumina — Rencana Produk dan Pembagian Kerja
 
+> **Keputusan pemilik produk, 9 November 2026:** fitur Darurat dan PDF dihapus seluruhnya, diganti Komunitas diskusi dengan frontend, backend, dan PostgreSQL. Keputusan ini menggantikan kewajiban Darurat di bagian historis dokumen ini. Publik bisa membaca; akun diperlukan untuk menulis, membalas, memberi reaksi, dan melaporkan. Percakapan Companion tidak otomatis disalin. Spesifikasi aktif: `docs/community.md`.
+
 Empat orang. Enam hari kerja. Satu produk yang bisa dipakai juri dalam lima
 menit. Submission **10 November 2026**.
 

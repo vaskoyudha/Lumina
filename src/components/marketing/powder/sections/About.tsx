@@ -142,7 +142,7 @@ export default function About() {
                         <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Ubah temuan menjadi langkah yang bisa langsung dijalankan.</h4>
                       </div>
                       <div className="framer-11ikhzz" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Lanjut ke modul belajar, simulasi, atau laporan darurat tanpa kehilangan alur.</p>
+                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Lanjut ke modul belajar, simulasi, atau diskusi komunitas tanpa kehilangan alur.</p>
                       </div>
                     </div>
                     <div className="framer-w9w87w" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>

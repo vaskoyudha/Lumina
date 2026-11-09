@@ -50,8 +50,8 @@ function addTwoSafeProofs() {
 
 function expectEmergencyLinks() {
   expect(
-    screen.getByRole("link", { name: /buka mode darurat/i }),
-  ).toHaveAttribute("href", "/darurat");
+    screen.getByRole("link", { name: /diskusikan pola ini/i }),
+  ).toHaveAttribute("href", "/komunitas");
   expect(screen.getByRole("link", { name: /semua simulasi/i })).toHaveAttribute(
     "href",
     "/simulasi",
