@@ -3,6 +3,7 @@
 **Status:** post-submission feature. Spec:
 `docs/superpowers/specs/2026-11-09-loker-tool-design.md`.
 Screenshots and a card walkthrough: `docs/loker-guide.md`.
+User-facing walkthrough: `docs/loker-tool-guide.md`.
 
 ## What it does
 
@@ -166,3 +167,32 @@ f. "Aman dilamar" means both engines found no scam signal in the posting and
 g. The incremental window trusts `fetched_at` and the run table. If the database
    is restored from an old dump, the first scan after restore asks for the full
    month again only when no successful run exists in that dump.
+
+## Verifying locally
+
+a. Apply migrations to the target database: `npm run db:migrate`.
+b. Integration tests need `TEST_DATABASE_URL` pointing at a throwaway database
+   whose name ends in `_test` and differs from `DATABASE_URL`. When it is set,
+   Jest forces `maxWorkers: 1` because the suites reset that same database;
+   without it the PostgreSQL suites are skipped.
+c. Focused suite: `npm test -- src/lib/loker src/app/api/loker`.
+d. Manual smoke while signed out:
+   - `GET /api/loker/scan/status` returns `204` before any run, then the latest
+     run row as JSON.
+   - `POST /api/companion/tools/summary` with a valid body returns `200`, or
+     `503 not-configured` when no model is set. Any extra field returns
+     `400 invalid-request` (the schema is `.strict()`).
+   - `POST /api/loker/scan` returns `401 unauthorized`.
+e. Manual smoke while signed in:
+   - `POST /api/loker/scan` returns `202 {ok, runId}`. A second call inside the
+     10-minute window returns `429`; a concurrent call from a different client
+     key returns `409 scan-running`.
+   - The card polls `/api/loker/scan/status` every three seconds and calls
+     `router.refresh()` once the run settles (`ok` or `failed`).
+
+Verified on 2026-11-09 against `main` (`c2cde73`): 30 suites / 275 tests across
+`src/lib/loker` and `src/app/api/loker` passed with the test database attached;
+a seeded corpus rendered, filtered, and expanded correctly at 1440 px and
+380 px with no horizontal overflow. The scanner subprocess itself was not
+exercised in that pass (Docker was unavailable), so a first in-container scan
+remains the end-to-end check.
