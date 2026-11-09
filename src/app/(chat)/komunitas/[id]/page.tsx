@@ -5,11 +5,9 @@ import { Suspense } from "react";
 import { z } from "zod";
 import { ContentLoading } from "@/components/belajar/content-state";
 import {
-  CommunityRules,
   CommunityThread,
   CommunityUnavailable,
 } from "@/components/community/community-view";
-import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import { getSession } from "@/lib/auth/server-session";
 import { getPost, listReplies } from "@/lib/community/store";
 export const metadata: Metadata = { title: "Diskusi komunitas" };
@@ -49,13 +47,11 @@ export async function ThreadContent({ params, searchParams }: Props) {
   }
   if (!post) notFound();
   return (
-    <WorkspaceShell label="Komunitas" aside={<CommunityRules />}>
-      <CommunityThread
-        post={post}
-        replies={replies}
-        canWrite={!!session}
-        page={page}
-      />
-    </WorkspaceShell>
+    <CommunityThread
+      post={post}
+      replies={replies}
+      canWrite={!!session}
+      page={page}
+    />
   );
 }
