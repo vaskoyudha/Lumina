@@ -84,13 +84,7 @@ export async function BelajarContent() {
         total={sorted.length}
       />
 
-      <div className="flex flex-col gap-3">
-        <CardNote complete={complete} total={sorted.length} />
-        <p className="appnext-caption">
-          Kemajuan belajar dan hasil simulasi disimpan di akunmu. Masuk agar
-          dapat melanjutkan dari perangkat lain.
-        </p>
-      </div>
+      <CardNote complete={complete} total={sorted.length} />
     </BelajarShell>
   );
 }
