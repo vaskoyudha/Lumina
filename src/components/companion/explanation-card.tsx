@@ -62,6 +62,10 @@ function TacticRow({ tactic }: { tactic: TacticExplained }) {
                 Kutipan: “{tactic.evidence}”
               </span>
             ) : null}
+            <span className="mt-1 line-clamp-2 block text-dim text-xs leading-snug group-data-[state=open]:hidden">
+              <span className="font-medium text-txt/80">Ciri: </span>
+              {tactic.tanda}
+            </span>
           </span>
         </CollapsibleTrigger>
 

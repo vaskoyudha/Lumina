@@ -71,21 +71,22 @@ function RailItem({
       aria-current={active ? "page" : undefined}
       onClick={onClick}
       className={cn(
-        "flex min-w-0 items-center rounded-[7px] transition-[background-color,color] duration-150 ease-out",
-        iconsOnly ? "size-9 justify-center" : "gap-2.5 px-2 py-[7px]",
+        "flex min-w-0 items-center rounded-[8px] transition-[background-color,color] duration-150 ease-out",
+        iconsOnly ? "size-10 justify-center" : "min-h-10 gap-2.5 px-2.5 py-2",
         emergency
           ? active
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-chip font-medium text-ink"
-            : "text-ink-soft hover:bg-txt/6 hover:text-ink",
+            ? "bg-chip font-medium text-ink shadow-rest"
+            : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
       )}
     >
-      <Icon aria-hidden strokeWidth={1.75} className="size-[15px] shrink-0" />
+      <Icon aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
       <span
         className={cn(
-          "truncate font-medium text-[12.5px] leading-[1.5]",
+          "truncate font-normal text-[13px] leading-5",
+          active && !emergency && "font-medium",
           iconsOnly && "sr-only",
         )}
       >
@@ -117,19 +118,20 @@ function AgentItem({
       aria-current={active ? "page" : undefined}
       onClick={onShow}
       className={cn(
-        "flex min-w-0 items-center rounded-[7px] transition-[background-color,color] duration-150 ease-out",
+        "flex min-w-0 items-center rounded-[8px] transition-[background-color,color] duration-150 ease-out",
         iconsOnly
-          ? "size-11 justify-center"
-          : "min-h-11 w-full gap-2.5 px-2 py-[7px] text-left",
+          ? "size-10 justify-center"
+          : "min-h-10 w-full gap-2.5 px-2.5 py-2 text-left",
         active
-          ? "bg-chip font-medium text-ink"
-          : "text-ink-soft hover:bg-txt/6 hover:text-ink",
+          ? "bg-chip font-medium text-ink shadow-rest"
+          : "text-ink-soft hover:bg-txt/[0.04] hover:text-ink",
       )}
     >
-      <Bot aria-hidden strokeWidth={1.75} className="size-[15px] shrink-0" />
+      <Bot aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
       <span
         className={cn(
-          "truncate font-medium text-[12.5px] leading-[1.5]",
+          "truncate font-normal text-[13px] leading-5",
+          active && "font-medium",
           iconsOnly ? "sr-only" : "min-w-0 flex-1",
         )}
       >
@@ -138,7 +140,7 @@ function AgentItem({
       {iconsOnly ? null : (
         <span
           aria-hidden
-          className="shrink-0 tabular text-[10px] text-ink-faint"
+          className="shrink-0 rounded-full bg-panel-2 px-1.5 py-0.5 font-medium tabular text-[10.5px] text-ink-mute"
         >
           {AGENT_SEQUENCE.length}
         </span>
@@ -178,6 +180,15 @@ export function NavRail({
     >
       {DESTINATIONS.map((item, index) => (
         <Fragment key={item.href}>
+          {item.emergency ? (
+            <div
+              aria-hidden
+              className={cn(
+                "my-1 border-t border-txt/[0.06]",
+                iconsOnly ? "w-8" : "",
+              )}
+            />
+          ) : null}
           <RailItem
             {...item}
             active={
