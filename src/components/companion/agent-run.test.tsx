@@ -342,6 +342,7 @@ describe("AgentRun", () => {
     await user.click(
       within(message).getByRole("button", { name: /message agent/i }),
     );
+    expect(within(message).getByText("Ciri yang dicek")).toBeInTheDocument();
     expect(within(message).getByText("Pola pesan menekan")).toBeInTheDocument();
     expect(
       within(message).queryByText("Sinyal pasar unik"),
