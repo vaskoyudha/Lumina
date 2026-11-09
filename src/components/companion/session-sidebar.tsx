@@ -308,7 +308,7 @@ export function SessionSidebar({
               aria-label="Lumina — beranda"
               className="min-w-0 flex-1"
             >
-              <LuminaLogo className="h-[24px] w-auto" />
+              <LuminaLogo className="h-[30px] w-auto" />
             </Link>
             {onClose ? (
               <Button

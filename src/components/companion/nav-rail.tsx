@@ -94,6 +94,7 @@ function RailItem({
       <Icon
         aria-hidden
         strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
         className={cn(
           "size-4 shrink-0",
           active && !emergency && "text-nav-active-icon",
@@ -152,6 +153,7 @@ function AgentItem({
       <Bot
         aria-hidden
         strokeWidth={1.8}
+        fill={active ? "currentColor" : "none"}
         className={cn("size-4 shrink-0", active && "text-nav-active-icon")}
       />
       <span
