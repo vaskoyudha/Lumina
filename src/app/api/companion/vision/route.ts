@@ -18,8 +18,12 @@ import {
  * the filename-only check the app already performed.
  */
 
-/** 20 s, matching the voice lane. Measured 10.4 s on the fast account. */
-const TIMEOUT_MS = 20000;
+/**
+ * 45 s. A phone screenshot resized to 1600 px still takes 5–8 s; a text-heavy
+ * one can take 30 s or more, so the old 20 s cap aborted real images before the
+ * upstream answered. The client downscales, so this is headroom, not the norm.
+ */
+const TIMEOUT_MS = 45000;
 
 const MAX_TOKENS = 2000;
 
