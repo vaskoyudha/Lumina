@@ -2,7 +2,15 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
+import * as orchestratorClient from "@/lib/orchestrator/client";
 import * as scoring from "@/lib/scoring/score";
+
+jest.mock("@/lib/orchestrator/client", () => {
+  const actual = jest.requireActual<typeof orchestratorClient>(
+    "@/lib/orchestrator/client",
+  );
+  return { ...actual, streamOrchestrator: jest.fn(actual.streamOrchestrator) };
+});
 
 jest.mock("@/lib/scoring/score", () => {
   const actual = jest.requireActual<typeof scoring>("@/lib/scoring/score");
@@ -173,6 +181,78 @@ describe("CompanionChat · real user intent regressions", () => {
       screen.queryByText(/tidak ada pola penipuan yang jelas/i),
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
+  });
+
+  it("routes an image check through the agent orchestrator", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockImplementationOnce(async (_request, options) => {
+      const event = {
+        type: "plan" as const,
+        runId: "run-image",
+        seq: 1,
+        at: 0,
+        rationale: "Memeriksa lampiran.",
+        agents: [
+          {
+            agent: "message" as const,
+            task: "Baca pesan pada gambar",
+            skills: [],
+            tools: [],
+          },
+        ],
+        planner: "model" as const,
+        ms: 1,
+      };
+      options.onEvent?.(event);
+      return {
+        outcome: "model" as const,
+        text: "Jawaban agen dari gambar.",
+        events: [event],
+        trace: null,
+        score: null,
+      };
+    });
+    fetchMock.mockImplementation(async (input) => {
+      if (String(input).includes("/api/companion/vision")) {
+        return {
+          ok: true,
+          status: 200,
+          body: null,
+          json: async () => ({
+            ok: true,
+            text: "Lowongan kerja Admin Toko, gaji Rp4.500.000.",
+          }),
+        };
+      }
+      return {
+        ok: false,
+        status: 503,
+        body: null,
+        json: async () => ({ error: "not-configured" }),
+      };
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+    const fileInput =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!fileInput) throw new Error("file input missing");
+    await user.upload(
+      fileInput,
+      new File(["image-bytes"], "lowongan.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    await waitFor(() => expect(orchestrate).toHaveBeenCalledTimes(1));
+    const request = orchestrate.mock.calls[0]?.[0];
+    expect(request?.lane).toBe("periksa");
+    expect(request?.question).toBe("Periksa isi gambar ini.");
+    expect(request?.message).toContain("Lowongan kerja Admin Toko");
+    expect(
+      await screen.findByText("Jawaban agen dari gambar."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Proses agen")).toBeInTheDocument();
+    expect(screen.queryByText("Orkestrator")).not.toBeInTheDocument();
   });
 
   it("excludes a checked message from later conversational history in every lane", async () => {

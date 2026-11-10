@@ -1412,18 +1412,28 @@ export function CompanionChat({
             }
 
             /*
-             * The real multi-agent path. It runs only for a checked message
-             * with no attachments, and the local score is still the verdict.
-             * Any failure falls through to the original voice call below.
+             * The real multi-agent path, including checks that carry an image
+             * or file. The attachment text is already folded into `scored` by
+             * the OCR step. Any failure falls through to the voice call below.
              */
-            if (orchestrator && attachments.length === 0) {
+            if (orchestrator) {
               const orchestrated = await streamOrchestrator(
                 {
                   lane: "periksa",
-                  question: text,
-                  message: scored,
+                  question: (
+                    text.trim() ||
+                    (hasImages
+                      ? "Periksa isi gambar ini."
+                      : "Periksa lampiran ini.")
+                  ).slice(0, 2_000),
+                  message:
+                    scored.slice(0, 20_000) ||
+                    attachments[0]?.name ||
+                    "Lampiran tanpa teks.",
                   history: chatHistory.slice(-10),
-                  priorTurns: priorTurns.map((turn) => turn.text).slice(-5),
+                  priorTurns: priorTurns
+                    .map((turn) => turn.text.slice(0, 20_000))
+                    .slice(-5),
                   consent: true,
                 },
                 {
