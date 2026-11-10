@@ -16,6 +16,8 @@ import { aboutCopy, aboutStats } from "@/lib/site";
  * second list to maintain. Alt text names the agent and the surface it reads.
  */
 const CREW_ROLE: Record<DetectorAgent, string> = {
+  email: "agen pemeriksa header email",
+  injection: "agen pemeriksa instruksi tersisip",
   message: "agen pemeriksa pesan",
   link: "agen pemeriksa tautan",
   identity: "agen pemeriksa identitas pengirim",

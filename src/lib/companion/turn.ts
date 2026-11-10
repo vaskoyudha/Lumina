@@ -13,7 +13,7 @@ import { extractLinks } from "@/lib/scoring/link";
  * in about a millisecond before this function was called.
  */
 
-export type Lane = "periksa" | "tanya" | "lanjutan" | "obrolan";
+export type Lane = "periksa" | "tanya" | "lanjutan" | "obrolan" | "belajar";
 
 export interface TurnPlan {
   lane: Lane;
@@ -35,8 +35,8 @@ export interface TurnPlan {
  */
 export const PASTE_LENGTH = 160;
 
-/** Shortest scam in the bench corpus (84). `turn.test.ts` pins it. */
-export const SHORTEST_SCAM = 84;
+/** Shortest scam in the bench corpus (24). `turn.test.ts` pins it. */
+export const SHORTEST_SCAM = 24;
 
 const MONEY =
   /(transfer|rekening|bayar|pembayaran|top\s?up|dana|ovo|gopay|shopeepay|pulsa|qris|nominal|saldo)/i;

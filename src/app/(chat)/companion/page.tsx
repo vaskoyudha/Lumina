@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function CompanionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ panel?: string }>;
+  searchParams: Promise<{ panel?: string; modul?: string }>;
 }) {
   return (
     <Suspense fallback={<CompanionChat />}>

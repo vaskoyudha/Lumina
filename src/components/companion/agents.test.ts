@@ -13,6 +13,8 @@ const IDS: DetectorAgent[] = [
   "job",
   "marketplace",
   "qris",
+  "email",
+  "injection",
   "evidence",
 ];
 

@@ -31,6 +31,8 @@ export const AGENT_SEQUENCE: DetectorAgent[] = [
   "job",
   "marketplace",
   "qris",
+  "email",
+  "injection",
   "evidence",
 ];
 
@@ -50,6 +52,30 @@ export interface AgentProfile {
 }
 
 export const AGENT_REGISTRY: Record<DetectorAgent, AgentProfile> = {
+  email: {
+    id: "email",
+    displayName: "Email",
+    ...STAGE_LABEL.email,
+    mechanism: ["Autentikasi header", "Alamat balasan", "Nama tampilan"],
+    purpose: "Memeriksa header yang tersedia tanpa menebak dari isi email.",
+    flavor: "Memisahkan alamat pengirim dan alamat balasan.",
+    caveat:
+      "Header tempelan dapat dipalsukan; hasil ini bukan verifikasi penyedia penerima.",
+    icon: Fingerprint,
+    portrait: null,
+    identity: "--lumina-agent-email",
+  },
+  injection: {
+    id: "injection",
+    displayName: "Penjaga",
+    ...STAGE_LABEL.injection,
+    mechanism: ["Instruksi ke pemeriksa", "Penyamaran peran", "Klaim skor"],
+    purpose: "Mengenali upaya memerintah sistem untuk melewati pemeriksaan.",
+    flavor: "Isi pesan tidak dapat memerintah pemeriksa.",
+    icon: MessageSquare,
+    portrait: null,
+    identity: "--lumina-agent-injection",
+  },
   message: {
     id: "message",
     displayName: "Mochi",

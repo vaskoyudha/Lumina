@@ -67,6 +67,7 @@ export const COMMUNITY_AGENTS: Record<CommunityAgentId, CommunityAgentProfile> =
       field: "QRIS & pembayaran",
       portrait: "/brand/agents/qris.jpg",
     },
+
     evidence: {
       displayName: "Bao",
       field: "Bukti & pelaporan",
