@@ -4,6 +4,7 @@ import { getModule } from "@/lib/content/store";
 import { CORPUS_LIMIT, capCorpus } from "@/lib/loker/corpus";
 import { loadCorpus } from "@/lib/loker/store";
 import type { LokerCorpus } from "@/lib/loker/types";
+import { isOrchestratorEnabled } from "@/lib/orchestrator/flag";
 
 const EMPTY_CORPUS: LokerCorpus = {
   postings: [],
@@ -41,6 +42,7 @@ export async function CompanionWithSession({
       session={session ? { nama: session.nama, email: session.email } : null}
       initialPanel={panel === "agen" ? "agen" : undefined}
       corpus={corpus}
+      orchestrator={isOrchestratorEnabled()}
       initialModule={
         module?.content
           ? { no: module.metadata.no, title: module.metadata.nama }

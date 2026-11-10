@@ -36,6 +36,29 @@ export const ReportDraftArgsSchema = z
 
 export type ReportDraftArgs = z.infer<typeof ReportDraftArgsSchema>;
 
+/**
+ * A link check carries exactly one URL.
+ *
+ * It is only offered when the reader explicitly asks to inspect a link and the
+ * URL is already in the question. The scanner sees the URL, never the message
+ * it came from.
+ */
+export const CheckLinkArgsSchema = z
+  .object({
+    url: z
+      .string()
+      .min(1)
+      .max(2048)
+      .refine((value) => /^https?:\/\//i.test(value), "invalid-url"),
+  })
+  .strict();
+
+export type CheckLinkArgs = z.infer<typeof CheckLinkArgsSchema>;
+
+/** The confirmation tool carries the URL only so the card can name it. */
+export const AskLinkCheckArgsSchema = CheckLinkArgsSchema;
+export type AskLinkCheckArgs = z.infer<typeof AskLinkCheckArgsSchema>;
+
 const JobSearchToolCallSchema = z
   .object({
     id: z.string(),
@@ -52,9 +75,27 @@ const ReportDraftToolCallSchema = z
   })
   .strict();
 
+const CheckLinkToolCallSchema = z
+  .object({
+    id: z.string(),
+    name: z.literal("check_link"),
+    arguments: CheckLinkArgsSchema,
+  })
+  .strict();
+
+const AskLinkCheckToolCallSchema = z
+  .object({
+    id: z.string(),
+    name: z.literal("ask_link_check"),
+    arguments: AskLinkCheckArgsSchema,
+  })
+  .strict();
+
 export const ToolCallSchema = z.discriminatedUnion("name", [
   JobSearchToolCallSchema,
   ReportDraftToolCallSchema,
+  CheckLinkToolCallSchema,
+  AskLinkCheckToolCallSchema,
 ]);
 
 export type ToolCall = z.infer<typeof ToolCallSchema>;
@@ -139,6 +180,60 @@ export const JOB_SEARCH_TOOL = {
         },
       },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+} as const;
+
+/**
+ * OpenAI-compatible function definition: inspect one URL with the phishing
+ * scanner. The replacement for "paste the link into a separate tool" when the
+ * reader asks the agent directly.
+ */
+export const CHECK_LINK_TOOL = {
+  type: "function",
+  function: {
+    name: "check_link",
+    description:
+      "Periksa satu tautan dengan pemindai phishing url.vet (DNS, TLS, redirect, umur domain, umpan balik ancaman). Panggil hanya setelah pengguna menyetujui pemeriksaan tautan yang disebutnya. Jangan mengarang atau menebak URL.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description:
+            "URL persis yang disebut pengguna, harus diawali http:// atau https://.",
+        },
+      },
+      required: ["url"],
+      additionalProperties: false,
+    },
+  },
+} as const;
+
+/**
+ * OpenAI-compatible function definition: ask before a URL leaves the browser.
+ *
+ * The scanner is a server-side service, so a link is never sent until the
+ * reader taps the confirmation card. The model only names the URL; the card
+ * and the approval live in the browser.
+ */
+export const ASK_LINK_CHECK_TOOL = {
+  type: "function",
+  function: {
+    name: "ask_link_check",
+    description:
+      "Tanyakan lebih dulu apakah pengguna mau tautan yang disebutnya diperiksa dengan pemindai phishing. Panggil ini ketika pengguna meminta memeriksa tautan, website, atau URL, dan URL-nya sudah ada di pertanyaan. Jangan memanggil check_link sebelum pengguna menyetujui.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description:
+            "URL persis yang disebut pengguna, harus diawali http:// atau https://.",
+        },
+      },
+      required: ["url"],
       additionalProperties: false,
     },
   },

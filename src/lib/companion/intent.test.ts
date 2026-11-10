@@ -3,6 +3,7 @@ import {
   isIncidentNarrative,
   learningModulesFor,
   wantsJobSearch,
+  wantsLinkCheck,
 } from "@/lib/companion/intent";
 import { isQuestionAbout } from "@/lib/companion/turn";
 import { SCAM_CASES } from "@/lib/scoring/bench-cases";
@@ -58,5 +59,19 @@ describe("conversation intent before scoring", () => {
     expect(wantsJobSearch("jangan cari lowongan, akun saya diretas")).toBe(
       false,
     );
+  });
+
+  it("only authorises a link scan on an explicit request with the URL", () => {
+    expect(
+      wantsLinkCheck("tolong cek tautan https://bca-verif.xyz/login ini aman?"),
+    ).toBe(true);
+    expect(
+      wantsLinkCheck("periksa website https://example.com apakah resmi"),
+    ).toBe(true);
+    expect(wantsLinkCheck("https://bca-verif.xyz/login")).toBe(false);
+    expect(wantsLinkCheck("apa itu phishing?")).toBe(false);
+    expect(
+      wantsLinkCheck("jangan cek https://example.com, itu situs kantor"),
+    ).toBe(false);
   });
 });
