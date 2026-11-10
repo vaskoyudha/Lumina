@@ -50,10 +50,18 @@ npm run format         # biome format --write
 npm run db:migrate     # jalankan migrasi; DATABASE_URL harus menunjuk DB tujuan
 npm run db:cleanup     # hapus sesi/state OAuth/penghitung kedaluwarsa
 npm run db:import-sqlite -- <backup.sqlite>  # cutover akun, sumber read-only
+npm run wip            # semua worktree: berkas kotor + commit belum di-push
 ```
 
 `npm run verify` harus lulus sebelum commit. Kalau gagal, perbaiki — jangan
 melewati gate.
+
+Sebelum `git switch`/`git checkout` di checkout bersama, jalankan `npm run wip`.
+Checkout ini dipakai beberapa stream sekaligus, jadi suntingan yang belum
+di-commit ikut pindah branch dan tampak "hilang". Commit per path
+(`git commit -- <berkas>`) dan push branch segera setelah satu irisan
+berfungsi, supaya branch switch, reset, atau `git add -A` dari sesi lain tidak
+bisa menyembunyikannya.
 
 Selain gate, ada dua jebakan:
 
