@@ -1,11 +1,11 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { CommunityAside } from "@/components/community/community-aside";
 import {
   PostEditor,
   TimelineComposer,
 } from "@/components/community/community-editor";
 import { EXPLORE_EVENT } from "@/components/community/community-explore";
-import { CommunityFrame } from "@/components/community/community-frame";
 import {
   CommunityFeed,
   CommunityThread,
@@ -39,6 +39,7 @@ const post: CommunityPost = {
   title: "Pesan kurir meminta APK baru",
   body: "Pesan mengaku kurir meminta memasang aplikasi. Bagaimana cara memeriksanya?",
   sourceUrl: null,
+  imageUrl: null,
   createdAt: "2026-11-09T06:00:00Z",
   updatedAt: "2026-11-09T06:00:00Z",
   replies: 0,
@@ -88,6 +89,44 @@ it("links real posts and renders user text as text rather than HTML", () => {
   expect(document.querySelector("script")).toBeNull();
   expect(screen.getByText(/belum terverifikasi/)).toBeInTheDocument();
 });
+it("renders a seed cover on the timeline and the thread", () => {
+  const covered = {
+    ...post,
+    imageUrl: "/images/community/qris-palsu.jpg",
+  };
+  const feed = render(
+    <CommunityFeed
+      posts={[covered]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite
+    />,
+  );
+  expect(
+    feed.getByTestId("post-image").querySelector("img")?.getAttribute("src"),
+  ).toContain("qris-palsu");
+  feed.unmount();
+  const thread = render(
+    <CommunityThread post={covered} replies={[]} canWrite={false} page={1} />,
+  );
+  expect(
+    thread
+      .getByTestId("thread-image")
+      .querySelector("img")
+      ?.getAttribute("src"),
+  ).toContain("qris-palsu");
+});
+it("renders no cover for a post without one", () => {
+  render(
+    <CommunityFeed
+      posts={[post]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite
+    />,
+  );
+  expect(screen.queryByTestId("post-image")).toBeNull();
+});
 it("creates a topic with selected category and redirects to its persisted id", async () => {
   const user = userEvent.setup();
   render(<PostEditor />);
@@ -120,6 +159,33 @@ it("keeps input and displays a retryable save error", async () => {
   ).toBeInTheDocument();
   expect(screen.getByLabelText("Ceritakan konteksnya")).toHaveValue(post.body);
   expect(push).not.toHaveBeenCalled();
+});
+it("places the inline reply composer above the reply list", () => {
+  render(
+    <CommunityThread
+      post={{ ...post, replies: 1 }}
+      replies={[
+        {
+          id: "reply-order",
+          author: "Anggota lain",
+          body: "Balasan uji untuk urutan.",
+          createdAt: post.createdAt,
+          updatedAt: post.createdAt,
+          isOwner: false,
+        },
+      ]}
+      canWrite
+      page={1}
+      viewerName="Rina"
+    />,
+  );
+  const composer = screen.getByRole("textbox", { name: "Tulis balasan" });
+  const reply = screen.getByRole("article", {
+    name: "Balasan dari Anggota lain",
+  });
+  expect(
+    composer.compareDocumentPosition(reply) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
 });
 it("persists a reply and helpful reaction from the real thread controls", async () => {
   const user = userEvent.setup();
@@ -405,44 +471,37 @@ it("opens the filter panel when the page is opened at the explore hash", async (
   });
 });
 
-it("keeps the cloned shell navigation connected to real Lumina routes for guests", async () => {
-  const user = userEvent.setup();
-  render(
-    <CommunityFrame session={null}>
-      <CommunityFeed
-        posts={[]}
-        total={0}
-        query={QuerySchema.parse({})}
-        canWrite={false}
-      />
-    </CommunityFrame>,
-  );
-  const nav = within(
-    screen.getByRole("navigation", { name: "Navigasi komunitas" }),
-  );
-  expect(nav.getByRole("link", { name: "Beranda" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
-  expect(nav.getByRole("link", { name: "Profil" })).toHaveAttribute(
-    "href",
-    "/masuk",
-  );
-  expect(nav.getByRole("link", { name: "Companion" })).toHaveAttribute(
-    "href",
-    "/companion",
-  );
-  expect(screen.getAllByRole("main")).toHaveLength(1);
+it("renders the X-style community rail with news, trends, and the moderator entry", () => {
+  render(<CommunityAside moderator latest={[post]} trending={[post]} />);
   expect(
-    screen.queryByRole("button", { name: /Percakapan baru/ }),
-  ).not.toBeInTheDocument();
-  await user.click(nav.getByRole("button", { name: "Menu komunitas" }));
-  expect(screen.getByRole("menuitem", { name: "Belajar" })).toHaveAttribute(
+    screen.getByRole("textbox", { name: "Cari di komunitas" }),
+  ).toHaveAttribute("placeholder", "Cari di komunitas");
+  expect(screen.getByText("Kabar komunitas")).toBeInTheDocument();
+  expect(screen.getByText("Yang sedang dibahas")).toBeInTheDocument();
+  expect(
+    screen.getAllByRole("link", { name: post.title }).length,
+  ).toBeGreaterThan(0);
+  expect(screen.getByRole("link", { name: "Lihat semua" })).toHaveAttribute(
+    "href",
+    "/komunitas?sort=ramai",
+  );
+  expect(
+    screen.getByRole("link", { name: "Tinjau laporan komunitas" }),
+  ).toHaveAttribute("href", "/komunitas/moderasi");
+  expect(screen.getByRole("link", { name: "Belajar" })).toHaveAttribute(
     "href",
     "/belajar",
   );
-  expect(screen.getByRole("menuitem", { name: "Simulasi" })).toHaveAttribute(
-    "href",
-    "/simulasi",
+});
+
+it("dismisses the news card and gates the moderator entry for guests", async () => {
+  const user = userEvent.setup();
+  render(<CommunityAside latest={[post]} trending={[post]} />);
+  await user.click(
+    screen.getByRole("button", { name: "Tutup kabar komunitas" }),
   );
+  expect(screen.queryByText("Kabar komunitas")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: "Tinjau laporan komunitas" }),
+  ).not.toBeInTheDocument();
 });

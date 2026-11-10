@@ -355,7 +355,7 @@ export function SessionSidebar({
           <Button
             onClick={onNew}
             data-pressable
-            className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-slab transition-[filter,transform,box-shadow] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:translate-y-[2px] active:shadow-slab-pressed"
+            className="h-auto w-full justify-between gap-2 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to py-2 pr-1.5 pl-3.5 font-semibold text-[13px] text-bg shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_4px_0_0_var(--color-brand-ink)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to hover:shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_6px_0_0_var(--color-brand-ink)] active:translate-y-[4px]! active:transform-none active:shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_0px_0_0_var(--color-brand-ink)] active:[--t-approach:80ms] active:duration-75"
           >
             <span>Percakapan baru</span>
             <span className="flex size-6 items-center justify-center rounded-full bg-bg text-brand-ink shadow-sm">
@@ -479,7 +479,7 @@ export function SessionSidebar({
         data-pressable
         aria-label="Percakapan baru"
         title="Percakapan baru"
-        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to p-0 text-bg shadow-slab transition-[filter,transform,box-shadow] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:translate-y-[2px] active:shadow-slab-pressed"
+        className="size-9 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to p-0 text-bg shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_3px_0_0_var(--color-brand-ink)] transition-[background-color,color,transform,translate,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to hover:shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_5px_0_0_var(--color-brand-ink)] active:translate-y-[3px]! active:transform-none active:shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_0px_0_0_var(--color-brand-ink)] active:[--t-approach:80ms] active:duration-75"
       >
         <Plus aria-hidden strokeWidth={2} className="size-4" />
       </Button>

@@ -4,8 +4,8 @@ import {
   ArrowUpRight,
   MessageCircle,
   Search,
-  Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ContentControls,
@@ -50,9 +50,12 @@ import { cn } from "@/lib/utils";
 export function CommunityRules({ moderator = false }: { moderator?: boolean }) {
   return (
     <div className="flex flex-col gap-4">
-      <Card data-community-panel className="gap-3 rounded-2xl py-4 shadow-none">
+      <Card
+        data-community-panel
+        className="gap-3 rounded-card border border-line bg-panel py-4 ring-0 shadow-[var(--appnext-shadow-ambient)]"
+      >
         <CardHeader>
-          <CardTitle className="text-xl font-extrabold">
+          <CardTitle className="text-base font-semibold">
             Ruang saling menjaga
           </CardTitle>
           <CardDescription>
@@ -78,9 +81,12 @@ export function CommunityRules({ moderator = false }: { moderator?: boolean }) {
           </ul>
         </CardContent>
       </Card>
-      <Card data-community-panel className="gap-3 rounded-2xl py-4 shadow-none">
+      <Card
+        data-community-panel
+        className="gap-3 rounded-card border border-line bg-panel py-4 ring-0 shadow-[var(--appnext-shadow-ambient)]"
+      >
         <CardHeader>
-          <CardTitle className="text-xl font-extrabold">
+          <CardTitle className="text-base font-semibold">
             Periksa sebelum menyebarkan
           </CardTitle>
           <CardDescription className="text-brand-ink">
@@ -187,30 +193,11 @@ export function CommunityFeed({
   const filtered =
     !!query.q || !!query.category || query.sort === "belum-dibalas";
   return (
-    <div className="min-w-0">
-      <header
-        data-community-header
-        className="flex min-h-14 items-center justify-between px-4 py-2"
-      >
-        <h1 className="text-xl font-bold">Komunitas</h1>
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          className="size-11 rounded-full"
-        >
-          <Link
-            href={queryHref(query, { sort: "ramai", page: 1 })}
-            aria-label="Lihat diskusi ramai"
-          >
-            <Sparkles aria-hidden />
-          </Link>
-        </Button>
-      </header>
-      <TimelineComposer canWrite={canWrite} viewerName={viewerName} />
+    <div className="mx-auto flex w-full max-w-2xl min-w-0 flex-col overflow-clip rounded-card border border-line bg-panel shadow-[var(--appnext-shadow-ambient)]">
       <nav
         aria-label="Urutan diskusi"
-        className="grid grid-cols-3 border-b border-line"
+        data-community-header
+        className="sticky top-0 z-10 grid grid-cols-3 border-b border-line bg-panel/90 backdrop-blur-md"
       >
         {[
           ["terbaru", "Terbaru"],
@@ -225,8 +212,10 @@ export function CommunityFeed({
             })}
             aria-current={query.sort === sort ? "page" : undefined}
             className={cn(
-              "relative flex min-h-14 items-center justify-center px-1 text-center text-sm transition-colors hover:bg-panel-2",
-              query.sort === sort ? "font-bold text-txt" : "text-dim",
+              "relative flex min-h-12 items-center justify-center px-1 text-center text-sm transition-colors hover:bg-panel-2",
+              query.sort === sort
+                ? "font-semibold text-txt"
+                : "text-dim hover:text-txt",
             )}
           >
             {label}
@@ -239,11 +228,12 @@ export function CommunityFeed({
           </Link>
         ))}
       </nav>
+      <TimelineComposer canWrite={canWrite} viewerName={viewerName} />
       <ExplorePanel defaultOpen={!!query.q || !!query.category}>
-        <summary className="cursor-pointer px-4 py-3 text-sm text-brand-ink">
+        <summary className="cursor-pointer border-b border-line px-4 py-3 text-sm font-medium text-brand-ink">
           Cari dan filter diskusi
         </summary>
-        <div className="space-y-3 px-4 pb-4">
+        <div className="space-y-3 border-b border-line px-4 py-4">
           <form
             method="get"
             action="/komunitas"
@@ -298,71 +288,88 @@ export function CommunityFeed({
           </nav>
         </div>
       </ExplorePanel>
-      <h2 className="border-b border-line px-4 py-3 text-xs text-dim [overflow-wrap:anywhere]">
+      <h2 className="border-b border-line px-4 py-2 text-center text-xs text-brand-ink [overflow-wrap:anywhere]">
         {query.q ? `Hasil untuk “${query.q}” · ` : ""}
         {total} diskusi
       </h2>
       {posts.length ? (
         <section aria-label="Linimasa diskusi" className="divide-y divide-line">
-          {posts.map((post) => (
+          {posts.map((post, index) => (
             <article
               key={post.id}
               aria-labelledby={`post-${post.id}`}
-              className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3 px-4 py-3 transition-colors hover:bg-panel-2/60"
+              className="min-w-0 px-4 py-4 transition-colors hover:bg-panel-2/40"
             >
-              <AuthorAvatar name={post.author} />
-              <div className="min-w-0">
-                <div className="-mt-2 -mr-2 flex items-start justify-between gap-1">
-                  <div className="min-w-0 pt-2">
-                    <Identity
-                      name={post.author}
-                      date={post.createdAt}
-                      updated={post.updatedAt}
-                    />
+              <div className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3">
+                <AuthorAvatar name={post.author} />
+                <div className="min-w-0">
+                  <div className="-mt-2 -mr-2 flex items-start justify-between gap-1">
+                    <div className="min-w-0 pt-2">
+                      <Identity
+                        name={post.author}
+                        date={post.createdAt}
+                        updated={post.updatedAt}
+                      />
+                    </div>
+                    <ContentControls post={post} canWrite={canWrite} compact />
                   </div>
-                  <ContentControls post={post} canWrite={canWrite} compact />
-                </div>
-                <p className="mt-0.5 text-xs text-brand-ink">
-                  {CATEGORIES[post.category].label}
-                </p>
-                <h3
-                  id={`post-${post.id}`}
-                  className="mt-1 text-[15px] font-bold leading-5 [overflow-wrap:anywhere]"
-                >
-                  <Link
-                    href={`/komunitas/${post.id}`}
-                    className="hover:underline underline-offset-2"
+                  <p className="mt-0.5 text-xs font-medium text-brand-ink">
+                    {CATEGORIES[post.category].label}
+                  </p>
+                  <h3
+                    id={`post-${post.id}`}
+                    className="mt-1 text-[17px] font-semibold leading-6 [overflow-wrap:anywhere]"
                   >
-                    {post.title}
-                  </Link>
-                </h3>
-                <p className="mt-1 line-clamp-6 whitespace-pre-line text-[15px] leading-5 [overflow-wrap:anywhere]">
-                  {postBody(post)}
-                </p>
-                <p className="mt-2 text-xs text-dim">
-                  Dibagikan anggota · belum terverifikasi
-                </p>
-                <div className="-ml-3 mt-1 flex flex-wrap items-start gap-x-5">
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="min-h-11 rounded-full px-3 text-xs text-dim"
-                  >
-                    <Link href={`/komunitas/${post.id}#balasan`}>
-                      <MessageCircle aria-hidden />
-                      {post.replies} balasan
+                    <Link
+                      href={`/komunitas/${post.id}`}
+                      className="hover:underline underline-offset-2"
+                    >
+                      {post.title}
                     </Link>
-                  </Button>
-                  <HelpfulButton post={post} canWrite={canWrite} compact />
+                  </h3>
+                  <p className="mt-1 line-clamp-6 whitespace-pre-line text-[15px] leading-5 [overflow-wrap:anywhere]">
+                    {postBody(post)}
+                  </p>
+                  {post.imageUrl && (
+                    <div
+                      data-testid="post-image"
+                      className="relative mt-3 aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-panel-2"
+                    >
+                      <Image
+                        src={post.imageUrl}
+                        alt=""
+                        fill
+                        loading={index === 0 ? "eager" : "lazy"}
+                        sizes="(max-width: 640px) 100vw, 720px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <p className="mt-2 text-xs text-dim">
+                    Dibagikan anggota · belum terverifikasi
+                  </p>
+                  <div className="-ml-3 mt-1 flex flex-wrap items-start gap-x-5">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="min-h-11 rounded-full px-3 text-xs text-dim"
+                    >
+                      <Link href={`/komunitas/${post.id}#balasan`}>
+                        <MessageCircle aria-hidden />
+                        {post.replies} balasan
+                      </Link>
+                    </Button>
+                    <HelpfulButton post={post} canWrite={canWrite} compact />
+                  </div>
                 </div>
               </div>
             </article>
           ))}
         </section>
       ) : (
-        <Empty className="items-start rounded-none border-0 px-8 py-10 text-left">
+        <Empty className="items-start rounded-none border-0 px-8 py-12 text-left">
           <EmptyHeader className="items-start text-left">
-            <EmptyTitle className="text-3xl font-extrabold leading-tight">
+            <EmptyTitle className="text-2xl font-semibold leading-tight">
               {filtered
                 ? "Belum ada diskusi yang cocok"
                 : "Percakapan pertama bisa dimulai darimu"}
@@ -374,7 +381,10 @@ export function CommunityFeed({
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent className="items-start">
-            <Button asChild className="min-h-11 rounded-full px-5 font-bold">
+            <Button
+              asChild
+              className="min-h-11 rounded-full px-5 font-semibold"
+            >
               <Link
                 href={
                   filtered
@@ -394,7 +404,7 @@ export function CommunityFeed({
           </EmptyContent>
         </Empty>
       )}
-      <div className="px-4">
+      <div className="px-4 pb-3">
         <Pagination
           page={query.page}
           total={total}
@@ -452,56 +462,82 @@ export function CommunityThread({
   replies,
   canWrite,
   page,
+  viewerName,
 }: {
   post: CommunityPost;
   replies: CommunityReply[];
   canWrite: boolean;
   page: number;
+  viewerName?: string;
 }) {
   return (
-    <div className="w-full min-w-0 pb-8">
-      <div>
-        <div
-          data-community-header
-          className="flex min-h-14 items-center gap-3 border-b border-line px-4 py-2"
+    <div className="flex w-full min-w-0 flex-col pb-8">
+      <div
+        data-community-header
+        className="sticky top-0 z-10 flex items-center gap-3 border-b border-line bg-panel/95 px-2 py-2 backdrop-blur"
+      >
+        <Button
+          asChild
+          variant="ghost"
+          size="icon"
+          className="size-11 shrink-0 rounded-full"
         >
-          <Button asChild variant="ghost" className="min-h-11 rounded-full">
-            <Link href="/komunitas">
-              <ArrowLeft aria-hidden />
-              Semua diskusi
-            </Link>
-          </Button>
-        </div>
-        <article
-          aria-labelledby="thread-title"
-          className="min-w-0 px-4 py-5 sm:px-6"
-        >
-          <div className="mb-4 flex items-center gap-3">
+          <Link href="/komunitas" aria-label="Kembali ke semua diskusi">
+            <ArrowLeft aria-hidden />
+          </Link>
+        </Button>
+        <h1 className="truncate text-lg font-bold leading-tight">Diskusi</h1>
+      </div>
+
+      <Card className="mt-3 gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+        <article aria-labelledby="thread-title" className="min-w-0 p-4 sm:p-6">
+          <div className="flex items-start gap-3">
             <AuthorAvatar name={post.author} />
-            <Identity
-              name={post.author}
-              date={post.createdAt}
-              updated={post.updatedAt}
-            />
+            <div className="min-w-0 flex-1">
+              <Identity
+                name={post.author}
+                date={post.createdAt}
+                updated={post.updatedAt}
+              />
+              <Badge
+                variant="secondary"
+                className="mt-1 bg-brand-soft text-brand-ink"
+              >
+                {CATEGORIES[post.category].label}
+              </Badge>
+            </div>
+            <div className="shrink-0">
+              <ContentControls post={post} canWrite={canWrite} compact />
+            </div>
           </div>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="bg-brand-soft text-brand-ink">
-              {CATEGORIES[post.category].label}
-            </Badge>
-          </div>
-          <h1
+          <h2
             id="thread-title"
-            className="break-words text-2xl font-semibold leading-snug [overflow-wrap:anywhere]"
+            className="mt-3 break-words text-xl font-semibold leading-snug [overflow-wrap:anywhere]"
           >
             {post.title}
-          </h1>
+          </h2>
+          {post.imageUrl && (
+            <div
+              data-testid="thread-image"
+              className="relative mt-4 aspect-[16/9] overflow-hidden rounded-card border border-line bg-panel-2"
+            >
+              <Image
+                src={post.imageUrl}
+                alt=""
+                fill
+                loading="eager"
+                sizes="(max-width: 768px) 100vw, 720px"
+                className="object-cover"
+              />
+            </div>
+          )}
           {postBody(post) && (
             <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed [overflow-wrap:anywhere]">
               {postBody(post)}
             </p>
           )}
           {post.sourceUrl && (
-            <div className="mt-4 min-w-0 rounded-2xl bg-panel-2 p-4">
+            <div className="mt-4 min-w-0 rounded-card border border-line bg-panel-2 p-4">
               <p className="text-xs font-medium text-dim">
                 Sumber yang dibagikan penulis
               </p>
@@ -519,80 +555,76 @@ export function CommunityThread({
               </p>
             </div>
           )}
-          <p className="mt-5 text-xs text-dim">
+          <p className="mt-4 text-xs text-dim">
             Dibagikan anggota · belum terverifikasi
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-line py-3 text-sm text-dim">
-            <span>
-              <strong className="font-semibold text-txt">{post.replies}</strong>{" "}
-              balasan
-            </span>
-            <span>
-              <strong className="font-semibold text-txt">{post.helpful}</strong>{" "}
-              membantu
-            </span>
-          </div>
-          <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-line py-2 text-sm text-dim">
+            <a
+              href="#balasan"
+              className="flex min-h-11 items-center gap-1.5 rounded-full text-sm text-dim hover:text-txt"
+            >
+              <MessageCircle aria-hidden className="size-4" />
+              {post.replies} balasan
+            </a>
             <HelpfulButton post={post} canWrite={canWrite} compact />
-            <ContentControls post={post} canWrite={canWrite} />
           </div>
         </article>
+
         <section
           id="balasan"
           aria-labelledby="replies-title"
-          className="min-w-0 scroll-mt-4 border-t border-line"
+          className="min-w-0 scroll-mt-16"
         >
-          <div className="border-b border-line px-4 py-5 sm:px-6">
-            <h2 id="replies-title" className="mb-4 text-base font-semibold">
-              Ikut berdiskusi
-            </h2>
-            {canWrite ? (
-              <ReplyEditor postId={post.id} />
-            ) : (
-              <div className="flex flex-col gap-3">
-                <p className="text-sm text-dim">
-                  Masuk untuk membalas menggunakan akun Lumina.
-                </p>
-                <Button asChild className="min-h-11 w-fit rounded-full">
-                  <Link href="/masuk">Masuk untuk membalas</Link>
-                </Button>
-              </div>
-            )}
+          <h2 id="replies-title" className="sr-only">
+            Balasan
+          </h2>
+          {canWrite ? (
+            <ReplyEditor postId={post.id} inline viewerName={viewerName} />
+          ) : (
+            <div className="flex flex-col gap-3 border-b border-line px-4 py-4 sm:px-6">
+              <p className="text-sm text-dim">
+                Masuk untuk membalas menggunakan akun Lumina.
+              </p>
+              <Button asChild className="min-h-11 w-fit rounded-full">
+                <Link href="/masuk">Masuk untuk membalas</Link>
+              </Button>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3 sm:px-6">
+            <h3 className="text-sm font-semibold">
+              Balasan{" "}
+              <span className="font-normal text-dim">· {post.replies}</span>
+            </h3>
+            <span className="text-xs text-dim">Kronologis</span>
           </div>
-          <h3 className="border-b border-line px-4 py-3 text-sm font-medium sm:px-6">
-            Balasan <span className="ml-1 text-dim">· {post.replies}</span>
-          </h3>
           {replies.length ? (
             <div className="divide-y divide-line">
-              {replies.map((reply, index) => (
+              {replies.map((reply) => (
                 <article
                   key={reply.id}
                   aria-label={`Balasan dari ${reply.author}`}
-                  className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3 px-4 py-5 sm:px-6"
+                  className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-6"
                 >
-                  <div className="flex flex-col items-center gap-2">
-                    <AuthorAvatar name={reply.author} />
-                    {index < replies.length - 1 && (
-                      <span
-                        aria-hidden
-                        className="min-h-6 w-px flex-1 bg-line"
+                  <AuthorAvatar name={reply.author} />
+                  <div className="min-w-0">
+                    <div className="flex items-start justify-between gap-1">
+                      <Identity
+                        name={reply.author}
+                        date={reply.createdAt}
+                        updated={reply.updatedAt}
                       />
-                    )}
-                  </div>
-                  <div className="min-w-0 space-y-3">
-                    <Identity
-                      name={reply.author}
-                      date={reply.createdAt}
-                      updated={reply.updatedAt}
-                    />
-                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
+                      <div className="shrink-0">
+                        <ContentControls
+                          post={post}
+                          reply={reply}
+                          canWrite={canWrite}
+                          compact
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
                       {reply.body}
                     </p>
-                    <ContentControls
-                      post={post}
-                      reply={reply}
-                      canWrite={canWrite}
-                    />
                   </div>
                 </article>
               ))}
@@ -612,7 +644,7 @@ export function CommunityThread({
             />
           </div>
         </section>
-      </div>
+      </Card>
     </div>
   );
 }
