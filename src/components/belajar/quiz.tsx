@@ -38,6 +38,36 @@ const LETTERS = ["A", "B", "C", "D", "E"] as const;
 const PASS_MARK = 0.6;
 
 /**
+ * Deterministic option order per question and retry: it removes the fixed
+ * "correct answer is B" position without breaking SSR hydration or the answer
+ * ids stored on the server.
+ */
+function mulberry32(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleOptions<T>(items: readonly T[], seedText: string): T[] {
+  let seed = 2166136261;
+  for (let i = 0; i < seedText.length; i += 1) {
+    seed ^= seedText.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+  const random = mulberry32(seed);
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
  * One question at a time ("apa yang kamu lakukan sekarang?"). Picking locks
  * the answer and shows the rationale immediately — the same teaching rule
  * the simulation uses (§5-C) — then the learner advances with an explicit
@@ -67,6 +97,7 @@ export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
 
   const total = questions.length;
   const question = questions[index];
+  const options = shuffleOptions(question.options, `${question.id}:${retries}`);
   const isLast = index === total - 1;
   const locked = picked !== null;
   const wasCorrect = locked && picked === question.correctId;
@@ -230,7 +261,7 @@ export function Quiz({ questions, onDone, onAttempt }: QuizProps) {
       </h3>
 
       <div className="flex flex-col gap-2.5">
-        {question.options.map((option, i) => {
+        {options.map((option, i) => {
           const isPicked = picked === option.id;
           const isCorrect = option.id === question.correctId;
           const state = !locked

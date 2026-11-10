@@ -212,9 +212,9 @@ export const testimonialCopy = {
     },
     {
       quote:
-        "184.302 laporan penipuan di IASC OJK, dijumlahkan dari sepuluh modus yang punya angka resmi.",
+        "184.302 laporan penipuan di IASC OJK (November 2024–Oktober 2025), dijumlahkan dari sepuluh modus yang punya angka resmi.",
       author: "— IASC OJK",
-      meta: "Dijumlahkan dari tabel OJK",
+      meta: "Data OJK, Nov 2024–Okt 2025",
       progress: "100%",
     },
   ],
