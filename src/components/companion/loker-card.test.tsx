@@ -69,4 +69,29 @@ describe("LokerCard", () => {
       "https://id.jobstreet.com/job/1",
     );
   });
+
+  it("recommends a clean posting and says what the engines found", async () => {
+    await renderOpen();
+    expect(screen.getByText("Aman dilamar")).toBeInTheDocument();
+    expect(
+      screen.getByText(/kedua penilaian tidak menemukan tanda penipuan/i),
+    ).toBeInTheDocument();
+  });
+
+  it("downgrades the recommendation and lists the evidence for it", async () => {
+    await renderOpen({
+      sentinelStatus: "suspicious",
+      sentinelFlags: ["domain_baru"],
+      domainAgeDays: 4,
+    });
+    expect(screen.getByText("Periksa dulu")).toBeInTheDocument();
+    // The flag appears twice on purpose: in the recommendation line and in the
+    // expanded "Catatan Sentinel" list.
+    expect(
+      screen.getAllByText(/domain perusahaan masih baru/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/domain lamaran baru berumur 4 hari/i),
+    ).toBeInTheDocument();
+  });
 });
