@@ -203,7 +203,13 @@ export class SubagentRuntime {
   /** Start a new named child. Same case+agent reuses the existing session. */
   async spawn(envelope: SubagentEnvelope): Promise<SubagentRunResult> {
     const existing = this.get(envelope.caseId, envelope.agent);
-    if (existing) return this.send(envelope);
+    if (existing) {
+      console.info(
+        `[subagent] reuse agent=${envelope.agent} turns=${existing.turns}`,
+      );
+      return this.send(envelope);
+    }
+    console.info(`[subagent] spawn agent=${envelope.agent}`);
     return this.execute(this.create(envelope), envelope);
   }
 
