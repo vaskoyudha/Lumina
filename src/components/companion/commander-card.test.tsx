@@ -24,7 +24,7 @@ describe("CommanderCard", () => {
     expect(screen.getByText(/membaca pesan/i)).toBeInTheDocument();
   });
 
-  it("shows the announcement and the called count", () => {
+  it("names the agents Lumina delegates to", () => {
     render(
       <CommanderCard
         phase="preparing"
@@ -36,7 +36,17 @@ describe("CommanderCard", () => {
     expect(
       screen.getByText(/saya melihat pola permintaan otp/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/menyiapkan 2 agen/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/mendelegasikan ke mochi dan ruru/i),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the delegation visible when the run stops short", () => {
+    render(<CommanderCard phase="stopped" agents={agents} />);
+    expect(
+      screen.getByText(/mendelegasikan ke mochi dan ruru/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/ringkasan tidak tersedia/i)).toBeInTheDocument();
   });
 
   it("counts elapsed time while it is still reading", () => {

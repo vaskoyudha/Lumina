@@ -210,8 +210,8 @@ interface Turn {
   attachmentText?: string;
   /**
    * Local OCR text kept so a later turn that refers back to the screenshot can
-   * be answered. Never persisted and never shown; the model sees it only when
-   * the reader explicitly points at the earlier attachment.
+   * be answered. Never shown; the model sees it only when the reader explicitly
+   * points at the earlier attachment. Stored with the account transcript.
    */
   recallText?: string;
   /** A local note when an attachment could not be read. */
@@ -397,6 +397,164 @@ function titleFor(text: string, attachments: readonly Attachment[]): string {
   return base.length > 42 ? `${base.slice(0, 42).trimEnd()}…` : base;
 }
 
+/**
+ * A turn as it goes to `companion_conversations.transcript`. Attachment bytes,
+ * blob URLs, and runtime-only fields are dropped; the name, size, and MIME
+ * type stay so the restored bubble can still show a file chip.
+ */
+type StoredTurn = Record<string, unknown>;
+
+const MAX_STORED_TURN_TEXT = 20_000;
+const MAX_TRANSCRIPT_CHARS = 700_000;
+
+function storedTurn(turn: Turn): StoredTurn {
+  const stored: StoredTurn = {
+    role: turn.role,
+    text: turn.text.slice(0, MAX_STORED_TURN_TEXT),
+  };
+  if (turn.at !== undefined) stored.at = turn.at;
+  if (turn.result !== undefined) stored.result = turn.result;
+  if (turn.source !== undefined) stored.source = turn.source;
+  if (turn.attachments?.length)
+    stored.attachments = turn.attachments.map((attachment) => ({
+      id: attachment.id,
+      name: attachment.name,
+      size: attachment.size,
+      type: attachment.type,
+    }));
+  if (turn.visionNote !== undefined) stored.visionNote = turn.visionNote;
+  if (turn.attachmentText !== undefined)
+    stored.attachmentText = turn.attachmentText;
+  if (turn.recallText !== undefined) stored.recallText = turn.recallText;
+  if (turn.attachmentNote !== undefined)
+    stored.attachmentNote = turn.attachmentNote;
+  if (turn.contentQuestion !== undefined)
+    stored.contentQuestion = turn.contentQuestion;
+  if (turn.trace !== undefined) stored.trace = turn.trace;
+  if (turn.orchestration !== undefined)
+    stored.orchestration = turn.orchestration;
+  if (turn.orchestrated !== undefined) stored.orchestrated = turn.orchestrated;
+  if (turn.explanation !== undefined) stored.explanation = turn.explanation;
+  if (turn.lane !== undefined) stored.lane = turn.lane;
+  if (turn.laneSource !== undefined) stored.laneSource = turn.laneSource;
+  if (turn.tool !== undefined) stored.tool = turn.tool;
+  if (turn.report !== undefined) stored.report = turn.report;
+  if (turn.link !== undefined) stored.link = turn.link;
+  if (turn.linkPrompt !== undefined) stored.linkPrompt = turn.linkPrompt;
+  if (turn.linkError !== undefined) stored.linkError = turn.linkError;
+  if (turn.learningModules !== undefined)
+    stored.learningModules = turn.learningModules;
+  if (turn.ocrConfidence !== undefined)
+    stored.ocrConfidence = turn.ocrConfidence;
+  if (turn.caseId !== undefined) stored.caseId = turn.caseId;
+  return stored;
+}
+
+/**
+ * Keeps the payload under the Server Action body limit. When a long thread is
+ * too large, process traces go first, then the oldest turns; the visible text
+ * of the newest turns is the part worth keeping.
+ */
+function encodeTranscript(turns: readonly Turn[]): StoredTurn[] {
+  const stored = turns.map(storedTurn);
+  if (JSON.stringify(stored).length <= MAX_TRANSCRIPT_CHARS) return stored;
+  for (const turn of stored) {
+    delete turn.orchestration;
+    delete turn.trace;
+    if (JSON.stringify(stored).length <= MAX_TRANSCRIPT_CHARS) return stored;
+  }
+  while (stored.length > 1) {
+    stored.shift();
+    if (JSON.stringify(stored).length <= MAX_TRANSCRIPT_CHARS) return stored;
+  }
+  return stored;
+}
+
+function transcriptSignature(turns: readonly Turn[]) {
+  return JSON.stringify(encodeTranscript(turns));
+}
+
+function restoredAttachment(value: unknown): Attachment | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    return null;
+  const item = value as Record<string, unknown>;
+  if (typeof item.name !== "string" || !item.name) return null;
+  const name = item.name.slice(0, 200);
+  const type =
+    typeof item.type === "string" ? item.type : "application/octet-stream";
+  return {
+    id: typeof item.id === "string" ? item.id : `restored-${name}`,
+    name,
+    size:
+      typeof item.size === "number" && Number.isFinite(item.size)
+        ? item.size
+        : 0,
+    type,
+    // Bytes stay on the device that created them; restored turns show a chip.
+    url: "",
+    file: new File([], name, { type }),
+  };
+}
+
+function restoredTurns(raw: unknown): Turn[] {
+  if (!Array.isArray(raw)) return [];
+  const turns: Turn[] = [];
+  for (const value of raw) {
+    if (value === null || typeof value !== "object" || Array.isArray(value))
+      continue;
+    const item = value as Record<string, unknown>;
+    if (
+      (item.role !== "user" && item.role !== "companion") ||
+      typeof item.text !== "string"
+    )
+      continue;
+    const turn: Turn = {
+      id: id(),
+      role: item.role,
+      text: item.text.slice(0, MAX_STORED_TURN_TEXT),
+    };
+    if (typeof item.at === "string") turn.at = item.at;
+    if (item.result) turn.result = item.result as ScoreResult;
+    if (typeof item.source === "string") turn.source = item.source;
+    if (Array.isArray(item.attachments)) {
+      const attachments = item.attachments
+        .map(restoredAttachment)
+        .filter((attachment): attachment is Attachment => attachment !== null);
+      if (attachments.length) turn.attachments = attachments;
+    }
+    if (typeof item.visionNote === "string") turn.visionNote = item.visionNote;
+    if (typeof item.attachmentText === "string")
+      turn.attachmentText = item.attachmentText;
+    if (typeof item.recallText === "string") turn.recallText = item.recallText;
+    if (typeof item.attachmentNote === "string")
+      turn.attachmentNote = item.attachmentNote;
+    if (typeof item.contentQuestion === "boolean")
+      turn.contentQuestion = item.contentQuestion;
+    if (item.trace) turn.trace = item.trace as AgentTrace;
+    if (Array.isArray(item.orchestration))
+      turn.orchestration = item.orchestration as OrchestratorEvent[];
+    if (typeof item.orchestrated === "boolean")
+      turn.orchestrated = item.orchestrated;
+    if (item.explanation) turn.explanation = item.explanation as Explanation;
+    if (typeof item.lane === "string") turn.lane = item.lane as Lane;
+    if (typeof item.laneSource === "string") turn.laneSource = item.laneSource;
+    if (item.tool) turn.tool = item.tool as LokerTurnTool;
+    if (item.report) turn.report = item.report as ReportTurnTool;
+    if (item.link) turn.link = item.link as LinkVerdict;
+    if (item.linkPrompt) turn.linkPrompt = item.linkPrompt as { url: string };
+    if (typeof item.linkError === "string") turn.linkError = item.linkError;
+    if (Array.isArray(item.learningModules))
+      turn.learningModules = item.learningModules.filter(
+        (module): module is number => typeof module === "number",
+      );
+    if (typeof item.ocrConfidence === "number")
+      turn.ocrConfidence = item.ocrConfidence;
+    if (typeof item.caseId === "string") turn.caseId = item.caseId;
+    turns.push(turn);
+  }
+  return turns;
+}
+
 const EMPTY_CORPUS: LokerCorpus = {
   postings: [],
   total: 0,
@@ -540,8 +698,9 @@ export function CompanionChat({
   }, [turns, highlightsByUserTurn]);
 
   /**
-   * Persists only the account-scoped metadata. The transcript and attachments
-   * stay in React state; this table never receives a message body.
+   * Persists the account-scoped row so the sidebar can show the thread
+   * immediately. The transcript itself follows from the debounced sync below
+   * once the answer stops streaming.
    */
   const persistSession = React.useCallback(
     (input: {
@@ -2057,6 +2216,11 @@ export function CompanionChat({
     router.push("/agen");
   };
 
+  const savedTranscripts = React.useRef(new Map<string, string>());
+  const transcriptTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   React.useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -2069,17 +2233,22 @@ export function CompanionChat({
           );
           const loaded = result.conversations
             .filter((item) => !known.has(item.id))
-            .map(
-              (item): Session => ({
+            .map((item): Session => {
+              const restored = restoredTurns(item.transcript);
+              savedTranscripts.current.set(
+                item.id,
+                transcriptSignature(restored),
+              );
+              return {
                 id: id(),
                 serverId: item.id,
                 title: item.title,
-                turns: [],
+                turns: restored,
                 risk: item.risk ?? undefined,
                 time: item.updatedAt.slice(11, 16),
                 updatedAt: new Date(item.updatedAt).getTime(),
-              }),
-            );
+              };
+            });
           return loaded.length ? [...prev, ...loaded] : prev;
         });
       })
@@ -2089,11 +2258,50 @@ export function CompanionChat({
     };
   }, [session]);
 
+  /*
+   * The transcript is saved after a turn settles, never while text streams.
+   * One debounce covers the finish patch, tool summary turns, and the case id
+   * that arrives later, so every write is a complete, consistent snapshot.
+   */
+  React.useEffect(() => {
+    if (!session) return;
+    if (sessions.some((item) => item.turns.some((turn) => turn.streaming)))
+      return;
+    const pending = sessions.flatMap((item) => {
+      if (!item.serverId || item.turns.length === 0) return [];
+      const stored = encodeTranscript(item.turns);
+      const signature = JSON.stringify(stored);
+      if (savedTranscripts.current.get(item.serverId) === signature) return [];
+      return [{ item, stored, signature }];
+    });
+    if (pending.length === 0) return;
+    if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
+    transcriptTimer.current = setTimeout(() => {
+      for (const entry of pending) {
+        const serverId = entry.item.serverId;
+        if (!serverId) continue;
+        savedTranscripts.current.set(serverId, entry.signature);
+        void saveConversationHistory({
+          id: serverId,
+          title: entry.item.title,
+          turns: entry.item.turns.length,
+          risk: entry.item.risk ?? null,
+          transcript: entry.stored,
+        }).catch(() => {
+          savedTranscripts.current.delete(serverId);
+        });
+      }
+    }, 600);
+    return () => {
+      if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
+      transcriptTimer.current = null;
+    };
+  }, [sessions, session]);
+
   /**
    * The header's "Ekspor percakapan" is the reference's Export chat, wired to
    * the only export that is honest here: the thread the reader can already see,
-   * as a plain download. History never leaves the tab (§11.6) — the file is
-   * built from the same state that renders the transcript, no network call.
+   * as a plain download built from the same state that renders the transcript.
    */
   const exportThread = () => {
     const lines = turns.map((turn) => {
@@ -2440,11 +2648,10 @@ export function CompanionChat({
                   kamu percaya.
                 </h2>
 
-                {active?.serverId ? (
+                {active?.serverId && turns.length === 0 ? (
                   <p className="mt-3 max-w-[520px] text-center text-dim text-xs leading-relaxed">
-                    Riwayat ini tersimpan sebagai judul di akunmu. Isi
-                    percakapan tetap di perangkat tempat ia dibuat, jadi
-                    transkripnya tidak bisa dibuka di sini.
+                    Transkrip percakapan ini belum tersimpan di akunmu. Mulai
+                    pesan baru di sini, atau buka percakapan lain dari riwayat.
                   </p>
                 ) : null}
 
@@ -2535,7 +2742,8 @@ export function CompanionChat({
                                 key={attachment.id}
                                 className="overflow-hidden rounded-sm border border-line bg-panel-2"
                               >
-                                {isImageAttachment(attachment) ? (
+                                {isImageAttachment(attachment) &&
+                                attachment.url ? (
                                   <span className="block size-20">
                                     {/* biome-ignore lint/performance/noImgElement: a blob: URL from a local File cannot go through next/image */}
                                     <img

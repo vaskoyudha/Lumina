@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
 import { SHIMMER_TEXT_CLASS } from "@/components/companion/thinking-row";
+import { AGENT_IDENTITIES } from "@/lib/agents/identities";
 import type { PlanStep } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,24 @@ const STATUS: Record<CommanderPhase, string> = {
   stopped: "Berhenti sebelum selesai",
 };
 
+const nameList = new Intl.ListFormat("id", {
+  type: "conjunction",
+  style: "long",
+});
+
+function statusLabel(phase: CommanderPhase, names?: string): string {
+  if (phase === "done") {
+    return names ? `Selesai · ${names} melapor` : "Selesai";
+  }
+  if (phase === "stopped") {
+    return names ? `Mendelegasikan ke ${names}` : "Ringkasan tidak tersedia";
+  }
+  if (phase === "preparing" && names) {
+    return `Mendelegasikan ke ${names}`;
+  }
+  return STATUS[phase];
+}
+
 export function CommanderCard({
   phase,
   announcement,
@@ -38,6 +57,12 @@ export function CommanderCard({
 }) {
   const settled = phase === "done" || phase === "stopped";
   const waiting = !settled && phase !== "preparing";
+  const names =
+    agents.length > 0
+      ? nameList.format(
+          agents.map((step) => AGENT_IDENTITIES[step.agent].displayName),
+        )
+      : undefined;
   const [elapsed, setElapsed] = React.useState(0);
 
   React.useEffect(() => {
@@ -84,17 +109,22 @@ export function CommanderCard({
         </div>
       </div>
       <output className="flex min-h-8 items-center gap-2 px-1">
-        {settled ? <Check aria-hidden className="size-4 text-dim" /> : null}
+        {phase === "done" ? (
+          <Check aria-hidden className="size-4 text-dim" />
+        ) : null}
         <span
           className={cn(
             "font-semibold text-[15px] leading-5",
             settled ? "text-dim" : SHIMMER_TEXT_CLASS,
           )}
         >
-          {phase === "preparing" && agents.length > 0
-            ? `Menyiapkan ${agents.length} agen`
-            : STATUS[phase]}
+          {statusLabel(phase, names)}
         </span>
+        {phase === "stopped" && names ? (
+          <span className="text-[11px] text-dim">
+            · ringkasan tidak tersedia
+          </span>
+        ) : null}
         {waiting && startedAt !== undefined ? (
           <span className="tabular min-w-[3.5rem] text-[11px] text-dim">
             {(elapsed / 1000).toFixed(1)} detik
