@@ -22,3 +22,7 @@ export const SimulationSubmissionSchema = z.object({
     .max(200),
 });
 export type SimulationSubmission = z.infer<typeof SimulationSubmissionSchema>;
+export const SimulationTimerSchema = SimulationSubmissionSchema.pick({
+  attemptId: true,
+  scenarioId: true,
+});

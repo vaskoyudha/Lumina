@@ -367,7 +367,7 @@ describe("CompanionChat · privacy copy matches the wire", () => {
     render(<CompanionChat />);
 
     expect(
-      screen.getByText(/isi pesan lengkap tidak dikirim/i),
+      screen.getByText(/isi pesan lengkap.*tidak dikirim/i),
     ).toBeInTheDocument();
   });
 });

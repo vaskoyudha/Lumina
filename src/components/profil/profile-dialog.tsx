@@ -14,7 +14,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useAccountProgress } from "@/components/belajar/account-progress-context";
 import {
   AccountPanel,
   type SettingsSession,
@@ -22,6 +21,7 @@ import {
 import { JobsPanel } from "@/components/profil/settings-jobs-panel";
 import { ProgressPanel } from "@/components/profil/settings-progress-panel";
 import { SecurityPanel } from "@/components/profil/settings-security-panel";
+import { useProfileProgress } from "@/components/profil/use-profile-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,6 @@ import type {
   SessionView,
 } from "@/lib/auth/account-view";
 import { useSavedLoker } from "@/lib/loker/use-saved";
-import { MODUS } from "@/lib/modus";
 import { BADGE_LABEL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
@@ -77,10 +76,12 @@ export function ProfileDialog({
   session,
   section,
   onOpenChange,
+  onAccountSaved,
 }: {
   session: SettingsSession;
   section: ProfileSection | null;
   onOpenChange: (open: boolean) => void;
+  onAccountSaved?: (account: { nama: string; email: string }) => void;
 }) {
   const [active, setActive] = useState<ProfileSection>("profil");
   const [account, setAccount] = useState<AccountView | null>(null);
@@ -89,11 +90,14 @@ export function ProfileDialog({
   const [reloadKey, setReloadKey] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const { progress, modules } = useAccountProgress();
+  const {
+    progress,
+    error: progressError,
+    total,
+  } = useProfileProgress(section !== null);
   const { saved } = useSavedLoker();
 
   const done = progress?.completedModules.length ?? 0;
-  const total = modules.length || MODUS.length;
   const pct = Math.min(100, Math.round((done / total) * 100));
   const badges = Object.entries(BADGE_LABEL)
     .filter(([id]) => progress?.badges.includes(id))
@@ -153,13 +157,15 @@ export function ProfileDialog({
   }
 
   const handleAccountSaved = useCallback(
-    (next: { nama: string; email: string }) =>
+    (next: { nama: string; email: string }) => {
       setAccount((current) => ({
         nama: next.nama,
         email: next.email,
         createdAt: current?.createdAt ?? session.createdAt ?? null,
-      })),
-    [session.createdAt],
+      }));
+      onAccountSaved?.(next);
+    },
+    [session.createdAt, onAccountSaved],
   );
 
   const handlePasswordChanged = useCallback(() => {
@@ -264,12 +270,22 @@ export function ProfileDialog({
                     />
                   ) : null}
                   {item.id === "kemajuan" ? (
-                    <ProgressPanel
-                      done={done}
-                      total={total}
-                      pct={pct}
-                      badges={badges}
-                    />
+                    progressError ? (
+                      <p role="alert" className="text-sm text-danger">
+                        {progressError}
+                      </p>
+                    ) : !progress ? (
+                      <output className="text-sm text-dim">
+                        Memuat progres akun…
+                      </output>
+                    ) : (
+                      <ProgressPanel
+                        done={done}
+                        total={total}
+                        pct={pct}
+                        badges={badges}
+                      />
+                    )
                   ) : null}
                   {item.id === "loker" ? (
                     <JobsPanel savedCount={saved.length} />

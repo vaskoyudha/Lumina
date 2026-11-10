@@ -17,6 +17,13 @@ layanan baru. Pesan yang diperiksa, percakapan, dan data triage tidak ikut disim
   kuis. Pola yang perlu ditinjau mengikuti jawaban terakhir.
 - `simulation_results`: hasil akhir, mode, dan urutan keputusan, dengan UUID
   percobaan agar retry tidak membuat duplikat. Server memeriksa urutan skenario.
+- `simulation_intrusion_timers` (migrasi `008`): waktu server menerima kejadian
+  perangkat terkompromi di mode tantangan. Hasil gagal karena intrusi memerlukan
+  timer milik akun dan skenario yang sama, serta waktu minimum sesuai meter
+  (toleransi satu tick). Memasang APK saja belum dianggap akhir misi.
+  Timer bukan bukti waktu bermain aktif: waktu jeda di browser tidak dapat
+  dibuktikan server. Cleanup menghapus timer terbengkalai setelah sehari;
+  timer hasil tersimpan dipertahankan agar retry tetap idempoten.
 
 Server Actions mengambil identitas dari sesi, bukan ID pengguna dari browser.
 Profil membaca progres dan 20 hasil simulasi terbaru dari database. Akun berbeda

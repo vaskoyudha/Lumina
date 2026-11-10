@@ -5,11 +5,13 @@ import {
 
 const MAX_IMAGES = 3;
 const MAX_BYTES = 6 * 1024 * 1024;
+export const IMAGE_READ_TIMEOUT_MS = 23000;
 
 export interface ImageTranscription {
   text: string;
   attempted: number;
   failed: number;
+  skipped: number;
 }
 
 interface ImagePayload {
@@ -17,39 +19,56 @@ interface ImagePayload {
   data: string;
 }
 
-function readImage(file: File): Promise<ImagePayload | null> {
-  if (file.size === 0 || file.size > MAX_BYTES) return Promise.resolve(null);
+function readImage(
+  file: File,
+  signal: AbortSignal,
+): Promise<ImagePayload | null> {
+  if (signal.aborted || file.size === 0 || file.size > MAX_BYTES)
+    return Promise.resolve(null);
 
   return new Promise((resolve) => {
     const reader = new FileReader();
+    const finish = (result: ImagePayload | null) => {
+      signal.removeEventListener("abort", abort);
+      reader.onload = reader.onerror = reader.onabort = null;
+      resolve(result);
+    };
+    const abort = () => {
+      finish(null);
+      reader.abort();
+    };
+    signal.addEventListener("abort", abort, { once: true });
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
       const comma = result.indexOf(",");
       if (comma < 0) {
-        resolve(null);
+        finish(null);
         return;
       }
       const header = result.slice(0, comma);
       const rawType = header.slice(5, header.indexOf(";")) || file.type;
       const mediaType = rawType === "image/jpg" ? "image/jpeg" : rawType;
-      resolve({
+      finish({
         mediaType,
         data: result.slice(comma + 1),
       });
     };
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(file);
+    reader.onerror = reader.onabort = () => finish(null);
+    try {
+      reader.readAsDataURL(file);
+    } catch {
+      finish(null);
+    }
   });
 }
 
 async function transcribeOne(
   attachment: Attachment,
-  signal?: AbortSignal,
+  signal: AbortSignal,
 ): Promise<string | null> {
-  const image = await readImage(attachment.file);
-  if (!image) return null;
-
   try {
+    const image = await readImage(attachment.file, signal);
+    if (!image || signal.aborted) return null;
     const response = await fetch("/api/companion/vision", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -81,15 +100,27 @@ export async function transcribeImages(
   attachments: readonly Attachment[],
   signal?: AbortSignal,
 ): Promise<ImageTranscription> {
-  const images = attachments.filter(isImageAttachment).slice(0, MAX_IMAGES);
+  const allImages = attachments.filter(isImageAttachment);
+  const images = allImages.slice(0, MAX_IMAGES);
 
   if (images.length === 0) {
-    return { text: "", attempted: 0, failed: 0 };
+    return { text: "", attempted: 0, failed: 0, skipped: 0 };
   }
 
-  const results = await Promise.all(
-    images.map((attachment) => transcribeOne(attachment, signal)),
-  );
+  const control = new AbortController();
+  const abort = () => control.abort();
+  if (signal?.aborted) abort();
+  else signal?.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(abort, IMAGE_READ_TIMEOUT_MS);
+  let results: (string | null)[];
+  try {
+    results = await Promise.all(
+      images.map((attachment) => transcribeOne(attachment, control.signal)),
+    );
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", abort);
+  }
   const text = results
     .filter((part): part is string => part !== null)
     .join("\n\n");
@@ -98,5 +129,6 @@ export async function transcribeImages(
     text,
     attempted: images.length,
     failed: results.filter((part) => part === null).length,
+    skipped: allImages.length - images.length,
   };
 }
