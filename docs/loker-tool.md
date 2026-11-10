@@ -19,7 +19,9 @@ e. Saved postings live in `localStorage` and appear in `/profil`.
 
 ```
 scanner/scan.mjs  ──►  $LOKER_SCAN_DATA_DIR/data/pipeline.md
-                              │
+                              ▲
+                              │  instrumentation.ts → lib/loker/prewarm.ts
+                              │  (boot + every LOKER_PREWARM_INTERVAL_MS)
                               ▼
         src/lib/loker/run.ts  →  ingest.ts  →  boards/*  →  RDAP
                               │                 │
@@ -52,6 +54,12 @@ c. `url_key` is the engine's dedupe key; a re-scan upserts and refreshes
    does not need a rescan.
 d. The visible corpus is cumulative, newest `fetched_at` first, capped by the
    RSC loader. The card prints the real count when the cap applies.
+e. The server prewarms the corpus (`src/lib/loker/prewarm.ts`, started by
+   `src/instrumentation.ts`): one scan shortly after boot and then one per
+   interval, so the card opens with rows instead of "belum dipindai". The
+   scheduler and the manual trigger share the same advisory lock, so they can
+   never crawl concurrently. `LOKER_PREWARM_INTERVAL_MS=0` disables the warm-up
+   without disabling the button.
 
 ## Data model
 
@@ -81,21 +89,28 @@ e. The model never scores and never adds findings.
 | Route | Auth | Limit | Purpose |
 |---|---|---|---|
 | `POST /api/loker/scan` | session | 1 / 10 min per client key | start a background scan |
-| `GET /api/loker/scan/status` | none | — | poll the latest run; `204` before any run |
+| `GET /api/loker/scan/status` | none | — | latest run + live corpus size; `204` before any run |
 | `POST /api/companion/tools/summary` | none | existing AI limit | one-sentence summary |
 
 The scan route takes a PostgreSQL advisory lock on a dedicated pooled client and
 holds it until the background job finishes. The rate limit is consumed before
 the lock, so a same-client retry inside the 10-minute window gets `429`; a
 trigger from another client key while a run is active gets `409`, not a second
-scan. The child process has a five-minute timeout and a sanitized environment;
-no shell interpolation is used.
+scan. The same lease helper (`src/lib/loker/start.ts`) is used by the prewarm
+scheduler. The child process has a five-minute timeout and a sanitized
+environment; no shell interpolation is used.
+
+`status` carries `postings`, the current corpus count. The card compares it with
+the snapshot it was rendered from and calls `router.refresh()` when it grows
+(throttled to one refresh per eight seconds, because the payload is up to
+~500 KB), so rows show up while ingest is still writing.
 
 ## Environment
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `LOKER_SCAN_DATA_DIR` | `<cwd>/.scan-data` | scanner data root (portals, pipeline, reports) |
+| `LOKER_PREWARM_INTERVAL_MS` | `21600000` (6 h) | background prewarm cadence; `0` disables it |
 | `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` | — | OpenAI-compatible endpoint; unset means the tool still works from the cached corpus and the summary falls back to deterministic copy |
 
 The data root must be writable by the app user. In the container it is
@@ -105,14 +120,16 @@ The data root must be writable by the app user. In the container it is
 
 a. First deploy: `npm run db:migrate`, then start the app. The first scan seeds
    `portals.yml` and the engine skeletons.
-b. A scan runs in the background; the card polls status and calls
-   `router.refresh()` when the run settles.
+b. A scan runs in the background; the card polls status and refreshes the
+   snapshot as the corpus grows, not only when the run settles.
 c. The tool reads whatever rows are already committed, so a running scan never
-   blocks a search; rows from the current run can appear as it progresses.
+   blocks a search; rows from the current run appear as it progresses.
 d. If RDAP or a board adapter fails, the card reports the honest `dropped`
    count. A high drop rate is a signal to revisit the "require all audit
    fields" decision, not to insert partial rows.
 e. `GET /api/health` is unchanged: it checks the database, not the scanner.
+f. Prewarm logs nothing to the card. If it is disabled or the database is
+   unreachable it simply skips; "Pindai ulang" still works.
 
 ## Honest limits
 
@@ -123,3 +140,6 @@ c. Two verdicts can disagree; the card names both and treats the caution as a
    flag.
 d. Free model quota can make the summary unavailable; the deterministic copy is
    still honest about the count.
+e. Prewarm removes the cold start only after it has run once. On a brand-new
+   database the first minutes still show "belum dipindai"; the scheduler starts
+   that crawl at boot, and the card fills in as rows commit.

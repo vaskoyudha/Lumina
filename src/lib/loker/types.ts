@@ -50,6 +50,17 @@ export interface ScanRunStatus {
   finishedAt: string | null;
 }
 
+/**
+ * The status payload the poll endpoint returns.
+ *
+ * `postings` is the corpus size at read time, not a run counter, so the card can
+ * refresh progressively while a scan is still writing rows. The run row's own
+ * `added` only lands when the job finishes.
+ */
+export interface ScanStatus extends ScanRunStatus {
+  postings: number;
+}
+
 /** The device-local snapshot written to `localStorage`. */
 export interface SavedLoker {
   id: string;

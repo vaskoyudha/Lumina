@@ -261,6 +261,14 @@ export async function finishScanRun(
   );
 }
 
+/** The cumulative corpus size, used by the scan status feed. */
+export async function countPostings(): Promise<number> {
+  const result = await authDatabase().query<{ total: string }>(
+    "select count(*)::text as total from loker_postings",
+  );
+  return Number(result.rows[0]?.total ?? 0);
+}
+
 export async function latestScanRun(): Promise<ScanRunStatus | null> {
   const result = await authDatabase().query<{
     status: ScanRunStatus["status"];
