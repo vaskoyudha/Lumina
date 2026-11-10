@@ -60,6 +60,14 @@ describe("halaman misi simulasi", () => {
     const planned = screen.getByRole("region", { name: "Level lain" });
     expect(within(planned).getAllByText("Rencana")).toHaveLength(4);
     expect(within(planned).queryByRole("link")).not.toBeInTheDocument();
+
+    // The level picker is a second card: one playable level links into the
+    // mission, the rest stay locked with a Rencana badge until they ship.
+    const levels = screen.getByRole("region", { name: "Level simulasi" });
+    const levelLinks = within(levels).getAllByRole("link");
+    expect(levelLinks).toHaveLength(1);
+    expect(levelLinks[0]).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
+    expect(within(levels).getAllByText("Rencana")).toHaveLength(4);
   });
 });
 
