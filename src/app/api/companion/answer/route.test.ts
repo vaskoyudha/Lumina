@@ -187,6 +187,245 @@ describe("POST /api/companion/answer", () => {
     });
   });
 
+  it("offers ask_link_check before any link leaves the browser", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "",
+              tool_calls: [
+                {
+                  id: "call-ask",
+                  type: "function",
+                  function: {
+                    name: "ask_link_check",
+                    arguments: JSON.stringify({
+                      url: "https://bca-verif.xyz/login",
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "tolong cek tautan https://bca-verif.xyz/login ini aman?",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      text: "",
+      toolCalls: [
+        {
+          id: "call-ask",
+          name: "ask_link_check",
+          arguments: { url: "https://bca-verif.xyz/login" },
+        },
+      ],
+    });
+    const sent = JSON.parse(
+      String((fetchMock.mock.calls[0]?.[1] as RequestInit).body),
+    ) as { tools: { function: { name: string } }[] };
+    expect(sent.tools.map((tool) => tool.function.name)).toEqual([
+      "ask_link_check",
+    ]);
+  });
+
+  it("offers check_link only after the reader approves the URL", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "",
+              tool_calls: [
+                {
+                  id: "call-link",
+                  type: "function",
+                  function: {
+                    name: "check_link",
+                    arguments: JSON.stringify({
+                      url: "https://bca-verif.xyz/login",
+                    }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "Ya, periksa tautan https://bca-verif.xyz/login apakah aman?",
+        linkApproved: "https://bca-verif.xyz/login",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      text: "",
+      toolCalls: [
+        {
+          id: "call-link",
+          name: "check_link",
+          arguments: { url: "https://bca-verif.xyz/login" },
+        },
+      ],
+    });
+    const sent = JSON.parse(
+      String((fetchMock.mock.calls[0]?.[1] as RequestInit).body),
+    ) as { tools: { function: { name: string } }[] };
+    expect(sent.tools.map((tool) => tool.function.name)).toEqual([
+      "check_link",
+    ]);
+  });
+
+  it("rejects an approval that is not in the question", async () => {
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "Ya, periksa tautan https://bca-verif.xyz/login apakah aman?",
+        linkApproved: "https://other.example/",
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: "invalid-link-approval",
+    });
+  });
+
+  it("accepts a link observation and does not offer a second scan", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: "Tautan itu berisiko." } }],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "tolong cek tautan https://bca-verif.xyz/login ini aman?",
+        linkApproved: "https://bca-verif.xyz/login",
+        observations: [
+          {
+            name: "check_link",
+            callId: "call-link",
+            arguments: { url: "https://bca-verif.xyz/login" },
+            ok: true,
+            result: {
+              verdict: "Risky",
+              score: 12,
+              badReasons: ["Domain baru"],
+              goodReasons: [],
+              incomplete: false,
+              domain: "bca-verif.xyz",
+            },
+          },
+        ],
+      }),
+    );
+    expect(response.status).toBe(200);
+    const sent = JSON.parse(
+      String((fetchMock.mock.calls[0]?.[1] as RequestInit).body),
+    ) as { tools?: unknown };
+    expect(sent.tools).toBeUndefined();
+  });
+
+  it("falls back to the scan verdict when the model returns no text", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: "" } }],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "tolong cek tautan https://bca-verif.xyz/login ini aman?",
+        linkApproved: "https://bca-verif.xyz/login",
+        observations: [
+          {
+            name: "check_link",
+            callId: "call-link",
+            arguments: { url: "https://bca-verif.xyz/login" },
+            ok: true,
+            result: {
+              verdict: "Risky",
+              score: 12,
+              badReasons: ["Domain baru"],
+              goodReasons: [],
+              incomplete: false,
+              domain: "bca-verif.xyz",
+            },
+          },
+        ],
+      }),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { text: string };
+    expect(body.text).toContain("berisiko");
+    expect(body.text).toContain("12/100");
+  });
+
+  it("replaces off-topic prose with the grounded scan verdict", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: "# 2+2 = 4" } }],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "tolong cek tautan https://bca-verif.xyz/login ini aman?",
+        linkApproved: "https://bca-verif.xyz/login",
+        observations: [
+          {
+            name: "check_link",
+            callId: "call-link",
+            arguments: { url: "https://bca-verif.xyz/login" },
+            ok: true,
+            result: {
+              verdict: "Risky",
+              score: 12,
+              badReasons: ["Domain baru"],
+              goodReasons: [],
+              incomplete: false,
+              domain: "bca-verif.xyz",
+            },
+          },
+        ],
+      }),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { text: string };
+    expect(body.text).toContain("bca-verif.xyz");
+    expect(body.text).toContain("berisiko");
+    expect(body.text).toContain("12/100");
+    expect(body.text).not.toContain("2+2");
+  });
+
   it("drops a tool call whose arguments do not validate", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

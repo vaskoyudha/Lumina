@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Link2,
   Lock,
   Minus,
   PenLine,
@@ -52,6 +53,7 @@ import {
   type Risk,
   type ScoreResult,
 } from "@/lib/contracts/score";
+import type { LinkVerdict } from "@/lib/link-verify/urlvet";
 import { MODUS_BY_ID } from "@/lib/modus";
 import { cn } from "@/lib/utils";
 
@@ -707,11 +709,41 @@ function VoiceNode({
   );
 }
 
+function LinkAgentRow({
+  status,
+  score,
+}: {
+  status: "waiting" | "done";
+  score?: number;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-line bg-panel px-3 py-2.5">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+        <Link2 aria-hidden className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-medium">
+          Bubu
+          <span className="font-normal text-dim">· Link Agent</span>
+          <span className="ml-auto shrink-0 font-normal text-[10.5px] text-dim">
+            {status === "waiting" ? "menunggu izin" : `selesai · ${score}/100`}
+          </span>
+        </p>
+        <p className="mt-0.5 text-[10.5px] text-dim">
+          Sub-agen tautan · url.vet
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function SignalPanel({
   result,
   sequence,
   evidence,
   trace,
+  link,
+  linkPending,
   running = false,
   titleId = "panel-bukti-title",
   className,
@@ -724,6 +756,10 @@ export function SignalPanel({
   evidence?: EvidenceBundle | null;
   /** What the pipeline actually did. Omit on surfaces that do not measure. */
   trace?: AgentTrace | null;
+  /** A completed manual link scan; shown instead of the message pipeline. */
+  link?: LinkVerdict | null;
+  /** A link waiting for the reader's approval; no URL has been sent yet. */
+  linkPending?: { url: string } | null;
   /** True while the language stage is still streaming its answer. */
   running?: boolean;
   /** Unique per surface: the chat renders the panel in a column and a sheet. */
@@ -742,6 +778,15 @@ export function SignalPanel({
     ? result.signals.filter((signal) => signal.weight > 0)
     : [];
   const ledger = buildPanelLedger(sequence, trace, findings);
+  const linkView = !result && link ? link : null;
+  const linkPendingView = !result && !link && linkPending ? linkPending : null;
+  const linkSurface = Boolean(linkView || linkPendingView);
+  const linkTone =
+    linkView?.verdict === "Risky"
+      ? "text-danger"
+      : linkView?.verdict === "Suspicious"
+        ? "text-warn"
+        : "text-brand-ink";
 
   const header = (
     <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
@@ -756,32 +801,128 @@ export function SignalPanel({
                 aria-hidden
                 className={cn(
                   "size-1.5 shrink-0 rounded-full",
-                  result ? RISK_TEXT[result.risk] : "bg-dim/50",
+                  result
+                    ? RISK_TEXT[result.risk]
+                    : linkView
+                      ? linkView.verdict === "Risky"
+                        ? "bg-danger"
+                        : linkView.verdict === "Suspicious"
+                          ? "bg-warn"
+                          : "bg-brand"
+                      : linkPendingView
+                        ? "bg-brand"
+                        : "bg-dim/50",
                 )}
               />
-              Panel bukti
+              {linkSurface ? "Verifikasi tautan" : "Panel bukti"}
             </h2>
           </CardTitle>
           <p className="mt-0.5 truncate text-[10.5px] text-dim">
-            {running
-              ? "Pemeriksaan sedang berjalan"
-              : result == null
-                ? "Menunggu pesan untuk diperiksa"
-                : trace
-                  ? "Pemeriksaan terakhir selesai"
-                  : "Diperbarui setelah pemeriksaan terakhir"}
+            {linkView
+              ? "Diperiksa oleh url.vet"
+              : linkPendingView
+                ? "Menunggu persetujuan pengiriman URL"
+                : running
+                  ? "Pemeriksaan sedang berjalan"
+                  : result == null
+                    ? "Menunggu pesan untuk diperiksa"
+                    : trace
+                      ? "Pemeriksaan terakhir selesai"
+                      : "Diperbarui setelah pemeriksaan terakhir"}
           </p>
           {result ? <CoverageStrip ledger={ledger} /> : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
-            {result ? `${findings.length} temuan` : `${sequence.length} agen`}
+            {result
+              ? `${findings.length} temuan`
+              : linkSurface
+                ? "1 tautan"
+                : `${sequence.length} agen`}
           </span>
           {action}
         </div>
       </div>
     </CardHeader>
   );
+
+  if (linkPendingView) {
+    return (
+      <Card
+        aria-labelledby={titleId}
+        className={cn(
+          "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-none bg-transparent py-0 ring-0",
+          className,
+        )}
+      >
+        {header}
+        <CardContent className="flex flex-col gap-3 px-4 py-4">
+          <LinkAgentRow status="waiting" />
+          <p className="font-medium text-[13px] text-txt">
+            Tautan belum dikirim ke pemindai.
+          </p>
+          <p className="break-all font-mono text-[11px] text-dim">
+            {linkPendingView.url}
+          </p>
+          <p className="text-[11px] leading-relaxed text-dim">
+            Setujui kartu konfirmasi di percakapan. Sebelum disetujui, tidak ada
+            URL yang dikirim ke url.vet dan agen pemeriksa pesan tidak
+            dijalankan untuk tautan ini.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (linkView) {
+    return (
+      <Card
+        aria-labelledby={titleId}
+        className={cn(
+          "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-none bg-transparent py-0 ring-0",
+          className,
+        )}
+      >
+        {header}
+        <CardContent className="flex flex-col gap-3 px-4 py-4">
+          <LinkAgentRow status="done" score={linkView.score} />
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={cn("font-semibold text-[15px]", linkTone)}>
+              {linkView.verdict === "Risky"
+                ? "Berisiko"
+                : linkView.verdict === "Suspicious"
+                  ? "Mencurigakan"
+                  : "Aman"}
+            </span>
+            <span className="tabular text-[12px] text-dim">
+              {linkView.score}/100
+            </span>
+          </div>
+          {linkView.domain ? (
+            <p className="break-all font-mono text-[11px] text-dim">
+              {linkView.domain}
+            </p>
+          ) : null}
+          {linkView.badReasons.length > 0 ? (
+            <ul className="flex list-disc flex-col gap-1 pl-4 text-[12px] text-txt/80">
+              {linkView.badReasons.slice(0, 5).map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          ) : null}
+          {linkView.incomplete ? (
+            <p className="text-[11px] text-warn">
+              Sebagian pemeriksaan tidak selesai; ulangi bila perlu.
+            </p>
+          ) : null}
+          <p className="text-[10.5px] text-dim">
+            Hanya tautan ini yang dikirim ke pemindai. Pesan yang diperiksa
+            tetap di perangkat.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const toolbar = (
     <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-3.5">

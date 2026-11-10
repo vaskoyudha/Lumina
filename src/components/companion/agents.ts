@@ -9,6 +9,7 @@ import {
   Quote,
   Store,
 } from "lucide-react";
+import { CREW_IDS } from "@/lib/agents/identities";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
 import type { AgentId } from "@/lib/contracts/score";
 import { DETECTOR_IDS } from "@/lib/scoring/detector-ids";
@@ -32,6 +33,14 @@ export type DetectorAgent = Exclude<AgentId, "scoring">;
  * it is appended here rather than pretended into the pipeline.
  */
 export const AGENT_SEQUENCE: DetectorAgent[] = [...DETECTOR_IDS, "evidence"];
+
+/**
+ * The eight identity agents shown on /agen and spawned by the Orchestrator.
+ *
+ * Keep `AGENT_SEQUENCE` at ten for the deterministic AgentRun/SignalPanel:
+ * injection and email are safety stages, not crew members.
+ */
+export const CREW_SEQUENCE: DetectorAgent[] = [...CREW_IDS];
 
 export interface AgentProfile {
   id: DetectorAgent;

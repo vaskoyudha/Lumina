@@ -19,14 +19,14 @@ import type { ToolCall } from "@/lib/contracts/tool";
 
 export type ToolExecution =
   | { kind: "observation"; observation: ToolObservation }
-  | { kind: "terminal"; terminal: "report" };
+  | { kind: "terminal"; terminal: "report" | "link" };
 
 export interface AgentLoopResult {
   outcome: AnswerResult["outcome"];
   text: string;
   calls: ToolCall[];
   observations: ToolObservation[];
-  terminal: "report" | null;
+  terminal: "report" | "link" | null;
   steps: number;
   /** Extra calls in one response that the loop did not execute. */
   ignored: number;
