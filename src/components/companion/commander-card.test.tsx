@@ -20,6 +20,7 @@ describe("CommanderCard", () => {
   it("shows Lumina reading before any announcement", () => {
     render(<CommanderCard phase="reading" />);
     expect(screen.getByText("Lumina")).toBeInTheDocument();
+    expect(screen.getByText("Komandan")).toBeInTheDocument();
     expect(screen.getByText(/membaca pesan/i)).toBeInTheDocument();
   });
 
