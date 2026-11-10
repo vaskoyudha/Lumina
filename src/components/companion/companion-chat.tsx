@@ -292,8 +292,13 @@ export function CompanionChat({
   );
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
-  /** The center column's second view; the turns stay in state while it is away. */
-  const [showAgents, setShowAgents] = React.useState(initialPanel === "agen");
+  /**
+   * The center column's second view. The address owns it: `/agen` is the
+   * overview, `/companion` is the conversation. Keeping it in state let a
+   * reused client instance carry the previous view across routes, which showed
+   * the chat under an `/agen` URL.
+   */
+  const showAgents = onAgentRoute || initialPanel === "agen";
   /** Seed for the empty-state composer: a nonce remounts it with new text. */
   const [composerSeed, setComposerSeed] = React.useState({
     text: "",
@@ -1303,7 +1308,6 @@ export function CompanionChat({
       return;
     }
     setShowSessions(false);
-    setShowAgents(false);
     setSelectedAgent(null);
 
     /*
@@ -1326,19 +1330,12 @@ export function CompanionChat({
   };
 
   /**
-   * "Agen" is its own address. From the conversation, send the reader to
-   * `/agen`; on `/agen` itself, only reset the selected brief so the sidebar
-   * does not push the same route again.
+   * "Agen" is its own address (`/agen`), so the sidebar row is a plain link.
+   * The empty-state card still has to navigate from the conversation.
    */
   const openAgents = () => {
     setShowSessions(false);
-    if (!onAgentRoute) {
-      router.push("/agen");
-      return;
-    }
-    setShowAgents(true);
-    setSelectedAgent(AGENT_SEQUENCE[0]);
-    setAgentsAnnouncement("");
+    router.push("/agen");
   };
 
   React.useEffect(() => {
@@ -1437,24 +1434,19 @@ export function CompanionChat({
           onSelect={(sessionId) => {
             // A conversation belongs to `/companion`; `/agen` is the overview.
             if (onAgentRoute) {
+              setSelectedId(sessionId);
+              setShowSessions(false);
               router.push("/companion");
               return;
             }
             setSelectedId(sessionId);
             setShowSessions(false);
-            setShowAgents(false);
             setSelectedAgent(null);
           }}
           onNew={startNew}
           onClose={() => setShowSessions(false)}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-          agentsActive={showAgents}
-          onShowAgents={openAgents}
-          onShowChat={() => {
-            setShowAgents(false);
-            setShowSessions(false);
-          }}
           auth={(iconsOnly) => (
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
@@ -1730,7 +1722,6 @@ export function CompanionChat({
                     onOpenHistory={openAgents}
                     onResume={(sessionId) => {
                       setSelectedId(sessionId);
-                      setShowAgents(false);
                     }}
                   />
                 </div>

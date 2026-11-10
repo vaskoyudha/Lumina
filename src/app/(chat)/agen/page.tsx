@@ -14,13 +14,13 @@ export const metadata: Metadata = {
  *
  * The overview does not need the conversation's request-time data, so it is the
  * fallback: the static shell paints the agents immediately while the session
- * and the job corpus stream in behind it. `/companion?panel=agen` still works
- * and now paints the same panel on its first frame.
+ * and the job corpus stream in behind it. There is no `/companion?panel=agen`
+ * alias — the address is always `/agen`.
  */
 export default function AgenPage() {
   return (
     <Suspense fallback={<CompanionChat initialPanel="agen" />}>
-      <CompanionWithSession searchParams={Promise.resolve({ panel: "agen" })} />
+      <CompanionWithSession />
     </Suspense>
   );
 }

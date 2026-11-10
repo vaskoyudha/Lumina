@@ -252,37 +252,30 @@ describe("CompanionChat · shell", () => {
     }
   });
 
-  it("opens the agent overview at its own /agen address", async () => {
-    const user = userEvent.setup();
+  it("makes the agent overview its own /agen destination", () => {
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /^agen/i }));
-
-    expect(mockPush).toHaveBeenCalledWith("/agen");
+    const row = screen.getByRole("link", { name: /^agen/i });
+    expect(row).toHaveAttribute("href", "/agen");
     expect(
       screen.queryByRole("heading", { name: "Agen pemeriksa" }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows every detection agent in the main panel when the sidebar option is pressed", async () => {
-    const user = userEvent.setup();
+  it("shows every detection agent in the main panel on /agen", () => {
     mockPathname = "/agen";
-    render(<CompanionChat initialPanel="agen" />);
+    render(<CompanionChat />);
 
-    const trigger = screen.getByRole("button", { name: /^agen/i });
+    const trigger = screen.getByRole("link", { name: /^agen/i });
     const sidebar = trigger.closest("aside");
     expect(sidebar).not.toBeNull();
     if (!sidebar) return;
 
-    // The sidebar stays navigation: pressing the option must not unfold a list
+    // The sidebar stays navigation: the option must not unfold a list
     // inside it, because the overview belongs to the center column.
     const sidebarScope = within(sidebar as HTMLElement);
     expect(sidebarScope.queryByText("Message Agent")).not.toBeInTheDocument();
-
-    await user.click(trigger);
-
     expect(trigger).toHaveAttribute("aria-current", "page");
-    expect(sidebarScope.queryByText("Message Agent")).not.toBeInTheDocument();
 
     const view = screen
       .getByRole("heading", { name: "Agen pemeriksa" })
@@ -321,24 +314,51 @@ describe("CompanionChat · shell", () => {
     expect(
       viewScope.getByText("Bagan, satu skor deterministik."),
     ).toBeInTheDocument();
+  });
 
-    await user.click(screen.getAllByRole("link", { name: "AI Companion" })[0]);
+  it("renders the conversation again when the address returns to /companion", () => {
+    mockPathname = "/agen";
+    const { rerender } = render(<CompanionChat />);
+    expect(
+      screen.getByRole("heading", { name: "Agen pemeriksa" }),
+    ).toBeInTheDocument();
+
+    mockPathname = "/companion";
+    rerender(<CompanionChat />);
+
     expect(
       screen.queryByRole("heading", { name: "Agen pemeriksa" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: /periksa sebelum/i }),
+    ).toBeInTheDocument();
   });
 
-  it("lands directly on the agent overview when opened from another surface", () => {
-    render(<CompanionChat initialPanel="agen" />);
+  it("lands directly on the agent overview at /agen", () => {
+    mockPathname = "/agen";
+    render(<CompanionChat />);
 
     const view = screen
       .getByRole("heading", { name: "Agen pemeriksa" })
       .closest("section");
     expect(view).not.toBeNull();
-    expect(screen.getByRole("button", { name: /^agen/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^agen/i })).toHaveAttribute(
       "aria-current",
       "page",
     );
+  });
+
+  it("paints the overview from the server hint before the pathname resolves", () => {
+    // During the prerender of `/agen` the hook can have no pathname yet; the
+    // explicit hint keeps the first frame on the overview instead of the chat.
+    render(<CompanionChat initialPanel="agen" />);
+
+    expect(
+      screen.getByRole("heading", { name: "Agen pemeriksa" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText(/tempel pesan/i),
+    ).not.toBeInTheDocument();
   });
 
   it("sends a new conversation from /agen back to /companion", async () => {
@@ -359,14 +379,7 @@ describe("CompanionChat · shell", () => {
   it("swaps the evidence panel for agent detail only while the overview is open", async () => {
     const user = userEvent.setup();
     mockPathname = "/agen";
-    render(<CompanionChat />);
-
-    expect(screen.getByText("Panel bukti")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Detail agen" }),
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /^agen/i }));
+    const { rerender } = render(<CompanionChat />);
 
     expect(
       screen.getByRole("heading", { name: "Detail agen" }),
@@ -396,7 +409,8 @@ describe("CompanionChat · shell", () => {
       within(detail).queryByText(/membaca nada pesan/i),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getAllByRole("link", { name: "AI Companion" })[0]);
+    mockPathname = "/companion";
+    rerender(<CompanionChat />);
 
     expect(screen.getByText("Panel bukti")).toBeInTheDocument();
     expect(

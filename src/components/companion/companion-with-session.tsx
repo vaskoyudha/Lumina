@@ -18,14 +18,9 @@ const EMPTY_CORPUS: LokerCorpus = {
  * message checker is entirely local. A failed read is an empty corpus, not an
  * error page.
  */
-export async function CompanionWithSession({
-  searchParams,
-}: {
-  searchParams: Promise<{ panel?: string }>;
-}) {
-  const [session, { panel }, corpus] = await Promise.all([
+export async function CompanionWithSession() {
+  const [session, corpus] = await Promise.all([
     getSession(),
-    searchParams,
     loadCorpus(CORPUS_LIMIT)
       .then(({ postings, total }) => capCorpus(postings, total))
       .catch(() => EMPTY_CORPUS),
@@ -34,7 +29,6 @@ export async function CompanionWithSession({
   return (
     <CompanionChat
       session={session ? { nama: session.nama, email: session.email } : null}
-      initialPanel={panel === "agen" ? "agen" : undefined}
       corpus={corpus}
     />
   );

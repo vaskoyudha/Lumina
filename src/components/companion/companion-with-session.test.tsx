@@ -59,7 +59,7 @@ describe("CompanionWithSession", () => {
       total: 5,
     });
 
-    render(await CompanionWithSession({ searchParams: Promise.resolve({}) }));
+    render(await CompanionWithSession());
     const chat = screen.getByTestId("chat");
     expect(chat).toHaveAttribute("data-total", "5");
     expect(chat).toHaveAttribute("data-count", "1");
@@ -70,7 +70,7 @@ describe("CompanionWithSession", () => {
     jest.mocked(getSession).mockResolvedValue(null);
     jest.mocked(loadCorpus).mockRejectedValue(new Error("down"));
 
-    render(await CompanionWithSession({ searchParams: Promise.resolve({}) }));
+    render(await CompanionWithSession());
     const chat = screen.getByTestId("chat");
     expect(chat).toHaveAttribute("data-total", "0");
     expect(chat).toHaveAttribute("data-count", "0");
