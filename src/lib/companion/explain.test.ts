@@ -92,3 +92,24 @@ describe("explain", () => {
     expect(first).toEqual(second);
   });
 });
+
+describe("report fallback for an unrecognized high-risk message", () => {
+  const OTP_ONLY =
+    "Kirim kode OTP 6 digit yang baru saja masuk ke nomor ini sekarang.";
+
+  it("still gives OTP theft a channel to report to", () => {
+    const result = scoreText({ text: OTP_ONLY });
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("tidak-dikenali");
+
+    const { report } = explain(result, OTP_ONLY);
+    expect(report.map((channel) => channel.id)).toEqual(["iasc", "komdigi"]);
+  });
+
+  it("does not invent a channel for a harmless unrecognized message", () => {
+    const text = "Halo, besok kita rapat jam sembilan pagi.";
+    const result = scoreText({ text });
+    expect(result.modus).toBe("tidak-dikenali");
+    expect(explain(result, text).report).toEqual([]);
+  });
+});

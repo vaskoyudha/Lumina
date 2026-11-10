@@ -17,6 +17,7 @@ function renderFor(
     <ExplanationCard
       explanation={explain(result, text)}
       schemeName={schemeName}
+      result={result}
     />,
   );
 }
@@ -94,6 +95,7 @@ describe("ExplanationCard", () => {
   });
 
   it("renders nothing at all for an empty explanation", () => {
+    const result = scoreText({ text: "Halo, apa kabar?" });
     const { container } = render(
       <ExplanationCard
         explanation={{
@@ -104,8 +106,20 @@ describe("ExplanationCard", () => {
           unrecognized: false,
         }}
         schemeName={null}
+        result={result}
       />,
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("offers a template for an OTP-only high-risk message", () => {
+    renderFor(
+      "Kirim kode OTP 6 digit yang baru saja masuk ke nomor ini sekarang.",
+      null,
+    );
+    expect(screen.getByText("Kalau sudah terlanjur")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Buat template laporan/i }),
+    ).toBeInTheDocument();
   });
 });
