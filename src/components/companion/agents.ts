@@ -116,7 +116,7 @@ export const AGENT_REGISTRY: Record<DetectorAgent, AgentProfile> = {
       "Memeriksa tawaran kerja: biaya di muka, tugas like/subscribe, dan penempatan luar negeri yang membebani pelamar.",
     flavor: "Memeriksa biaya yang diminta sebelum ada surat tawaran.",
     icon: Briefcase,
-    portrait: null,
+    portrait: "/brand/agents/job.jpg",
     identity: "--lumina-agent-job",
   },
   marketplace: {
@@ -129,7 +129,7 @@ export const AGENT_REGISTRY: Record<DetectorAgent, AgentProfile> = {
       "Mengikuti alur jual-beli: pembayaran ke rekening pribadi, gift card, dan trik refund lewat QRIS.",
     flavor: "Mengikuti alur bayar yang keluar dari platform.",
     icon: Store,
-    portrait: null,
+    portrait: "/brand/agents/marketplace.jpg",
     identity: "--lumina-agent-marketplace",
   },
   qris: {
@@ -144,7 +144,7 @@ export const AGENT_REGISTRY: Record<DetectorAgent, AgentProfile> = {
     caveat:
       "CRC valid hanya berarti formatnya benar; cocokkan nama merchant di layar sebelum membayar.",
     icon: QrCode,
-    portrait: null,
+    portrait: "/brand/agents/qris.jpg",
     identity: "--lumina-agent-qris",
   },
   evidence: {

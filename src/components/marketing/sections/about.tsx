@@ -1,50 +1,112 @@
 "use client";
 
 import Image from "next/image";
+import {
+  AGENT_REGISTRY,
+  AGENT_SEQUENCE,
+  type DetectorAgent,
+} from "@/components/companion/agents";
 import { Button } from "@/components/ui/button";
 import { scrollToId } from "@/lib/scroll";
 import { aboutCopy, aboutStats } from "@/lib/site";
 
-const portraits = [
+/**
+ * The crew shown above the section copy is the same registry the companion
+ * uses, so a new agent or a replaced mascot reaches the landing without a
+ * second list to maintain. Alt text names the agent and the surface it reads.
+ */
+const CREW_ROLE: Record<DetectorAgent, string> = {
+  message: "agen pemeriksa pesan",
+  link: "agen pemeriksa tautan",
+  identity: "agen pemeriksa identitas pengirim",
+  conversation: "agen pemeriksa alur percakapan",
+  job: "agen pemeriksa tawaran kerja",
+  marketplace: "agen pemeriksa jual-beli",
+  qris: "agen pemeriksa QRIS",
+  evidence: "agen penyusun bukti",
+};
+
+const agents = AGENT_SEQUENCE.flatMap((id) => {
+  const profile = AGENT_REGISTRY[id];
+  if (!profile.portrait) return [];
+  return [
+    {
+      key: id,
+      portrait: profile.portrait,
+      alt: `${profile.displayName}, ${CREW_ROLE[id]}`,
+    },
+  ];
+});
+
+/**
+ * Lumina sits in the middle of its own crew: four detectors on each side.
+ * The split is four, not zero, so every agent stays visible without a second row.
+ */
+const CREW = [
+  ...agents.slice(0, 4),
   {
-    key: "about-1",
-    rotate: "-rotate-[26deg]",
-    translate: "translate-y-12 sm:translate-y-16",
-    size: "w-24 h-28 sm:w-36 sm:h-40",
-    shadow: "shadow-lg",
-    extra: "",
+    key: "lumina",
+    portrait: "/brand/agents/lumina.jpg",
+    alt: "Lumina, orkestrator",
+  },
+  ...agents.slice(4),
+];
+
+/** Position in the nine-card fan: outer cards sit lower and turn further. */
+const fan = [
+  {
+    rotate: "-rotate-[30deg]",
+    translate: "translate-y-12",
+    size: "w-[clamp(80px,7.6vw,118px)] h-[clamp(80px,7.6vw,118px)]",
+    z: "",
   },
   {
-    key: "about-2",
-    rotate: "-rotate-[13deg]",
-    translate: "translate-y-3 sm:translate-y-5",
-    size: "w-24 h-28 sm:w-36 sm:h-40",
-    shadow: "shadow-lg",
-    extra: "",
+    rotate: "-rotate-[22deg]",
+    translate: "translate-y-7",
+    size: "w-[clamp(90px,8.7vw,134px)] h-[clamp(90px,8.7vw,134px)]",
+    z: "",
   },
   {
-    key: "about-3",
+    rotate: "-rotate-[15deg]",
+    translate: "translate-y-3",
+    size: "w-[clamp(102px,9.9vw,152px)] h-[clamp(102px,9.9vw,152px)]",
+    z: "z-10",
+  },
+  {
+    rotate: "-rotate-[7deg]",
+    translate: "translate-y-1",
+    size: "w-[clamp(112px,11vw,168px)] h-[clamp(112px,11vw,168px)]",
+    z: "z-20",
+  },
+  {
     rotate: "rotate-0",
     translate: "-translate-y-2",
-    size: "w-28 h-32 sm:w-40 sm:h-44",
-    shadow: "shadow-xl",
-    extra: "z-10",
+    size: "w-[clamp(130px,12.8vw,196px)] h-[clamp(130px,12.8vw,196px)]",
+    z: "z-30",
   },
   {
-    key: "about-4",
-    rotate: "rotate-[13deg]",
-    translate: "translate-y-3 sm:translate-y-5",
-    size: "w-24 h-28 sm:w-36 sm:h-40",
-    shadow: "shadow-lg",
-    extra: "",
+    rotate: "rotate-[7deg]",
+    translate: "translate-y-1",
+    size: "w-[clamp(112px,11vw,168px)] h-[clamp(112px,11vw,168px)]",
+    z: "z-20",
   },
   {
-    key: "about-5",
-    rotate: "rotate-[26deg]",
-    translate: "translate-y-12 sm:translate-y-16",
-    size: "w-24 h-28 sm:w-36 sm:h-40",
-    shadow: "shadow-lg",
-    extra: "",
+    rotate: "rotate-[15deg]",
+    translate: "translate-y-3",
+    size: "w-[clamp(102px,9.9vw,152px)] h-[clamp(102px,9.9vw,152px)]",
+    z: "z-10",
+  },
+  {
+    rotate: "rotate-[22deg]",
+    translate: "translate-y-7",
+    size: "w-[clamp(90px,8.7vw,134px)] h-[clamp(90px,8.7vw,134px)]",
+    z: "",
+  },
+  {
+    rotate: "rotate-[30deg]",
+    translate: "translate-y-12",
+    size: "w-[clamp(80px,7.6vw,118px)] h-[clamp(80px,7.6vw,118px)]",
+    z: "",
   },
 ];
 
@@ -55,38 +117,59 @@ export function About() {
       className="relative overflow-hidden bg-ls-surface px-4 pt-28 pb-24 sm:px-8"
     >
       <div className="mx-auto max-w-[1440px]">
-        <div
-          data-reveal
-          className="relative flex min-h-[210px] items-end justify-center gap-3 pt-4 pb-6 sm:min-h-[260px] sm:gap-6 md:gap-8"
-        >
-          {portraits.map((portrait, index) => (
-            <div
-              key={portrait.key}
-              className={`${portrait.size} overflow-hidden rounded-2xl border-2 border-white ${portrait.shadow} transform ${portrait.rotate} ${portrait.translate} transition-transform duration-300 hover:scale-105 ${portrait.extra}`}
-            >
-              <Image
-                src={`/images/${portrait.key}.jpg`}
-                alt={aboutCopy.portraits[index].alt}
-                width={320}
-                height={352}
-                className="h-full w-full object-cover"
-                priority={index === 2}
-              />
-            </div>
-          ))}
+        <div data-reveal className="relative -mx-4 sm:-mx-8">
+          <ul
+            aria-label="Delapan agen pemeriksa dan Lumina"
+            className="mx-auto grid max-w-[600px] grid-cols-3 gap-2 sm:gap-3 lg:hidden"
+          >
+            {CREW.map((agent) => (
+              <li
+                key={agent.key}
+                className="overflow-hidden rounded-2xl border-2 border-white shadow-md"
+              >
+                <Image
+                  src={agent.portrait}
+                  alt={agent.alt}
+                  width={320}
+                  height={320}
+                  className="aspect-square w-full object-cover"
+                />
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden min-h-[220px] items-end justify-center gap-[clamp(12px,1.2vw,18px)] pt-4 pb-6 lg:flex">
+            {CREW.map((agent, index) => {
+              const position = fan[index % fan.length];
+              return (
+                <div
+                  key={agent.key}
+                  className={`${position.size} shrink-0 overflow-hidden rounded-2xl border-2 border-white shadow-lg transform ${position.rotate} ${position.translate} transition-transform duration-300 hover:scale-105 ${position.z}`}
+                >
+                  <Image
+                    src={agent.portrait}
+                    alt={agent.alt}
+                    width={320}
+                    height={320}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="relative pt-10 pb-6 text-center sm:pt-14">
-          <div className="pointer-events-none absolute top-0 left-1/2 h-16 w-[calc(100%-2rem)] max-w-[760px] -translate-x-1/2 select-none sm:h-[84px]">
+          <div className="pointer-events-none absolute top-0 left-1/2 h-20 w-[calc(100%-2rem)] max-w-[1280px] -translate-x-1/2 select-none sm:h-[120px]">
             <svg
               className="h-full w-full"
-              viewBox="0 0 760 84"
+              viewBox="0 0 1280 120"
               preserveAspectRatio="none"
               fill="none"
               aria-hidden="true"
             >
               <path
-                d="M0 84C150 84 210 8 380 8S610 84 760 84"
+                d="M2 116C310 116 372 6 640 6S970 116 1278 116"
                 stroke="var(--ls-line-strong)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -102,10 +185,8 @@ export function About() {
               <span>{aboutCopy.badge}</span>
             </div>
 
-            <h2 className="mx-auto max-w-xl font-semibold text-3xl text-ls-ink leading-[1.15] sm:text-4xl lg:text-[42px]">
-              {aboutCopy.title[0]}
-              <br />
-              {aboutCopy.title[1]}
+            <h2 className="mx-auto max-w-2xl text-balance font-semibold text-3xl text-ls-ink leading-[1.15] sm:text-4xl lg:text-[42px]">
+              {aboutCopy.title.join(" ")}
             </h2>
 
             <p className="mx-auto mt-4 max-w-md text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
