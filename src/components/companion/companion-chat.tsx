@@ -2074,7 +2074,7 @@ export function CompanionChat({
   };
 
   const empty = turns.length === 0;
-  const contentTop = "pt-4";
+  const contentTop = tutorModule ? "pt-4" : "pt-[76px]";
 
   return (
     <div
@@ -2915,7 +2915,9 @@ export function CompanionChat({
                                   () => URL.revokeObjectURL(url),
                                   1000,
                                 );
-                              } catch {}
+                              } catch {
+                                // Export is best-effort; the trace stays open.
+                              }
                             }}
                           >
                             Ekspor jejak tanpa isi pesan
