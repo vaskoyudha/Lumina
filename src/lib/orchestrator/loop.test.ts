@@ -476,6 +476,7 @@ describe("runOrchestrator", () => {
         2,
     );
     expect(reused.length).toBeGreaterThan(0);
+    expect(reused.some((prompt) => prompt.includes("<follow_up>"))).toBe(true);
     clearSubagentSessions(caseId);
   });
 
