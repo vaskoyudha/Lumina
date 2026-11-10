@@ -2,6 +2,7 @@
 
 import { consumeAttempt } from "@/lib/auth/accounts";
 import { getSession } from "@/lib/auth/server-session";
+import { savePractice } from "@/lib/learning/review-store";
 import {
   LearningError,
   readAccountProgress,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/learning/store";
 import {
   QuizSubmissionSchema,
+  ReviewSubmissionSchema,
   SimulationSubmissionSchema,
   SimulationTimerSchema,
 } from "@/lib/learning/validation";
@@ -74,13 +76,38 @@ export async function submitQuiz(input: unknown) {
     const parsed = QuizSubmissionSchema.safeParse(input);
     if (!parsed.success)
       return { ok: false as const, error: "Jawaban kuis tidak valid." };
-    const { moduleNo, answers, complete } = parsed.data;
+    const { moduleNo, answers, complete, attemptId } = parsed.data;
     return {
       ok: true as const,
-      progress: await saveQuiz(session.id, moduleNo, answers, complete),
+      progress: await (attemptId
+        ? saveQuiz(session.id, moduleNo, answers, complete, attemptId)
+        : saveQuiz(session.id, moduleNo, answers, complete)),
     };
   } catch (error) {
     return failure(error);
+  }
+}
+export async function submitReview(input: unknown) {
+  try {
+    const session = await getSession();
+    if (!session)
+      return {
+        ok: false as const,
+        error: "Masuk untuk menyimpan latihan di akun.",
+        unauthorized: true,
+      };
+    const parsed = ReviewSubmissionSchema.safeParse(input);
+    if (!parsed.success)
+      return { ok: false as const, error: "Jawaban latihan tidak valid." };
+    await consumeAttempt(`learning:review:${session.id}`, 60, 60000);
+    const feedback = await savePractice(session.id, parsed.data);
+    return {
+      ok: true as const,
+      ...feedback,
+      progress: await readAccountProgress(session.id),
+    };
+  } catch {
+    return { ok: false as const, error: "Latihan belum tersimpan. Coba lagi." };
   }
 }
 export async function submitSimulation(input: unknown) {

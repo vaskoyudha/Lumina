@@ -27,9 +27,7 @@ it("shows account completion, badge and module link", async () => {
   );
 });
 it("shows missed quiz patterns", async () => {
-  mockAccount(recordMissed(EMPTY_PROGRESS, ["q1"]));
+  mockAccount(recordMissed(EMPTY_PROGRESS, ["apk-q1"]));
   renderAccount(<ProfilKemajuan modules={MODULE_FIXTURES} />);
-  expect(
-    await screen.findByText(/pola kuis masih perlu ditinjau/i),
-  ).toBeInTheDocument();
+  expect(await screen.findByText(/pola perlu ditinjau/i)).toBeInTheDocument();
 });

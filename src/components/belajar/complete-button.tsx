@@ -19,9 +19,11 @@ import { BADGE_FOR_MODULE } from "@/lib/progress";
 export function CompleteButton({
   moduleNo,
   answers,
+  attemptId,
 }: {
   moduleNo: number;
   answers: Record<string, string>;
+  attemptId?: string;
 }) {
   const { update, authenticated } = useAccountProgress();
   const [pending, setPending] = useState(false);
@@ -35,7 +37,12 @@ export function CompleteButton({
     setPending(true);
     setError(null);
     try {
-      const result = await submitQuiz({ moduleNo, answers, complete: true });
+      const result = await submitQuiz({
+        moduleNo,
+        answers,
+        complete: true,
+        ...(attemptId ? { attemptId } : {}),
+      });
       if (result.ok) update(result.progress);
       else setError(result.error);
     } catch {

@@ -8,12 +8,14 @@ import {
   MessageSquareWarning,
   Phone,
 } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAccountProgress } from "@/components/belajar/belajar-progress";
 import { CompleteButton } from "@/components/belajar/complete-button";
 import { CourseSimulationCta } from "@/components/belajar/course-simulation-cta";
 import { Quiz } from "@/components/belajar/quiz";
+import { Remediation } from "@/components/belajar/remediation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -336,6 +338,7 @@ function KeyPoints({ modul }: { modul: ModuleContent }) {
 export function ModulBody({ modul }: { modul: ModuleContent }) {
   const [passed, setPassed] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const attemptId = useRef<string | undefined>(undefined);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { update, authenticated } = useAccountProgress();
   const toc = tocFor(modul);
@@ -353,6 +356,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
     setAnswers(latest);
   }
   async function saveAttempt(latest: Record<string, string>) {
+    attemptId.current = crypto.randomUUID();
     setAnswers(latest);
     if (!authenticated) return;
     try {
@@ -360,6 +364,7 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         moduleNo: modul.no,
         answers: latest,
         complete: false,
+        attemptId: attemptId.current,
       });
       if (result.ok) {
         update(result.progress);
@@ -374,6 +379,10 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
       <div className="flex min-w-0 flex-col gap-5">
         <ModuleOrientation modul={modul} />
+        <Button asChild variant="outline" className="min-h-11 w-fit">
+          <Link href={`/companion?modul=${modul.no}`}>Tanya materi ini</Link>
+        </Button>
+        <Remediation moduleNo={modul.no} />
 
         <LessonSection
           id="anatomi"
@@ -477,7 +486,11 @@ export function ModulBody({ modul }: { modul: ModuleContent }) {
         <KeyPoints modul={modul} />
 
         {passed ? (
-          <CompleteButton moduleNo={modul.no} answers={answers} />
+          <CompleteButton
+            moduleNo={modul.no}
+            answers={answers}
+            attemptId={attemptId.current}
+          />
         ) : (
           <Card className="gap-0 rounded-card border border-line py-0 shadow-[var(--appnext-shadow-soft)]">
             <CardContent className="py-4 text-dim">
