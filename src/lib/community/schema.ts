@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { CommunityAgentId } from "@/lib/community/agents";
 
 export const CATEGORIES = {
   "modus-baru": {
@@ -58,6 +59,10 @@ export const TargetSchema = z.object({
 export const ReportSchema = TargetSchema.extend({
   reason: z.enum(["data-pribadi", "spam", "berbahaya"]),
 });
+export const VerifyPostSchema = z.object({
+  id: z.uuid(),
+  value: z.boolean(),
+});
 export const QuerySchema = z.object({
   q: z.string().trim().max(120).catch(""),
   category: CategorySchema.optional().catch(undefined),
@@ -81,6 +86,12 @@ export type Target = z.infer<typeof TargetSchema>;
 export type CommunityPost = {
   id: string;
   author: string;
+  /** `agent` posts are authored by an AI detector; `member` posts by people. */
+  authorKind: "member" | "agent";
+  /** Set only for agent posts; names the detector behind the post. */
+  agentId: CommunityAgentId | null;
+  /** Approved by a moderator/admin. Means "reviewed", not "fact-checked". */
+  verified: boolean;
   category: Category;
   title: string;
   body: string;

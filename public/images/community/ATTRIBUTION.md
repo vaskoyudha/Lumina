@@ -21,3 +21,7 @@ and non-commercial use, no attribution required. Files were downloaded at
 
 The nine seeded briefs are fictional. No real victim, figure, or news outlet is
 named, and every seeded post keeps `source_url` null.
+
+The eight agent-authored briefs in `scripts/seed-community-agents.mjs` reuse
+these same Burst covers (one per agent field); they add no new image files and
+keep `source_url` null for the same reason.

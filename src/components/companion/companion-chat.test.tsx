@@ -3,6 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
 
+jest.mock("@/lib/companion/history", () => ({
+  listConversationHistory: jest.fn(async () => ({
+    ok: true,
+    conversations: [],
+  })),
+  saveConversationHistory: jest.fn(async () => ({ ok: true })),
+}));
+
 /**
  * This suite renders the whole conversation client and runs the full
  * deterministic pipeline. The full run executes it beside ~60 other suites on

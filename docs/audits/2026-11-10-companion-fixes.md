@@ -1,6 +1,7 @@
 # Review Companion dan perbaikan CRUD — 10 November 2026
 
-Lanjutan audit commit `fffe09d` pada branch `codex/audit-crud-keamanan`.
+Lanjutan audit commit `fffe09d` pada branch `codex/audit-crud-keamanan`,
+kemudian disinkronkan dengan `main` sampai `a59f30c`.
 Permintaan pemilik: review AI Companion, petakan bug, lalu perbaiki seluruh
 temuan, termasuk R1–R6 dari audit CRUD sebelumnya.
 
@@ -18,8 +19,10 @@ temuan, termasuk R1–R6 dari audit CRUD sebelumnya.
 | C8 | Balasan khusus tool tanpa teks masuk history sebagai string kosong, lalu ditolak schema pada chat berikutnya | History hanya memuat giliran dengan teks nonkosong |
 | C9 | Pertanyaan konsep lebih dari 2.000 karakter dikirim lalu ditolak route tanpa penjelasan batas | Chat memberi batas yang jelas tanpa mengirim payload tidak valid; teks pemeriksaan tetap dapat lebih panjang |
 | C10 | Kartu “Riwayat Agen” menampilkan seed aktivitas dan waktu fiktif; sapaan akun selalu “Tamu” | Kartu hanya memuat stage yang sudah selesai (`selesai` atau `temuan`) dari trace nyata dalam memori tab, menampilkan durasi terukur, dan membuka percakapan asal; sapaan memakai nama akun |
+| C11 | Fitur metadata riwayat dari main terbaru menyalin awal pesan/nama lampiran menjadi judul di database | Klien hanya mengirim label topik publik; server menerapkan allowlist saat menulis dan membaca; migrasi 010 membersihkan judul lama tanpa menghapus riwayat |
+| C12 | Pemanggilan tool template laporan tanpa pemeriksaan sebelumnya dapat menghasilkan balasan kosong | Chat menjelaskan bahwa pesan perlu diperiksa lebih dahulu, tanpa membuka template dengan temuan yang tidak tersedia |
 
-Klasifikasi: C3 dan C6 menyentuh kontrak privasi; C1, C4, C5, C7, dan C8
+Klasifikasi: C3, C6, dan C11 menyentuh kontrak privasi; C1, C4, C5, C7, C8, dan C12
 mempengaruhi ketepatan/ketersediaan alur; C2 dan C9 mempengaruhi pengalaman pengguna.
 Perbaikan C3 melindungi permintaan berikutnya; data yang sebelumnya dikirim
 ketika pengguna masih menganggapnya pertanyaan tidak dapat ditarik kembali.
@@ -44,7 +47,11 @@ Endpoint bersama baru: GET `/api/account/progress`, berisi progres akun dari
 sesi dan jumlah modul, dengan `Cache-Control: no-store`. Tidak menerima ID akun
 dari browser dan tidak mengembalikan detail database saat gagal.
 
-Migrasi baru: `008_simulation_intrusion_timers.sql`. Runner mengirim kejadian
+Migrasi baru: `008_simulation_intrusion_timers.sql` dan
+`010_companion_private_titles.sql`. Migrasi 010 mengganti seluruh label riwayat
+yang sudah ada dengan “Percakapan Companion”, karena label lama dapat berisi
+kutipan pesan. ID, pemilik, waktu, jumlah giliran, dan risiko tetap tersedia.
+Runner mengirim kejadian
 perangkat terkompromi pada mode tantangan melalui Server Action yang memeriksa
 sesi, memvalidasi input, dan membatasi frekuensi. Receipt tidak direset oleh retry.
 `db:cleanup` menghapus receipt terbengkalai setelah sehari; receipt untuk hasil
@@ -65,15 +72,19 @@ dua tes React tambahan memeriksa keadaan kosong yang jujur dan navigasi riwayat 
 
 Hasil akhir:
 
-- `npm run verify` lulus: typecheck, Biome, **1.029 tes**, dan build produksi.
-- Seluruh **43 tes integrasi PostgreSQL** lulus pada database terpisah
-  `lumina_crud_audit_test`, termasuk empat kasus tambahan. Total 1.072 tes
+- `npm run verify` lulus setelah integrasi main: typecheck, Biome,
+  **1.078 tes**, dan build produksi.
+- Seluruh **47 tes integrasi PostgreSQL** lulus pada database terpisah
+  `lumina_crud_audit_test`, termasuk metadata riwayat Companion. Total 1.125 tes
   tercakup oleh gate dan run integrasi terpisah.
 - Chrome headless pada **380 × 844** menguji build produksi dengan dua akun
   sintetis dan sesi database: progres akun dari Companion, perubahan nama dan
   trigger profil, terbitkan/edit topik, balasan ke-21 beserta halaman/anchor,
   laporkan → setujui moderator → edit → laporkan ulang, serta hapus oleh penulis.
   Riwayat agen nyata juga diuji membuka percakapan asal setelah memulai chat baru.
+  Setelah sinkronisasi main, browser juga membuktikan metadata tersimpan tanpa
+  kutipan pesan, reload hanya memulihkan label, dan tool model membuka template
+  laporan yang dapat diisi pada lebar 380px.
 - Companion, hasil pemeriksaan, dialog progres, editor komunitas, halaman kedua
   balasan, dan antrean moderasi diperiksa visual; lebar document/body tetap
   380px. Tidak ada uncaught browser error pada alur CRUD tersebut.
@@ -87,7 +98,9 @@ Screenshot dan harness browser berada di `.cache/crud-audit/`, diabaikan Git.
 Seluruh akun browser sintetis dan data turunannya dibersihkan setelah verifikasi.
 
 Sebelum menjalankan versi ini pada database tujuan, jalankan `npm run db:migrate`.
-Tidak ada deployment VPS dalam pekerjaan ini. Kontrak dalam `lib/contracts/`
-dan engine `lib/scoring/` tidak diubah; pesan dan percakapan Companion tidak
-ditambahkan ke database atau localStorage. Perubahan melintasi stream A/B/C/D
+Tidak ada deployment VPS dalam pekerjaan ini. Perbaikan audit tidak mengubah
+engine `lib/scoring/` atau kontrak scoring. Kontrak tool/laporan dari main tetap
+dipertahankan. Isi pesan, lampiran, dan transkrip Companion tidak ditambahkan
+ke database atau localStorage; hanya metadata dengan label topik publik yang
+dipersistenkan sesuai pengecualian produk terbaru. Perubahan melintasi stream A/B/C/D
 serta permukaan bersama profil/API/migrasi/cleanup.

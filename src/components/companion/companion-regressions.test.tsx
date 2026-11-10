@@ -1,9 +1,17 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
+import { saveConversationHistory } from "@/lib/companion/history";
 import { AnswerRequestSchema } from "@/lib/contracts/answer";
 
 jest.setTimeout(15000);
+jest.mock("@/lib/companion/history", () => ({
+  listConversationHistory: jest.fn(async () => ({
+    ok: true,
+    conversations: [],
+  })),
+  saveConversationHistory: jest.fn(async () => ({ ok: true })),
+}));
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: jest.fn() }),
   usePathname: () => "/companion",
@@ -11,6 +19,7 @@ jest.mock("next/navigation", () => ({
 const originalFetch = global.fetch;
 let fetchMock: jest.Mock;
 beforeEach(() => {
+  jest.clearAllMocks();
   fetchMock = jest.fn(async (url: string) =>
     url === "/api/companion/answer"
       ? {
@@ -191,4 +200,41 @@ it("includes agents with findings in real history and reopens their conversation
   expect(screen.getByRole("log", { name: "Percakapan" })).toHaveTextContent(
     "Buka Undangan-Pernikahan.apk sekarang.",
   );
+});
+
+it("persists public topic labels without copying checked messages or attachment names", async () => {
+  render(
+    <CompanionChat
+      session={{
+        nama: "Anggota",
+        email: "member@example.test",
+      }}
+    />,
+  );
+  await send("Buka Undangan-Pribadi-Rahasia.apk sekarang.");
+  await waitFor(() => expect(saveConversationHistory).toHaveBeenCalled());
+  const input = jest.mocked(saveConversationHistory).mock.calls.at(-1)?.[0];
+  expect(input?.title).toMatch(/^Pemeriksaan(:| pesan)/);
+  expect(JSON.stringify(input)).not.toContain("Undangan-Pribadi-Rahasia");
+  expect(Object.keys(input ?? {}).sort()).toEqual([
+    "id",
+    "risk",
+    "title",
+    "turns",
+  ]);
+});
+
+it("explains that a check is needed when the model opens a report without a verdict", async () => {
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      text: "",
+      toolCalls: [{ id: "report", name: "report_draft", arguments: {} }],
+    }),
+  });
+  render(<CompanionChat />);
+  await send("buatkan laporan");
+  expect(
+    await screen.findByText(/Periksa pesan yang mencurigakan terlebih dahulu/),
+  ).toBeVisible();
 });
