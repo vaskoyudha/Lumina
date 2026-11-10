@@ -106,8 +106,9 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
   `reasoning_effort`; biarkan kosong untuk model yang menolak `none`.
 - `LUMINA_LLM_LANES`, `LUMINA_LLM_LANE_KEY` — lane egress tambahan (base URL
   opencode2api dipisah koma + kunci bersama).
-- `LUMINA_COMPANION_ORCHESTRATOR=1` — pakai planner → spesialis → synthesizer;
-  tanpa itu Companion tetap satu panggilan suara. `LUMINA_ORCHESTRATOR_DEADLINE_MS`
+- `LUMINA_COMPANION_ORCHESTRATOR` — default aktif: planner → spesialis →
+  synthesizer. Set `0` untuk kembali ke satu panggilan suara (mis. tanpa
+  endpoint chat-completions). `LUMINA_ORCHESTRATOR_DEADLINE_MS`
   (default 120000; maksimum 180000) membatasi seluruh run serial; timer abort dan
   kebijakan lewati agen memakai nilai yang sama.
 - `URLVET_API_URL` — verifikasi tautan opt-in. Kosong = `https://api.url.vet`
