@@ -157,5 +157,5 @@ export const MODUL_04 = {
     "Laporkan akun dan aplikasi ke platform tempat pesan diterima serta ke IASC.",
     "Laporkan ke polisi setempat dan beri tahu orang lain yang mungkin sudah kamu ajak.",
   ],
-  scenarioId: null,
+  scenarioId: "L3-lowongan-berbayar",
 } satisfies ModuleContent;

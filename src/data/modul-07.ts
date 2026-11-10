@@ -152,5 +152,5 @@ export const MODUL_07 = {
     "Hubungi bank lewat nomor resmi untuk meminta blokir dan memeriksa transaksi terakhir.",
     "Laporkan nomor dan tautan ke IASC, bank terkait, dan polisi setempat.",
   ],
-  scenarioId: null,
+  scenarioId: "L2-phishing-tautan",
 } satisfies ModuleContent;

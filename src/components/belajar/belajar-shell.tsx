@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  AccountProgressProvider,
-  ProgressNotice,
-} from "@/components/belajar/belajar-progress";
+import { ProgressNotice } from "@/components/belajar/belajar-progress";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
 
 /**
@@ -25,11 +22,14 @@ export function BelajarShell({
   modules: import("@/lib/content/schema").LearningSummary[];
 }) {
   return (
-    <AccountProgressProvider modules={modules}>
-      <WorkspaceShell label="Belajar" aside={aside} className={className}>
-        <ProgressNotice />
-        {children}
-      </WorkspaceShell>
-    </AccountProgressProvider>
+    <WorkspaceShell
+      label="Belajar"
+      aside={aside}
+      className={className}
+      progressModules={modules}
+    >
+      <ProgressNotice />
+      {children}
+    </WorkspaceShell>
   );
 }

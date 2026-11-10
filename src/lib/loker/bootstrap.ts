@@ -13,13 +13,16 @@ import path from "node:path";
  */
 export function scanDataDir(): string {
   const override = process.env.LOKER_SCAN_DATA_DIR?.trim();
-  if (override) return path.resolve(process.cwd(), override);
-  return path.join(process.cwd(), ".scan-data");
+  // `path.resolve` is already cwd-relative. Calling `process.cwd()` here makes
+  // Next's file tracer treat the path as dynamic and pull the whole repository
+  // into the standalone build.
+  if (override) return path.resolve(override);
+  return path.resolve(".scan-data");
 }
 
 /** The vendored engine, source-controlled and never written to. */
 export function scannerDir(): string {
-  return path.join(process.cwd(), "scanner");
+  return path.resolve("scanner");
 }
 
 async function exists(target: string): Promise<boolean> {
@@ -80,7 +83,7 @@ export async function bootstrapScanRoot(
   ];
 
   for (const [rel, content] of skeleton) {
-    const target = path.join(root, rel);
+    const target = path.join(/* turbopackIgnore: true */ root, rel);
     await mkdir(path.dirname(target), { recursive: true });
     try {
       await writeFile(target, content, { encoding: "utf8", flag: "wx" });
@@ -95,7 +98,7 @@ export async function bootstrapScanRoot(
       "scanner/portals.yml is missing; the vendored scanner copy is incomplete. Re-vendor it and track it with `git add -f scanner/portals.yml`.",
     );
   }
-  const portals = path.join(root, "portals.yml");
+  const portals = path.join(/* turbopackIgnore: true */ root, "portals.yml");
   try {
     await copyFile(seed, portals, constants.COPYFILE_EXCL);
   } catch (error) {
@@ -103,6 +106,8 @@ export async function bootstrapScanRoot(
   }
 
   for (const rel of ["reports", "jds", "batch/tracker-additions"]) {
-    await mkdir(path.join(root, rel), { recursive: true });
+    await mkdir(path.join(/* turbopackIgnore: true */ root, rel), {
+      recursive: true,
+    });
   }
 }

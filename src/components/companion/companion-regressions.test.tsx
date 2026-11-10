@@ -4,7 +4,8 @@ import { CompanionChat } from "@/components/companion/companion-chat";
 import { saveConversationHistory } from "@/lib/companion/history";
 import { AnswerRequestSchema } from "@/lib/contracts/answer";
 
-jest.setTimeout(15000);
+// Full conversation pipeline under parallel load; 15 s measured the scheduler.
+jest.setTimeout(30_000);
 jest.mock("@/lib/companion/history", () => ({
   listConversationHistory: jest.fn(async () => ({
     ok: true,

@@ -355,6 +355,10 @@
      Contrast on white: txt 16.1:1, dim 5.7:1, danger 6.5:1,
      warn 5.5:1 — every one clears 4.5:1, and the meter fill stays solid at
      40px type so it reads from the back of the room. --- */
+  /* The workspace asks for Plus Jakarta; the self-hosted Inter variable font
+     is the fallback, so keep the token resolvable instead of leaving a
+     dangling `var()` that invalidates the whole font-family declaration. */
+  --font-jakarta: var(--font-sans);
   --lumina-bg: #fafafa;
   --lumina-panel: #ffffff;
   --lumina-panel-2: #f5f5f5;
