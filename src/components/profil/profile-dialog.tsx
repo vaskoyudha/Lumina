@@ -1,34 +1,31 @@
 "use client";
 
 import {
-  ArrowLeftRight,
   Briefcase,
   GraduationCap,
-  LogOut,
   ShieldCheck,
+  UserRound,
+  X,
 } from "lucide-react";
-import Link from "next/link";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useAccountProgress } from "@/components/belajar/account-progress-context";
-import { ProfilLoker } from "@/components/profil/profil-loker";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import {
+  AccountPanel,
+  type SettingsSession,
+} from "@/components/profil/settings-account-panel";
+import { JobsPanel } from "@/components/profil/settings-jobs-panel";
+import { ProgressPanel } from "@/components/profil/settings-progress-panel";
+import { SecurityPanel } from "@/components/profil/settings-security-panel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
-import { logout } from "@/lib/auth/actions";
+import type { AccountPayload, AccountView } from "@/lib/auth/account-view";
 import { useSavedLoker } from "@/lib/loker/use-saved";
 import { MODUS } from "@/lib/modus";
 import { BADGE_LABEL } from "@/lib/progress";
@@ -36,9 +33,20 @@ import { cn } from "@/lib/utils";
 
 export type ProfileSection = "profil" | "kemajuan" | "loker" | "privasi";
 
+const SECTIONS: Array<{
+  id: ProfileSection;
+  label: string;
+  icon: typeof UserRound;
+}> = [
+  { id: "profil", label: "Akun", icon: UserRound },
+  { id: "kemajuan", label: "Kemajuan", icon: GraduationCap },
+  { id: "loker", label: "Lowongan", icon: Briefcase },
+  { id: "privasi", label: "Privasi & keamanan", icon: ShieldCheck },
+];
+
 const COPY: Record<ProfileSection, { title: string; description: string }> = {
   profil: {
-    title: "Profil saya",
+    title: "Akun",
     description: "Identitas akun dan sesi yang sedang aktif.",
   },
   kemajuan: {
@@ -55,47 +63,21 @@ const COPY: Record<ProfileSection, { title: string; description: string }> = {
   },
 };
 
-function initialsFor(nama: string): string {
-  const parts = nama.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "L";
-  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
-  return `${parts[0].slice(0, 1)}${parts[parts.length - 1].slice(0, 1)}`.toUpperCase();
-}
-
-function formatCreated(createdAt?: string | null): string | null {
-  if (!createdAt) return null;
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Asia/Jakarta",
-  }).format(date);
-}
-
-/**
- * Floating profile cards.
- *
- * The sidebar and app nav used to send people to `/profil` for every item in
- * the account menu. This dialog keeps the same information in place: identity,
- * progress, saved jobs and privacy, opened as floating sections over the
- * current page.
- */
 export function ProfileDialog({
   session,
   section,
   onOpenChange,
 }: {
-  session: { nama: string; email: string; createdAt?: string | null };
+  session: SettingsSession;
   section: ProfileSection | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [active, setActive] = useState<ProfileSection>("profil");
+  const [account, setAccount] = useState<AccountView | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { progress, modules } = useAccountProgress();
   const { saved } = useSavedLoker();
-  const copy = COPY[section ?? "profil"];
-  const initial = initialsFor(session.nama);
-  const createdLabel = formatCreated(session.createdAt);
 
   const done = progress?.completedModules.length ?? 0;
   const total = modules.length || MODUS.length;
@@ -104,151 +86,156 @@ export function ProfileDialog({
     .filter(([id]) => progress?.badges.includes(id))
     .map(([, label]) => label);
 
+  useEffect(() => {
+    if (section) setActive(section);
+  }, [section]);
+
+  useEffect(() => {
+    if (section === null) return;
+    if (typeof fetch !== "function") return;
+    let alive = true;
+    setLoadError(null);
+    fetch("/api/account", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("account");
+        return (await response.json()) as AccountPayload;
+      })
+      .then((data) => {
+        if (!alive) return;
+        setAccount(data.account ?? null);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setLoadError(
+          "Pengaturan akun tidak dapat dimuat. Tutup lalu buka lagi.",
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, [section]);
+
+  function moveTab(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const forward = event.key === "ArrowDown" || event.key === "ArrowRight";
+    const backward = event.key === "ArrowUp" || event.key === "ArrowLeft";
+    if (!forward && !backward && event.key !== "Home" && event.key !== "End")
+      return;
+    event.preventDefault();
+    let next = index;
+    if (forward) next = (index + 1) % SECTIONS.length;
+    if (backward) next = (index - 1 + SECTIONS.length) % SECTIONS.length;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = SECTIONS.length - 1;
+    setActive(SECTIONS[next].id);
+    tabRefs.current[next]?.focus();
+  }
+
   return (
     <Dialog open={section !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85dvh] w-[min(32rem,calc(100vw-2rem))] max-w-lg overflow-x-hidden overflow-y-auto">
-        <DialogHeader className="pr-8">
-          <DialogTitle>{copy.title}</DialogTitle>
-          <DialogDescription>{copy.description}</DialogDescription>
-        </DialogHeader>
-
-        <div className="flex min-w-0 flex-col gap-4">
-          {section === "profil" || section === "privasi" ? (
-            <Card className="gap-0 rounded-xl py-0 ring-1 ring-line">
-              <CardContent className="flex items-center gap-3 p-4">
-                <Avatar className="size-11 shrink-0">
-                  <AvatarFallback className="bg-brand-soft font-semibold text-[12px] text-brand-ink">
-                    {initial}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-sm text-txt">
-                    {session.nama}
-                  </p>
-                  <p className="truncate text-dim text-xs">{session.email}</p>
-                </div>
-                <Badge variant="outline" className="shrink-0">
-                  Akun Lumina
-                </Badge>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {section === "profil" ? (
-            <Card className="gap-0 rounded-xl py-0 ring-1 ring-line">
-              <CardContent className="p-4">
-                <dl className="grid gap-3 sm:grid-cols-2">
-                  <div className="min-w-0">
-                    <dt className="text-dim text-[11px]">Nama</dt>
-                    <dd className="truncate text-sm text-txt">
-                      {session.nama}
-                    </dd>
-                  </div>
-                  <div className="min-w-0">
-                    <dt className="text-dim text-[11px]">Email</dt>
-                    <dd className="truncate text-sm text-txt">
-                      {session.email}
-                    </dd>
-                  </div>
-                  <div className="min-w-0">
-                    <dt className="text-dim text-[11px]">Jenis akun</dt>
-                    <dd className="text-sm text-txt">
-                      Sesi akun, berlaku 24 jam
-                    </dd>
-                  </div>
-                  <div className="min-w-0">
-                    <dt className="text-dim text-[11px]">Profil dibuat</dt>
-                    <dd className="tabular text-sm text-txt">
-                      {createdLabel ?? "Tidak tersedia"}
-                    </dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {section === "kemajuan" ? (
-            <Card className="gap-0 rounded-xl py-0 ring-1 ring-line">
-              <CardHeader className="p-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <GraduationCap aria-hidden className="size-4 text-brand" />
-                  {done} dari {total} modul selesai
-                </CardTitle>
-                <CardDescription>
-                  Progres tersimpan di akunmu, bukan di perangkat ini.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 pt-3">
-                <Progress
-                  value={pct}
-                  aria-label="Progres belajar"
-                  className="h-2 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-brand"
-                />
-                <p className="mt-3 text-dim text-xs">
-                  {badges.length > 0
-                    ? `Lencana: ${badges.join(", ")}.`
-                    : "Belum ada lencana. Selesaikan satu modul untuk mulai."}
-                </p>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {section === "loker" ? (
-            <Card className="gap-0 rounded-xl py-0 ring-1 ring-line">
-              <CardHeader className="p-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Briefcase aria-hidden className="size-4 text-brand" />
-                  {saved.length} lowongan tersimpan
-                </CardTitle>
-                <CardDescription>
-                  Daftar ini tersimpan di perangkat ini.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 pt-3">
-                <ProfilLoker />
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {section === "privasi" ? (
-            <Card className="gap-0 rounded-xl py-0 ring-1 ring-line">
-              <CardContent className="p-4">
-                <p className="text-dim text-sm leading-relaxed">
-                  Nama dan email tersimpan untuk akunmu. Percakapan tidak
-                  disimpan dalam database akun; progres belajar dan lowongan
-                  tersimpan tetap di sisi akun dan perangkat ini. Sesi berlaku
-                  24 jam.
-                </p>
-                <p className="mt-3 flex items-start gap-1.5 text-dim text-xs leading-relaxed">
-                  <ShieldCheck
-                    aria-hidden
-                    className="mt-px size-3.5 shrink-0 text-brand"
-                  />
-                  Keluar mencabut sesi ini di server. Verifikasi email dan
-                  pemulihan password belum tersedia.
-                </p>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          <div
-            className={cn(
-              "flex flex-wrap gap-2",
-              section === "loker" && "pt-1",
-            )}
-          >
-            <Button asChild variant="outline" className="h-10">
-              <Link href="/masuk" data-pressable>
-                <ArrowLeftRight aria-hidden className="size-4" />
-                Ganti akun
-              </Link>
-            </Button>
-            <form action={logout}>
-              <Button type="submit" variant="outline" className="h-10">
-                <LogOut aria-hidden className="size-4" />
-                Keluar
+      <DialogContent
+        showCloseButton={false}
+        className="block h-[min(44rem,calc(100dvh-2rem))] w-[min(64rem,calc(100vw-2rem))] max-w-none overflow-hidden rounded-3xl border-0 bg-background p-0 shadow-2xl ring-0 sm:max-w-none"
+      >
+        <DialogDescription className="sr-only">
+          Kelola identitas akun, password, dan sesi yang aktif.
+        </DialogDescription>
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex h-14 shrink-0 items-center justify-between border-line border-b px-5">
+            <DialogTitle className="font-heading font-medium text-base">
+              Pengaturan
+            </DialogTitle>
+            <DialogClose asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Tutup pengaturan"
+                className="rounded-full"
+              >
+                <X aria-hidden />
               </Button>
-            </form>
+            </DialogClose>
+          </div>
+
+          <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[13.5rem_minmax(0,1fr)] md:grid-rows-1">
+            <div
+              role="tablist"
+              aria-label="Bagian pengaturan"
+              aria-orientation="vertical"
+              className="grid grid-cols-2 gap-1 border-line border-b p-2 md:flex md:flex-col md:border-r md:border-b-0"
+            >
+              {SECTIONS.map((item, index) => {
+                const Icon = item.icon;
+                const selected = active === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    ref={(node) => {
+                      tabRefs.current[index] = node;
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`settings-tab-${item.id}`}
+                    aria-selected={selected}
+                    aria-controls={`settings-panel-${item.id}`}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => setActive(item.id)}
+                    onKeyDown={(event) => moveTab(event, index)}
+                    className={cn(
+                      "flex h-9 items-center gap-2 rounded-lg px-2.5 text-left text-[13px] transition-colors",
+                      selected
+                        ? "bg-panel font-medium text-txt shadow-rest"
+                        : "text-dim hover:bg-panel-2/60 hover:text-txt",
+                    )}
+                  >
+                    <Icon aria-hidden className="size-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="min-h-0 overflow-y-auto px-5 py-5">
+              {loadError ? (
+                <Alert role="alert" variant="destructive" className="mb-4">
+                  <AlertDescription>{loadError}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              {SECTIONS.map((item) => (
+                <section
+                  key={item.id}
+                  role="tabpanel"
+                  id={`settings-panel-${item.id}`}
+                  aria-labelledby={`settings-tab-${item.id}`}
+                  hidden={active !== item.id}
+                  className="flex flex-col gap-5"
+                >
+                  <header>
+                    <h2 className="font-heading font-medium text-lg text-txt">
+                      {COPY[item.id].title}
+                    </h2>
+                    <p className="mt-1 text-dim text-sm">
+                      {COPY[item.id].description}
+                    </p>
+                  </header>
+                  {item.id === "profil" ? (
+                    <AccountPanel session={session} account={account} />
+                  ) : null}
+                  {item.id === "kemajuan" ? (
+                    <ProgressPanel
+                      done={done}
+                      total={total}
+                      pct={pct}
+                      badges={badges}
+                    />
+                  ) : null}
+                  {item.id === "loker" ? (
+                    <JobsPanel savedCount={saved.length} />
+                  ) : null}
+                  {item.id === "privasi" ? <SecurityPanel /> : null}
+                </section>
+              ))}
+            </div>
           </div>
         </div>
       </DialogContent>

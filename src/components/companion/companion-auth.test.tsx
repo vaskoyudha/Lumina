@@ -82,7 +82,7 @@ describe("CompanionAuth", () => {
     );
 
     expect(await screen.findByRole("dialog")).toHaveAccessibleName(
-      /profil saya/i,
+      /pengaturan/i,
     );
     expect(screen.getByText(/jenis akun/i)).toBeInTheDocument();
 
@@ -114,7 +114,7 @@ describe("CompanionAuth", () => {
     );
 
     expect(await screen.findByRole("dialog")).toHaveAccessibleName(
-      /kemajuan belajar/i,
+      /pengaturan/i,
     );
     expect(screen.getByText(/0 dari 12 modul selesai/i)).toBeInTheDocument();
   });
