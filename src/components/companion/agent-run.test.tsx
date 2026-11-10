@@ -76,6 +76,45 @@ describe("AgentRun", () => {
     );
   });
 
+  it("renders the standing crew with every agent card", () => {
+    render(<AgentRun trace={{ stages: [], totalMs: 0 }} />);
+
+    expect(screen.getByText("8 agen siap")).toBeInTheDocument();
+    expect(screen.getByText("Belum ada pemeriksaan")).toBeInTheDocument();
+    for (const id of [
+      "message",
+      "link",
+      "identity",
+      "conversation",
+      "job",
+      "marketplace",
+      "qris",
+      "evidence",
+    ]) {
+      expect(screen.getByTestId(`agent-card-${id}`)).toHaveAttribute(
+        "data-status",
+        "menunggu",
+      );
+    }
+  });
+
+  it("mirrors each agent's live status on its crew card", () => {
+    render(<AgentRun trace={trace} live />);
+
+    expect(screen.getByTestId("agent-card-message")).toHaveAttribute(
+      "data-status",
+      "temuan",
+    );
+    expect(screen.getByTestId("agent-card-link")).toHaveAttribute(
+      "data-status",
+      "dilewati",
+    );
+    expect(screen.getByTestId("agent-card-evidence")).toHaveAttribute(
+      "data-status",
+      "selesai",
+    );
+  });
+
   it("prints the voice name once, not twice", () => {
     const settled: AgentTrace = {
       ...trace,
@@ -283,12 +322,19 @@ describe("AgentRun", () => {
       totalMs: 12,
     };
     const { container } = render(<AgentRun trace={settled} />);
-    const head = container.querySelector("[data-run-state]");
+    expect(container.querySelector("[data-run-state]")).toBeInTheDocument();
+    const summary = screen.getByTestId("agent-summary");
 
     // 3 selesai + 1 dengan temuan + 4 dilewati = 8 agents, and 12 - 2.5 = 9.5.
-    expect(head).toHaveTextContent(
-      "3 selesai · 1 dengan temuan · 4 dilewati · 2 temuan · 9,5 ms",
-    );
+    for (const chip of [
+      "3 selesai",
+      "1 dengan temuan",
+      "4 dilewati",
+      "2 temuan",
+      "9,5 ms",
+    ]) {
+      expect(within(summary).getByText(chip)).toBeInTheDocument();
+    }
   });
 
   it("announces the settled summary once the run stops", () => {
@@ -361,6 +407,37 @@ describe("AgentRun", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers real link verification on the Link Agent's evidence", async () => {
+    const user = userEvent.setup();
+    const result: ScoreResult = {
+      score: 60,
+      risk: "tinggi",
+      signals: [
+        {
+          label: "Domain meniru brand — bukan situs resmi",
+          weight: 0.85,
+          evidence: "https://bcaa.xyz/login",
+          agent: "link",
+        },
+      ],
+      modus: "tidak-dikenali",
+      advice: [],
+      relatedModule: null,
+      hardOverride: false,
+    };
+    const linked: AgentTrace = {
+      stages: [stage({ id: "link", status: "temuan", findings: 1, ms: 2 })],
+      totalMs: 2,
+    };
+    render(<AgentRun trace={linked} result={result} />);
+
+    const link = screen.getByTestId("agent-link");
+    await user.click(within(link).getByRole("button", { name: /link agent/i }));
+    expect(
+      within(link).getByRole("button", { name: /periksa tautan/i }),
+    ).toBeInTheDocument();
+  });
+
   it("renders the full skip or failure note in the expanded body", async () => {
     const user = userEvent.setup();
     const note = "Model terlalu lambat menjawab; jawaban disusun dari templat.";
@@ -386,7 +463,7 @@ describe("AgentRun", () => {
     expect(within(body as HTMLElement).getByText(note)).toBeInTheDocument();
   });
 
-  it("renders job-search as a non-detector row", () => {
+  it("keeps job-search out of the agent rows", () => {
     const withSearch: AgentTrace = {
       ...trace,
       stages: [
@@ -403,12 +480,8 @@ describe("AgentRun", () => {
       totalMs: 15,
     };
     render(<AgentRun trace={withSearch} />);
-    const row = screen.getByTestId("agent-job-search");
-    expect(within(row).getByText("Pencari Lowongan")).toBeInTheDocument();
-    // It searches the scan, it does not inspect the message: no "0 temuan".
-    expect(within(row).queryByText(/0 temuan/)).not.toBeInTheDocument();
-    expect(within(row).getByText("Selesai")).toBeInTheDocument();
-    expect(within(row).getByText("2 lowongan cocok")).toBeInTheDocument();
+    // The lowongan card owns this surface; the run strip does not duplicate it.
+    expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
   });
 
   it("subtracts voice and job-search from the engine time", () => {
@@ -432,8 +505,9 @@ describe("AgentRun", () => {
     };
     render(<AgentRun trace={withSearch} />);
     // 8 - 5 - 2 = 1 ms of detector work.
-    expect(
-      screen.getByText(/^1 selesai · 0 dilewati · 0 temuan · 1,0 ms$/),
-    ).toBeInTheDocument();
+    const summary = screen.getByTestId("agent-summary");
+    for (const chip of ["1 selesai", "0 dilewati", "0 temuan", "1,0 ms"]) {
+      expect(within(summary).getByText(chip)).toBeInTheDocument();
+    }
   });
 });
