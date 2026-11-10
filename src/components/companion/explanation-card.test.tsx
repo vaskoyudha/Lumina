@@ -29,6 +29,35 @@ describe("ExplanationCard", () => {
     expect(screen.getByText("Urgensi palsu")).toBeInTheDocument();
   });
 
+  it("shows a specialist finding before the deterministic tactics", () => {
+    const result = scoreText({ text: PHISH });
+    render(
+      <ExplanationCard
+        explanation={explain(result, PHISH)}
+        schemeName="Phishing tautan & akun"
+        result={result}
+        agentFindings={[
+          {
+            agent: "Kiko · Lowongan Agent",
+            point: {
+              signal: "Tugas berbayar",
+              point: "Pembayaran diminta sebelum tugas berikutnya.",
+              reason: "Pekerjaan sah tidak meminta setoran dari pelamar.",
+              pattern: "task-scam",
+              watchout: "Jangan bayar biaya lanjutan.",
+              quote: "Halo, ini dari BCA",
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Temuan agen")).toBeInTheDocument();
+    expect(screen.getByText("Kiko · Lowongan Agent")).toBeInTheDocument();
+    expect(
+      screen.getByText("Pembayaran diminta sebelum tugas berikutnya."),
+    ).toBeInTheDocument();
+  });
+
   it("shows the quote that triggered each tactic", () => {
     renderFor(PHISH);
     expect(
