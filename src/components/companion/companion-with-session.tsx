@@ -34,7 +34,7 @@ export async function CompanionWithSession({
     loadCorpus(CORPUS_LIMIT)
       .then(({ postings, total }) => capCorpus(postings, total))
       .catch(() => EMPTY_CORPUS),
-    agentPanel && session
+    session
       ? latestAgentRun(session.id).catch(() => null)
       : Promise.resolve(null),
   ]);

@@ -48,7 +48,10 @@ import {
 } from "@/components/companion/highlight-text";
 import { LokerTool } from "@/components/companion/loker-tool";
 import { ProcessTrace } from "@/components/companion/process-trace";
-import { CompanionQuickCards } from "@/components/companion/quick-cards";
+import {
+  CompanionQuickCards,
+  type RecentAgentRun,
+} from "@/components/companion/quick-cards";
 import { ReportTemplate } from "@/components/companion/report-template";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
@@ -640,35 +643,73 @@ export function CompanionChat({
       ),
     [sessions],
   );
-  const recentAgentRuns = React.useMemo(
-    () =>
-      sessions
-        .flatMap((item) =>
-          item.turns.flatMap((turn) =>
-            AGENT_SEQUENCE.flatMap((agent) => {
-              const stage = turn.trace?.stages.find(
-                (stage) =>
-                  stage.id === agent &&
-                  (stage.status === "selesai" || stage.status === "temuan"),
-              );
-              return stage
-                ? [
-                    {
-                      id: agent,
-                      key: `${turn.id}-${agent}`,
-                      sessionId: item.id,
-                      ms: stage.ms,
-                      turnId: turn.id,
-                    },
-                  ]
-                : [];
-            }),
-          ),
-        )
-        .sort((a, b) => b.turnId - a.turnId)
-        .slice(0, 4),
-    [sessions],
-  );
+  const recentAgentRuns = React.useMemo<RecentAgentRun[]>(() => {
+    const inTab = sessions
+      .flatMap((item) =>
+        item.turns.flatMap((turn) => {
+          const events = (turn.orchestration ?? []).flatMap((event) => {
+            if (event.type !== "agent_result") return [];
+            if (event.status !== "selesai") return [];
+            const agent = AGENT_SEQUENCE.find((id) => id === event.agent);
+            return agent
+              ? [
+                  {
+                    id: agent,
+                    key: `${turn.id}-${agent}`,
+                    sessionId: item.id,
+                    ms: event.ms,
+                    turnId: turn.id,
+                    source: "tab" as const,
+                  },
+                ]
+              : [];
+          });
+          if (events.length > 0) return events;
+          return AGENT_SEQUENCE.flatMap((agent) => {
+            const stage = turn.trace?.stages.find(
+              (stage) =>
+                stage.id === agent &&
+                (stage.status === "selesai" || stage.status === "temuan"),
+            );
+            return stage
+              ? [
+                  {
+                    id: agent,
+                    key: `${turn.id}-${agent}`,
+                    sessionId: item.id,
+                    ms: stage.ms,
+                    turnId: turn.id,
+                    source: "tab" as const,
+                  },
+                ]
+              : [];
+          });
+        }),
+      )
+      .sort((a, b) => b.turnId - a.turnId)
+      .slice(0, 4);
+
+    if (inTab.length > 0) return inTab;
+    if (!latestRun) return [];
+
+    return latestRun.agents
+      .flatMap((agent) => {
+        if (agent.status !== "selesai") return [];
+        const id = AGENT_SEQUENCE.find((candidate) => candidate === agent.id);
+        return id
+          ? [
+              {
+                id,
+                key: `${latestRun.runId}-${id}`,
+                sessionId: -1,
+                ms: agent.ms,
+                source: "akun" as const,
+              },
+            ]
+          : [];
+      })
+      .slice(0, 4);
+  }, [sessions, latestRun]);
 
   /**
    * The panel describes one verdict, never the whole session. Bundling every
