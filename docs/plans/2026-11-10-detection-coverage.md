@@ -442,3 +442,27 @@ These are planned but excluded from the pitch until they are measured:
 - **Template similarity can overfit.** Templates are paraphrases, not bench cases; measure on held-out cases.
 - **Screenshot forensics is the highest-risk item.** Keep it out of the score.
 - **Open question:** does the competition demo need live verification at all? If the venue network is unreliable, demo Slice A and show Slice C as a recorded trace with an honest “opsional” label.
+
+---
+
+## 11. Measured result — 10 November 2026
+
+Recorded from `runEval()` on the merged branch, not from a terminal transcript.
+
+| Measure | Value | Gate |
+|---|---|---|
+| Corpus | 120 cases: 60 scam, 60 legitimate | 120 |
+| Scam recall (`mencurigakan`+) | 60/60 | ≥ 90% |
+| Scam directly `tinggi` | 49/60 | — |
+| False positives on legitimate cases | 0/60 | ≤ 5% |
+| Modus classification where `wantModus` exists | 56/56 | ≥ 85% |
+| Slowest CPU per case | < 1 ms | < 50 ms |
+| `fetch` calls inside `src/lib/scoring/**` unit tests | 0 (spy test) | 0 |
+
+What is honest to claim from this: the local ring catches every scam in this
+corpus without flagging a single legitimate message, and every rule that ships
+has a near-miss trap. What is **not** measured here: network enrichment. The
+routes exist behind `VERIFY_LINK=on` / `VERIFY_FILE=on`, the demo runs with both
+off, and the trace says `dilewati`. Phase 4 items (APK parser, PDF sandbox,
+large-scale phone/account reputation, screenshot forensics inside the score)
+remain deferred for the reasons in §7.
