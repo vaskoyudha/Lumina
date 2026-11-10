@@ -13,7 +13,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { AccountProgressProvider } from "@/components/belajar/belajar-progress";
 import {
   ContentLoading,
   ContentUnavailable,
@@ -80,10 +79,11 @@ function SimulasiAside({
 }) {
   return (
     <div className={cn("flex flex-col gap-2", SURFACE_RAIL)}>
-      <section
-        aria-labelledby="planned-heading"
-        className={cn(SURFACE_SUBCARD, "p-3.5")}
-      >
+      {PLANNED.length > 0 ? (
+        <section
+          aria-labelledby="planned-heading"
+          className={cn(SURFACE_SUBCARD, "p-3.5")}
+        >
         <div className="flex items-center justify-between gap-2 border-[#efe5dc] border-b pb-1.5">
           <h2
             id="planned-heading"
@@ -129,7 +129,8 @@ function SimulasiAside({
             );
           })}
         </ul>
-      </section>
+        </section>
+      ) : null}
 
       <section className={cn(SURFACE_TIP, "relative overflow-hidden p-3.5")}>
         <span
@@ -226,11 +227,11 @@ export async function SimulasiContent() {
     TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" "),
     TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
   return (
-    <AccountProgressProvider modules={summaries}>
-      <WorkspaceShell
-        label="Simulasi"
-        aside={<SimulasiAside planned={PLANNED} levels={levels} />}
-      >
+    <WorkspaceShell
+      label="Simulasi"
+      aside={<SimulasiAside planned={PLANNED} levels={levels} />}
+      progressModules={summaries}
+    >
         <div className="flex w-full flex-col gap-6">
           <MissionStatusBar />
           <section className={cn("relative overflow-hidden", SURFACE_MAIN)}>
@@ -480,6 +481,5 @@ export async function SimulasiContent() {
           </div>
         </div>
       </WorkspaceShell>
-    </AccountProgressProvider>
   );
 }

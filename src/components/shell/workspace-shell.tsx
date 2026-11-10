@@ -1,6 +1,7 @@
 import { type ReactNode, Suspense } from "react";
 import { WorkspaceFrame } from "@/components/shell/workspace-frame";
 import { getSession } from "@/lib/auth/server-session";
+import type { LearningSummary } from "@/lib/content/schema";
 
 /**
  * Server wrapper for the shared workspace chrome. The session read sits inside
@@ -14,11 +15,13 @@ export function WorkspaceShell({
   aside,
   className,
   label,
+  progressModules,
 }: {
   children: ReactNode;
   aside?: ReactNode;
   className?: string;
   label?: string;
+  progressModules?: LearningSummary[];
 }) {
   return (
     <Suspense
@@ -32,6 +35,7 @@ export function WorkspaceShell({
         aside={aside}
         className={className}
         label={label}
+        progressModules={progressModules}
       >
         {children}
       </WorkspaceShellWithSession>
@@ -44,11 +48,13 @@ async function WorkspaceShellWithSession({
   aside,
   className,
   label,
+  progressModules,
 }: {
   children: ReactNode;
   aside?: ReactNode;
   className?: string;
   label?: string;
+  progressModules?: LearningSummary[];
 }) {
   const session = await getSession();
 
@@ -66,6 +72,7 @@ async function WorkspaceShellWithSession({
       aside={aside}
       className={className}
       label={label}
+      progressModules={progressModules}
     >
       {children}
     </WorkspaceFrame>
