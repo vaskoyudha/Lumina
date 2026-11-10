@@ -84,51 +84,51 @@ function SimulasiAside({
           aria-labelledby="planned-heading"
           className={cn(SURFACE_SUBCARD, "p-3.5")}
         >
-        <div className="flex items-center justify-between gap-2 border-[#efe5dc] border-b pb-1.5">
-          <h2
-            id="planned-heading"
-            className="font-extrabold text-[10.5px] text-[#1e1c1a]"
-          >
-            Level lain
-          </h2>
-          <span className="inline-flex items-center gap-1 font-bold text-[9.5px] text-[#e65c00]">
-            Lihat semua
-            <ArrowRight aria-hidden className="size-3" />
-          </span>
-        </div>
-        <ul className="mt-1 list-none divide-y divide-[#f0e5dc] p-0">
-          {PLANNED.map((modus) => {
-            const copy = PLANNED_COPY[modus.id];
-            const title = copy?.title ?? modus.nama;
-            const note = copy?.note ?? modus.ciri[0];
-            return (
-              <li key={modus.id} className="flex items-start gap-2.5 py-2.5">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-[linear-gradient(180deg,#fde8d8_0%,#fbd9c2_100%)] text-[#e65808]">
-                  <Lock aria-hidden strokeWidth={1.8} className="size-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 border-[#efe5dc] border-b pb-1.5">
+            <h2
+              id="planned-heading"
+              className="font-extrabold text-[10.5px] text-[#1e1c1a]"
+            >
+              Level lain
+            </h2>
+            <span className="inline-flex items-center gap-1 font-bold text-[9.5px] text-[#e65c00]">
+              Lihat semua
+              <ArrowRight aria-hidden className="size-3" />
+            </span>
+          </div>
+          <ul className="mt-1 list-none divide-y divide-[#f0e5dc] p-0">
+            {PLANNED.map((modus) => {
+              const copy = PLANNED_COPY[modus.id];
+              const title = copy?.title ?? modus.nama;
+              const note = copy?.note ?? modus.ciri[0];
+              return (
+                <li key={modus.id} className="flex items-start gap-2.5 py-2.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-[linear-gradient(180deg,#fde8d8_0%,#fbd9c2_100%)] text-[#e65808]">
+                    <Lock aria-hidden strokeWidth={1.8} className="size-3.5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p
+                        className="font-bold text-[11px] text-[#1e1c1a] leading-snug"
+                        title={title}
+                      >
+                        {title}
+                      </p>
+                      <span className="shrink-0 rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2 py-[1px] font-bold text-[8.5px] text-[#d4511b]">
+                        Rencana
+                      </span>
+                    </div>
                     <p
-                      className="font-bold text-[11px] text-[#1e1c1a] leading-snug"
-                      title={title}
+                      className="mt-0.5 text-[9.6px] text-[#8a8077] leading-snug"
+                      title={note}
                     >
-                      {title}
+                      {note}
                     </p>
-                    <span className="shrink-0 rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2 py-[1px] font-bold text-[8.5px] text-[#d4511b]">
-                      Rencana
-                    </span>
                   </div>
-                  <p
-                    className="mt-0.5 text-[9.6px] text-[#8a8077] leading-snug"
-                    title={note}
-                  >
-                    {note}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       ) : null}
 
@@ -232,254 +232,254 @@ export async function SimulasiContent() {
       aside={<SimulasiAside planned={PLANNED} levels={levels} />}
       progressModules={summaries}
     >
-        <div className="flex w-full flex-col gap-6">
-          <MissionStatusBar />
-          <section className={cn("relative overflow-hidden", SURFACE_MAIN)}>
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-[url('/simulasi/hero-gift.webp')] bg-cover bg-[position:72%_50%] bg-no-repeat opacity-90 [mask-image:linear-gradient(90deg,transparent_0%,black_42%)]"
-            />
-            <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
-              <ProfilePopup className="size-11" />
-            </div>
-            <div className="relative">
-              <div className="min-w-0 max-w-xl p-6 sm:p-8">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="inline-flex items-center gap-1.5 rounded-full border border-[#e5dbd1] bg-[linear-gradient(180deg,#f8f3ee_0%,#f1e8e0_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#4a433e]">
-                    <span className="flex size-4 items-center justify-center rounded-full bg-[#f2600c] text-white">
-                      <ShieldCheck aria-hidden className="size-2.5" />
-                    </span>
-                    Misi · Level {featured.scenario.scenario.level}
-                  </p>
-                  <span className="rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#d4511b]">
-                    Fiktif
+      <div className="flex w-full flex-col gap-6">
+        <MissionStatusBar />
+        <section className={cn("relative overflow-hidden", SURFACE_MAIN)}>
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[url('/simulasi/hero-gift.webp')] bg-cover bg-[position:72%_50%] bg-no-repeat opacity-90 [mask-image:linear-gradient(90deg,transparent_0%,black_42%)]"
+          />
+          <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+            <ProfilePopup className="size-11" />
+          </div>
+          <div className="relative">
+            <div className="min-w-0 max-w-xl p-6 sm:p-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="inline-flex items-center gap-1.5 rounded-full border border-[#e5dbd1] bg-[linear-gradient(180deg,#f8f3ee_0%,#f1e8e0_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#4a433e]">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-[#f2600c] text-white">
+                    <ShieldCheck aria-hidden className="size-2.5" />
                   </span>
-                </div>
-                <h1
-                  id="mission-title"
-                  className="mt-3 font-extrabold text-2xl text-[#1e1c1a] leading-tight tracking-tight sm:text-[34px]"
-                >
-                  {TITLE_LEAD} <span className="text-brand">{TITLE_TAIL}</span>
-                </h1>
-                <p className="mt-3 max-w-xl text-[#5c534c] text-sm leading-relaxed">
-                  {MISSION.context}
+                  Misi · Level {featured.scenario.scenario.level}
                 </p>
-                <p
+                <span className="rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#d4511b]">
+                  Fiktif
+                </span>
+              </div>
+              <h1
+                id="mission-title"
+                className="mt-3 font-extrabold text-2xl text-[#1e1c1a] leading-tight tracking-tight sm:text-[34px]"
+              >
+                {TITLE_LEAD} <span className="text-brand">{TITLE_TAIL}</span>
+              </h1>
+              <p className="mt-3 max-w-xl text-[#5c534c] text-sm leading-relaxed">
+                {MISSION.context}
+              </p>
+              <p
+                className={cn(
+                  SURFACE_NOTE,
+                  "mt-3 max-w-xl px-3.5 py-2.5 text-sm text-[#4a3728] leading-relaxed",
+                )}
+              >
+                <span className="font-bold text-[#c8430e]">Tujuanmu: </span>
+                {MISSION.objective}
+              </p>
+              <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#7c726a] text-[10.5px]">
+                <Clock aria-hidden className="size-3.5 text-[#f2600c]" />
+                <span>Perkiraan {MISSION.duration}</span>
+                <span aria-hidden>·</span>
+                <span>{MISSION.chapters.length} babak</span>
+                <span aria-hidden>·</span>
+                <span>{endingCount} kemungkinan akhir</span>
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Button
+                  asChild
                   className={cn(
-                    SURFACE_NOTE,
-                    "mt-3 max-w-xl px-3.5 py-2.5 text-sm text-[#4a3728] leading-relaxed",
+                    "min-h-11 rounded-full px-5 font-bold",
+                    SURFACE_FLAME,
                   )}
                 >
-                  <span className="font-bold text-[#c8430e]">Tujuanmu: </span>
-                  {MISSION.objective}
-                </p>
-                <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#7c726a] text-[10.5px]">
-                  <Clock aria-hidden className="size-3.5 text-[#f2600c]" />
-                  <span>Perkiraan {MISSION.duration}</span>
-                  <span aria-hidden>·</span>
-                  <span>{MISSION.chapters.length} babak</span>
-                  <span aria-hidden>·</span>
-                  <span>{endingCount} kemungkinan akhir</span>
-                </p>
-
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <Button
-                    asChild
-                    className={cn(
-                      "min-h-11 rounded-full px-5 font-bold",
-                      SURFACE_FLAME,
-                    )}
-                  >
-                    <Link
-                      href={`/simulasi/${featured.scenario.scenario.id}`}
-                      data-pressable
-                    >
-                      Mulai briefing
-                      <ArrowRight aria-hidden />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="min-h-11 rounded-full border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] px-4 font-semibold text-[#221f1d] hover:brightness-99"
-                  >
-                    <Link
-                      href={
-                        featured.moduleNo
-                          ? `/belajar/${featured.moduleNo}`
-                          : "/belajar"
-                      }
-                      data-pressable
-                    >
-                      Pelajari pola ini
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {simulations.length > 1 && (
-            <section aria-label="Misi lainnya">
-              <h2 className="text-lg">Misi lainnya</h2>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {simulations.slice(1).map((s) => (
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="min-h-11"
-                    key={s.scenario.scenario.id}
-                  >
-                    <Link href={`/simulasi/${s.scenario.scenario.id}`}>
-                      {s.mission.title}
-                    </Link>
-                  </Button>
-                ))}
-              </div>
-            </section>
-          )}
-          <section aria-labelledby="chapters-heading" className="space-y-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2
-                id="chapters-heading"
-                className="flex items-center gap-2 font-extrabold text-[18px] text-txt"
-              >
-                <Route aria-hidden className="size-4 text-brand" />
-                Alur misi
-              </h2>
-              <p className="text-dim text-xs">Satu keputusan per babak.</p>
-            </div>
-            <ol className="grid list-none gap-3 p-0 md:grid-cols-3">
-              {MISSION.chapters.map((chapter, index) => {
-                const Icon = CHAPTER_ICONS[index] ?? ShieldCheck;
-                return (
-                  <li
-                    key={chapter}
-                    className={cn(
-                      "relative flex flex-col gap-3 p-4",
-                      SURFACE_PANEL,
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="flex size-9 items-center justify-center rounded-[12px] bg-[linear-gradient(180deg,#fde8d8_0%,#fbd9c2_100%)] text-[#e65808]">
-                        <Icon aria-hidden className="size-4" />
-                      </span>
-                      <span className="tabular flex size-[22px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#ff7a18_0%,#f25c05_60%,#e04f00_100%)] font-extrabold text-[9.5px] text-white">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-extrabold text-[12.2px] text-[#1a1817]">
-                        {chapter}
-                      </p>
-                      <p className="mt-1 text-[#7c726a] text-[11px] leading-relaxed">
-                        {CHAPTER_NOTES[index]}
-                      </p>
-                    </div>
-                    {index < MISSION.chapters.length - 1 ? (
-                      <span
-                        aria-hidden
-                        className="absolute top-1/2 right-[-13px] z-10 hidden size-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#f2600c] text-white shadow md:flex"
-                      >
-                        <ArrowRight className="size-3" />
-                      </span>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card
-              className={cn(
-                "gap-0 overflow-hidden border-0 py-0 ring-0 shadow-none min-[1680px]:relative min-[1680px]:aspect-[2048/869]",
-                SURFACE_PANEL,
-              )}
-            >
-              <div
-                aria-hidden="true"
-                className="aspect-[2048/869] w-full bg-[url('/simulasi/card-laptop.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
-              />
-              <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:right-0 min-[1680px]:ml-auto min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="flex items-center gap-2 font-extrabold text-[12.2px] text-[#1a1817]">
-                    <ListChecks aria-hidden className="size-4 text-[#f2600c]" />
-                    Ringkasan Misi
-                  </h2>
                   <Link
                     href={`/simulasi/${featured.scenario.scenario.id}`}
-                    className="shrink-0 whitespace-nowrap font-bold text-[9.5px] text-[#e65c00] hover:underline"
+                    data-pressable
                   >
-                    Lihat detail →
+                    Mulai briefing
+                    <ArrowRight aria-hidden />
                   </Link>
-                </div>
-                <ul className="mt-3 flex list-none flex-col gap-1 p-0">
-                  {SUMMARY_POINTS.map((point, index) => (
-                    <li key={point} className="flex items-start gap-2">
-                      <span
-                        className={cn(
-                          "grid size-[18px] shrink-0 place-items-center rounded-[6px] font-extrabold text-[9.2px]",
-                          SURFACE_BADGE,
-                        )}
-                      >
-                        {index + 1}
-                      </span>
-                      <p
-                        className={cn(
-                          "flex-1 px-2.5 py-[5px] text-[#24211f] text-[11px] leading-[1.35]",
-                          SURFACE_ROW,
-                        )}
-                      >
-                        {point}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-11 rounded-full border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] px-4 font-semibold text-[#221f1d] hover:brightness-99"
+                >
+                  <Link
+                    href={
+                      featured.moduleNo
+                        ? `/belajar/${featured.moduleNo}`
+                        : "/belajar"
+                    }
+                    data-pressable
+                  >
+                    Pelajari pola ini
+                  </Link>
+                </Button>
               </div>
-            </Card>
-
-            <Card
-              className={cn(
-                "gap-0 overflow-hidden border-0 py-0 ring-0 shadow-none min-[1680px]:relative min-[1680px]:aspect-[2048/869]",
-                SURFACE_PANEL,
-              )}
-            >
-              <div
-                aria-hidden="true"
-                className="aspect-[2048/869] w-full bg-[url('/simulasi/card-shield.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
-              />
-              <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:left-0 min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
-                <h2 className="flex items-center gap-2 font-extrabold text-[12.2px] text-[#1a1817]">
-                  <Lightbulb aria-hidden className="size-4 text-[#f2600c]" />
-                  Tips Penting
-                </h2>
-                <ul className="mt-3 flex list-none flex-col gap-1 p-0">
-                  {TIPS.map((tip, index) => (
-                    <li key={tip} className="flex items-start gap-2">
-                      <span
-                        className={cn(
-                          "grid size-[18px] shrink-0 place-items-center rounded-[6px] font-extrabold text-[9.2px]",
-                          SURFACE_BADGE,
-                        )}
-                      >
-                        {index + 1}
-                      </span>
-                      <p
-                        className={cn(
-                          "flex-1 px-2.5 py-[5px] text-[#24211f] text-[11px] leading-[1.35]",
-                          SURFACE_ROW,
-                        )}
-                      >
-                        {tip}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Card>
+            </div>
           </div>
+        </section>
+
+        {simulations.length > 1 && (
+          <section aria-label="Misi lainnya">
+            <h2 className="text-lg">Misi lainnya</h2>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {simulations.slice(1).map((s) => (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-11"
+                  key={s.scenario.scenario.id}
+                >
+                  <Link href={`/simulasi/${s.scenario.scenario.id}`}>
+                    {s.mission.title}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </section>
+        )}
+        <section aria-labelledby="chapters-heading" className="space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2
+              id="chapters-heading"
+              className="flex items-center gap-2 font-extrabold text-[18px] text-txt"
+            >
+              <Route aria-hidden className="size-4 text-brand" />
+              Alur misi
+            </h2>
+            <p className="text-dim text-xs">Satu keputusan per babak.</p>
+          </div>
+          <ol className="grid list-none gap-3 p-0 md:grid-cols-3">
+            {MISSION.chapters.map((chapter, index) => {
+              const Icon = CHAPTER_ICONS[index] ?? ShieldCheck;
+              return (
+                <li
+                  key={chapter}
+                  className={cn(
+                    "relative flex flex-col gap-3 p-4",
+                    SURFACE_PANEL,
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex size-9 items-center justify-center rounded-[12px] bg-[linear-gradient(180deg,#fde8d8_0%,#fbd9c2_100%)] text-[#e65808]">
+                      <Icon aria-hidden className="size-4" />
+                    </span>
+                    <span className="tabular flex size-[22px] items-center justify-center rounded-full bg-[linear-gradient(180deg,#ff7a18_0%,#f25c05_60%,#e04f00_100%)] font-extrabold text-[9.5px] text-white">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-[12.2px] text-[#1a1817]">
+                      {chapter}
+                    </p>
+                    <p className="mt-1 text-[#7c726a] text-[11px] leading-relaxed">
+                      {CHAPTER_NOTES[index]}
+                    </p>
+                  </div>
+                  {index < MISSION.chapters.length - 1 ? (
+                    <span
+                      aria-hidden
+                      className="absolute top-1/2 right-[-13px] z-10 hidden size-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#f2600c] text-white shadow md:flex"
+                    >
+                      <ArrowRight className="size-3" />
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className={cn(
+              "gap-0 overflow-hidden border-0 py-0 ring-0 shadow-none min-[1680px]:relative min-[1680px]:aspect-[2048/869]",
+              SURFACE_PANEL,
+            )}
+          >
+            <div
+              aria-hidden="true"
+              className="aspect-[2048/869] w-full bg-[url('/simulasi/card-laptop.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
+            />
+            <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:right-0 min-[1680px]:ml-auto min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-extrabold text-[12.2px] text-[#1a1817]">
+                  <ListChecks aria-hidden className="size-4 text-[#f2600c]" />
+                  Ringkasan Misi
+                </h2>
+                <Link
+                  href={`/simulasi/${featured.scenario.scenario.id}`}
+                  className="shrink-0 whitespace-nowrap font-bold text-[9.5px] text-[#e65c00] hover:underline"
+                >
+                  Lihat detail →
+                </Link>
+              </div>
+              <ul className="mt-3 flex list-none flex-col gap-1 p-0">
+                {SUMMARY_POINTS.map((point, index) => (
+                  <li key={point} className="flex items-start gap-2">
+                    <span
+                      className={cn(
+                        "grid size-[18px] shrink-0 place-items-center rounded-[6px] font-extrabold text-[9.2px]",
+                        SURFACE_BADGE,
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <p
+                      className={cn(
+                        "flex-1 px-2.5 py-[5px] text-[#24211f] text-[11px] leading-[1.35]",
+                        SURFACE_ROW,
+                      )}
+                    >
+                      {point}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+
+          <Card
+            className={cn(
+              "gap-0 overflow-hidden border-0 py-0 ring-0 shadow-none min-[1680px]:relative min-[1680px]:aspect-[2048/869]",
+              SURFACE_PANEL,
+            )}
+          >
+            <div
+              aria-hidden="true"
+              className="aspect-[2048/869] w-full bg-[url('/simulasi/card-shield.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
+            />
+            <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:left-0 min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
+              <h2 className="flex items-center gap-2 font-extrabold text-[12.2px] text-[#1a1817]">
+                <Lightbulb aria-hidden className="size-4 text-[#f2600c]" />
+                Tips Penting
+              </h2>
+              <ul className="mt-3 flex list-none flex-col gap-1 p-0">
+                {TIPS.map((tip, index) => (
+                  <li key={tip} className="flex items-start gap-2">
+                    <span
+                      className={cn(
+                        "grid size-[18px] shrink-0 place-items-center rounded-[6px] font-extrabold text-[9.2px]",
+                        SURFACE_BADGE,
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <p
+                      className={cn(
+                        "flex-1 px-2.5 py-[5px] text-[#24211f] text-[11px] leading-[1.35]",
+                        SURFACE_ROW,
+                      )}
+                    >
+                      {tip}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
         </div>
-      </WorkspaceShell>
+      </div>
+    </WorkspaceShell>
   );
 }
