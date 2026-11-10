@@ -3,8 +3,10 @@
 import { cookies, headers } from "next/headers";
 import {
   authenticatePassword,
+  changeAccountPassword,
   consumeAttempt,
   ensureDemoAccount,
+  updateAccountName,
 } from "@/lib/auth/accounts";
 import {
   changePasswordAction,
@@ -156,4 +158,51 @@ it("rejects a malformed session id", async () => {
   await expect(revokeSessionAction("../../etc/passwd")).resolves.toMatchObject({
     ok: false,
   });
+});
+
+it("rate-limits name and password mutations per account", async () => {
+  jest.mocked(cookies).mockResolvedValue({
+    get: () => ({ value: "token" }),
+  } as never);
+  jest.mocked(readSession).mockResolvedValue({
+    id: "user-1",
+    email: "siti@lumina.id",
+    nama: "Siti",
+    created_at: "2026-01-02T00:00:00.000Z",
+    exp: 0,
+  });
+  jest.mocked(consumeAttempt).mockClear();
+  jest.mocked(consumeAttempt).mockResolvedValue(undefined as never);
+  jest.mocked(updateAccountName).mockResolvedValue({
+    id: "user-1",
+    email: "siti@lumina.id",
+    nama: "Siti Baru",
+    created_at: "2026-01-02T00:00:00.000Z",
+  });
+  jest.mocked(changeAccountPassword).mockResolvedValue(undefined);
+
+  const nameForm = new FormData();
+  nameForm.set("nama", "Siti Baru");
+  await expect(updateNama(undefined, nameForm)).resolves.toMatchObject({
+    ok: true,
+    account: { nama: "Siti Baru", email: "siti@lumina.id" },
+  });
+  expect(consumeAttempt).toHaveBeenCalledWith(
+    "account:name:user-1",
+    20,
+    600000,
+  );
+
+  const passwordForm = new FormData();
+  passwordForm.set("current", "password123");
+  passwordForm.set("password", "password456");
+  passwordForm.set("konfirmasi", "password456");
+  await expect(
+    changePasswordAction(undefined, passwordForm),
+  ).resolves.toMatchObject({ ok: true });
+  expect(consumeAttempt).toHaveBeenCalledWith(
+    "account:password:user-1",
+    5,
+    900000,
+  );
 });

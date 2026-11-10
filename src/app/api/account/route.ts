@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { deviceLabel } from "@/lib/auth/account-view";
 import { authDatabase } from "@/lib/auth/database";
 import { getSession } from "@/lib/auth/server-session";
-import { listSessions } from "@/lib/auth/session";
+import { listSessions, SESSION_COOKIE } from "@/lib/auth/session";
 
 const headers = { "cache-control": "no-store" };
 
@@ -20,7 +20,7 @@ export async function GET() {
       "SELECT password_hash IS NOT NULL AS has_password FROM users WHERE id = $1",
       [session.id],
     ),
-    listSessions(session.id, jar.get("lumina_session")?.value),
+    listSessions(session.id, jar.get(SESSION_COOKIE)?.value),
   ]);
 
   return Response.json(

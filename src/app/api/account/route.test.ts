@@ -8,7 +8,10 @@ import { listSessions } from "@/lib/auth/session";
 
 jest.mock("next/headers", () => ({ cookies: jest.fn() }));
 jest.mock("@/lib/auth/server-session", () => ({ getSession: jest.fn() }));
-jest.mock("@/lib/auth/session", () => ({ listSessions: jest.fn() }));
+jest.mock("@/lib/auth/session", () => ({
+  SESSION_COOKIE: "lumina_session",
+  listSessions: jest.fn(),
+}));
 jest.mock("@/lib/auth/database", () => ({ authDatabase: jest.fn() }));
 
 describe("GET /api/account", () => {
