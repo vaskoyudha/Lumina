@@ -20,7 +20,10 @@ import {
   useRef,
   useState,
 } from "react";
-import type { DetectorAgent } from "@/components/companion/agents";
+import {
+  AGENT_REGISTRY,
+  type DetectorAgent,
+} from "@/components/companion/agents";
 import { buildPanelLedger } from "@/components/companion/panel-ledger";
 import {
   CoverageGroup,
@@ -134,36 +137,24 @@ const branchCode = (index: number) => `Q${5 + index}`;
 const synthesisCode = (count: number) => `Q${5 + count}`;
 const voiceCode = (count: number) => `Q${6 + count}`;
 
-/**
- * The condition each branch is entered under, printed on the root node's rule
- * rows. These are the detectors' real triggers, not invented prose: a branch
- * runs when there is something of its kind to inspect.
- */
-const BRANCH_CONDITION: Record<AgentId, string> = {
-  message: "Ada urgensi, otoritas, atau iming-iming",
-  link: "Ada tautan yang perlu dibuka",
-  identity: "Ada klaim institusi atau nomor asing",
-  conversation: "Ada pesan sebelumnya di percakapan",
-  job: "Ada tawaran kerja atau tugas berbayar",
-  marketplace: "Ada percakapan jual-beli",
-  qris: "Ada payload QRIS",
-  evidence: "Ada temuan yang bisa dikutip",
-  scoring: "Menggabungkan seluruh temuan",
-};
-
 type NodeStatus = "ran" | "live" | "skipped" | "failed" | "pending";
 
-/** The brand mascot used as a branch badge. */
-function AgentMark() {
-  return (
-    <Image
-      alt=""
-      className="size-full object-cover"
-      height={128}
-      src="/brand/companion-mascot.png"
-      width={128}
-    />
-  );
+/** The agent's own portrait, falling back to its registry icon. */
+function AgentMark({ agent }: { agent: DetectorAgent }) {
+  const profile = AGENT_REGISTRY[agent];
+  if (profile.portrait) {
+    return (
+      <Image
+        alt=""
+        className="size-full object-cover"
+        height={56}
+        src={profile.portrait}
+        width={56}
+      />
+    );
+  }
+  const Icon = profile.icon;
+  return <Icon aria-hidden className="size-1/2 text-brand-strong" />;
 }
 
 /** Entry pill + stem + port, cloned from the reference canvas. */
@@ -427,13 +418,14 @@ function AgentNode({
   kind: string;
   label: string;
   nextCode: string;
-  nodeId: AgentId;
+  nodeId: DetectorAgent;
   status: NodeStatus;
   note?: string;
   count: number;
 }) {
   const skipped = status === "skipped";
   const live = status === "live";
+  const profile = AGENT_REGISTRY[nodeId];
 
   return (
     <li
@@ -462,21 +454,23 @@ function AgentNode({
       <div className="px-3.5 pt-2.5 pb-2">
         <div className="flex items-center gap-2.5">
           <span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-brand-edge bg-brand-chip">
-            <AgentMark />
+            <AgentMark agent={nodeId} />
           </span>
-          {skipped ? (
-            <p className="text-[12.5px] text-ink leading-snug">
-              <span className="font-semibold">{label}</span>{" "}
-              <span className="text-ink-faint">
-                dilewati
-                {note ? ` — ${note}` : "."}
-              </span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-[12.5px] text-ink leading-snug">
+              {profile.displayName}
             </p>
-          ) : (
-            <p className="font-semibold text-[12.5px] text-ink leading-snug">
-              {label}
+            <p className="truncate text-[10.5px] leading-snug">
+              <span className="text-ink-mute">{label}</span>
+              {skipped ? (
+                <span className="text-ink-faint">
+                  {" "}
+                  dilewati
+                  {note ? ` — ${note}` : "."}
+                </span>
+              ) : null}
             </p>
-          )}
+          </div>
         </div>
         <p className="mt-1.5 font-mono text-[9.5px] text-ink-mute uppercase tracking-[0.1em]">
           {code} &nbsp;·&nbsp; {kind}
@@ -535,10 +529,11 @@ function BranchList({
 }
 
 /**
- * The root node's rule list. Each row is a real routing rule — the condition
- * the branch is entered under and the node it leads to. `active` marks the
- * branches that actually reported this run; before any input nothing is
- * highlighted, so the card never implies work that has not happened.
+ * The root node's rule list. Each row prints what the branch reads — the same
+ * `task` string the trace records — and the node it leads to. `MEMBACA` is
+ * deliberate: most detectors run on every message, so a conditional `IF` would
+ * promise a gate the engine does not have. `active` marks the branches that
+ * actually reported this run.
  */
 function RoutingRow({
   agent,
@@ -558,7 +553,7 @@ function RoutingRow({
     >
       <div className="flex min-w-0 items-center gap-2 pr-2">
         <span className="shrink-0 rounded-[5px] bg-chip px-1.5 py-0.5 font-mono font-medium text-[10px] text-ink-soft">
-          IF
+          MEMBACA
         </span>
         <span
           className={cn(
@@ -566,7 +561,7 @@ function RoutingRow({
             active ? "font-medium text-txt" : "text-ink-mute",
           )}
         >
-          {BRANCH_CONDITION[agent]}
+          {STAGE_LABEL[agent].task}
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-2">
