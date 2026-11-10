@@ -182,7 +182,7 @@ export function ProcessTrace({
         {plan || blocks.length > 0 ? (
           <section
             aria-label="Agen di bawah komando Lumina"
-            className="ml-1.5 flex flex-col gap-2.5 border-line border-l pl-3"
+            className="flex flex-col gap-2.5"
           >
             {visibleBlocks.length > 0 ? (
               <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
@@ -205,7 +205,7 @@ export function ProcessTrace({
                       animationDelay: `${Math.min(index, 6) * 45}ms`,
                     }}
                     className={cn(
-                      "motion-safe:animate-[trace-enter_260ms_ease-out_both] rounded-lg border bg-panel px-2.5 py-2",
+                      "motion-safe:animate-[trace-enter_260ms_ease-out_both] rounded-[20px] border bg-panel px-3.5 py-3 shadow-panel",
                       block.end ? "border-line" : "border-brand-edge/60",
                     )}
                   >
