@@ -436,6 +436,8 @@
   --lumina-nav-active-to: #fce8dc;
   --lumina-nav-active-ink: #e85515;
   --lumina-nav-active-icon: #f05a1a;
+  /* Soft bloom layered over the selected-row gradient. */
+  --lumina-nav-active-glow: rgb(255 255 255 / 0.72);
 
   /* Reference level-filter track: #F9EFEA ground with #5C534E inactive
      labels; the active pill reuses the #F05A1A selected-icon orange. */
@@ -733,4 +735,24 @@ html {
 button.bg-primary,
 a.bg-primary {
   border-color: var(--lumina-ink-line);
+}
+
+/*
+ * Workspace active nav row. The reference selected row is a flat peach, which
+ * reads as a single colour at 40px; a soft radial bloom over the diagonal
+ * gradient gives the pill depth without turning it into a second primary
+ * button. Applied to both the expanded row and the collapsed rail tile.
+ */
+.nav-active-tint {
+  background-image:
+    radial-gradient(
+      130% 150% at 0% 0%,
+      var(--lumina-nav-active-glow) 0%,
+      rgb(255 255 255 / 0) 62%
+    ),
+    linear-gradient(
+      135deg,
+      var(--lumina-nav-active-from) 0%,
+      var(--lumina-nav-active-to) 100%
+    );
 }
