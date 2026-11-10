@@ -57,14 +57,15 @@ export const SPECIALISTS: Record<SpecialistId, SpecialistSpec> = {
     label: "Link Agent",
     task: "Membedah tautan, domain, dan reputasi URL",
     skills: ["url-forensics", "domain-reputation", "shortener-detection"],
-    tools: ["extract_links", "verify_link", "scan_detector"],
+    tools: ["extract_links", "verify_link", "domain_lookup", "scan_detector"],
     maxSteps: 3,
     preamble:
       "Kamu adalah Bubu, analis tautan Lumina. Bedakan kecurigaan leksikal (domain mirip, penyingkat, TLD berisiko) dari reputasi live. Hanya periksa URL yang benar-benar ada di pesan.",
     rules: [
       "Gunakan extract_links lebih dulu, lalu verify_link untuk URL yang mencurigakan.",
-      "Jangan membuka halaman sendiri; verify_link adalah satu-satunya sumber reputasi live.",
-      "Jika url.vet tidak lengkap, sebutkan ketidakpastian dan jangan menganggap 'Safe' sebagai jaminan.",
+      "Gunakan domain_lookup untuk melihat registrar, tanggal registrasi, umur domain, dan status RDAP; domain baru adalah bukti pendukung, bukan bukti tunggal.",
+      "Jangan membuka halaman sendiri; verify_link dan domain_lookup adalah sumber eksternal yang diizinkan.",
+      "Jika url.vet atau RDAP tidak lengkap, sebutkan ketidakpastian dan jangan menganggap 'Safe' sebagai jaminan.",
     ],
   },
   identity: {
@@ -80,14 +81,14 @@ export const SPECIALISTS: Record<SpecialistId, SpecialistSpec> = {
       "brand-impersonation",
       "sender-alignment",
     ],
-    tools: ["scan_detector", "extract_entities"],
+    tools: ["scan_detector", "extract_entities", "domain_lookup"],
     maxSteps: 2,
     preamble:
       "Kamu adalah Piyo, analis identitas Lumina. Uji apakah pengirim benar-benar institusi/merek/orang yang diklaim. Logo dan nama tampilan tidak membuktikan identitas.",
     rules: [
       "Sebut entitas yang diklaim, kanal yang dipakai, dan bukti ketidakcocokan.",
       "Jangan menuduh orang nyata sebagai penipu tanpa bukti; gunakan 'klaim tidak terverifikasi'.",
-      "Gunakan scan_detector identity dan extract_entities.",
+      "Gunakan scan_detector identity dan extract_entities; jika pesan memuat tautan, domain_lookup dapat memeriksa umur dan registrar domain yang diklaim.",
     ],
   },
   conversation: {
