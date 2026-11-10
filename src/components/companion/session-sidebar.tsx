@@ -435,14 +435,19 @@ export function SessionSidebar({
             <p className="mt-1 mb-2.5 text-[9.5px] text-dim leading-[1.35]">
               Bagikan pola baru dan belajar dari pengalaman anggota.
             </p>
-            <Link
-              href="/komunitas"
-              data-pressable
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-sm transition-transform active:scale-95"
+            <Button
+              asChild
+              className="h-auto justify-center gap-1.5 rounded-full border-0 bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-3 py-1.5 font-semibold text-[10.5px] text-bg shadow-slab transition-[filter,transform,box-shadow] duration-150 ease-out hover:from-brand-cta-hover-from hover:to-brand-cta-hover-to active:translate-y-[2px] active:shadow-slab-pressed"
             >
-              <span>Buka komunitas</span>
-              <ChevronRight aria-hidden strokeWidth={2.4} className="size-3" />
-            </Link>
+              <Link href="/komunitas" data-pressable>
+                <span>Buka komunitas</span>
+                <ChevronRight
+                  aria-hidden
+                  strokeWidth={2.4}
+                  className="size-3"
+                />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
