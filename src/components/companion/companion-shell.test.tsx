@@ -252,9 +252,22 @@ describe("CompanionChat · shell", () => {
     }
   });
 
-  it("shows every detection agent in the main panel when the sidebar option is pressed", async () => {
+  it("opens the agent overview at its own /agen address", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
+
+    await user.click(screen.getByRole("button", { name: /^agen/i }));
+
+    expect(mockPush).toHaveBeenCalledWith("/agen");
+    expect(
+      screen.queryByRole("heading", { name: "Agen pemeriksa" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows every detection agent in the main panel when the sidebar option is pressed", async () => {
+    const user = userEvent.setup();
+    mockPathname = "/agen";
+    render(<CompanionChat initialPanel="agen" />);
 
     const trigger = screen.getByRole("button", { name: /^agen/i });
     const sidebar = trigger.closest("aside");
@@ -345,6 +358,7 @@ describe("CompanionChat · shell", () => {
 
   it("swaps the evidence panel for agent detail only while the overview is open", async () => {
     const user = userEvent.setup();
+    mockPathname = "/agen";
     render(<CompanionChat />);
 
     expect(screen.getByText("Panel bukti")).toBeInTheDocument();
