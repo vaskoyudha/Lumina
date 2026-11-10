@@ -1,6 +1,7 @@
 # Agent orchestration and crew bubbles
 
-**Status:** Implemented 8 November 2026; hardened 9 November 2026
+**Status:** Implemented 8 November 2026; hardened 9 November 2026; consensus
+scoring 12 November 2026
 **Plan:** `docs/superpowers/plans/2026-11-08-agent-orchestration-ui.md`
 **Design:** `docs/superpowers/specs/2026-11-08-agent-orchestration-design.md`
 
@@ -45,7 +46,7 @@ while `trace.commander` is a required field added together with its producer.
 The streaming orchestrator emits one ordered pipeline:
 
 ```
-run_start → commander_say → score → plan → agent_start/agent_result (serial, ≤6) → synthesis_end → done
+run_start → commander_say → score → plan → agent_start/agent_result (serial, ≤6) → consensus → score_decision → synthesis_end → done
 ```
 
 Specialists run one at a time under `LUMINA_ORCHESTRATOR_DEADLINE_MS` (default
@@ -53,6 +54,20 @@ Specialists run one at a time under `LUMINA_ORCHESTRATOR_DEADLINE_MS` (default
 reported as `dilewati`. The commander sees the OCR'd message, prior turns, and
 the baseline score/modus/risk; it never states a score or band itself, and the
 band is revealed after synthesis.
+
+## Consensus scoring
+
+After the specialists report, `findConsensus()` groups points whose normalized
+pattern matches across at least two distinct agents and whose quotes passed the
+report validator. Only then does Lumina get a `submit_score` tool; it may set any
+score, raise or lower, with a short rationale and the supporting signal labels.
+`authorScore()` turns that decision into the final `ScoreResult`: the band comes
+from `riskFor()`, the consensus points become `source: "consensus"` signals, and
+the engine score stays visible as `baselineScore`. If the model errors, returns
+no tool call, or the deadline hits, the engine score survives and the trace marks
+`source: "fallback"`. Set `LUMINA_CONSENSUS_SCORE=0` to keep the engine score.
+The design is in
+`docs/superpowers/specs/2026-11-12-consensus-score-design.md`.
 
 ## The crew
 
@@ -174,7 +189,11 @@ b. Only the question/history, a lossy digest, and public `modus`/tactic facts ar
    so a verbatim quote cannot leave by construction.
 c. Vision only copies text from an image; it has no score/risk/signal fields and
    its output must re-enter `scoreText()`.
-d. The model is never asked for a score and may not add or remove signals.
+d. The engine score is the baseline. After two distinct agents ground the same
+   pattern with quotes, Lumina may author the final score through
+   `submit_score`; the engine score stays visible, `source` marks the origin,
+   and the OTP/PIN/password floor still applies. The model may not invent
+   signals.
 
 ## Files
 

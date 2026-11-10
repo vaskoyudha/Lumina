@@ -111,6 +111,9 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
   endpoint chat-completions). `LUMINA_ORCHESTRATOR_DEADLINE_MS`
   (default 120000; maksimum 180000) membatasi seluruh run serial; timer abort dan
   kebijakan lewati agen memakai nilai yang sama.
+- `LUMINA_CONSENSUS_SCORE` — default aktif: Lumina boleh menetapkan skor akhir
+  setelah minimal dua agen sepakat pada pola yang sama dan mengutip bukti. Set
+  `0` untuk mempertahankan skor engine.
 - `URLVET_API_URL` — verifikasi tautan opt-in. Kosong = `https://api.url.vet`
   publik; `off` mematikan. Hanya URL yang dikirim.
 - `VERIFY_LINK`, `VERIFY_FILE` — reputasi tautan/berkas lewat scanner; default
@@ -143,8 +146,11 @@ a. Pesan yang diperiksa tidak pernah meninggalkan perangkat. Yang dikirim ke
    Giliran yang pernah diperiksa difilter dari riwayat obrolan di klien.
 b. `/api/companion/vision` hanya menyalin teks dari gambar. Kontraknya tidak punya
    field skor/risk/signal; hasilnya hanya boleh masuk kembali ke `scoreText()`.
-c. Model tidak pernah diminta memberi skor dan tidak boleh menambah atau
-   menurunkan `signals` (plan §3b, §11.6a).
+c. Skor engine tetap baseline. Setelah minimal dua agen sepakat pada pola yang
+   sama dan masing-masing mengutip bukti, Lumina boleh menetapkan skor akhir
+   lewat `submit_score`; skor engine tetap ditampilkan dan `source` menandai
+   asal skor. Permintaan OTP/PIN/password tetap memaksa band tinggi. Model
+   tidak boleh mengarang sinyal; poin konsensus harus lolos validasi laporan.
 d. Riwayat Companion menyimpan metadata per akun di `companion_conversations`
    (judul, jumlah giliran, waktu, dan skor terakhir). Isi pesan, lampiran, dan
    transkrip tidak pernah ikut; membuka riwayat di perangkat lain hanya
@@ -376,6 +382,9 @@ e. Verifikasi tautan/berkas tidak menulis balik ke `signals`. `/api/link/verify`
    memakai `URLVET_API_URL` (mati dengan `off`); reputasi di `/api/verify-link`
    dan `/api/verify-file` mati kecuali `VERIFY_LINK=on` / `VERIFY_FILE=on`, dan
    verifikasi berkas hanya mengirim hash SHA-256.
+f. Skor akhir dari konsensus hanya lahir bila dua agen berbeda sepakat pada pola
+   yang sama dan masing-masing mengutip bukti; skor engine tetap terlihat, dan
+   fallback model tidak mengubah angka.
 
 ## Test
 
