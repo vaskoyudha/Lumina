@@ -73,10 +73,10 @@ export default function About() {
                     </div>
                     <div className="framer-brva0z">
                       <div className="framer-kub8y9" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Kumpulkan pesan, tautan, dan pengetahuan dalam satu percakapan.</h4>
+                        <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Kumpulkan pesan, tautan, dan temuan dalam satu percakapan.</h4>
                       </div>
                       <div className="framer-tts7ao" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Hubungkan pesan, tautan, dan pengalamanmu, supaya setiap jawaban mulai dari konteks yang tepat.</p>
+                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Setiap jawaban mulai dari konteks yang kamu tempel, bukan dari riwayat yang disimpan di server.</p>
                       </div>
                     </div>
                     <div className="framer-7qzzij" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -139,10 +139,10 @@ export default function About() {
                     </div>
                     <div className="framer-7cybj7">
                       <div className="framer-1dbb936" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Ubah temuan menjadi langkah yang bisa langsung dijalankan.</h4>
+                        <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Ubah temuan menjadi langkah berikutnya.</h4>
                       </div>
                       <div className="framer-11ikhzz" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Lanjut ke modul belajar, simulasi, atau diskusi komunitas tanpa kehilangan alur.</p>
+                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Lanjut ke modul yang relevan atau buka komunitas; simulasi APK tersedia sebagai latihan.</p>
                       </div>
                     </div>
                     <div className="framer-w9w87w" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
@@ -183,10 +183,10 @@ export default function About() {
                     </div>
                     <div className="framer-vdouej">
                       <div className="framer-c2igiu" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Kenali pola, celah, dan cara memperbaiki diri lebih cepat.</h4>
+                        <h4 className="framer-text framer-styles-preset-14zqc8e" data-styles-preset="gk3iglzUb" dir="auto">Kemajuan yang bisa dilihat.</h4>
                       </div>
                       <div className="framer-19gjaep" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Lihat pertanyaan yang sering muncul, bagian yang masih membingungkan, dan apa yang perlu diperkuat.</p>
+                        <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto">Lihat modul yang sudah selesai, kuis yang dikerjakan, dan hasil simulasi yang tersimpan di akunmu.</p>
                       </div>
                     </div>
                     <div className="framer-1qtsckt" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>

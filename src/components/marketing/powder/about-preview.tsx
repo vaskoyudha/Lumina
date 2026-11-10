@@ -57,9 +57,9 @@ function AboutPanel({
 }
 
 const SOURCES = [
-  { Icon: FileText, label: "Docs" },
-  { Icon: Database, label: "CRM" },
-  { Icon: CircleHelp, label: "Help Center" },
+  { Icon: FileText, label: "Pesan" },
+  { Icon: Database, label: "Nomor pengirim" },
+  { Icon: CircleHelp, label: "Tautan" },
 ];
 
 export function KonteksPreview() {
@@ -68,18 +68,18 @@ export function KonteksPreview() {
       <div className="flex h-full flex-col p-[7.5%]">
         <div className="flex justify-end">
           <span className="max-w-[88%] rounded-[18px] border border-[var(--mp-bubble-line)] bg-[var(--mp-bubble)] px-5 py-3 text-[15px] leading-[1.35] text-[var(--mp-ink)]">
-            What&apos;s blocking the Acme renewal?
+            Pesan ini minta OTP, tapi pengirimnya bukan bank.
           </span>
         </div>
 
         <p className="mt-6 text-[14px] leading-[1.55] text-[var(--mp-ink-2)]">
-          Invoice approval from finance and one unresolved support issue tied to
-          SSO setup.
+          Permintaan OTP, klaim pihak bank, dan nomor asing. Skor 92/100, risiko
+          tinggi.
         </p>
 
         <div className="mt-7">
           <span className="flex items-center gap-3 text-[13px] text-[var(--mp-muted)]">
-            3 Sources connected
+            3 hal yang diperiksa
             <span className="h-px flex-1 bg-[var(--mp-line)]" />
           </span>
           <div className="mt-3 flex flex-wrap items-center gap-2.5">
@@ -97,7 +97,7 @@ export function KonteksPreview() {
 
         <div className="mt-auto flex items-center justify-between rounded-[16px] border border-[var(--mp-line)] bg-[var(--mp-well)] px-4 py-3">
           <span className="text-[13.5px] text-[var(--mp-faint-2)]">
-            Ask anything
+            Tanya soal pesan ini
           </span>
           <span className="flex items-center gap-2">
             <span className="grid size-[30px] place-items-center rounded-full border border-[var(--mp-line-2)] bg-[var(--mp-row)] text-[var(--mp-ink-3)]">
@@ -128,7 +128,7 @@ export function LangkahCardPreview() {
   return (
     <AboutPanel backdrop={BACKDROPS.langkah}>
       <div className="flex h-full flex-col gap-4 p-[7.5%]">
-        <Field label="Assignee">
+        <Field label="Sumber">
           <span className="flex h-[50px] items-center gap-2.5 rounded-[14px] border border-[var(--mp-line-2)] bg-[var(--mp-well)] px-4 text-[15px] text-[var(--mp-ink)]">
             <UserRound
               aria-hidden="true"
@@ -136,7 +136,7 @@ export function LangkahCardPreview() {
               size={17}
               strokeWidth={1.6}
             />
-            <span className="min-w-0 flex-1 truncate">Taylor Smith</span>
+            <span className="min-w-0 flex-1 truncate">Pesan WhatsApp</span>
             <ChevronDown
               aria-hidden="true"
               className="text-[var(--mp-muted)]"
@@ -146,10 +146,10 @@ export function LangkahCardPreview() {
           </span>
         </Field>
 
-        <Field label="Priority">
+        <Field label="Temuan">
           <span className="flex h-[50px] items-center gap-2.5 rounded-[14px] border border-[var(--mp-line-2)] bg-[var(--mp-well)] px-4 text-[15px] text-[var(--mp-ink)]">
             <span className="size-[10px] shrink-0 rounded-full bg-[var(--mp-danger)]" />
-            <span className="min-w-0 flex-1 truncate">High priority</span>
+            <span className="min-w-0 flex-1 truncate">Permintaan OTP</span>
             <ChevronDown
               aria-hidden="true"
               className="text-[var(--mp-muted)]"
@@ -159,19 +159,18 @@ export function LangkahCardPreview() {
           </span>
         </Field>
 
-        <Field label="Summary">
+        <Field label="Ringkasan">
           <p className="rounded-[14px] border border-[var(--mp-line-2)] bg-[var(--mp-well)] px-4 py-3 text-[13.5px] leading-[1.5] text-[var(--mp-muted)]">
-            User is able to log in with SSO. Issue is affecting multiple users
-            at Acme. Investigate SAML configuration and secure a fix.
+            Pengirim mengaku bank dan meminta kode OTP.
           </p>
         </Field>
 
         <div className="mt-auto flex gap-3">
           <span className="flex h-[46px] flex-1 items-center justify-center rounded-full border border-[var(--mp-line-2)] bg-[var(--mp-row)] text-[14.5px] font-medium text-[var(--mp-ink-2)]">
-            Cancel
+            Buka modul
           </span>
           <span className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-[var(--mp-ink)] text-[14.5px] font-medium text-[var(--mp-card)]">
-            Confirm
+            Periksa lagi
           </span>
         </div>
       </div>
@@ -179,17 +178,17 @@ export function LangkahCardPreview() {
   );
 }
 
-const TABS = ["Trends", "Questions", "Gaps to fill"];
+const TABS = ["Progres", "Modul", "Simulasi"];
 
 const STATS = [
-  { value: "28%", label: "Billing questions" },
-  { value: "22%", label: "Follow-ups" },
+  { value: "1", label: "modul selesai" },
+  { value: "1", label: "simulasi" },
 ];
 
 const INSIGHTS = [
-  "Billing questions rose 28% week over week.",
-  "Refund-related tickets made up 22% of all support volume.",
-  "First-response time was 17% slower than last week.",
+  "Modul 10 selesai.",
+  "Simulasi APK: 2 keputusan berisiko.",
+  "Lanjut ke modul 2.",
 ];
 
 export function WawasanCardPreview() {

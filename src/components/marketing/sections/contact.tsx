@@ -69,7 +69,7 @@ export function Contact() {
             <h2 className="font-medium text-3xl tracking-tight sm:text-5xl">
               {contactCopy.headerTitle}
             </h2>
-            <p className="max-w-md text-amberwarm-100/80 text-xs leading-relaxed sm:text-sm">
+            <p className="max-w-md text-amberwarm-100/80 text-sm leading-relaxed">
               {contactCopy.headerBody}
             </p>
           </div>
@@ -108,12 +108,12 @@ export function Contact() {
               <h3 className="font-semibold text-3xl text-ls-ink leading-tight sm:text-4xl">
                 {contactCopy.formTitle}
               </h3>
-              <p className="mt-2.5 text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
+              <p className="mt-2.5 text-ls-ink-2 text-sm leading-relaxed">
                 {contactCopy.formBody}
               </p>
             </div>
 
-            <div className="divide-y divide-dashed divide-ls-line-strong pt-6 text-xs sm:pt-12 sm:text-sm">
+            <div className="divide-y divide-dashed divide-ls-line-strong pt-6 text-sm sm:pt-12">
               {contactCopy.info.map((row) => (
                 <div
                   key={row.label}
@@ -186,7 +186,7 @@ export function Contact() {
                     name="email"
                     type="email"
                     required
-                    placeholder="emailkamu@gmail.com"
+                    placeholder="nama@email.com"
                     className={fieldClass}
                   />
                 </div>
@@ -203,7 +203,7 @@ export function Contact() {
                     name="message"
                     rows={4}
                     required
-                    placeholder="Tulis pertanyaanmu di sini.."
+                    placeholder="Tulis pertanyaanmu di sini."
                     className={`${fieldClass} min-h-24 py-2.5`}
                   />
                 </div>
@@ -214,15 +214,7 @@ export function Contact() {
                     htmlFor="contact-privacy"
                     className="block text-ls-ink-2 text-xs font-normal leading-snug"
                   >
-                    {contactCopy.consent.split("kebijakan privasi")[0]}
-                    <button
-                      type="button"
-                      onClick={() => showToast(contactCopy.privacyToast)}
-                      className="font-medium text-ls-ink underline"
-                    >
-                      kebijakan privasi
-                    </button>
-                    {contactCopy.consent.split("kebijakan privasi")[1]}
+                    {contactCopy.consent}
                   </Label>
                 </div>
 

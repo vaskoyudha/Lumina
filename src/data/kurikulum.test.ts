@@ -72,13 +72,19 @@ describe("kurikulum", () => {
     }
   });
 
-  it("wires only module 10 to the one playable simulation", () => {
+  it("wires five modules to their playable simulations", () => {
     const withScenario = Object.values(KURIKULUM).filter(
       (course) => course.scenarioId !== null,
     );
-    expect(withScenario).toHaveLength(1);
-    expect(withScenario[0]?.no).toBe(10);
-    expect(withScenario[0]?.scenarioId).toBe("L1-kurir-apk");
+    expect(
+      withScenario.map((course) => [course.no, course.scenarioId]),
+    ).toEqual([
+      [2, "L4-fake-call"],
+      [4, "L3-lowongan-berbayar"],
+      [7, "L2-phishing-tautan"],
+      [9, "L3-pinjol-fiktif"],
+      [10, "L1-kurir-apk"],
+    ]);
   });
 
   it("the written module still parses with its published shape", () => {

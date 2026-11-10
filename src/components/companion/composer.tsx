@@ -391,12 +391,16 @@ export function Composer({
       </div>
 
       {/*
-        Plan §11.6a requires a permanent, explicit notice that the conversation
-        leaves the device. The reference has no second text block under the
-        composer, so the sentence lives in the DOM for every user and screen
-        reader but does not add a line of chrome.
+        Plan §11.6 requires one permanent line under the field, not a
+        dismissible dialog. The line stays short so it does not become a wall of
+        grey text; the fuller image and storage detail lives in the DOM for
+        screen readers only.
       */}
-      <p className="mt-2 text-xs leading-relaxed text-dim">
+      <p className="mt-2 text-[10.5px] leading-relaxed text-ink-faint">
+        Percakapan ini dikirim ke model untuk menyusun jawaban. Pemeriksaan
+        tetap di perangkat ini.
+      </p>
+      <p className="sr-only">
         Isi pesan lengkap yang diperiksa tidak dikirim: pemeriksaan berjalan di
         perangkat ini. Pertanyaan, riwayat obrolan yang tidak diperiksa, dan
         ringkasan temuan tanpa kutipan dapat dikirim ke layanan AI. Gambar

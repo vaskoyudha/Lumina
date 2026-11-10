@@ -1,28 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 /**
  * Inter, matching the reference chat UI's `$font-ui` stack
- * (`'Inter', system-ui, -apple-system, sans-serif`). Loaded through
- * `next/font` so it is self-hosted and needs no network at runtime — the same
- * file the browser would get from the system stack, just guaranteed.
+ * (`'Inter', system-ui, -apple-system, sans-serif`). The variable font is
+ * committed under `app/fonts` instead of fetched from Google at build/dev time:
+ * an offline demo must not spend 20+ seconds timing out before first paint.
+ * The workspace's `--font-jakarta` falls back to this family.
  */
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "./fonts/inter-variable.woff2",
   variable: "--font-sans",
-  display: "swap",
-});
-
-/**
- * The supplied dashboard reference sets
- * `fontFamily: "'Plus Jakarta Sans', 'Inter', ..."` on its whole surface.
- * Load it as a separate variable so only the workspace (sidebar + dashboard)
- * adopts it, while the rest of the product keeps Inter.
- */
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-jakarta",
+  weight: "100 900",
   display: "swap",
 });
 
@@ -53,11 +43,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="id"
-      className={`font-sans ${inter.variable} ${jakarta.variable}`}
-    >
-      <body className="appnext min-h-dvh bg-bg text-txt antialiased">
+    <html lang="id" className={`font-sans ${inter.variable}`}>
+      <body
+        className="appnext min-h-dvh bg-bg text-txt antialiased"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

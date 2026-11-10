@@ -43,31 +43,31 @@ export default function Numbers() {
                 <div className="framer-ab7g5e">
                   <div className="ssr-variant hidden-3job37 hidden-nzvz5l">
                     <div className="framer-hfok5d" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                      <h1 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
-                        18{" "}
-                        <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/20</span>
-                      </h1>
+                      <h2 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        25{" "}
+                        <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/29</span>
+                      </h2>
                     </div>
                   </div>
                   <div className="ssr-variant hidden-kj696b hidden-nzvz5l">
                     <div className="framer-hfok5d" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                      <h1 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
-                        18{" "}
-                        <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/20</span>
-                      </h1>
+                      <h2 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        25{" "}
+                        <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/29</span>
+                      </h2>
                     </div>
                   </div>
                   <div className="ssr-variant hidden-3job37 hidden-kj696b">
                     <div className="framer-hfok5d" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                      <h1 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
-                        18{" "}
-                        <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/20</span>
-                      </h1>
+                      <h2 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        25{" "}
+                        <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/29</span>
+                      </h2>
                     </div>
                   </div>
                 </div>
                 <div className="framer-1hca9nm" data-framer-component-type="RichTextContainer" style={{transform: "none"}}>
-                  <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-alignment": "left", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Kasus penipuan yang langsung dinilai tinggi oleh engine.</p>
+                  <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-alignment": "left", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Kasus penipuan yang langsung dinilai tinggi oleh engine (korpus 57 pesan).</p>
                 </div>
               </div>
               <div className="framer-yb32hr" data-border="true">
@@ -137,31 +137,31 @@ export default function Numbers() {
                   <div className="framer-7bgqob">
                     <div className="ssr-variant hidden-3job37 hidden-nzvz5l">
                       <div className="framer-1af25vf" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                        <h1 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        <h2 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                           0
-                          <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/23</span>
-                        </h1>
+                          <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/28</span>
+                        </h2>
                       </div>
                     </div>
                     <div className="ssr-variant hidden-kj696b hidden-nzvz5l">
                       <div className="framer-1af25vf" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                        <h1 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        <h2 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                           0
-                          <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/23</span>
-                        </h1>
+                          <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/28</span>
+                        </h2>
                       </div>
                     </div>
                     <div className="ssr-variant hidden-3job37 hidden-kj696b">
                       <div className="framer-1af25vf" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                        <h1 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        <h2 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                           0
-                          <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/23</span>
-                        </h1>
+                          <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/28</span>
+                        </h2>
                       </div>
                     </div>
                   </div>
                   <div className="framer-1euc5un" data-framer-component-type="RichTextContainer" style={{transform: "none"}}>
-                    <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-alignment": "left", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Pesan sah yang salah dituduh tinggi saat pengujian.</p>
+                    <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-alignment": "left", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Pesan sah yang salah dituduh saat pengujian.</p>
                   </div>
                 </div>
                 <div className="framer-tzibwd" data-border="true">
@@ -188,7 +188,7 @@ export default function Numbers() {
                 </div>
               </div>
               <div className="framer-2apshp" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>20 dari 20 kasus penipuan tertangkap minimal sebagai mencurigakan.</p>
+                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>29 dari 29 kasus penipuan tertangkap minimal sebagai mencurigakan.</p>
               </div>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function Numbers() {
                 </div>
               </div>
               <div className="framer-mmln75" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Semua pemeriksaan berjalan di perangkat, tanpa jaringan.</p>
+                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>Skor dan temuan berjalan di perangkat; tautan dan gambar diperiksa lewat jaringan hanya saat kamu memintanya.</p>
               </div>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function Numbers() {
                 </div>
               </div>
               <div className="framer-1jrnnzs" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>43 pesan uji lintas 12 modus, angkanya bisa diukur ulang.</p>
+                <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}}>57 pesan uji lintas 12 modus, angkanya bisa diukur ulang.</p>
               </div>
             </div>
           </div>

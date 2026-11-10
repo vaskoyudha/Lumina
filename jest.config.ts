@@ -16,6 +16,9 @@ const config: Config = {
   testEnvironment: "jsdom",
   // Integration suites reset the same dedicated database. Keep their data isolated in time.
   maxWorkers: process.env.TEST_DATABASE_URL ? 1 : "50%",
+  // Component suites drive real user events; on a loaded Windows host the
+  // default 5s budget expires while the worker is still scheduling timers.
+  testTimeout: 15_000,
   modulePathIgnorePatterns: ["<rootDir>/.cache/", "<rootDir>/.next/"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testMatch: ["<rootDir>/src/**/*.test.ts?(x)"],

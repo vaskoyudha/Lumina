@@ -4,7 +4,8 @@ import { CompanionChat } from "@/components/companion/companion-chat";
 import { saveConversationHistory } from "@/lib/companion/history";
 import { AnswerRequestSchema } from "@/lib/contracts/answer";
 
-jest.setTimeout(15000);
+// Full conversation pipeline under parallel load; 15 s measured the scheduler.
+jest.setTimeout(30_000);
 jest.mock("@/lib/companion/history", () => ({
   listConversationHistory: jest.fn(async () => ({
     ok: true,
@@ -127,12 +128,14 @@ it("retains transcript image URLs until unmount and uses OCR as local conversati
   unmount();
   expect(revoke).toHaveBeenCalledWith(url);
 });
-it("keeps the data-transfer notice visible for sighted users", () => {
+it("keeps the data-transfer notice visible without a paragraph of chrome", () => {
   render(<CompanionChat />);
-  expect(screen.getByText(/Isi pesan lengkap.*tidak dikirim/)).toBeVisible();
-  expect(screen.getByText(/Isi pesan lengkap.*tidak dikirim/)).not.toHaveClass(
-    "sr-only",
+  const line = screen.getByText(
+    /Percakapan ini dikirim ke model untuk menyusun jawaban/i,
   );
+  expect(line).toBeVisible();
+  const detail = screen.getByText(/Isi pesan lengkap.*tidak dikirim/);
+  expect(detail).toHaveClass("sr-only");
 });
 it("keeps a tool-only response out of subsequent model history", async () => {
   let replies = 0;

@@ -10,32 +10,32 @@ import { FourTickCrosshair } from "./measure-preview";
 const BACKDROP =
   "/sites/powder-framer-website-4824bd20/root-8a5edab2/M3AKVBhu25GOh5mNc4l3oWTQ5TQ.jpg";
 
-const CHECKS = ["SAML 2.0 + OIDC", "Managed through Admin \u2192 Security"];
+const CHECKS = ["Permintaan OTP", "Transfer di luar marketplace"];
 
 const SOURCES = [
   {
     Icon: FileText,
-    title: "Authentication Guide",
+    title: "Modus terkait",
     count: 1,
-    body: "SSO (SAML 2.0, OIDC) is supported on Business and Enterprise plans.",
+    body: "Permintaan OTP dan klaim pihak bank adalah pola identitas palsu.",
   },
   {
     Icon: CreditCard,
-    title: "Pricing & Plans",
+    title: "Kanal resmi",
     count: 2,
-    body: "Feature availability by plan \u2014 Pro, Business, Enterprise.",
+    body: "Bank, IASC OJK, Komdigi, dan Polri.",
   },
   {
     Icon: CircleHelp,
-    title: "Help Center",
+    title: "Langkah berikutnya",
     count: 3,
-    body: "Step-by-step instructions for configuring SSO in Admin.",
+    body: "Jangan bagikan OTP. Hubungi bank lewat kanal resmi.",
   },
 ];
 
 const CITATIONS = [
-  { Icon: FileText, label: "Docs \u00b7 Authentication", count: 1 },
-  { Icon: CreditCard, label: "Pricing \u00b7 Plans", count: 2 },
+  { Icon: FileText, label: "Modus \u00b7 OTP", count: 1 },
+  { Icon: CreditCard, label: "Kanal \u00b7 Resmi", count: 2 },
 ];
 
 function ShowSources() {
@@ -44,7 +44,7 @@ function ShowSources() {
       <span className="grid size-[13px] place-items-center rounded-full bg-[var(--mp-ink)] text-[var(--mp-control)]">
         <Check aria-hidden="true" size={8} strokeWidth={3} />
       </span>
-      Show Sources
+      Lihat bukti
     </span>
   );
 }
@@ -85,27 +85,29 @@ export function PeriksaPreview() {
     <ChatPreview
       rootClassName="periksa-preview"
       backdropSrc={BACKDROP}
-      title="Verify"
+      title="Periksa"
       activeThread={0}
       headerExtra={<ShowSources />}
       aside={{
-        title: "Sources",
-        footer: "Add source",
+        title: "Bukti",
+        footer: "Lihat garis waktu",
         children: <SourcesRail />,
       }}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-1">
         <div className="flex shrink-0 justify-end">
           <span className="max-w-[72%] rounded-[14px] rounded-br-[4px] border border-[var(--mp-bubble-line)] bg-[var(--mp-bubble)] px-4 py-2 text-[11.5px] text-[var(--mp-ink)]">
-            Do we support SSO on the Pro plan?
+            Apa yang membuat pesan ini mencurigakan?
           </span>
         </div>
 
         <div className="shrink-0">
           <p className="text-[12px] leading-[1.5] text-[var(--mp-ink-2)]">
-            SSO is available on{" "}
-            <span className="font-medium">Business and Enterprise plans</span>.
-            It&apos;s not included in Pro.
+            Pesan ini meminta{" "}
+            <span className="font-medium">
+              OTP dan transfer ke rekening pribadi
+            </span>
+            . Dua sinyal itu sering muncul bersama.
           </p>
           <ul className="mt-2 space-y-1.5">
             {CHECKS.map((item) => (
@@ -145,19 +147,19 @@ export function PeriksaPreview() {
 
         <div className="shrink-0 rounded-[10px] border border-[var(--mp-line)] bg-[var(--mp-card)] px-4 py-3">
           <span className="text-[12px] font-medium text-[var(--mp-ink-2)]">
-            Key Details
+            Temuan engine
           </span>
           <ul className="mt-2 space-y-2">
             <li className="flex items-center gap-2.5">
               <FourTickCrosshair className="shrink-0 text-[var(--mp-muted)]" />
               <span className="text-[11.5px] text-[var(--mp-ink-3)]">
-                Set up SSO in Admin &gt; Security &gt; SSO
+                Permintaan OTP terdeteksi
               </span>
             </li>
             <li className="flex items-center gap-2.5">
               <FourTickCrosshair className="shrink-0 text-[var(--mp-muted)]" />
               <span className="text-[11.5px] text-[var(--mp-ink-3)]">
-                Contact sales to upgrade
+                Buka modul terkait
               </span>
             </li>
           </ul>

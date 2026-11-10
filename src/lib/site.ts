@@ -1,10 +1,11 @@
-export type NavLink = { label: string; id: string };
+export type NavLink = { label: string; id?: string; href?: string };
 
 export const navLinks: NavLink[] = [
   { label: "Beranda", id: "section-home" },
-  { label: "Tentang", id: "section-about" },
   { label: "Modus", id: "section-programs" },
-  { label: "Akses", id: "section-pricing" },
+  { label: "Belajar", href: "/belajar" },
+  { label: "Simulasi", href: "/simulasi" },
+  { label: "Komunitas", href: "/komunitas" },
   { label: "Kontak", id: "section-contact" },
 ];
 
@@ -21,7 +22,7 @@ export const brand = {
 
 export const heroPerks = [
   { title: "Langsung pakai", body: "Tempel pesan, tanpa daftar." },
-  { title: "Di perangkat", body: "Pemeriksaan berjalan lokal." },
+  { title: "Skor di perangkat", body: "Pemeriksaan inti berjalan lokal." },
   { title: "Bisa dijelaskan", body: "Setiap skor punya alasan." },
 ];
 
@@ -33,10 +34,10 @@ export const aboutCopy = {
 };
 
 export const aboutStats = [
-  { value: "20/20", label: "Pesan penipuan tertangkap" },
-  { value: "18/20", label: "Langsung dinilai tinggi" },
-  { value: "0/23", label: "Pesan sah salah dituduh" },
-  { value: "184.302", label: "Laporan IASC OJK" },
+  { value: "29/29", label: "Pesan penipuan tertangkap" },
+  { value: "25/29", label: "Langsung dinilai tinggi" },
+  { value: "0/28", label: "Pesan sah salah dituduh" },
+  { value: "184.302", label: "Laporan IASC OJK (10 modus)" },
 ];
 
 export const stepsCopy = {
@@ -63,7 +64,7 @@ export const stepsCopy = {
 
 export const programsCopy = {
   badge: "YANG KAMI BANTU KENALI",
-  title: "Enam modus yang paling sering mendarat di ponselmu",
+  title: "Enam modus yang bisa kamu periksa hari ini",
   cta: "Periksa pesan seperti ini",
 };
 
@@ -108,17 +109,17 @@ export const serviceRows = [
     modusNo: 10,
     title: "File APK lewat WhatsApp",
     features: ["APK di luar Play Store", "Pengirim tak dikenal"],
-    body: "Modul yang sudah lengkap di perpustakaan Lumina. File APK dari chat langsung memicu risiko tinggi.",
+    body: "Modul 10 sudah tersedia di perpustakaan Lumina. File APK dari chat langsung memicu risiko tinggi.",
   },
 ];
 
 export const transformationCopy = {
   badge: "PETA PERUBAHAN",
   title: ["Langkah yang lebih tenang,", "dimulai dari satu pemeriksaan"],
-  helper: "Pilih kondisimu di kiri untuk melihat langkah yang tersedia.",
+  helper: "Pilih kondisimu untuk melihat langkah yang tersedia.",
   leftLabel: "Kondisimu sekarang",
   rightLabel: "Yang bisa kamu dapatkan",
-  cta: "Mulai periksa sekarang",
+  cta: "Kenali modusnya",
 };
 
 export const transformationPairs = [
@@ -127,7 +128,10 @@ export const transformationPairs = [
   { left: "Tautan sudah diklik", right: "Langkah pertama jelas" },
   { left: "OTP sudah diberikan", right: "Arahan ke kanal resmi" },
   { left: "Uang sudah terkirim", right: "Kanal resmi tersedia" },
-  { left: "Bingung harus lapor ke mana", right: "Urutan laporan tersusun" },
+  {
+    left: "Bingung harus lapor ke mana",
+    right: "Langkah dan kanal resmi tersusun",
+  },
   { left: "Data pribadi terasa bocor", right: "Data tetap di perangkat" },
 ];
 
@@ -135,7 +139,7 @@ export const pricingCopy = {
   badge: "AKSES LUMINA",
   promoLabel: "Tandai harga pendukung awal (50%)",
   title: "Jelas sejak awal, termasuk yang belum jadi",
-  body: "Pemeriksaan pesan selalu gratis. Paket pendukung menandai fitur yang masih rencana, bukan menjualnya sebagai fitur jadi.",
+  body: "Pemeriksaan pesan selalu gratis. Paket pendukung membedakan fitur yang sudah tersedia dari yang masih rencana, bukan menjual rencana sebagai fitur jadi.",
 };
 
 export const plans = [
@@ -149,13 +153,13 @@ export const plans = [
     name: "Gratis",
     desc: "Semua yang dibutuhkan untuk memeriksa satu pesan hari ini.",
     features: [
-      "Pemeriksaan pesan & tautan tanpa batas",
+      "Pemeriksaan pesan tanpa batas",
+      "Verifikasi tautan 6 per menit",
       "Skor 0–100 dengan kutipan alasan",
       "Dua belas modus, dibaca bebas",
       "Komunitas berbagi modus dan diskusi",
       "Kanal resmi OJK & Komdigi",
       "Tanpa simpan teks di server",
-      "Bahasa Indonesia sehari-hari",
     ],
     price: "Rp0",
     oldPrice: "",
@@ -171,15 +175,15 @@ export const plans = [
     iconClass: "bg-ls-accent text-ls-accent-ink",
     bulletClass: "text-ls-accent-text",
     name: "Pendukung",
-    desc: "Untuk yang ingin modul belajar lengkap dan simulasi.",
+    desc: "Untuk yang ingin mendukung level simulasi lanjutan dan pembaruan modul.",
     features: [
       "Semua yang ada di paket Gratis",
-      "Modul belajar lengkap (modul 10 selesai)",
-      "Simulasi roleplay — rencana",
-      "Laporan siap kirim — rencana",
+      "Dua belas modul belajar dengan kuis",
+      "Simulasi Level 1 — tersedia",
+      "Level simulasi lanjutan — rencana",
       "Ringkasan pola yang kamu temui",
       "Dukungan prioritas lewat email",
-      "Membiayai modul berikutnya",
+      "Membiayai level simulasi berikutnya",
     ],
     price: "Rp49.000",
     oldPrice: "Rp98.000",
@@ -194,23 +198,23 @@ export const testimonialCopy = {
   items: [
     {
       quote:
-        "Dua puluh dari dua puluh pesan penipuan di korpus uji tertangkap. Delapan belas di antaranya langsung dinilai risiko tinggi.",
+        "Dua puluh sembilan dari dua puluh sembilan pesan penipuan di korpus uji tertangkap. Dua puluh lima di antaranya langsung dinilai risiko tinggi.",
       author: "— Uji internal Lumina",
-      meta: "Korpus 43 pesan, dua belas modus",
+      meta: "Korpus 57 pesan, dua belas modus",
       progress: "33.3%",
     },
     {
       quote:
-        "Nol dari dua puluh tiga pesan sah salah dituduh, termasuk pesan sah yang sengaja memuat jebakan klasik.",
+        "Nol dari dua puluh delapan pesan sah salah dituduh, termasuk pesan sah yang sengaja memuat jebakan klasik.",
       author: "— Uji internal Lumina",
       meta: "Fokus: temuan palsu",
       progress: "66.6%",
     },
     {
       quote:
-        "184.302 laporan penipuan di IASC OJK, dijumlahkan dari sepuluh modus yang punya angka resmi.",
+        "184.302 laporan penipuan di IASC OJK (November 2024–Oktober 2025), dijumlahkan dari sepuluh modus yang punya angka resmi.",
       author: "— IASC OJK",
-      meta: "Dijumlahkan dari tabel OJK",
+      meta: "Data OJK, Nov 2024–Okt 2025",
       progress: "100%",
     },
   ],
@@ -220,27 +224,32 @@ export const contactCopy = {
   headerBadge: "KONTAK LUMINA",
   headerTitle: "Hubungi tim Lumina",
   headerBody:
-    "Kalau ada yang belum jelas soal pemeriksaan, privasi, atau modul belajar, tulis saja. Kami membaca setiap pesan.",
+    "Kalau ada yang belum jelas soal pemeriksaan, privasi, atau modul belajar, lihat pertanyaan umum. Formulir di bawah masih demo dan belum mengirim pesan ke server.",
   formBadge: "FORMULIR KONTAK",
   formTitle: "Mari mulai percakapan",
   formBody:
-    "Ceritakan pertanyaanmu tentang cara kerja pemeriksaan atau fitur yang sedang disiapkan. Semakin spesifik, semakin cepat kami bisa membantu.",
+    "Ceritakan pertanyaanmu tentang cara kerja pemeriksaan atau fitur yang sedang disiapkan. Formulir ini hanya menyimpan pesan di peramban saat demo.",
   info: [
-    { label: "Waktu balasan", value: "1–2 hari kerja", icon: "✆" },
-    { label: "Jam kerja", value: "Senin–Jumat, 09.00–18.00 WIB", icon: "◷" },
-    { label: "Basis tim", value: "Jakarta, Indonesia", icon: "◎" },
+    { label: "Balasan", value: "Tidak dijanjikan pada versi demo", icon: "✆" },
+    {
+      label: "Kanal resmi",
+      value: "Bank, IASC OJK, Komdigi, Polri",
+      icon: "◷",
+    },
+    { label: "Basis tim", value: "Semarang, Indonesia", icon: "◎" },
   ],
   submit: "Kirim pesan ke Lumina",
-  consent: "Kamu setuju dengan kebijakan privasi kami.",
+  consent:
+    "Saya paham formulir ini masih demo dan data tidak dikirim ke server.",
   privacyToast:
     "Privasi Lumina: teks pemeriksaan tidak disimpan di server. Detailnya ada di bagian pertanyaan umum.",
   demoNote:
-    "Demo ini belum mengirim data ke server — pesan hanya tampil di peramban ini.",
+    "Demo ini belum mengirim data ke server. Pesan hanya tampil di peramban ini.",
 };
 
 export const contactEmails = [
-  { label: "Pertanyaan umum:", value: "HALO@LUMINA.ID" },
-  { label: "Laporan & masukan:", value: "LAPOR@LUMINA.ID" },
+  { label: "Pertanyaan umum:", value: "HALO@LUMINAAA.WEB.ID" },
+  { label: "Laporan & masukan:", value: "LAPOR@LUMINAAA.WEB.ID" },
 ];
 
 export const faqCopy = {
@@ -284,7 +293,7 @@ export const faqData: Record<FaqCategory, { q: string; a: string }[]> = {
   Pemeriksaan: [
     {
       q: "Bagaimana Lumina menentukan skor?",
-      a: "Lima detektor berjalan berurutan: pesan, tautan, identitas pengirim, pola percakapan, lalu orkestrator skor. Semuanya aturan deterministik. Model bahasa hanya dipakai untuk menyusun kalimat penjelasan, bukan untuk menentukan angka.",
+      a: "Delapan agen berjalan berurutan: pesan, tautan, identitas pengirim, pola percakapan, tawaran kerja, jual-beli, QRIS, lalu penyusun bukti. Orkestrator skor menggabungkan temuannya menjadi 0–100. Semuanya aturan deterministik. Model bahasa hanya dipakai untuk menyusun kalimat penjelasan, bukan untuk menentukan angka.",
     },
     {
       q: "Kenapa satu temuan bisa langsung membuat skor tinggi?",
@@ -298,7 +307,7 @@ export const faqData: Record<FaqCategory, { q: string; a: string }[]> = {
   Privasi: [
     {
       q: "Apakah pesan saya disimpan?",
-      a: "Tidak. Pemeriksaan berjalan di perangkatmu dan teks tidak dikirim untuk disimpan. Tidak ada riwayat percakapan pengguna di server.",
+      a: "Tidak. Pemeriksaan skor berjalan di perangkatmu dan teks tidak dikirim untuk disimpan. Tidak ada riwayat percakapan pengguna di server. Percakapan tetap dikirim ke model bahasa untuk menyusun jawaban, dengan pemberitahuan di antarmuka.",
     },
     {
       q: "Apakah saya perlu membuat akun?",
@@ -312,7 +321,7 @@ export const faqData: Record<FaqCategory, { q: string; a: string }[]> = {
   Batasan: [
     {
       q: "Apa yang belum tersedia?",
-      a: "Modul belajar selain modul 10, simulasi roleplay, dan pembuatan laporan otomatis masih berstatus segera atau rencana. Lumina menandainya terus terang di antarmuka, bukan menyamarkannya sebagai fitur jadi.",
+      a: "Seluruh dua belas modul belajar dan Simulasi Level 1 sudah tersedia. Level simulasi lain masih rencana. Pembuatan laporan otomatis bukan lagi bagian produk; Lumina mengarahkan ke kanal resmi bank, IASC OJK, Komdigi, atau Polri. Lumina menandai status fitur terus terang di antarmuka, bukan menyamarkannya sebagai fitur jadi.",
     },
     {
       q: "Apakah skor 100 berarti pasti penipuan?",
@@ -320,7 +329,7 @@ export const faqData: Record<FaqCategory, { q: string; a: string }[]> = {
     },
     {
       q: "Apakah Lumina bisa salah menuduh pesan biasa?",
-      a: "Bisa, meski pada korpus uji 23 pesan sah tidak ada yang salah dituduh. Karena itu setiap temuan selalu disertai kutipan, supaya kamu bisa menilai sendiri apakah alasannya masuk akal.",
+      a: "Bisa, meski pada korpus uji 28 pesan sah tidak ada yang salah dituduh. Karena itu setiap temuan selalu disertai kutipan, supaya kamu bisa menilai sendiri apakah alasannya masuk akal.",
     },
   ],
 };
@@ -334,7 +343,7 @@ export const footerCopy = {
   newsletterPlaceholder: "Masukkan email...",
   newsletterCta: "Berlangganan",
   copyright: "© 2026 Lumina. Seluruh hak cipta dilindungi.",
-  legal: "Jakarta, Indonesia • Pemeriksaan berjalan di perangkat",
+  legal: "Semarang, Indonesia • Skor diperiksa di perangkat",
 };
 
 export const footerColumns: {
@@ -347,6 +356,9 @@ export const footerColumns: {
       { label: "Beranda", href: "#section-home" },
       { label: "Tentang Kami", href: "#section-about" },
       { label: "Modus", href: "#section-programs" },
+      { label: "Belajar", href: "/belajar" },
+      { label: "Simulasi", href: "/simulasi" },
+      { label: "Komunitas", href: "/komunitas" },
       { label: "Akses & Harga", href: "#section-pricing" },
       { label: "Kontak", href: "#section-contact" },
     ],
@@ -373,7 +385,7 @@ export const footerColumns: {
     links: [
       { label: "Kebijakan Privasi", href: "#section-faq" },
       { label: "Ketentuan", href: "#section-faq" },
-      { label: "Status Fitur", href: "#section-programs" },
+      { label: "Pertanyaan Umum", href: "#section-faq" },
       { label: "Pusat Bantuan", href: "#section-contact" },
     ],
   },
@@ -381,26 +393,26 @@ export const footerColumns: {
     title: "HUBUNGI",
     links: [
       {
-        label: "halo@lumina.id",
+        label: "halo@luminaaa.web.id",
         href: "#section-contact",
-        copy: "halo@lumina.id",
+        copy: "halo@luminaaa.web.id",
       },
       {
-        label: "lapor@lumina.id",
+        label: "lapor@luminaaa.web.id",
         href: "#section-contact",
-        copy: "lapor@lumina.id",
+        copy: "lapor@luminaaa.web.id",
       },
-      { label: "Jakarta, Indonesia", href: "#section-contact" },
-      { label: "Senin–Jumat, 09.00–18.00", href: "#section-contact" },
+      { label: "Semarang, Indonesia", href: "#section-contact" },
+      { label: "Kanal resmi di bagian FAQ", href: "#section-faq" },
     ],
   },
   {
     title: "STATUS FITUR",
     links: [
-      { label: "Pemeriksaan — aktif", href: "#section-home" },
-      { label: "Modul belajar — satu selesai", href: "#section-programs" },
-      { label: "Simulasi — rencana", href: "#section-programs" },
-      { label: "Laporan otomatis — rencana", href: "#section-programs" },
+      { label: "Pemeriksaan — aktif", href: "/companion" },
+      { label: "Modul belajar — 12 lengkap", href: "/belajar" },
+      { label: "Simulasi Level 1 — aktif", href: "/simulasi" },
+      { label: "Komunitas — aktif", href: "/komunitas" },
     ],
   },
 ];
@@ -408,7 +420,7 @@ export const footerColumns: {
 export const bookingCopy = {
   badge: "AKSES LUMINA",
   title: "Ikuti perkembangan Lumina",
-  body: "Tinggalkan email supaya kami bisa mengabari saat modul dan simulasi baru tersedia.",
+  body: "Tinggalkan email untuk mencoba alur demo. Data belum dikirim ke server dan hanya tercatat di peramban ini.",
   programLabel: "Pilihan akses",
   formatLabel: "Kanal kabar",
   dayLabel: "Waktu baca",
@@ -426,4 +438,4 @@ export const promoEnabledMessage =
   "Pemeriksaan contoh aktif — coba tempel pesanmu sendiri.";
 
 export const privacyMessage =
-  "Pemeriksaan berjalan di perangkatmu. Teks tidak disimpan di server.";
+  "Pemeriksaan skor berjalan di perangkatmu. Teks tidak disimpan di server. Percakapan dikirim ke model bahasa untuk penjelasan, dengan pemberitahuan.";

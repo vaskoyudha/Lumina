@@ -72,7 +72,7 @@ export function MissionStatusBar({
             <p className="font-extrabold text-[13px] text-[#1e1c1a] leading-snug">
               {title}
             </p>
-            <p className="mt-0.5 text-[#8a8077] text-[10.5px] leading-snug">
+            <p className="mt-0.5 text-[#8a8077] text-[12.5px] leading-snug">
               {description}
             </p>
           </div>

@@ -21,9 +21,10 @@ jest.mock("@/lib/companion/history", () => ({
  * This suite renders the whole conversation client and runs the full
  * deterministic pipeline. The full run executes it beside ~60 other suites on
  * 12 cores, where Jest's 5 s default measures the scheduler rather than the
- * component; 15 s still fails a genuine hang.
+ * component; 30 s still fails a genuine hang, while the earlier 15 s budget
+ * was still too tight for the panel-link case on a loaded host.
  */
-jest.setTimeout(15_000);
+jest.setTimeout(30_000);
 
 /**
  * These render the real conversation component. The Evidence Agent is only
@@ -44,10 +45,16 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+let mockPathname = "/companion";
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn() }),
-  usePathname: () => "/companion",
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => mockPathname,
 }));
+
+beforeEach(() => {
+  mockPathname = "/companion";
+});
 
 /**
  * Paste, not type. Every test here asserts what the engine and the panel do
@@ -458,13 +465,15 @@ describe("CompanionChat · verdict before voice", () => {
     );
 
     const user = userEvent.setup();
-    render(<CompanionChat />);
+    const { rerender } = render(<CompanionChat />);
 
     await sendApk(user);
     // The verdict is already on screen; the voice model is still pending.
     await screen.findAllByText("File APK via WhatsApp");
 
-    await user.click(screen.getByRole("button", { name: /^agen/i }));
+    // Following the /agen link swaps the address; the transcript unmounts.
+    mockPathname = "/agen";
+    rerender(<CompanionChat />);
     expect(
       screen.getByRole("heading", { name: "Agen pemeriksa" }),
     ).toBeInTheDocument();

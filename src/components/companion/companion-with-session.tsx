@@ -20,10 +20,10 @@ const EMPTY_CORPUS: LokerCorpus = {
  * error page.
  */
 export async function CompanionWithSession({
-  searchParams,
+  searchParams = Promise.resolve({}),
 }: {
-  searchParams: Promise<{ panel?: string; modul?: string }>;
-}) {
+  searchParams?: Promise<{ panel?: string; modul?: string }>;
+} = {}) {
   const [session, { panel, modul }, corpus] = await Promise.all([
     getSession(),
     searchParams,

@@ -17,15 +17,19 @@ describe("modus.json (§11.2 — single source of truth for A and B)", () => {
     expect(MODUS_BY_ID.size).toBe(MODUS.length);
   });
 
-  it("wires only module 10 to the one playable scenario", () => {
+  it("wires the five written modules to their playable scenarios", () => {
     const playable = MODUS.filter((m) => m.scenarioId !== null);
-    expect(playable).toHaveLength(1);
-    expect(playable[0]?.no).toBe(10);
-    expect(playable[0]?.scenarioId).toBe("L1-kurir-apk");
+    expect(playable.map((m) => [m.no, m.scenarioId])).toEqual([
+      [2, "L4-fake-call"],
+      [4, "L3-lowongan-berbayar"],
+      [7, "L2-phishing-tautan"],
+      [9, "L3-pinjol-fiktif"],
+      [10, "L1-kurir-apk"],
+    ]);
   });
 
-  it("keeps at least one unwritten module marked 'segera'", () => {
-    expect(MODUS.some((m) => m.modulStatus === "segera")).toBe(true);
+  it("marks every module as 'lengkap' once all 12 are written", () => {
+    expect(MODUS.every((m) => m.modulStatus === "lengkap")).toBe(true);
   });
 });
 

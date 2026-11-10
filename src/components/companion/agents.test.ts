@@ -4,19 +4,9 @@ import {
   type DetectorAgent,
 } from "@/components/companion/agents";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
+import { DETECTOR_IDS } from "@/lib/scoring/detector-ids";
 
-const IDS: DetectorAgent[] = [
-  "message",
-  "link",
-  "identity",
-  "conversation",
-  "job",
-  "marketplace",
-  "qris",
-  "email",
-  "injection",
-  "evidence",
-];
+const IDS: DetectorAgent[] = [...DETECTOR_IDS, "evidence"];
 
 describe("agent registry", () => {
   it("has a profile for every detector, in sequence order", () => {

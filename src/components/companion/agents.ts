@@ -11,30 +11,27 @@ import {
 } from "lucide-react";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
 import type { AgentId } from "@/lib/contracts/score";
+import { DETECTOR_IDS } from "@/lib/scoring/detector-ids";
 
 /**
  * The agent registry — one profile per detector, the single source of truth.
  *
- * Labels and tasks are read from the frozen trace contract instead of being
- * copied, so the panel, the diagram, and the trace cannot describe the same
- * detector three different ways. Mechanism chips name rule families that exist
- * in the engine; if a family is removed, its chip goes with it.
+ * Order, labels, and tasks are read from the engine's own contract instead of
+ * being copied, so the panel, the diagram, and the trace cannot describe the
+ * same detector three different ways. Mechanism chips are reader-facing copy,
+ * not a coverage claim: a rule can exist without a chip, so the chips are not
+ * evidence that every family is implemented.
  */
 
 export type DetectorAgent = Exclude<AgentId, "scoring">;
 
-export const AGENT_SEQUENCE: DetectorAgent[] = [
-  "message",
-  "link",
-  "identity",
-  "conversation",
-  "job",
-  "marketplace",
-  "qris",
-  "email",
-  "injection",
-  "evidence",
-];
+/**
+ * Same order the engine evaluates, plus the Evidence Agent.
+ *
+ * Evidence is not a detector — it assembles a bundle after findings exist — so
+ * it is appended here rather than pretended into the pipeline.
+ */
+export const AGENT_SEQUENCE: DetectorAgent[] = [...DETECTOR_IDS, "evidence"];
 
 export interface AgentProfile {
   id: DetectorAgent;

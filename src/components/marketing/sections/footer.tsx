@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useSite } from "@/components/marketing/site-provider";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ export function Footer() {
           <br />
           {footerCopy.title[1]}
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-amberwarm-100/75 text-xs leading-relaxed sm:text-sm">
+        <p className="mx-auto mt-3 max-w-md text-amberwarm-100/75 text-sm leading-relaxed">
           {footerCopy.body}
         </p>
         <div className="mt-7">
@@ -127,7 +128,7 @@ export function Footer() {
           {footerColumns.map((column) => (
             <div
               key={column.title}
-              className="space-y-2.5 border-white/10 border-r border-dashed pr-4 last:border-r-0 last:pr-0"
+              className="min-w-0 space-y-2.5 border-white/10 border-r border-dashed pr-4 last:border-r-0 last:pr-0"
             >
               <div className="font-semibold text-[10px] text-amberwarm-200/60 uppercase tracking-widest">
                 {column.title}
@@ -140,7 +141,7 @@ export function Footer() {
                         type="button"
                         data-copy-email={link.copy}
                         onClick={() => copyEmail(link.copy ?? "")}
-                        className="text-left hover:text-white"
+                        className="break-all text-left hover:text-white"
                       >
                         {link.label}
                       </button>
@@ -153,6 +154,10 @@ export function Footer() {
                       >
                         {link.label}
                       </a>
+                    ) : link.href.startsWith("/") ? (
+                      <Link href={link.href} className="hover:text-white">
+                        {link.label}
+                      </Link>
                     ) : (
                       <a
                         href={link.href}

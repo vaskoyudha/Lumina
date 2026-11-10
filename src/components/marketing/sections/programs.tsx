@@ -26,7 +26,7 @@ export function Programs() {
           id="section-steps"
           className="relative overflow-hidden rounded-3xl border border-ls-line-strong bg-ls-card-alt p-7 shadow-sm sm:p-10 lg:col-span-5"
         >
-          <p className="mb-8 border-ls-accent-strong border-l-2 pl-4 text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
+          <p className="mb-8 border-ls-accent-strong border-l-2 pl-4 text-ls-ink-2 text-sm leading-relaxed">
             {stepsCopy.intro}
           </p>
 

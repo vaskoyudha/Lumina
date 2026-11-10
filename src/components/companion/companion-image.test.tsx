@@ -13,6 +13,11 @@ jest.mock("@/lib/companion/history", () => ({
   saveConversationHistory: jest.fn(async () => ({ ok: true })),
 }));
 
+jest.mock("next/navigation", () => ({
+  usePathname: () => "/companion",
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+}));
+
 /**
  * This suite renders the whole conversation client and drives the vision route
  * plus the deterministic pipeline. The full run executes it beside ~60 other
@@ -158,5 +163,80 @@ describe("CompanionChat · images are read, then scored locally", () => {
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 
     expect(await screen.findByText(/gagal dibaca/i)).toBeInTheDocument();
+  });
+});
+
+describe("CompanionChat · phone-sized images are normalized before upload", () => {
+  const bitmap = {
+    width: 3000,
+    height: 4000,
+    close: jest.fn(),
+  };
+  let createImageBitmapMock: jest.Mock;
+  let getContextSpy: jest.SpyInstance;
+  let toBlobSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    createImageBitmapMock = jest.fn(async () => bitmap);
+    Object.defineProperty(globalThis, "createImageBitmap", {
+      value: createImageBitmapMock,
+      configurable: true,
+    });
+    getContextSpy = jest
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue({
+        fillStyle: "",
+        fillRect: jest.fn(),
+        drawImage: jest.fn(),
+      } as unknown as CanvasRenderingContext2D);
+    toBlobSpy = jest
+      .spyOn(HTMLCanvasElement.prototype, "toBlob")
+      .mockImplementation((callback) => {
+        callback(
+          new Blob([new Uint8Array([255, 216, 255, 224])], {
+            type: "image/jpeg",
+          }),
+        );
+      });
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(globalThis, "createImageBitmap");
+    getContextSpy.mockRestore();
+    toBlobSpy.mockRestore();
+  });
+
+  it("downscales a large HEIC photo and sends JPEG the route accepts", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<CompanionChat />);
+
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    if (!input) return;
+
+    const big = new Uint8Array(2 * 1024 * 1024);
+    const photo = new File([big], "foto-heic.heic", { type: "image/heic" });
+    await user.upload(input, photo);
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.find(
+          ([url]) => String(url) === "/api/companion/vision",
+        ),
+      ).toBeDefined();
+    });
+
+    const visionCall = fetchMock.mock.calls.find(
+      ([url]) => String(url) === "/api/companion/vision",
+    );
+    const visionBody = JSON.parse(String(visionCall?.[1]?.body)) as {
+      image: { mediaType: string; data: string };
+    };
+    expect(createImageBitmapMock).toHaveBeenCalled();
+    expect(visionBody.image.mediaType).toBe("image/jpeg");
+    expect(visionBody.image.data.length).toBeGreaterThan(0);
   });
 });
