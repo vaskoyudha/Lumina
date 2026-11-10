@@ -1,6 +1,6 @@
 export function isOrchestratorEnabled(): boolean {
   const value = process.env.LUMINA_COMPANION_ORCHESTRATOR?.trim();
-  return /^(1|true|on|yes)$/i.test(value ?? "");
+  return !/^(0|false|off|no)$/i.test(value ?? "");
 }
 
 export function orchestratorDeadlineMs(): number {
