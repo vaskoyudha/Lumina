@@ -6,6 +6,21 @@ export function clientKey(request: Request): string {
   const ip = request.headers.get("x-lumina-client-ip")?.trim() ?? "";
   return process.env.TRUST_PROXY === "true" && isIP(ip) ? ip : "anonymous";
 }
+
+export interface RequestMeta {
+  userAgent: string | null;
+  clientIp: string | null;
+}
+
+/** Account metadata for the session list; the IP is proxy-trusted only. */
+export function requestMeta(headers: Pick<Headers, "get">): RequestMeta {
+  const userAgent = headers.get("user-agent")?.trim() ?? "";
+  const ip = headers.get("x-lumina-client-ip")?.trim() ?? "";
+  return {
+    userAgent: userAgent ? userAgent.slice(0, 300) : null,
+    clientIp: process.env.TRUST_PROXY === "true" && isIP(ip) ? ip : null,
+  };
+}
 export async function limitAI(
   request: Request,
   kind: "text" | "vision",
