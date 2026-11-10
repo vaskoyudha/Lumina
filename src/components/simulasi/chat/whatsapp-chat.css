@@ -1,21 +1,15 @@
-/* Simulation-only chat surface. Warm Lumina palette (the supplied simulation
-   reference): peach paper, flame accent, rounded cards. Colours come from the
-   workspace tokens in src/styles/appnext-tokens.css, so the chat keeps the same
-   contract as the rest of the workspace. Not the WhatsApp asset: the wallpaper
-   pattern is generated from gradients. */
+/* Simulation-only chat surface. Values ported from the supplied simulation
+   reference (`lumina_simulation.tsx`): warm paper card, near-white header and
+   composer, peach outgoing bubbles, flame send. Not the WhatsApp asset: the
+   wallpaper pattern is generated from gradients. */
 .wa-chat {
-  --wa-header: rgb(255 253 251 / 96%);
-  --wa-header-ink: var(--lumina-txt);
-  --wa-wallpaper: var(--lumina-brand-tint);
-  --wa-doodle: color-mix(in oklab, var(--lumina-brand-line) 55%, transparent);
-  --wa-in: #ffffff;
-  --wa-out: var(--lumina-brand-soft);
+  --wa-header-ink: #1e1c1a;
+  --wa-meta: #999088;
+  --wa-body-ink: #1e1c1a;
   --wa-out-ink: #2b231d;
-  --wa-meta: var(--lumina-dim);
-  --wa-system: rgb(255 255 255 / 92%);
-  --wa-border: var(--lumina-brand-line);
-  --wa-composer: rgb(255 253 251 / 96%);
-  --wa-tick: var(--lumina-brand);
+  --wa-tick: #e65c00;
+  --wa-border: #f4e5da;
+  --wa-hairline: #f2e5da;
 
   position: relative;
   display: flex;
@@ -25,63 +19,51 @@
   overflow: hidden;
   border: 1px solid var(--wa-border);
   border-radius: 22px;
-  background: linear-gradient(
-    135deg,
-    var(--lumina-brand-tint) 0%,
-    var(--lumina-brand-soft) 55%,
-    var(--lumina-brand-soft-2) 100%
-  );
-  box-shadow: var(--appnext-shadow-soft);
+  background: linear-gradient(180deg, #fdf8f4 0%, #fcf4ed 55%, #f9ebe0 100%);
+  box-shadow: 0 6px 24px rgb(175 110 65 / 6%);
 }
 
 .wa-chat__header {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 58px;
+  height: 46px;
   flex: 0 0 auto;
   padding: 0 14px;
   background: linear-gradient(
     180deg,
     rgb(255 253 251 / 96%) 0%,
-    rgb(253 248 243 / 92%) 100%
+    rgb(253 248 243 / 94%) 100%
   );
-  border-bottom: 1px solid var(--wa-border);
+  border-bottom: 1px solid var(--wa-hairline);
 }
 
 .wa-chat__back {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    var(--lumina-brand-soft) 0%,
-    var(--lumina-brand-line) 100%
-  );
-  color: var(--lumina-ink-soft);
+  background: linear-gradient(180deg, #fdeadd 0%, #fbdac4 100%);
+  color: #3a322d;
+  transition: filter 120ms ease;
 }
 
 .wa-chat__back:hover {
-  filter: brightness(0.97);
+  filter: brightness(0.95);
 }
 
 .wa-chat__avatar {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    var(--lumina-brand-soft) 0%,
-    var(--lumina-brand-line) 100%
-  );
-  color: var(--lumina-brand-ink);
-  font-size: 12px;
+  background: linear-gradient(180deg, #f8e6d7 0%, #f2d7c2 100%);
+  color: #4a3f37;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -93,7 +75,7 @@
 .wa-chat__name {
   overflow: hidden;
   color: var(--wa-header-ink);
-  font-size: 13.5px;
+  font-size: 11.5px;
   font-weight: 800;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -102,25 +84,22 @@
 
 .wa-chat__status {
   overflow: hidden;
-  color: var(--wa-meta);
-  font-size: 11px;
+  color: #8a8077;
+  font-size: 9.2px;
   font-weight: 500;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .wa-chat__fake {
   flex: 0 0 auto;
-  padding: 3px 9px;
-  border: 1px solid var(--lumina-brand-line);
+  padding: 2px 10px;
+  border: 1px solid #e5dbd1;
   border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    var(--lumina-brand-tint) 0%,
-    var(--lumina-brand-soft) 100%
-  );
-  color: var(--lumina-brand-chip-ink);
-  font-size: 10px;
+  background: linear-gradient(180deg, #f8f3ee 0%, #f1e8e0 100%);
+  color: #4a433e;
+  font-size: 9.2px;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -129,62 +108,51 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 10px;
-  color: var(--lumina-ink-soft);
+  gap: 8px;
+  color: #3a3531;
 }
 
 .wa-reveal {
-  min-height: 40px;
+  min-height: 36px;
   margin-top: 6px;
   padding: 0 14px;
-  border: 1px solid var(--lumina-brand-line);
+  border: 1px solid #f5decb;
   border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    var(--lumina-brand-tint) 100%
-  );
-  color: var(--lumina-brand-ink);
-  font-size: 12px;
-  font-weight: 600;
+  background: linear-gradient(180deg, #fef5ed 0%, #fce8d8 100%);
+  color: #3a332e;
+  font-size: 11px;
+  font-weight: 700;
+  transition: filter 120ms ease;
 }
 
 .wa-reveal:hover {
-  background: #ffffff;
+  filter: brightness(0.99);
 }
 
 .wa-chat__body {
   flex: 1 1 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 16px 14px 20px;
-  background-color: var(--wa-wallpaper);
+  padding: 12px 16px 16px;
   background-image:
     radial-gradient(
       circle at 20% 30%,
-      var(--wa-doodle) 0 1.5px,
+      rgb(217 208 197 / 22%) 0 1.5px,
       transparent 2px
     ),
     radial-gradient(
       circle at 70% 65%,
-      var(--wa-doodle) 0 1px,
+      rgb(217 208 197 / 16%) 0 1px,
       transparent 1.6px
-    ),
-    linear-gradient(
-      160deg,
-      rgb(255 252 249 / 70%) 0%,
-      rgb(253 236 226 / 55%) 55%,
-      rgb(250 217 198 / 55%) 100%
     );
   background-size:
     46px 46px,
-    63px 63px,
-    100% 100%;
+    63px 63px;
 }
 
 .wa-row {
   display: flex;
-  margin: 6px 0;
+  margin: 8px 0;
   padding: 0 2px;
 }
 
@@ -195,13 +163,13 @@
 .wa-bubble {
   position: relative;
   max-width: 82%;
+  border: 1px solid #f3eae2;
   border-radius: 16px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   background: linear-gradient(180deg, #ffffff 0%, #fdfaf8 100%);
-  border: 1px solid var(--lumina-brand-line);
-  box-shadow: 0 2px 8px rgb(160 105 65 / 6%);
-  color: var(--wa-header-ink);
-  font-size: 13.5px;
+  box-shadow: 0 2px 8px rgb(160 105 65 / 4%);
+  color: var(--wa-body-ink);
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -212,14 +180,10 @@
 .wa-row.is-out .wa-bubble {
   border: 0;
   border-top-right-radius: 6px;
-  background: linear-gradient(
-    135deg,
-    var(--lumina-brand-soft) 0%,
-    var(--lumina-brand-soft-2) 65%,
-    #f8cca8 100%
-  );
+  background: linear-gradient(135deg, #fde6d5 0%, #f9d1b6 65%, #f6c4a4 100%);
   color: var(--wa-out-ink);
-  box-shadow: 0 2px 8px rgb(210 120 65 / 10%);
+  box-shadow: 0 2px 8px rgb(210 120 65 / 8%);
+  font-weight: 500;
 }
 
 .wa-text {
@@ -235,7 +199,8 @@
   gap: 4px;
   margin-top: 4px;
   color: var(--wa-meta);
-  font-size: 10.5px;
+  font-size: 8.5px;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -248,23 +213,23 @@
   align-items: flex-start;
   gap: 8px;
   margin-top: 8px;
-  padding: 9px 10px;
-  border: 1px solid var(--lumina-brand-line);
+  padding: 8px 10px;
+  border: 1px solid #f3eae2;
   border-radius: 12px;
-  background: rgb(255 249 245 / 80%);
+  background: rgb(255 251 248 / 80%);
 }
 
 .wa-file__name {
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
 .wa-file__detail {
   margin: 2px 0 0;
   color: var(--wa-meta);
-  font-size: 11.5px;
+  font-size: 9.6px;
 }
 
 .wa-file__actions {
@@ -275,19 +240,19 @@
 }
 
 .wa-file__actions button {
-  min-height: 38px;
+  min-height: 36px;
   padding: 7px 11px;
-  border: 1px solid var(--lumina-brand-line);
+  border: 1px solid #ede3da;
   border-radius: 10px;
-  background: #ffffff;
-  color: var(--wa-header-ink);
-  font-size: 12.5px;
+  background: linear-gradient(90deg, #ffffff 0%, #fdfaf7 100%);
+  color: #221f1d;
+  font-size: 11px;
   font-weight: 600;
   text-align: left;
 }
 
 .wa-file__actions button:hover {
-  background: var(--lumina-brand-tint);
+  filter: brightness(0.99);
 }
 
 .wa-file__note {
@@ -296,21 +261,22 @@
   border-radius: 10px;
   background: #ffffff;
   color: var(--wa-meta);
-  font-size: 12px;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .wa-system {
   align-self: center;
   max-width: 88%;
   margin: 8px auto;
-  padding: 7px 12px;
-  border: 1px solid var(--lumina-brand-line);
+  padding: 5px 12px;
+  border: 1px solid #efe4da;
   border-radius: 9999px;
-  background: var(--wa-system);
-  color: var(--lumina-ink-soft);
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.4;
+  background: linear-gradient(180deg, #ffffff 0%, #fcf8f5 100%);
+  color: #4a443f;
+  font-size: 9.6px;
+  font-weight: 600;
+  line-height: 1.35;
   text-align: center;
   overflow-wrap: anywhere;
   box-shadow: 0 2px 8px rgb(160 105 65 / 5%);
@@ -319,20 +285,21 @@
 .wa-system__time {
   margin-left: 6px;
   color: var(--wa-meta);
-  font-size: 10.5px;
+  font-size: 8.5px;
 }
 
 .wa-chat__prompt {
   margin: 0 0 2px;
-  padding: 2px 4px;
+  padding: 2px 2px;
   color: var(--wa-header-ink);
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 800;
+  line-height: 1.3;
   outline: none;
 }
 
 .wa-chat__prompt:focus-visible {
-  outline: 2px solid var(--lumina-brand);
+  outline: 2px solid #f25c05;
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -355,9 +322,9 @@
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px 8px;
-  border-top: 1px solid var(--wa-border);
+  gap: 5px;
+  padding: 10px 12px 9px;
+  border-top: 1px solid #f2e4d8;
   background: linear-gradient(
     180deg,
     rgb(255 251 248 / 92%) 0%,
@@ -368,14 +335,14 @@
 .wa-quick__reply {
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  padding: 9px 12px;
-  border: 1px solid var(--lumina-brand-line);
-  border-radius: 12px;
+  gap: 10px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #ede3da;
+  border-radius: 10px;
   background: linear-gradient(90deg, #ffffff 0%, #fdfaf7 100%);
-  color: var(--wa-header-ink);
-  font-size: 13px;
+  color: #221f1d;
+  font-size: 11px;
   font-weight: 600;
   text-align: left;
   transition:
@@ -385,7 +352,7 @@
 
 .wa-quick__reply:hover:not(:disabled) {
   filter: brightness(0.99);
-  box-shadow: 0 2px 8px rgb(160 105 65 / 8%);
+  box-shadow: 0 2px 8px rgb(160 105 65 / 6%);
 }
 
 .wa-quick__reply:disabled {
@@ -397,17 +364,13 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    var(--lumina-brand-soft) 0%,
-    var(--lumina-brand-line) 100%
-  );
-  color: var(--lumina-brand-ink);
-  font-size: 11px;
-  font-weight: 800;
+  background: #f4ede6;
+  color: #5c534c;
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .wa-composer {
@@ -415,21 +378,26 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border-top: 1px solid var(--wa-border);
-  background: var(--wa-composer);
+  height: 46px;
+  padding: 0 12px;
+  border-top: 1px solid var(--wa-hairline);
+  background: linear-gradient(
+    180deg,
+    rgb(255 253 251 / 96%) 0%,
+    rgb(253 249 245 / 98%) 100%
+  );
 }
 
 .wa-composer__input {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 40px;
-  padding: 8px 14px;
-  border: 1px solid var(--lumina-brand-line);
+  min-height: 30px;
+  padding: 4px 14px;
+  border: 1px solid #efe6dd;
   border-radius: 9999px;
   background: linear-gradient(180deg, #fcf9f6 0%, #f7f2ed 100%);
-  color: var(--lumina-txt);
-  font-size: 13px;
+  color: #333333;
+  font-size: 10px;
   font-weight: 500;
 }
 
@@ -441,30 +409,42 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 9999px;
-  background: var(--lumina-brand-tint);
-  color: var(--lumina-ink-soft);
+  background: #f6f1ec;
+  color: #5c534c;
+  transition: background-color 120ms ease;
+}
+
+.wa-composer__btn:hover:not(:disabled) {
+  background: #ece4dc;
 }
 
 .wa-composer__btn:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+}
+
+/* Send keeps the flame fill from the reference; it is a non-interactive mock
+   here, so only the cursor changes. */
+.wa-composer__btn:last-child {
+  background: linear-gradient(180deg, #ff7a18 0%, #f25c05 60%, #e04f00 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgb(242 92 5 / 30%);
 }
 
 .wa-typing {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 12px 14px;
+  padding: 10px 14px;
 }
 
 .wa-typing span {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: var(--lumina-brand-glow);
+  background: #b8b0a8;
   animation: wa-blink 1.2s infinite;
 }
 
@@ -480,7 +460,7 @@
   0%,
   80%,
   100% {
-    opacity: 0.25;
+    opacity: 0.35;
   }
   40% {
     opacity: 1;

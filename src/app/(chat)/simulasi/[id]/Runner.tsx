@@ -32,6 +32,18 @@ import {
   ChatTyping,
 } from "@/components/simulasi/chat/chat-composer";
 import { ChatSurface } from "@/components/simulasi/chat/chat-surface";
+import {
+  SURFACE_ALERT,
+  SURFACE_BADGE,
+  SURFACE_FLAME,
+  SURFACE_MAIN,
+  SURFACE_NOTE,
+  SURFACE_RAIL,
+  SURFACE_ROW,
+  SURFACE_SOFT,
+  SURFACE_SUBCARD,
+  SURFACE_TIP,
+} from "@/components/simulasi/surface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,10 +109,10 @@ function Meter({
         aria-valuemax={max}
         aria-valuenow={Math.round(value)}
         className={cn(
-          "h-2 rounded-full bg-brand-tint lg:h-2.5",
+          "h-[9px] rounded-full bg-[#f4eae1] lg:h-2.5",
           danger
-            ? "[&_[data-slot=progress-indicator]]:bg-danger"
-            : "[&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-brand-glow [&_[data-slot=progress-indicator]]:to-brand",
+            ? "[&_[data-slot=progress-indicator]]:bg-[linear-gradient(90deg,#e61919_0%,#b91c1c_100%)]"
+            : "[&_[data-slot=progress-indicator]]:bg-[linear-gradient(90deg,#ff7a18_0%,#ee5a06_100%)]",
         )}
       />
       {start && end && (
@@ -465,22 +477,24 @@ export function Runner({
     return (
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-4">
-          <header className="relative overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 p-5 shadow-[var(--appnext-shadow-soft)] sm:p-6">
+          <header
+            className={cn("relative overflow-hidden p-5 sm:p-6", SURFACE_MAIN)}
+          >
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-brand-glow/20 blur-3xl"
+              className="pointer-events-none absolute -top-20 -right-12 size-56 rounded-full bg-[#f8cca8]/25 blur-3xl"
             />
             <div className="relative flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-panel/80 px-2.5 py-1 font-bold text-[10.5px] text-brand-ink">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5dbd1] bg-[linear-gradient(180deg,#f8f3ee_0%,#f1e8e0_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#4a433e]">
                 <ShieldCheck aria-hidden="true" className="size-3.5" />
                 {persist
                   ? `Misi · Level ${scenario.scenario.level}`
                   : `Latihan modul ${content.moduleNo ?? ""}`.trim()}
               </span>
-              <span aria-hidden="true" className="text-brand-line">
+              <span aria-hidden="true" className="text-[#e0d3c8]">
                 ·
               </span>
-              <span className="rounded-full bg-brand-soft px-2.5 py-1 font-bold text-[10.5px] text-brand-chip-ink">
+              <span className="rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#d4511b]">
                 {persist ? "Fiktif" : "Latihan"}
               </span>
             </div>
@@ -510,7 +524,12 @@ export function Runner({
             </Alert>
           )}
 
-          <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+          <Card
+            className={cn(
+              "gap-0 border-0 py-0 ring-0 shadow-none",
+              SURFACE_MAIN,
+            )}
+          >
             <CardContent className="flex flex-col gap-5 p-5 sm:p-6">
               <div>
                 <p className="font-semibold text-[10.5px] text-dim uppercase tracking-[0.12em]">
@@ -528,11 +547,11 @@ export function Runner({
                 </CardDescription>
               </div>
 
-              <div className="rounded-[16px] border border-brand-line bg-gradient-to-br from-brand-tint/70 to-panel p-4">
-                <p className="font-bold text-[13px] text-brand-ink">
+              <div className={cn(SURFACE_NOTE, "px-4 py-3.5")}>
+                <p className="font-extrabold text-[12.5px] text-[#c8430e]">
                   Tujuan misi
                 </p>
-                <p className="mt-1 text-sm text-txt leading-relaxed">
+                <p className="mt-1 text-[#4a3728] text-sm leading-relaxed">
                   {MISSION.objective}
                 </p>
               </div>
@@ -552,17 +571,19 @@ export function Runner({
                     aria-pressed={mode === "santai"}
                     data-mode="santai"
                     className={cn(
-                      "h-auto justify-start gap-3 whitespace-normal rounded-[16px] px-4 py-3 text-left",
+                      "h-auto justify-start gap-3 whitespace-normal rounded-[14px] px-4 py-3 text-left",
                       mode === "santai"
-                        ? "border-brand-line bg-brand-soft/70"
-                        : "border-line bg-panel",
+                        ? "border-[#f25c05]/60 bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] ring-1 ring-[#f25c05]"
+                        : "border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)]",
                     )}
                     onClick={() => setMode("santai")}
                   >
                     <Coffee aria-hidden="true" className="shrink-0" />
                     <span className="min-w-0">
-                      <span className="block font-bold">Santai</span>
-                      <span className="block text-dim text-xs">
+                      <span className="block font-bold text-[#221f1d]">
+                        Santai
+                      </span>
+                      <span className="block text-[#8a8077] text-xs">
                         Tanpa tekanan waktu otomatis
                       </span>
                     </span>
@@ -573,17 +594,19 @@ export function Runner({
                     aria-pressed={mode === "tantangan"}
                     data-mode="tantangan"
                     className={cn(
-                      "h-auto justify-start gap-3 whitespace-normal rounded-[16px] px-4 py-3 text-left",
+                      "h-auto justify-start gap-3 whitespace-normal rounded-[14px] px-4 py-3 text-left",
                       mode === "tantangan"
-                        ? "border-brand-line bg-brand-soft/70"
-                        : "border-line bg-panel",
+                        ? "border-[#f25c05]/60 bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] ring-1 ring-[#f25c05]"
+                        : "border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)]",
                     )}
                     onClick={() => setMode("tantangan")}
                   >
                     <Zap aria-hidden="true" className="shrink-0" />
                     <span className="min-w-0">
-                      <span className="block font-bold">Tantangan</span>
-                      <span className="block text-dim text-xs">
+                      <span className="block font-bold text-[#221f1d]">
+                        Tantangan
+                      </span>
+                      <span className="block text-[#8a8077] text-xs">
                         Tekanan naik jika akses aplikasi terbuka
                       </span>
                     </span>
@@ -594,7 +617,10 @@ export function Runner({
               <div className="flex flex-wrap items-center gap-2 border-brand-line border-t pt-4">
                 <Button
                   data-pressable
-                  className="h-11 rounded-full bg-gradient-to-b from-brand-glow via-brand to-brand-strong px-5 font-bold text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105"
+                  className={cn(
+                    "h-11 rounded-full px-5 font-bold",
+                    SURFACE_FLAME,
+                  )}
                   onClick={() => {
                     setAttemptId(crypto.randomUUID());
                     setStarted(true);
@@ -606,7 +632,7 @@ export function Runner({
                 <Button
                   asChild
                   variant="outline"
-                  className="h-11 rounded-full border-brand-line bg-panel font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
+                  className="h-11 rounded-full border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] font-semibold text-[#221f1d] hover:brightness-99"
                   data-pressable
                 >
                   <Link
@@ -629,67 +655,78 @@ export function Runner({
           </Card>
         </div>
 
-        <aside
-          aria-label="Ringkasan briefing"
-          className="flex flex-col gap-4 lg:sticky lg:top-0"
-        >
-          <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <h2 className="font-extrabold text-sm text-txt">Ringkasan misi</h2>
-            <dl className="mt-3 grid grid-cols-3 gap-1 rounded-[14px] border border-brand-line bg-gradient-to-b from-brand-tint/70 to-brand-soft/40 p-2.5">
-              <div className="flex flex-col items-center py-1.5">
-                <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
-                  Babak
-                </dt>
-                <dd className="order-1 tabular font-extrabold text-sm text-txt">
-                  {MISSION.chapters.length}
-                </dd>
-              </div>
-              <div className="flex flex-col items-center py-1.5">
-                <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
-                  Akhir
-                </dt>
-                <dd className="order-1 tabular font-extrabold text-sm text-txt">
-                  {
-                    scenario.nodes.filter((node) => node.type === "ending")
-                      .length
-                  }
-                </dd>
-              </div>
-              <div className="flex flex-col items-center py-1.5">
-                <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
-                  Menit
-                </dt>
-                <dd className="order-1 tabular font-extrabold text-sm text-txt">
-                  3–5
-                </dd>
-              </div>
-            </dl>
-            <p className="mt-3 text-dim text-[11px] leading-relaxed">
-              Pilihanmu mengubah meter panik dan akses asing. Penilaian
-              mengikuti aturan skenario, bukan model.
-            </p>
-          </Card>
+        <aside aria-label="Ringkasan briefing" className="lg:sticky lg:top-0">
+          <div className={cn("flex flex-col gap-2", SURFACE_RAIL)}>
+            <section className={cn(SURFACE_SUBCARD, "p-4")}>
+              <h2 className="font-extrabold text-[10.5px] text-[#1e1c1a]">
+                Ringkasan misi
+              </h2>
+              <dl className="mt-2.5 grid grid-cols-3 gap-1 rounded-[12px] bg-[linear-gradient(90deg,#fbf8f6_0%,#f5f3f1_55%,#faf6f3_100%)] p-2.5">
+                <div className="flex flex-col items-center py-1.5">
+                  <dt className="order-2 mt-0.5 text-[8.8px] text-[#7c726a] leading-none">
+                    Babak
+                  </dt>
+                  <dd className="order-1 tabular font-extrabold text-[#1e1c1a] text-sm">
+                    {MISSION.chapters.length}
+                  </dd>
+                </div>
+                <div className="flex flex-col items-center py-1.5">
+                  <dt className="order-2 mt-0.5 text-[8.8px] text-[#7c726a] leading-none">
+                    Akhir
+                  </dt>
+                  <dd className="order-1 tabular font-extrabold text-[#1e1c1a] text-sm">
+                    {
+                      scenario.nodes.filter((node) => node.type === "ending")
+                        .length
+                    }
+                  </dd>
+                </div>
+                <div className="flex flex-col items-center py-1.5">
+                  <dt className="order-2 mt-0.5 text-[8.8px] text-[#7c726a] leading-none">
+                    Menit
+                  </dt>
+                  <dd className="order-1 tabular font-extrabold text-[#1e1c1a] text-sm">
+                    3–5
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-2.5 text-[#7c726a] text-[10.5px] leading-relaxed">
+                Pilihanmu mengubah meter panik dan akses asing. Penilaian
+                mengikuti aturan skenario, bukan model.
+              </p>
+            </section>
 
-          <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <h2 className="font-extrabold text-sm text-txt">Cara dinilai</h2>
-            <ul className="mt-2 flex flex-col gap-2 text-dim text-xs leading-relaxed">
-              <li>Setiap pilihan punya konsekuensi tetap pada cerita.</li>
-              <li>
-                Meter panik dan akses asing bergerak dari keputusanmu, bukan
-                tebakan.
-              </li>
-              <li>Bukti yang dibagikan harus aman; kode rahasia ditolak.</li>
-            </ul>
-          </Card>
+            <section className={cn(SURFACE_SUBCARD, "p-4")}>
+              <h2 className="font-extrabold text-[10.5px] text-[#1e1c1a]">
+                Cara dinilai
+              </h2>
+              <ul className="mt-2 flex flex-col gap-1.5 text-[#7c726a] text-[10.5px] leading-relaxed">
+                <li>Setiap pilihan punya konsekuensi tetap pada cerita.</li>
+                <li>
+                  Meter panik dan akses asing bergerak dari keputusanmu, bukan
+                  tebakan.
+                </li>
+                <li>Bukti yang dibagikan harus aman; kode rahasia ditolak.</li>
+              </ul>
+            </section>
 
-          <Alert className="rounded-2xl border-brand-line bg-brand-tint/60">
-            <ShieldCheck aria-hidden="true" />
-            <AlertTitle>Latihan, bukan pemindaian perangkat</AlertTitle>
-            <AlertDescription>
-              Semua pesan, lampiran, dan alat di sini fiktif. Latihan tidak
-              mengubah perangkat atau mengirim laporan ke mana pun.
-            </AlertDescription>
-          </Alert>
+            <section
+              className={cn(SURFACE_TIP, "flex items-start gap-2 p-2.5")}
+            >
+              <span className="mt-0.5 grid size-[20px] shrink-0 place-items-center rounded-full bg-[#ffffff]/80 text-[#b45309]">
+                <ShieldCheck aria-hidden="true" className="size-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-extrabold text-[10px] text-[#b45309] leading-tight">
+                  Latihan, bukan pemindaian perangkat
+                </p>
+                <p className="mt-0.5 text-[#4a3728] text-[8.6px] leading-[1.35]">
+                  Semua pesan, lampiran, dan alat di sini fiktif. Latihan tidak
+                  mengubah perangkat atau mengirim laporan ke mana pun.
+                </p>
+              </div>
+            </section>
+          </div>
         </aside>
       </div>
     );
@@ -714,15 +751,17 @@ export function Runner({
           className="flex flex-col gap-5"
           data-outcome={failure ? "failure" : ending.variant}
         >
-          <header className="relative overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 p-5 shadow-[var(--appnext-shadow-soft)] sm:p-6">
+          <header
+            className={cn("relative overflow-hidden p-5 sm:p-6", SURFACE_MAIN)}
+          >
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-brand-glow/20 blur-3xl"
+              className="pointer-events-none absolute -top-20 -right-12 size-56 rounded-full bg-[#f8cca8]/25 blur-3xl"
             />
             <div className="relative flex flex-wrap items-center gap-2">
               <Badge
                 variant="outline"
-                className="rounded-full border-brand-line bg-panel/80 px-2.5 py-1 font-bold text-[10.5px] text-brand-ink"
+                className="rounded-full border-[#e5dbd1] bg-[linear-gradient(180deg,#f8f3ee_0%,#f1e8e0_100%)] px-2.5 py-1 font-bold text-[10.5px] text-[#4a433e]"
               >
                 {failure
                   ? persist
@@ -732,7 +771,7 @@ export function Runner({
                     ? "Misi selesai"
                     : "Latihan selesai"}
               </Badge>
-              <span aria-hidden="true" className="text-brand-line">
+              <span aria-hidden="true" className="text-[#e0d3c8]">
                 ·
               </span>
               <Badge
@@ -740,8 +779,8 @@ export function Runner({
                 className={cn(
                   "rounded-full border-0 px-2.5 py-1 font-bold text-[10.5px]",
                   failure || emergency
-                    ? "bg-danger/10 text-danger"
-                    : "bg-brand-soft text-brand-chip-ink",
+                    ? "bg-[linear-gradient(135deg,#fde8ea_0%,#fce1de_55%,#f9dbd2_100%)] text-[#b91c1c]"
+                    : "bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] text-[#d4511b]",
                 )}
               >
                 {failure
@@ -767,23 +806,28 @@ export function Runner({
 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
             <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
-              <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+              <Card
+                className={cn(
+                  "gap-0 border-0 py-0 ring-0 shadow-none",
+                  SURFACE_MAIN,
+                )}
+              >
                 <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
                   {latest?.rationale && (
-                    <div className="rounded-[14px] border border-brand-line bg-gradient-to-r from-brand-soft via-brand-tint to-brand-soft/60 px-3.5 py-3">
+                    <div className={cn(SURFACE_ALERT, "px-3 py-2.5")}>
                       <div className="flex items-start gap-2.5">
-                        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-panel text-brand-ink">
+                        <span className="mt-0.5 grid size-[20px] shrink-0 place-items-center rounded-full bg-[#d92d20] font-extrabold text-[10px] text-white">
                           <ShieldAlert aria-hidden="true" className="size-4" />
                         </span>
                         <div className="min-w-0">
-                          <p className="font-extrabold text-[12.5px] text-brand-ink">
+                          <p className="font-extrabold text-[12.5px] text-[#c8430e]">
                             {failure
                               ? "Penjelasan pilihan"
                               : latestTactic
                                 ? `Pola terakhir: ${latestTactic.name}`
                                 : "Penjelasan pilihan terakhir"}
                           </p>
-                          <p className="mt-1 text-[12.5px] text-ink-soft leading-relaxed">
+                          <p className="mt-1 text-[#b5481f] text-[12px] leading-relaxed">
                             {latest.rationale}
                           </p>
                         </div>
@@ -799,13 +843,23 @@ export function Runner({
                       />
                       Empat hal untuk diingat
                     </h2>
-                    <ol className="mt-1 flex list-none flex-col gap-1.5 p-0">
+                    <ol className="mt-1 flex list-none flex-col gap-1 p-0">
                       {ending.debrief.map((line, index) => (
                         <li key={line} className="flex items-start gap-2">
-                          <span className="grid size-5 shrink-0 place-items-center rounded-md bg-brand-soft font-extrabold text-[10px] text-brand-ink">
+                          <span
+                            className={cn(
+                              "grid size-[18px] shrink-0 place-items-center rounded-[6px] font-extrabold text-[9.2px]",
+                              SURFACE_BADGE,
+                            )}
+                          >
                             {index + 1}
                           </span>
-                          <p className="flex-1 rounded-[10px] bg-gradient-to-r from-panel-2/80 to-brand-tint/60 px-2.5 py-1.5 text-[12.5px] text-txt leading-relaxed">
+                          <p
+                            className={cn(
+                              "flex-1 px-2.5 py-[5px] text-[#24211f] text-[12px] leading-[1.35]",
+                              SURFACE_ROW,
+                            )}
+                          >
                             {line}
                           </p>
                         </li>
@@ -814,29 +868,39 @@ export function Runner({
                   </section>
 
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <div className="flex items-start gap-2.5 rounded-[14px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 px-3 py-2.5">
-                      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-panel text-brand-ink">
-                        <CheckCircle2 aria-hidden="true" className="size-4" />
+                    <div
+                      className={cn(
+                        SURFACE_NOTE,
+                        "flex items-start gap-2.5 px-3 py-2.5",
+                      )}
+                    >
+                      <span className="mt-0.5 grid size-[22px] shrink-0 place-items-center rounded-full bg-white/80 text-[#c8430e]">
+                        <CheckCircle2 aria-hidden="true" className="size-3.5" />
                       </span>
                       <div>
-                        <p className="font-extrabold text-[11.5px] text-txt">
+                        <p className="font-extrabold text-[10.4px] text-[#1c1a18] leading-tight">
                           Langkah aman
                         </p>
-                        <p className="mt-0.5 text-[11px] text-dim leading-relaxed">
+                        <p className="mt-0.5 text-[#6c615a] text-[9.5px] leading-[1.3]">
                           {safeSteps.length} dari {decisions.length} keputusan
                           menjaga kendali akun.
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-2.5 rounded-[14px] border border-brand-line bg-gradient-to-br from-brand-soft/60 via-panel to-brand-tint/70 px-3 py-2.5">
-                      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-panel text-danger">
-                        <ShieldAlert aria-hidden="true" className="size-4" />
+                    <div
+                      className={cn(
+                        SURFACE_NOTE,
+                        "flex items-start gap-2.5 px-3 py-2.5",
+                      )}
+                    >
+                      <span className="mt-0.5 grid size-[22px] shrink-0 place-items-center rounded-full bg-white/80 text-[#b91c1c]">
+                        <ShieldAlert aria-hidden="true" className="size-3.5" />
                       </span>
                       <div>
-                        <p className="font-extrabold text-[11.5px] text-txt">
+                        <p className="font-extrabold text-[10.4px] text-[#1c1a18] leading-tight">
                           Langkah berisiko
                         </p>
-                        <p className="mt-0.5 text-[11px] text-dim leading-relaxed">
+                        <p className="mt-0.5 text-[#6c615a] text-[9.5px] leading-[1.3]">
                           {riskySteps.length} keputusan membuka celah. Pelajari
                           ulang alasannya.
                         </p>
@@ -844,13 +908,18 @@ export function Runner({
                     </div>
                   </div>
 
-                  <div className="rounded-[14px] border border-brand-line bg-gradient-to-r from-panel to-brand-tint/60 px-3 py-2.5">
+                  <div
+                    className={cn(
+                      SURFACE_ROW,
+                      "border border-[#f5ece4] px-3 py-2.5",
+                    )}
+                  >
                     <div className="flex items-center gap-1.5">
                       <Lightbulb
                         aria-hidden="true"
-                        className="size-4 text-brand"
+                        className="size-3.5 text-[#c8430e]"
                       />
-                      <p className="font-extrabold text-[11.5px] text-txt">
+                      <p className="font-extrabold text-[10.4px] text-[#1e1c1a]">
                         Bukti latihan yang dipilih
                       </p>
                     </div>
@@ -859,17 +928,17 @@ export function Runner({
                         proofItems.map((item) => (
                           <span
                             key={item.id}
-                            className="flex items-center gap-1.5 font-semibold text-[11.5px] text-ink-soft"
+                            className="flex items-center gap-1.5 font-semibold text-[#4a3728] text-[10.5px]"
                           >
                             <CheckCircle2
                               aria-hidden="true"
-                              className="size-3.5 fill-brand text-white"
+                              className="size-3 fill-[#f2600c] text-white"
                             />
                             {item.label}
                           </span>
                         ))
                       ) : (
-                        <span className="text-[11.5px] text-dim">
+                        <span className="text-[#8a8077] text-[10.5px]">
                           Belum ada bukti yang dipilih pada jalur ini.
                         </span>
                       )}
@@ -884,15 +953,18 @@ export function Runner({
                       {decisions.map((choice, index) => (
                         <div
                           key={`${index}-${choice.label}`}
-                          className="rounded-[12px] border border-brand-line bg-gradient-to-r from-panel-2/60 to-brand-tint/40 p-3"
+                          className={cn(
+                            SURFACE_ROW,
+                            "border border-[#f0e5dc] p-3",
+                          )}
                         >
-                          <p className="text-sm">
+                          <p className="text-[12px]">
                             <strong
                               className={cn(
                                 "font-bold",
                                 choice.verdict === "benar"
-                                  ? "text-brand-ink"
-                                  : "text-danger",
+                                  ? "text-[#c8430e]"
+                                  : "text-[#b91c1c]",
                               )}
                             >
                               {choice.verdict === "benar"
@@ -902,7 +974,7 @@ export function Runner({
                             </strong>{" "}
                             {choice.label}
                           </p>
-                          <p className="mt-1 text-dim text-sm">
+                          <p className="mt-1 text-[#7c726a] text-[11.5px]">
                             {choice.rationale}
                           </p>
                         </div>
@@ -918,130 +990,146 @@ export function Runner({
 
             <aside
               aria-label="Ringkasan hasil misi"
-              className="order-first flex flex-col gap-4 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
+              className="order-first lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
             >
-              <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-extrabold text-sm text-txt">
-                    Ringkasan Misi
-                  </h2>
-                  <span className="rounded-full bg-brand-soft px-2 py-0.5 font-bold text-[10px] text-brand-chip-ink">
-                    Level {scenario.scenario.level}
-                  </span>
-                </div>
-                <dl className="mt-3 grid grid-cols-3 gap-1 rounded-[14px] border border-brand-line bg-gradient-to-b from-brand-tint/70 to-brand-soft/40 p-2.5">
-                  {[
-                    ["Keputusan", decisions.length],
-                    ["Pola", tactics.length],
-                    ["Bukti", proof.length],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="flex flex-col items-center py-1.5"
-                    >
-                      <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
-                        {label}
-                      </dt>
-                      <dd className="order-1 tabular font-extrabold text-sm text-txt">
-                        {value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="mt-2 flex items-start gap-1.5 rounded-[10px] bg-brand-tint/70 p-2">
-                  <span className="mt-0.5 grid size-3.5 shrink-0 place-items-center rounded-full bg-brand font-bold text-[8px] text-white">
-                    i
-                  </span>
-                  <p className="text-[10.5px] text-dim leading-relaxed">
-                    {tactics.length > 0
-                      ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
-                      : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-                <h2 className="font-extrabold text-sm text-txt">
-                  Langkah berikutnya
-                </h2>
-                <div className="mt-3 flex flex-col gap-2">
-                  {emergency && (
-                    <Button
-                      asChild
-                      className="h-11 rounded-full bg-gradient-to-b from-brand-glow via-brand to-brand-strong font-bold text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105"
-                      data-pressable
-                    >
-                      <Link href="/komunitas">
-                        <MessageSquare aria-hidden="true" className="size-4" />
-                        Diskusikan pola ini
-                      </Link>
-                    </Button>
-                  )}
-                  <Button
-                    data-pressable
-                    variant={emergency ? "outline" : "default"}
+              <div className={cn("flex flex-col gap-2", SURFACE_RAIL)}>
+                <section className={cn(SURFACE_SUBCARD, "p-3.5")}>
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="font-extrabold text-[10.5px] text-[#1e1c1a]">
+                      Ringkasan Misi
+                    </h2>
+                    <span className="rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2 py-[1px] font-bold text-[8.5px] text-[#d4511b]">
+                      Level {scenario.scenario.level}
+                    </span>
+                  </div>
+                  <dl
                     className={cn(
-                      "h-11 rounded-full font-bold",
-                      emergency
-                        ? "border-brand-line bg-panel text-txt hover:bg-brand-soft hover:text-brand-ink"
-                        : "bg-gradient-to-b from-brand-glow via-brand to-brand-strong text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105",
+                      SURFACE_ROW,
+                      "mt-2.5 grid grid-cols-3 gap-1 p-2.5",
                     )}
-                    onClick={reset}
                   >
-                    <Shuffle aria-hidden="true" className="size-4" />
-                    Coba jalur lain
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="h-11 rounded-full border-brand-line bg-panel font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
-                    data-pressable
-                  >
-                    <Link
-                      href={
-                        content.moduleNo
-                          ? `/belajar/${content.moduleNo}`
-                          : "/belajar"
-                      }
+                    {[
+                      ["Keputusan", decisions.length],
+                      ["Pola", tactics.length],
+                      ["Bukti", proof.length],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="flex flex-col items-center py-1.5"
+                      >
+                        <dt className="order-2 mt-0.5 text-[8.8px] text-[#7c726a] leading-none">
+                          {label}
+                        </dt>
+                        <dd className="order-1 tabular font-extrabold text-[#1e1c1a] text-sm">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="mt-2 flex items-start gap-1.5 rounded-[10px] bg-[#fdf3ec] p-2">
+                    <span className="mt-0.5 grid size-3.5 shrink-0 place-items-center rounded-full bg-[#f2600c] font-bold text-[8px] text-white">
+                      i
+                    </span>
+                    <p className="text-[#7c726a] text-[9.5px] leading-relaxed">
+                      {tactics.length > 0
+                        ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
+                        : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
+                    </p>
+                  </div>
+                </section>
+
+                <section className={cn(SURFACE_SUBCARD, "p-3.5")}>
+                  <h2 className="font-extrabold text-[10.5px] text-[#1e1c1a]">
+                    Langkah berikutnya
+                  </h2>
+                  <div className="mt-2.5 flex flex-col gap-2">
+                    {emergency && (
+                      <Button
+                        asChild
+                        className={cn(
+                          "h-11 rounded-full font-bold",
+                          SURFACE_FLAME,
+                        )}
+                        data-pressable
+                      >
+                        <Link href="/komunitas">
+                          <MessageSquare
+                            aria-hidden="true"
+                            className="size-4"
+                          />
+                          Diskusikan pola ini
+                        </Link>
+                      </Button>
+                    )}
+                    <Button
+                      data-pressable
+                      variant={emergency ? "outline" : "default"}
+                      className={cn(
+                        "h-11 rounded-full font-bold",
+                        emergency
+                          ? "border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] text-[#221f1d]"
+                          : SURFACE_FLAME,
+                      )}
+                      onClick={reset}
                     >
-                      <BookOpen aria-hidden="true" className="size-4" />
-                      Pelajari pola ini
-                    </Link>
-                  </Button>
-                  {!emergency && (
+                      <Shuffle aria-hidden="true" className="size-4" />
+                      Coba jalur lain
+                    </Button>
                     <Button
                       asChild
                       variant="outline"
-                      className="h-11 rounded-full border-brand-line bg-panel font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
+                      className="h-11 rounded-full border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] font-semibold text-[#221f1d] hover:brightness-99"
                       data-pressable
                     >
-                      <Link href="/komunitas">
-                        <MessageSquare aria-hidden="true" className="size-4" />
-                        Diskusikan pola ini
+                      <Link
+                        href={
+                          content.moduleNo
+                            ? `/belajar/${content.moduleNo}`
+                            : "/belajar"
+                        }
+                      >
+                        <BookOpen aria-hidden="true" className="size-4" />
+                        Pelajari pola ini
                       </Link>
                     </Button>
-                  )}
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="h-11 rounded-full text-dim hover:bg-brand-tint hover:text-txt"
-                    data-pressable
-                  >
-                    <Link href="/simulasi">
-                      <LayoutGrid aria-hidden="true" className="size-4" />
-                      Semua simulasi
-                    </Link>
-                  </Button>
-                </div>
-                <p className="mt-2 text-dim text-[11px] leading-relaxed">
-                  Diskusi adalah tempat berbagi pengalaman. Bila kasus sedang
-                  berlangsung, hubungi bank atau penyedia akun melalui kanal
-                  resmi.
-                </p>
-                <div className="mt-3 border-brand-line border-t pt-2">
-                  {collection}
-                </div>
-              </Card>
+                    {!emergency && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="h-11 rounded-full border-[#ede3da] bg-[linear-gradient(180deg,#ffffff_0%,#fdfaf7_100%)] font-semibold text-[#221f1d] hover:brightness-99"
+                        data-pressable
+                      >
+                        <Link href="/komunitas">
+                          <MessageSquare
+                            aria-hidden="true"
+                            className="size-4"
+                          />
+                          Diskusikan pola ini
+                        </Link>
+                      </Button>
+                    )}
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="h-11 rounded-full text-dim hover:bg-brand-tint hover:text-txt"
+                      data-pressable
+                    >
+                      <Link href="/simulasi">
+                        <LayoutGrid aria-hidden="true" className="size-4" />
+                        Semua simulasi
+                      </Link>
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-[#7c726a] text-[9.5px] leading-relaxed">
+                    Diskusi adalah tempat berbagi pengalaman. Bila kasus sedang
+                    berlangsung, hubungi bank atau penyedia akun melalui kanal
+                    resmi.
+                  </p>
+                  <div className="mt-3 border-[#f0e5dc] border-t pt-2">
+                    {collection}
+                  </div>
+                </section>
+              </div>
             </aside>
           </div>
         </div>
@@ -1050,7 +1138,7 @@ export function Runner({
   }
   const task = active.type === "tool_task" ? active : null;
   const tool = task && (
-    <Card className="rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+    <Card className={cn("border-0 ring-0 shadow-none", SURFACE_MAIN)}>
       <CardHeader>
         <div className="flex items-center gap-2">
           {task.tool === "isolation" ? (
@@ -1182,16 +1270,19 @@ export function Runner({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
         <aside
           aria-label="Status misi"
-          className="sticky top-0 z-20 -mx-5 border-brand-line border-b bg-panel/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:static lg:z-auto lg:col-start-2 lg:row-start-1 lg:mx-0 lg:flex lg:flex-col lg:gap-4 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none"
+          className="sticky top-0 z-20 -mx-5 border-[#f2e5da] border-b bg-[#fffdfb]/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:static lg:z-auto lg:col-start-2 lg:row-start-1 lg:mx-0 lg:flex lg:flex-col lg:gap-4 lg:rounded-[22px] lg:border lg:border-[#f5e6dc] lg:bg-[linear-gradient(180deg,rgba(255,252,249,0.86)_0%,rgba(253,246,240,0.92)_100%)] lg:p-2.5 lg:px-2.5 lg:py-2.5 lg:shadow-[0_6px_24px_rgba(175,110,65,0.05)] lg:backdrop-blur-none"
         >
-          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-[22px] lg:border lg:border-brand-line lg:bg-gradient-to-b lg:from-panel lg:to-brand-tint/40 lg:py-4 lg:shadow-[var(--appnext-shadow-ambient)]">
+          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-[18px] lg:border lg:border-[#f3e6dc] lg:bg-[linear-gradient(180deg,#ffffff_0%,#fdf9f6_100%)] lg:py-4 lg:shadow-none">
             <CardContent className="flex flex-col gap-3 p-0 lg:gap-4 lg:p-4">
-              <div className="flex items-center justify-between gap-2 border-brand-line border-b pb-2">
-                <span className="inline-flex items-center gap-1.5 font-extrabold text-[12px] text-txt">
-                  <Shield aria-hidden="true" className="size-3.5 text-brand" />
+              <div className="flex items-center justify-between gap-2 border-[#efe5dc] border-b pb-2">
+                <span className="inline-flex items-center gap-1.5 font-extrabold text-[10.5px] text-[#1e1c1a]">
+                  <Shield
+                    aria-hidden="true"
+                    className="size-3.5 fill-[#1e1c1a]/25 text-[#1e1c1a]"
+                  />
                   Mode simulasi
                 </span>
-                <span className="rounded-full bg-brand-soft px-2 py-0.5 font-bold text-[10px] text-brand-chip-ink">
+                <span className="rounded-full bg-[linear-gradient(90deg,#fde6d6_0%,#fbdac4_100%)] px-2 py-[1px] font-bold text-[8.5px] text-[#d4511b]">
                   {mode === "santai" ? "Santai" : "Tantangan"}
                 </span>
               </div>
@@ -1333,7 +1424,10 @@ export function Runner({
               <Button
                 data-pressable
                 variant="outline"
-                className="hidden h-11 rounded-full border-brand-line bg-gradient-to-b from-panel to-brand-tint/70 font-semibold text-ink-soft hover:bg-brand-soft lg:flex"
+                className={cn(
+                  "hidden h-10 rounded-[10px] font-bold text-[#3a332e] lg:flex",
+                  SURFACE_SOFT,
+                )}
                 disabled={paused || breathingUsed}
                 onClick={() => {
                   setBreathingAt(steps.length);
