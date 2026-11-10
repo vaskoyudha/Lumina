@@ -58,7 +58,7 @@ export function SiteHeader() {
               scrolled ? "opacity-100" : "opacity-0"
             }`}
           />
-          <div className="relative hidden items-center gap-4 font-medium text-sm md:flex lg:gap-7">
+          <div className="relative hidden items-center gap-4 font-medium text-sm lg:flex lg:gap-7">
             {navLinks.map((link) =>
               link.href ? (
                 <Link
@@ -85,7 +85,7 @@ export function SiteHeader() {
             type="button"
             onClick={() => scrollToId("section-home")}
             aria-label={`${brand.name} — kembali ke atas`}
-            className="group relative flex items-center transition-transform duration-200 ease-out hover:-translate-y-0.5"
+            className="group flex items-center transition-transform duration-200 ease-out hover:-translate-y-0.5 lg:absolute lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:hover:-translate-y-[calc(50%+2px)]"
           >
             {/* The wordmark is the widest thing in the bar; below `sm` the
                 auth cluster leaves ~94px for it, so the height steps down. */}
