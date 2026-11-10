@@ -36,14 +36,45 @@ describe("validateReport", () => {
     expect(validateReport(report, { message, signals: [] }).ok).toBe(true);
   });
 
-  it("rejects a signal the tools did not return", () => {
+  it("accepts one quoted observation when no tool signal fits", () => {
     const report = {
       ...valid,
-      points: [{ ...valid.points[0], signal: "Sinyal karangan" }],
+      points: [
+        {
+          ...valid.points[0],
+          signal: "Pola tugas berbayar",
+          quote: "biaya admin",
+        },
+      ],
+    };
+    const result = validateReport(report, { message, signals });
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts one quoted observation when the tools returned nothing", () => {
+    const report = {
+      ...valid,
+      points: [
+        {
+          ...valid.points[0],
+          signal: "Pola tugas berbayar",
+          quote: "biaya admin",
+        },
+      ],
+    };
+    expect(validateReport(report, { message, signals: [] }).ok).toBe(true);
+  });
+
+  it("rejects an observation without a quote", () => {
+    const report = {
+      ...valid,
+      points: [
+        { ...valid.points[0], signal: "Pola tugas berbayar", quote: undefined },
+      ],
     };
     const result = validateReport(report, { message, signals });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues.join(" ")).toContain("bukan sinyal");
+    if (!result.ok) expect(result.issues.join(" ")).toContain("kutipan");
   });
 
   it("rejects an invented quote", () => {

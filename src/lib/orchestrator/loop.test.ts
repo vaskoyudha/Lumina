@@ -36,7 +36,11 @@ function systemOf(messages: { role: string; content: string | null }[]) {
   return messages[0]?.content ?? "";
 }
 
-function reportCall(id: string, signal = "Meminta kode OTP") {
+function reportCall(
+  id: string,
+  signal = "Meminta kode OTP",
+  quote = "kirim kode OTP",
+) {
   return {
     id,
     type: "function",
@@ -52,7 +56,7 @@ function reportCall(id: string, signal = "Meminta kode OTP") {
             reason: "Bank tidak meminta kode OTP lewat chat.",
             pattern: "credential-request",
             watchout: "Jangan kirim kode OTP.",
-            quote: "kirim kode OTP",
+            quote,
           },
         ],
         watchouts: ["Jangan kirim kode OTP."],
@@ -154,6 +158,7 @@ describe("runOrchestrator", () => {
             reportCall(
               `call-${specialistCalls}`,
               attempt === 1 ? "Sinyal karangan" : "Meminta kode OTP",
+              attempt === 1 ? "kutipan yang tidak ada" : "kirim kode OTP",
             ),
           ],
         };
