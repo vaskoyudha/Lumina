@@ -15,6 +15,8 @@ import {
   specialistSystemPrompt,
 } from "@/lib/orchestrator/agents";
 import {
+  COMMANDER_PROMPT,
+  commanderUserPrompt,
   PLANNER_PROMPT,
   plannerUserPrompt,
   SYNTHESIS_PROMPT,
@@ -64,6 +66,94 @@ const PlannerOutputSchema = z
       .max(MAX_AGENTS),
   })
   .strict();
+
+const MAX_COMMANDER_TOKENS = 220;
+const SCORE_IN_TEXT = /\b\d{1,3}\s*\/\s*100\b|\bskor\s*\d{1,3}\b/i;
+const BAND_IN_TEXT =
+  /\b(?:band|risiko)\s+(?:bersih|rendah|mencurigakan|tinggi)\b/i;
+
+const CommanderOutputSchema = z
+  .object({
+    announcement: z.string().min(1).max(400),
+    focus: z.string().max(120).default(""),
+  })
+  .strict();
+
+interface CommanderBrief {
+  text: string;
+  focus: string;
+  source: "model" | "fallback";
+  ms: number;
+}
+
+function fallbackCommander(baseline: ScoreResult): string {
+  const modus = baseline.modus?.trim();
+  return modus
+    ? `Saya melihat pola yang sering muncul pada ${modus}. Saya akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.`
+    : "Saya sudah membaca pesan ini dan akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.";
+}
+
+async function makeCommander(
+  request: OrchestratorRequest,
+  baseline: ScoreResult,
+  chat: OrchestratorDeps["chat"],
+  signal: AbortSignal,
+): Promise<CommanderBrief> {
+  const started = performance.now();
+  const fallback = (): CommanderBrief => ({
+    text: fallbackCommander(baseline),
+    focus: baseline.modus ?? "",
+    source: "fallback",
+    ms: Math.round(performance.now() - started),
+  });
+  if (!chat) return fallback();
+  try {
+    const message = await chat(
+      {
+        messages: [
+          { role: "system", content: COMMANDER_PROMPT },
+          {
+            role: "user",
+            content: commanderUserPrompt({
+              question: request.question,
+              message: request.message,
+              modus: baseline.modus,
+              score: baseline.score,
+              risk: baseline.risk,
+              priorTurns: request.priorTurns,
+            }),
+          },
+        ],
+        maxTokens: MAX_COMMANDER_TOKENS,
+        temperature: 0.2,
+        responseFormat: "json",
+      },
+      signal,
+    );
+    const parsed = CommanderOutputSchema.safeParse(
+      safeJson(message.content ?? ""),
+    );
+    if (!parsed.success) throw new Error("invalid-commander");
+    const text = parsed.data.announcement.trim();
+    const focus = parsed.data.focus.trim();
+    if (
+      !text ||
+      SCORE_IN_TEXT.test(text) ||
+      BAND_IN_TEXT.test(text) ||
+      SCORE_IN_TEXT.test(focus) ||
+      BAND_IN_TEXT.test(focus)
+    )
+      throw new Error("commander-verdict");
+    return {
+      text,
+      focus,
+      source: "model",
+      ms: Math.round(performance.now() - started),
+    };
+  } catch {
+    return fallback();
+  }
+}
 
 interface ModelMessage {
   role: string;
@@ -858,6 +948,14 @@ export async function runOrchestrator(
     turns: request.priorTurns.map((text) => ({ text })),
   });
   const baseline = cached.result;
+  const commander = await makeCommander(request, baseline, chat, signal);
+  emit({
+    type: "commander_say",
+    text: commander.text,
+    focus: commander.focus,
+    source: commander.source,
+    ms: commander.ms,
+  });
   emit({
     type: "score",
     result: baseline,
@@ -1020,6 +1118,11 @@ export async function runOrchestrator(
 
   const trace: OrchestrationTrace = {
     runId,
+    commander: {
+      text: commander.text,
+      source: commander.source,
+      ms: commander.ms,
+    },
     planner: {
       rationale: plan.rationale,
       agents: plan.steps,
