@@ -1,6 +1,12 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  CircleDashed,
+  type LucideIcon,
+  ScanSearch,
+  Waypoints,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { AgentInfoHint } from "@/components/companion/agent-info-popover";
 import {
@@ -71,6 +77,52 @@ function formatMs(ms: number): string {
   return `${ms.toFixed(1).replace(".", ",")} ms`;
 }
 
+/**
+ * A section heading in the panel's card style: a soft circular icon on the
+ * left, one shared title size for every section, and room for a count on the
+ * right. The icon is decoration and stays out of the accessible name.
+ */
+export function PanelSectionHeading({
+  id,
+  icon: Icon,
+  tone = "brand",
+  meta,
+  children,
+  className,
+}: {
+  id?: string;
+  icon: LucideIcon;
+  tone?: "brand" | "warn" | "danger";
+  meta?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}): ReactNode {
+  return (
+    <div className={cn("flex min-w-0 items-center gap-2", className)}>
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-full",
+          tone === "danger"
+            ? "bg-danger/10 text-danger"
+            : tone === "warn"
+              ? "bg-warn/10 text-warn"
+              : "bg-brand-soft text-brand",
+        )}
+      >
+        <Icon className="size-3.5" strokeWidth={2} />
+      </span>
+      <h3
+        className="min-w-0 flex-1 truncate font-semibold text-[12.5px] text-ink tracking-[-0.01em]"
+        id={id}
+      >
+        {children}
+      </h3>
+      {meta ? <span className="shrink-0">{meta}</span> : null}
+    </div>
+  );
+}
+
 /** Coverage is a sentence first and eight ticks second, never a percentage. */
 export function CoverageStrip({ ledger }: { ledger: PanelLedger }) {
   const { counts } = ledger;
@@ -126,12 +178,9 @@ export function FindingsSection({
 
   return (
     <section aria-labelledby={`${titleId}-findings`} className="mt-3">
-      <h3
-        className="font-mono text-[9px] text-dim uppercase tracking-[0.14em]"
-        id={`${titleId}-findings`}
-      >
+      <PanelSectionHeading icon={ScanSearch} id={`${titleId}-findings`}>
         {total > 0 ? `Menemukan · ${total}` : "Temuan"}
-      </h3>
+      </PanelSectionHeading>
       <ul aria-label="Temuan terdeteksi" className="mt-2 flex flex-col gap-2">
         {agents.length === 0 ? (
           <li className="rounded-[10px] border border-edge-soft bg-bg px-2.5 py-2 text-[11.5px] text-dim">
@@ -217,12 +266,9 @@ export function SpawnedSection({
 
   return (
     <section aria-labelledby={`${titleId}-spawned`} className="mt-3">
-      <h3
-        className="font-mono text-[9px] text-dim uppercase tracking-[0.14em]"
-        id={`${titleId}-spawned`}
-      >
+      <PanelSectionHeading icon={Waypoints} id={`${titleId}-spawned`}>
         Sub-agen dijalankan · {agents.length}
-      </h3>
+      </PanelSectionHeading>
       <ul
         aria-label="Sub-agen yang dijalankan"
         className="mt-2 flex flex-col gap-1.5"
@@ -295,11 +341,14 @@ export function CoverageGroup({
   label,
   agents,
   defaultOpen = false,
+  icon: Icon = CircleDashed,
   onSelectAgent,
 }: {
   label: string;
   agents: readonly PanelAgent[];
   defaultOpen?: boolean;
+  /** Heading glyph; each coverage bucket passes its own. */
+  icon?: LucideIcon;
   onSelectAgent?: (agent: DetectorAgent) => void;
 }): ReactNode {
   if (agents.length === 0) return null;
@@ -308,7 +357,15 @@ export function CoverageGroup({
     <Collapsible defaultOpen={defaultOpen}>
       <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 rounded-[10px] border border-edge bg-panel px-3 py-2 text-left hover:border-brand-edge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="text-[11.5px] text-ink-mute">{label}</span>
+          <span
+            aria-hidden
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand"
+          >
+            <Icon className="size-3.5" strokeWidth={2} />
+          </span>
+          <span className="min-w-0 truncate font-semibold text-[12.5px] text-ink">
+            {label}
+          </span>
           <span className="rounded bg-chip px-1.5 py-0.5 font-mono text-[10px] text-ink-soft">
             {agents.length}
           </span>
