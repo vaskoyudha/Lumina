@@ -258,3 +258,16 @@ c. Heuristics are tuned for Indonesian message text; they are not a
    general-purpose classifier.
 d. The overview is explanatory; it is not a control surface and does not start
    runs by itself.
+
+## Measured 2026-11-12
+
+- Eval corpus (`npm test -- src/lib/scoring/eval.test.ts`, the `EVAL` line):
+  60 scam + 60 legitimate cases, `caught 60/60`, `legitNotRisky 60/60`,
+  `falsePositives 0`, modus classification 56/60, `slowestCpuMs 3.637`. The
+  suite already pins 60/60 catches and zero false positives; `slowestCpuMs` is
+  CPU time for the slowest single case, not wall clock.
+- Serial latency with a 40 ms stub specialist
+  (`LUMINA_LATENCY=1 npm test -- src/lib/orchestrator/serial-latency.test.ts`):
+  `twoAgentMs 156`, `sixAgentMs 258` from the `LATENCY` line. The same run
+  confirms every `agent_start` is immediately followed by its own
+  `agent_result` at both sizes, so the crew really runs one at a time.
