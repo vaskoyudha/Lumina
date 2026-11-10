@@ -711,6 +711,71 @@ describe("CompanionChat · verdict before voice", () => {
     expect(within(card).getByText("78")).toBeInTheDocument();
   });
 
+  it("fills the agent history from an orchestrated run", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockImplementationOnce(async (_request, options) => {
+      options?.onEvent?.({
+        type: "agent_result",
+        runId: "run-history",
+        seq: 1,
+        at: 1,
+        agent: "message",
+        label: "Message Agent",
+        status: "selesai",
+        summary: "Pesan diperiksa.",
+        findings: [],
+        points: [],
+        ms: 4,
+      });
+      return {
+        outcome: "model" as const,
+        text: "Jawaban agen.",
+        events: [],
+        trace: null,
+        score: null,
+      };
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+
+    await sendApk(user);
+    await screen.findByText("Jawaban agen.");
+    await user.click(
+      screen.getAllByRole("button", { name: "Percakapan baru" })[0],
+    );
+
+    expect(await screen.findByText("Selesai · 4 ms")).toBeInTheDocument();
+    expect(screen.getAllByText("Mochi").length).toBeGreaterThan(0);
+  });
+
+  it("falls back to the saved latest run when the tab has no runs", () => {
+    render(
+      <CompanionChat
+        latestRun={{
+          runId: "run-saved",
+          modus: "tidak-dikenali",
+          band: "bersih",
+          plannerSource: "model",
+          totalMs: 12000,
+          agents: [
+            {
+              id: "message",
+              label: "Message Agent",
+              status: "selesai",
+              ms: 9000,
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText("Pemeriksaan terakhir · 9000 ms"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Mochi").length).toBeGreaterThan(0);
+  });
+
   it("announces the settled summary after opening the Agents view mid-run", async () => {
     let resolveReply: (value: unknown) => void = () => undefined;
     fetchMock.mockImplementation(
