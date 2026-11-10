@@ -77,7 +77,7 @@ function RailItem({
             ? "bg-danger text-bg"
             : "text-danger hover:bg-danger/10"
           : active
-            ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
+            ? "nav-active-tint font-bold text-nav-active-ink"
             : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
@@ -139,7 +139,7 @@ function AgentItem({
           ? "size-10 justify-center"
           : "w-full gap-2.5 px-3 py-2 text-left",
         active
-          ? "bg-gradient-to-r from-nav-active-from to-nav-active-to font-bold text-nav-active-ink"
+          ? "nav-active-tint font-bold text-nav-active-ink"
           : "text-ink-soft hover:bg-brand-soft/60 hover:text-ink",
       )}
     >
