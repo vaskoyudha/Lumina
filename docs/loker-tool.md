@@ -14,6 +14,10 @@ c. The model chooses a `job_search` tool call from natural language, or the
 d. Filters (query terms, location, salary band, hide-flagged) run in the
    browser against the RSC snapshot.
 e. Saved postings live in `localStorage` and appear in `/profil`.
+f. Every card carries Lumina's recommendation (`Aman dilamar` / `Periksa dulu` /
+   `Sebaiknya hindari`) with the engine evidence behind it, and the tool header
+   counts the visible results by level. The recommendation is deterministic;
+   the companion may repeat it, never change it.
 
 ## Architecture
 
@@ -60,6 +64,16 @@ e. The server prewarms the corpus (`src/lib/loker/prewarm.ts`, started by
    scheduler and the manual trigger share the same advisory lock, so they can
    never crawl concurrently. `LOKER_PREWARM_INTERVAL_MS=0` disables the warm-up
    without disabling the button.
+f. A scan is incremental, like Careevo's engine: the requested window starts at
+   the last successful run (plus one day of overlap) instead of always asking
+   for 30 days, and a URL already in `loker_postings` is not fetched or audited
+   again. Only a database with no successful run asks for the full month.
+g. `src/lib/loker/verdict.ts` turns the two verdicts into one recommendation
+   ("caution wins": rejected/tinggi → hindari, suspicious/mencurigakan →
+   waspada, else aman) and lists the stored evidence. It is the same rule the
+   hide-flagged filter uses, so badge and filter cannot disagree. The summary
+   route derives the counts from the contract's existing fields and tells the
+   model to repeat them; the offline fallback sentence carries them too.
 
 ## Data model
 
@@ -79,7 +93,9 @@ a. The checked message never leaves the device. The search query is typed by the
    reader or derived by the model from their own question; it is filtered in the
    browser and never sent to a search endpoint.
 b. Phase 2 sends titles, companies, verdict labels, and a count. It has no field
-   for the query, a description, an apply URL, or the saved list.
+   for the query, a description, an apply URL, or the saved list. The server
+   derives the recommendation counts from those verdict labels; the schema is
+   unchanged, so the client cannot add a field.
 c. RDAP sends only a posting's public domain.
 d. Saved postings never leave the browser.
 e. The model never scores and never adds findings.
@@ -143,3 +159,9 @@ d. Free model quota can make the summary unavailable; the deterministic copy is
 e. Prewarm removes the cold start only after it has run once. On a brand-new
    database the first minutes still show "belum dipindai"; the scheduler starts
    that crawl at boot, and the card fills in as rows commit.
+f. "Aman dilamar" means both engines found no scam signal in the posting and
+   the audit fields they saw. It is not a guarantee: the scan cannot see a
+   phone call, a chat message, or an offer made after applying.
+g. The incremental window trusts `fetched_at` and the run table. If the database
+   is restored from an old dump, the first scan after restore asks for the full
+   month again only when no successful run exists in that dump.

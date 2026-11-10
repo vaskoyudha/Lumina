@@ -27,6 +27,7 @@ import type {
   SavedLoker,
   ScanStatus,
 } from "@/lib/loker/types";
+import { ringkasRekomendasi } from "@/lib/loker/verdict";
 import { cn } from "@/lib/utils";
 
 type ScanState =
@@ -181,6 +182,7 @@ export function LokerTool({
     () => filterPostings(corpus.postings, args),
     [corpus.postings, args],
   );
+  const ringkasan = React.useMemo(() => ringkasRekomendasi(results), [results]);
   const savedIds = React.useMemo(
     () => new Set(saved.map((item) => item.id)),
     [saved],
@@ -245,6 +247,13 @@ export function LokerTool({
                 ? ` · dipindai ${lastScan.slice(0, 10)}`
                 : " · belum dipindai"}
             </p>
+            {results.length > 0 ? (
+              <p className="mt-1.5 inline-flex w-fit items-center rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-ink">
+                {ringkasan.waspada + ringkasan.hindari === 0
+                  ? `${ringkasan.aman} aman dilamar`
+                  : `${ringkasan.aman} aman · ${ringkasan.waspada + ringkasan.hindari} perlu diperiksa`}
+              </p>
+            ) : null}
           </div>
         </div>
 

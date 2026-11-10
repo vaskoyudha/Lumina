@@ -21,6 +21,12 @@ import {
 import type { Risk } from "@/lib/contracts/score";
 import { labelSinyal } from "@/lib/loker/audit/sentinel";
 import type { LokerView } from "@/lib/loker/types";
+import {
+  alasanRekomendasi,
+  REKOMENDASI_LABEL,
+  type Rekomendasi,
+  rekomendasiUntuk,
+} from "@/lib/loker/verdict";
 import { cn } from "@/lib/utils";
 
 const SENTINEL_LABEL = {
@@ -67,6 +73,13 @@ function sentinelTone(posting: LokerView): string {
   return "border-line bg-panel-2 text-txt";
 }
 
+/** The recommendation badge is the easiest read, so it gets the brand wash. */
+function rekomendasiTone(level: Rekomendasi): string {
+  if (level === "hindari") return "border-danger/25 bg-danger/10 text-danger";
+  if (level === "waspada") return "border-warn/25 bg-warn/10 text-warn";
+  return "border-brand/25 bg-brand-soft text-brand-ink";
+}
+
 function luminaTone(posting: LokerView): string {
   if (posting.luminaRisk === "tinggi") {
     return "border-danger/25 bg-danger/10 text-danger";
@@ -99,6 +112,8 @@ export function LokerCard({
 }) {
   const [open, setOpen] = React.useState(false);
   const applyUrl = tautanLamaran(posting.applyUrl);
+  const rekomendasi = rekomendasiUntuk(posting);
+  const alasan = alasanRekomendasi(posting);
 
   return (
     <li className="min-w-0 rounded-2xl border border-line bg-panel p-4 shadow-rest">
@@ -172,6 +187,15 @@ export function LokerCard({
           <Badge
             variant="outline"
             className={cn(
+              "h-6 rounded-full px-2.5 text-[10.5px] font-bold",
+              rekomendasiTone(rekomendasi),
+            )}
+          >
+            {REKOMENDASI_LABEL[rekomendasi]}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
               "h-6 rounded-full px-2.5 text-[10.5px] font-semibold",
               sentinelTone(posting),
             )}
@@ -188,6 +212,11 @@ export function LokerCard({
             Lumina: {RISK_LABEL[posting.luminaRisk]}
           </Badge>
         </div>
+
+        <p className="mt-2 text-[11px] text-dim leading-snug">
+          <span className="font-semibold text-txt">Rekomendasi Lumina: </span>
+          {alasan.join("; ")}.
+        </p>
 
         {disagreement(posting) ? (
           <p className="mt-2.5 flex items-start gap-1.5 rounded-[8px] bg-warn/5 px-2.5 py-2 text-[11px] text-warn leading-snug">

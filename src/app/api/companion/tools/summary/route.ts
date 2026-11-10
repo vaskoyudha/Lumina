@@ -1,4 +1,5 @@
 import { ToolSummaryRequestSchema } from "@/lib/contracts/tool";
+import { ringkasRekomendasi } from "@/lib/loker/verdict";
 import {
   BodyTooLarge,
   limitAI,
@@ -13,9 +14,9 @@ const MAX_TOKENS = 160;
 
 const SYSTEM = [
   "Kamu adalah Lumina, pendamping pencari kerja di Indonesia.",
-  "Kamu menerima daftar lowongan yang sudah disaring di perangkat pengguna.",
-  "Tulis tepat satu kalimat Bahasa Indonesia yang menyebut jumlah lowongan dan, bila ada, satu posisi atau perusahaan yang paling relevan.",
-  "Jangan menilai ulang, jangan menambah temuan, jangan menyebut skor, dan jangan mengarang lowongan yang tidak ada di daftar.",
+  "Kamu menerima daftar lowongan yang sudah disaring di perangkat pengguna, beserta field rekomendasi yang sudah dihitung Lumina dari dua penilaiannya.",
+  "Tulis tepat satu kalimat Bahasa Indonesia yang menyebut jumlah lowongan, rekomendasi keselamatannya (misalnya 'semuanya aman dilamar' atau '3 perlu diperiksa'), dan bila ada satu posisi atau perusahaan yang paling relevan.",
+  "Rekomendasi pada field rekomendasi adalah keputusan engine: ulangi apa adanya. Jangan menilai ulang, jangan menambah temuan, jangan menyebut skor, dan jangan mengarang lowongan yang tidak ada di daftar.",
   "Tanpa salam, tanpa markdown, tanpa daftar.",
 ].join("\n");
 
@@ -68,7 +69,15 @@ export async function POST(request: Request) {
           max_tokens: MAX_TOKENS,
           messages: [
             { role: "system", content: SYSTEM },
-            { role: "user", content: JSON.stringify(parsed.data) },
+            {
+              role: "user",
+              // The aggregate is derived here, from the two verdict fields the
+              // contract already allows, so the schema stays frozen.
+              content: JSON.stringify({
+                ...parsed.data,
+                rekomendasi: ringkasRekomendasi(parsed.data.postings),
+              }),
+            },
           ],
         }),
       },

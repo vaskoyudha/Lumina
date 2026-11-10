@@ -17,6 +17,7 @@ import { normalisasiKunciUrl, parseInbox } from "@/lib/loker/receipt";
 import { runScan } from "@/lib/loker/scan";
 import {
   finishScanRun,
+  lastSuccessfulScanFinishedAt,
   readDomainCache,
   readPostingKeys,
   type ScanRunResult,
@@ -102,10 +103,47 @@ export interface RunDeps {
   keys?: () => Promise<ReadonlySet<string>>;
   ingest?: typeof ingestScan;
   finish?: typeof finishScanRun;
+  /** Days to ask the scanner for. Defaults to the incremental window. */
+  window?: () => Promise<number>;
 }
 
 async function defaultReadPipeline(root: string): Promise<string> {
   return readFile(path.join(root, "data", "pipeline.md"), "utf8");
+}
+
+/** The scanner's own default window, and the never-exceed bound. */
+const MAX_WINDOW_DAYS = 30;
+
+/**
+ * Days the next scan should ask for.
+ *
+ * Careevo's engine can re-read a whole month, but Lumina already holds the
+ * corpus: re-scanning 30 days every time re-fetches pages for rows it already
+ * has. The window therefore starts at the last successful run (plus one day of
+ * overlap for late edits), and only falls back to 30 days when there is no
+ * successful run yet.
+ */
+export function scanWindowDays(
+  lastFinishedAt: string | null,
+  now = Date.now(),
+): number {
+  if (!lastFinishedAt) return MAX_WINDOW_DAYS;
+  const finishedAt = Date.parse(lastFinishedAt);
+  if (!Number.isFinite(finishedAt)) return MAX_WINDOW_DAYS;
+  const age = now - finishedAt;
+  if (age < 0) return MAX_WINDOW_DAYS;
+  return Math.min(
+    MAX_WINDOW_DAYS,
+    Math.max(1, Math.ceil(age / 86_400_000) + 1),
+  );
+}
+
+async function defaultWindow(): Promise<number> {
+  try {
+    return scanWindowDays(await lastSuccessfulScanFinishedAt());
+  } catch {
+    return MAX_WINDOW_DAYS;
+  }
 }
 
 /**
@@ -123,10 +161,11 @@ export async function runScanJob(
   const keys = deps.keys ?? readPostingKeys;
   const ingest = deps.ingest ?? ingestScan;
   const finish = deps.finish ?? finishScanRun;
+  const window = deps.window ?? defaultWindow;
 
   let result: ScanRunResult;
   try {
-    const outcome = await scan({ since: 30 });
+    const outcome = await scan({ since: await window() });
     if (!outcome.ok) {
       result = {
         status: "failed",
@@ -157,7 +196,12 @@ export async function runScanJob(
       const existing = await keys();
       const fromThisRun = inbox.filter((row) => {
         if (row.done) return false;
-        return wanted.has(normalisasiKunciUrl(row.url));
+        const key = normalisasiKunciUrl(row.url);
+        if (!key) return false;
+        // A URL already in the corpus is not re-fetched: the row's audit is
+        // stored, and re-upserting it would only move an old posting to the top
+        // of the "newest" list.
+        return wanted.has(key) && !existing.has(key);
       });
       const backlog = inbox
         .filter((row) => {

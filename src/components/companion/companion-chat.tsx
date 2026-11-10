@@ -84,8 +84,13 @@ import {
 import type { ScoreResult, Signal } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { filterPostings } from "@/lib/loker/search";
-import type { LokerCorpus, LokerSearchArgs } from "@/lib/loker/types";
+import type {
+  LokerCorpus,
+  LokerSearchArgs,
+  LokerView,
+} from "@/lib/loker/types";
 import { useSavedLoker } from "@/lib/loker/use-saved";
+import { kalimatRekomendasi, ringkasRekomendasi } from "@/lib/loker/verdict";
 import { modusFor } from "@/lib/modus";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
@@ -218,13 +223,11 @@ const EMPTY_CORPUS: LokerCorpus = {
 
 /**
  * Deterministic copy when the summary route is offline or unconfigured. It
- * states the count and nothing the card does not already show.
+ * states the count and the engine's own recommendation, nothing the card does
+ * not already show.
  */
-function summaryFallback(count: number): string {
-  if (count === 0) {
-    return "Tidak ada lowongan yang cocok dengan saringan itu.";
-  }
-  return `${count} lowongan cocok dengan saringan itu. Buka kartu untuk melihat dua penilaian tiap lowongan.`;
+function summaryFallback(postings: readonly LokerView[]): string {
+  return kalimatRekomendasi(ringkasRekomendasi(postings));
 }
 
 export function CompanionChat({
@@ -924,7 +927,7 @@ export function CompanionChat({
             clearTimeout(summaryTimer);
           }
 
-          const sentence = summary ?? summaryFallback(matches.length);
+          const sentence = summary ?? summaryFallback(matches);
 
           patchCompanion((turn) => ({
             ...turn,
