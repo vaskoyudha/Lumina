@@ -121,9 +121,9 @@ export function validateReport(
       );
     }
   });
-  if (report.points.length > context.signals.length) {
+  if (report.points.length > context.signals.length + 1) {
     issues.push(
-      "points: jumlah poin melebihi jumlah sinyal yang dikembalikan tool",
+      "points: maksimal satu poin observasi tambahan di luar sinyal tool",
     );
   }
 
@@ -131,13 +131,23 @@ export function validateReport(
     context.signals.map((signal) => [normalize(signal.label), signal]),
   );
   const seen = new Set<string>();
+  let observations = 0;
 
   report.points.forEach((point, index) => {
     const key = normalize(point.signal);
-    if (!byLabel.has(key)) {
-      issues.push(
-        `points.${index}.signal: "${point.signal}" bukan sinyal yang dikembalikan tool`,
-      );
+    const known = byLabel.has(key);
+    if (!known) {
+      observations += 1;
+      if (observations > 1) {
+        issues.push(
+          `points.${index}.signal: hanya satu observasi agen yang boleh di luar sinyal tool`,
+        );
+      }
+      if (!point.quote) {
+        issues.push(
+          `points.${index}.quote: observasi agen wajib menyertakan kutipan persis dari pesan`,
+        );
+      }
     }
     if (seen.has(key)) {
       issues.push(`points.${index}.signal: sinyal duplikat "${point.signal}"`);
@@ -177,7 +187,7 @@ export const SUBMIT_REPORT_TOOL = {
   function: {
     name: "submit_report",
     description:
-      "Submit the final evidence-grounded report. Call this when your investigation is ready; if the harness rejects it, read the issues and call it again with the corrected fields. The harness rejects unknown signals and invented quotes, so use the labels and evidence returned by the other tools.",
+      "Submit the final evidence-grounded report. Call this when your investigation is ready; if the harness rejects it, read the issues and call it again with the corrected fields. Prefer a label returned by the other tools. If no tool signal fits but you can see a clear pattern, you may submit at most one observation point with an exact quote from the message; invented labels or quotes are rejected.",
     parameters: z.toJSONSchema(SubmitReportSchema),
   },
 };
