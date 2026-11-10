@@ -46,10 +46,11 @@ import { cn } from "@/lib/utils";
 /**
  * Agents — the detector overview shown in the center column.
  *
- * Static by design. The right-hand pane is the live surface on the conversation
- * and the explanatory surface here; this view only answers who checks a message
- * and what each one looks for. The connectors are decorative: they loop to show
- * direction, never to claim that a stage is running. No trace is read here.
+ * The diagram is static: it answers who checks a message and what each one
+ * looks for, and its connectors are decorative — they loop to show direction,
+ * never to claim that a stage is running. The one live surface is the optional
+ * latest-run summary above it, a content-free `AgentRunSummary` for the
+ * signed-in account; no message and no trace is read here.
  *
  * Shape: Lumina sits at the top as the orchestrator and lays the detectors out
  * in a responsive grid, each dropping into its own mechanism lane. Reading

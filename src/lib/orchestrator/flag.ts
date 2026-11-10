@@ -5,7 +5,7 @@ export function isOrchestratorEnabled(): boolean {
 
 export function orchestratorDeadlineMs(): number {
   const value = Number(process.env.LUMINA_ORCHESTRATOR_DEADLINE_MS);
-  return Number.isFinite(value) && value >= 10_000 && value <= 120_000
+  return Number.isFinite(value) && value >= 10_000 && value <= 180_000
     ? value
-    : 60_000;
+    : 120_000;
 }
