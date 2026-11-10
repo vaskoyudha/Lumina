@@ -17,6 +17,7 @@ import * as React from "react";
 import {
   AGENT_REGISTRY,
   AGENT_SEQUENCE,
+  type AgentProfile,
   type DetectorAgent,
   LUMINA_STEPS,
 } from "@/components/companion/agents";
@@ -197,6 +198,67 @@ function signalsFor(
   );
 }
 
+/** One agent's face in the crew grid: portrait when present, icon otherwise. */
+function CrewFace({ profile }: { profile: AgentProfile }) {
+  return (
+    <span
+      aria-hidden
+      className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line"
+      style={{
+        backgroundColor: `var(${profile.identity}-soft)`,
+        color: `var(${profile.identity})`,
+      }}
+    >
+      {profile.portrait ? (
+        <Image
+          src={profile.portrait}
+          alt=""
+          width={28}
+          height={28}
+          className="size-full object-cover"
+        />
+      ) : (
+        <profile.icon className="size-3.5" />
+      )}
+    </span>
+  );
+}
+
+function Chip({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone?: "danger" | "warn";
+}) {
+  return (
+    <span
+      className={cn(
+        "rounded-md border border-line px-1.5 py-0.5 text-[10px] leading-none text-txt/70",
+        tone === "danger" && "border-danger/30 text-danger",
+        tone === "warn" && "border-warn/30 text-warn",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function crewTone(status: StageStatus): string {
+  switch (status) {
+    case "gagal":
+      return "text-danger";
+    case "temuan":
+      return "text-warn";
+    case "berjalan":
+      return "text-brand-ink";
+    case "selesai":
+      return "text-txt/70";
+    default:
+      return "text-dim";
+  }
+}
+
 function AgentBubble({
   stage,
   result,
@@ -234,7 +296,7 @@ function AgentBubble({
         aria-busy={stage.status === "berjalan" || undefined}
         style={{ borderLeftColor: identity }}
         className={cn(
-          "relative min-w-0 rounded-r-[12px] border-l-2 py-1.5 pr-3 pl-3",
+          "relative min-w-0 rounded-card border border-line border-l-2 bg-panel py-1.5 pr-3 pl-3",
           stage.status === "gagal" && "bg-danger/5",
         )}
       >
@@ -441,6 +503,7 @@ export function AgentRun({
   );
   const voiceLive = live && voice?.status === "berjalan";
   const state = runState(trace.stages);
+  const idle = specialists.length === 0;
   const reduce = useReducedMotion();
   const animated = live && !reduce;
   const clean = specialists.filter(
@@ -474,7 +537,8 @@ export function AgentRun({
       data-run-state={state}
     >
       <motion.div
-        className="rounded-[14px] border border-line bg-panel px-3.5 py-3"
+        data-testid="agent-summary"
+        className="rounded-card border border-line bg-panel p-3.5"
         initial={animated ? { opacity: 0, y: 4 } : false}
         animate={animated ? { opacity: 1, y: 0 } : false}
         transition={{ duration: 0.12, ease: "easeOut" }}
@@ -482,33 +546,36 @@ export function AgentRun({
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-medium text-[12px] text-txt">Orkestrator</span>
           <span className="text-[11px] text-dim">
-            {specialists.length} agen
+            {AGENT_SEQUENCE.length} agen{idle ? " siap" : ""}
           </span>
-          {state === "berjalan" ? (
+          {idle ? (
+            <span className="text-[11px] text-dim/80">
+              Belum ada pemeriksaan
+            </span>
+          ) : state === "berjalan" ? (
             <span className="text-[11px] text-brand-ink">
               {completed} agen selesai ·{" "}
               {voiceLive ? "menyusun jawaban…" : "berjalan…"}
             </span>
-          ) : (
-            <span className="tabular text-[11px] text-dim">
-              {[
-                failed > 0 ? `${failed} gagal` : null,
-                `${clean} selesai`,
-                withFindings > 0 ? `${withFindings} dengan temuan` : null,
-                `${skipped} dilewati`,
-                `${findings} temuan`,
-                `${durationText(engineMs)}`,
-                voice?.status === "dilewati"
-                  ? "jawaban dari templat"
-                  : voice?.status === "gagal"
-                    ? "penyusun bahasa gagal"
-                    : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          )}
+          ) : null}
         </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {failed > 0 ? <Chip tone="danger">{failed} gagal</Chip> : null}
+          <Chip>{clean} selesai</Chip>
+          {withFindings > 0 ? (
+            <Chip tone="warn">{withFindings} dengan temuan</Chip>
+          ) : null}
+          <Chip>{skipped} dilewati</Chip>
+          <Chip>{findings} temuan</Chip>
+          <Chip>{durationText(engineMs)}</Chip>
+          {voice?.status === "dilewati" ? (
+            <Chip>jawaban dari templat</Chip>
+          ) : voice?.status === "gagal" ? (
+            <Chip tone="danger">penyusun bahasa gagal</Chip>
+          ) : null}
+        </div>
+
         <ol className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-dim">
           {LUMINA_STEPS.map((step, index) => (
             <li key={step} className="flex items-center gap-1">
@@ -532,46 +599,59 @@ export function AgentRun({
             </li>
           ))}
         </ol>
-        <ul aria-hidden className="mt-2 flex -space-x-1.5">
-          {specialists.slice(0, 8).map((stage) => {
-            const profile = isDetector(stage.id)
-              ? AGENT_REGISTRY[stage.id]
-              : null;
-            return (
-              <li
-                key={stage.id}
-                className="flex size-5 items-center justify-center overflow-hidden rounded-full border border-panel"
-                style={{
-                  backgroundColor: profile
-                    ? `var(${profile.identity}-soft)`
-                    : "var(--lumina-brand-soft)",
-                  color: profile ? `var(${profile.identity})` : undefined,
-                }}
-              >
-                {profile?.portrait ? (
-                  <Image
-                    src={profile.portrait}
-                    alt=""
-                    width={20}
-                    height={20}
-                    className="size-full object-cover"
-                  />
-                ) : profile ? (
-                  <profile.icon className="size-2.5" />
-                ) : null}
-              </li>
-            );
-          })}
-          {specialists.length > 8 ? (
-            <li className="flex size-5 items-center justify-center rounded-full border border-panel bg-panel-2 font-mono text-[9px] text-dim">
-              +{specialists.length - 8}
-            </li>
-          ) : null}
-        </ul>
       </motion.div>
 
+      <ul
+        aria-label="Agen yang bertugas"
+        className="grid grid-cols-2 gap-1.5 sm:grid-cols-4"
+      >
+        {AGENT_SEQUENCE.map((id) => {
+          const profile = AGENT_REGISTRY[id];
+          const stage = byId.get(id);
+          const status = stage?.status ?? "menunggu";
+          return (
+            <li
+              key={id}
+              data-testid={`agent-card-${id}`}
+              data-status={status}
+              className={cn(
+                "flex min-w-0 items-center gap-2 rounded-card border border-line bg-panel px-2.5 py-2",
+                status === "gagal" && "border-danger/30 bg-danger/5",
+              )}
+            >
+              <CrewFace profile={profile} />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline justify-between gap-1">
+                  <span className="truncate font-medium text-[11.5px] text-txt">
+                    {profile.displayName}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-[10px] leading-none",
+                      crewTone(status),
+                    )}
+                  >
+                    {STATUS_WORD[status]}
+                  </span>
+                </span>
+                <span className="mt-0.5 flex items-center justify-between gap-1">
+                  <span className="truncate font-mono text-[9px] text-dim uppercase tracking-[0.12em]">
+                    {profile.label}
+                  </span>
+                  {stage && stage.status !== "berjalan" ? (
+                    <span className="tabular shrink-0 text-[9px] text-txt/60">
+                      {durationText(stage.ms)}
+                    </span>
+                  ) : null}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
       <motion.ol
-        className="ms-3 flex flex-col border-l border-line"
+        className="flex flex-col gap-1.5"
         data-motion-list={animated ? "true" : "false"}
         initial={animated ? "hidden" : false}
         animate={animated ? "show" : false}
