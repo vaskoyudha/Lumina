@@ -14,7 +14,12 @@ import {
   TrendingUp,
   User,
 } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
+import {
+  AGENT_REGISTRY,
+  type DetectorAgent,
+} from "@/components/companion/agents";
 
 /**
  * The two dashboard cards the owner supplied (`lumina_dashboard.tsx`), cloned
@@ -98,6 +103,7 @@ const QUICK_FEATURES: readonly QuickFeature[] = [
 
 interface AgentHistoryItem {
   id: string;
+  agent: DetectorAgent;
   title: string;
   time: string;
   unreadDot?: boolean;
@@ -109,6 +115,7 @@ interface AgentHistoryItem {
 const AGENT_HISTORY: readonly AgentHistoryItem[] = [
   {
     id: "h1",
+    agent: "job",
     title: "Pencari Lowongan",
     time: "2 menit yang lalu",
     unreadDot: true,
@@ -118,6 +125,7 @@ const AGENT_HISTORY: readonly AgentHistoryItem[] = [
   },
   {
     id: "h2",
+    agent: "marketplace",
     title: "Pesaing Agent",
     time: "1 jam yang lalu",
     icon: BarChart2,
@@ -125,6 +133,7 @@ const AGENT_HISTORY: readonly AgentHistoryItem[] = [
   },
   {
     id: "h3",
+    agent: "identity",
     title: "Identitas Agent",
     time: "3 jam yang lalu",
     icon: User,
@@ -133,6 +142,7 @@ const AGENT_HISTORY: readonly AgentHistoryItem[] = [
   },
   {
     id: "h4",
+    agent: "conversation",
     title: "Conversation Insights",
     time: "1 hari yang lalu",
     icon: MessageSquare,
@@ -233,6 +243,7 @@ export function CompanionQuickCards({
           {AGENT_HISTORY.map((item) => {
             const Icon = item.icon;
             const tone = TONE[item.tone];
+            const portrait = AGENT_REGISTRY[item.agent].portrait;
             return (
               <div
                 key={item.id}
@@ -244,14 +255,24 @@ export function CompanionQuickCards({
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
                   <span
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone.box}`}
+                    className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${tone.box}`}
                   >
-                    <Icon
-                      aria-hidden
-                      className={`size-5 ${tone.ink} ${
-                        item.filled ? "fill-current" : ""
-                      }`}
-                    />
+                    {portrait ? (
+                      <Image
+                        src={portrait}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <Icon
+                        aria-hidden
+                        className={`size-5 ${tone.ink} ${
+                          item.filled ? "fill-current" : ""
+                        }`}
+                      />
+                    )}
                   </span>
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5">
