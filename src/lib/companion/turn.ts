@@ -102,7 +102,7 @@ const ATTACHMENT_NOUN =
   /\b(?:screenshot|screen\s?shot|ss|image|photo|picture|attachment|file|document|tangkapan\s+layar|gambar|foto|lampiran|berkas|dokumen)\b/i;
 
 const PRIOR_REFERENCE =
-  /\b(?:tadi|barusan|sebelumnya|sebelum\s+ini|di\s+atas|above|earlier|previous(?:ly)?|before|(?:saya|aku)\s+(?:baru\s+)?(?:kirim|kasih|beri|unggah|tempel|bagikan)|(?:just|baru)\s+(?:sent|send|gave|give|shared|share|uploaded|upload|pasted|paste|attached|attach|showed|show))\b/i;
+  /\b(?:tadi|barusan|sebelumnya|sebelum\s+ini|di\s+atas|above|earlier|previous(?:ly)?|before|(?:that|this|the)\s+(?:screenshot|screen\s?shot|image|photo|picture|attachment|file|document)|(?:gambar|foto|ss|screenshot|tangkapan\s+layar|lampiran|berkas|dokumen)\s+(?:itu|tersebut|tadi)|(?:saya|aku)\s+(?:baru\s+)?(?:kirim|kasih|beri|unggah|tempel|bagikan)|(?:just|baru)\s+(?:sent|send|gave|give|shared|share|uploaded|upload|pasted|paste|attached|attach|showed|show))\b/i;
 
 /** True when the reader is asking about an attachment sent on an earlier turn. */
 export function refersToPriorAttachment(text: string): boolean {

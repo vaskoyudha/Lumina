@@ -252,7 +252,7 @@ describe("CompanionChat · images are read, then scored locally", () => {
 
     await user.type(
       screen.getByPlaceholderText(/tempel pesan/i),
-      "So basically the screenshot that I just give you it is one of indicators from other people",
+      "So basically based on that image it is like some fraud system right",
     );
     await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 

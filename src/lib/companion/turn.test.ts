@@ -318,9 +318,15 @@ describe("refersToPriorAttachment", () => {
         "So basically the screenshot that I just give you it is one of indicators from other people",
       ),
     ).toBe(true);
+    expect(
+      refersToPriorAttachment(
+        "So basically based on that image it is like some fraud system right",
+      ),
+    ).toBe(true);
     expect(refersToPriorAttachment("gambar tadi itu dari teman saya")).toBe(
       true,
     );
+    expect(refersToPriorAttachment("gambar itu dari teman saya")).toBe(true);
     expect(refersToPriorAttachment("lampiran yang saya kirim sebelumnya")).toBe(
       true,
     );
