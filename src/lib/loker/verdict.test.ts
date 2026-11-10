@@ -1,6 +1,7 @@
 import type { LokerView } from "@/lib/loker/types";
 import {
   alasanRekomendasi,
+  kalimatAlasan,
   kalimatRekomendasi,
   rekomendasiDari,
   rekomendasiUntuk,
@@ -79,9 +80,21 @@ describe("alasanRekomendasi", () => {
     ]);
   });
 
+  it("keeps an informational signal out of the safe verdict", () => {
+    const alasan = alasanRekomendasi(
+      posting({
+        luminaSignals: [
+          { label: "Tautan tidak ada di daftar domain resmi", weight: 1 },
+        ],
+      }),
+    );
+    expect(alasan).toEqual(["Kedua penilaian tidak menemukan tanda penipuan."]);
+  });
+
   it("caps the list so a card stays a card", () => {
     const alasan = alasanRekomendasi(
       posting({
+        sentinelStatus: "suspicious",
         sentinelFlags: ["domain_baru", "email_pribadi"],
         luminaSignals: [
           { label: "A", weight: 1 },
@@ -126,6 +139,15 @@ describe("rekomendasiUntuk", () => {
   it("reads the two stored verdicts only", () => {
     expect(rekomendasiUntuk(posting({ luminaRisk: "mencurigakan" }))).toBe(
       "waspada",
+    );
+  });
+});
+
+describe("kalimatAlasan", () => {
+  it("joins the evidence with exactly one trailing period", () => {
+    expect(kalimatAlasan(["Domain baru."])).toBe("Domain baru.");
+    expect(kalimatAlasan(["Domain baru", "Email pribadi"])).toBe(
+      "Domain baru; Email pribadi.",
     );
   });
 });

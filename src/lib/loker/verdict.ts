@@ -62,6 +62,19 @@ export function alasanRekomendasi(
     | "companyEmail"
   >,
 ): string[] {
+  const level = rekomendasiUntuk(posting);
+
+  /*
+   * A signal with a positive weight can still be informational — the score
+   * engine records "the apply link is not on the official-domain list" without
+   * raising the risk level. Listing it under "Aman dilamar" reads like a
+   * contradiction, so the safe verdict gets one positive sentence and no
+   * evidence list.
+   */
+  if (level === "aman") {
+    return ["Kedua penilaian tidak menemukan tanda penipuan."];
+  }
+
   const alasan: string[] = [];
 
   for (const flag of posting.sentinelFlags.slice(0, 2)) {
@@ -77,13 +90,17 @@ export function alasanRekomendasi(
 
   if (alasan.length > 0) return alasan.slice(0, 3);
 
-  const level = rekomendasiUntuk(posting);
   if (level === "hindari")
     return ["Salah satu penilaian menolak lowongan ini."];
-  if (level === "waspada") {
-    return ["Salah satu penilaian meminta kehati-hatian."];
-  }
-  return ["Kedua penilaian tidak menemukan tanda penipuan."];
+  return ["Salah satu penilaian meminta kehati-hatian."];
+}
+
+/** One sentence from the evidence list, with exactly one trailing period. */
+export function kalimatAlasan(alasan: readonly string[]): string {
+  const body = alasan
+    .map((item) => item.trim().replace(/[.!?]+$/, ""))
+    .join("; ");
+  return `${body}.`;
 }
 
 export interface RingkasanRekomendasi {

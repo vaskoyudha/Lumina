@@ -23,6 +23,7 @@ import { labelSinyal } from "@/lib/loker/audit/sentinel";
 import type { LokerView } from "@/lib/loker/types";
 import {
   alasanRekomendasi,
+  kalimatAlasan,
   REKOMENDASI_LABEL,
   type Rekomendasi,
   rekomendasiUntuk,
@@ -215,7 +216,7 @@ export function LokerCard({
 
         <p className="mt-2 text-[11px] text-dim leading-snug">
           <span className="font-semibold text-txt">Rekomendasi Lumina: </span>
-          {alasan.join("; ")}.
+          {kalimatAlasan(alasan)}
         </p>
 
         {disagreement(posting) ? (
