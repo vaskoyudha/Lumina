@@ -410,6 +410,40 @@ describe("runOrchestrator", () => {
     ).toBe(true);
   });
 
+  it("marks a specialist with no assigned signal as skipped, not failed", async () => {
+    const clean: ScoreResult = {
+      ...baseline,
+      score: 0,
+      risk: "bersih",
+      signals: [],
+      modus: "tidak-ada",
+      hardOverride: false,
+    };
+    const cleanScored = (() => ({ result: clean, trace: path })) as never;
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban")) {
+          return { role: "assistant", content: "Skor resmi 0/100." };
+        }
+        return { role: "assistant", content: null, tool_calls: [] };
+      },
+    );
+
+    const result = await runOrchestrator(
+      { ...request, message: "Tidak ada pola penipuan di sini." },
+      { chat: chat as never, score: cleanScored },
+    );
+
+    const qris = result.events.find(
+      (event) => event.type === "agent_result" && event.agent === "qris",
+    );
+    expect(qris?.type === "agent_result" ? qris.status : null).toBe("dilewati");
+  });
+
   it("fails honestly instead of leaking raw JSON after two invalid reports", async () => {
     const result = await runOrchestrator(request, {
       chat: async (options) => {
@@ -433,10 +467,16 @@ describe("runOrchestrator", () => {
     expect(reports.length).toBeGreaterThan(0);
     for (const report of reports) {
       if (report.type !== "agent_result") continue;
-      expect(report.status).toBe("gagal");
+      expect(["gagal", "dilewati"]).toContain(report.status);
       expect(report.points).toEqual([]);
       expect(report.summary.trim().startsWith("{")).toBe(false);
     }
+    expect(
+      reports.some(
+        (report) =>
+          report.type === "agent_result" && report.status === "gagal",
+      ),
+    ).toBe(true);
   });
 
   it("reuses the same child session for the same case id", async () => {
