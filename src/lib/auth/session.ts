@@ -10,6 +10,30 @@ export interface SessionPayload extends Account {
   exp: number;
 }
 
+export interface SessionMeta {
+  userAgent?: string | null;
+  clientIp?: string | null;
+}
+
+export interface AccountSession {
+  id: string;
+  userAgent: string | null;
+  clientIp: string | null;
+  signedIn: string;
+  lastActive: string;
+  expiresAt: string;
+  current: boolean;
+}
+
+interface SessionRecord {
+  token_hash: string;
+  user_agent: string | null;
+  client_ip: string | null;
+  created_at: Date | string;
+  last_seen_at: Date | string;
+  expires_at: Date | string;
+}
+
 export const sessionCookieOptions = {
   httpOnly: true,
   sameSite: "lax" as const,
@@ -21,14 +45,17 @@ export const sessionCookieOptions = {
 export async function createSession(
   userId: string,
   previous?: string,
+  meta: SessionMeta = {},
 ): Promise<string> {
   const token = randomBytes(32).toString("base64url");
   const client = await authDatabase().connect();
   try {
     await client.query("BEGIN");
     await client.query(
-      "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '24 hours')",
-      [digest(token), userId],
+      `INSERT INTO sessions
+        (token_hash, user_id, expires_at, user_agent, client_ip, created_at, last_seen_at)
+       VALUES ($1, $2, now() + interval '24 hours', $3, $4, now(), now())`,
+      [digest(token), userId, meta.userAgent ?? null, meta.clientIp ?? null],
     );
     if (previous)
       await client.query("DELETE FROM sessions WHERE token_hash = $1", [
@@ -55,6 +82,12 @@ export async function readSession(
     )
   ).rows[0];
   if (!row) return null;
+  await authDatabase()
+    .query(
+      "UPDATE sessions SET last_seen_at = now() WHERE token_hash = $1 AND last_seen_at < now() - interval '5 minutes'",
+      [digest(token)],
+    )
+    .catch(() => {});
   return {
     id: row.id,
     email: row.email,
@@ -68,4 +101,65 @@ export async function revokeSession(token: string | undefined): Promise<void> {
     await authDatabase().query("DELETE FROM sessions WHERE token_hash = $1", [
       digest(token),
     ]);
+}
+
+export async function listSessions(
+  userId: string,
+  currentToken?: string,
+): Promise<AccountSession[]> {
+  const currentHash = currentToken ? digest(currentToken) : "";
+  const rows = (
+    await authDatabase().query<SessionRecord>(
+      `SELECT token_hash, user_agent, client_ip, created_at, last_seen_at, expires_at
+       FROM sessions
+       WHERE user_id = $1 AND expires_at > now()
+       ORDER BY last_seen_at DESC
+       LIMIT 50`,
+      [userId],
+    )
+  ).rows;
+  return rows.map((row) => ({
+    id: row.token_hash,
+    userAgent: row.user_agent,
+    clientIp: row.client_ip,
+    signedIn: new Date(row.created_at).toISOString(),
+    lastActive: new Date(row.last_seen_at).toISOString(),
+    expiresAt: new Date(row.expires_at).toISOString(),
+    current: row.token_hash === currentHash,
+  }));
+}
+
+export async function revokeUserSession(
+  userId: string,
+  tokenHash: string,
+): Promise<boolean> {
+  const result = await authDatabase().query(
+    "DELETE FROM sessions WHERE token_hash = $1 AND user_id = $2",
+    [tokenHash, userId],
+  );
+  return Boolean(result.rowCount);
+}
+
+export async function revokeOtherSessions(
+  userId: string,
+  currentToken?: string,
+): Promise<number> {
+  const currentHash = currentToken ? digest(currentToken) : null;
+  const result = currentHash
+    ? await authDatabase().query(
+        "DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2",
+        [userId, currentHash],
+      )
+    : await authDatabase().query("DELETE FROM sessions WHERE user_id = $1", [
+        userId,
+      ]);
+  return result.rowCount ?? 0;
+}
+
+export async function revokeAllSessions(userId: string): Promise<number> {
+  const result = await authDatabase().query(
+    "DELETE FROM sessions WHERE user_id = $1",
+    [userId],
+  );
+  return result.rowCount ?? 0;
 }
