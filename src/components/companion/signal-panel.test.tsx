@@ -58,6 +58,11 @@ describe("SignalPanel", () => {
     expect(
       screen.getByRole("list", { name: /agent yang akan memeriksa/i }),
     ).toBeInTheDocument();
+
+    // The routing rows print the trace contract's own task strings, not a
+    // second hand-written copy, and do not claim a gate most detectors lack.
+    expect(screen.getAllByText("MEMBACA")).toHaveLength(AGENT_SEQUENCE.length);
+    expect(screen.getByText(STAGE_LABEL.message.task)).toBeInTheDocument();
   });
 
   it("leads with the verdict and never invents a finding", () => {
