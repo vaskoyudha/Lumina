@@ -14,7 +14,7 @@
           "Minta DP dulu"
         ],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message", "link"]
@@ -213,7 +213,7 @@
           "Melarang verifikasi"
         ],
         "level": 2,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": "L4",
         "detectors": ["message", "identity", "conversation"]
@@ -408,7 +408,7 @@
           "Diminta setor lagi"
         ],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message", "link"]
@@ -607,7 +607,7 @@
           "Top-up membesar"
         ],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": "L3",
         "detectors": ["message", "link"]
@@ -802,7 +802,7 @@
         "kerugian": "±Rp189,9 M",
         "ciri": ["\"Anda menang\"", "Wajib bayar admin/pajak dulu"],
         "level": 2,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message", "link"]
@@ -989,7 +989,7 @@
         "kerugian": "±Rp491 M",
         "ciri": ["Kenalan online", "Paket tertahan", "Pemerasan video call"],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message", "identity", "conversation"]
@@ -1179,7 +1179,7 @@
           "Domain mirip merek resmi"
         ],
         "level": 2,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": "L2",
         "detectors": ["message", "link"]
@@ -1370,7 +1370,7 @@
         "kerugian": "±Rp361 M",
         "ciri": ["\"CS\" palsu", "Diminta share screen / remote app"],
         "level": 2,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message", "conversation"]
@@ -1561,7 +1561,7 @@
         "kerugian": "±Rp40,6 M",
         "ciri": ["Pinjaman cepat", "Biaya di muka", "Ancaman sebar data"],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": "L3",
         "detectors": ["message", "link"]
@@ -1930,7 +1930,7 @@
           "Nama penerima tidak sesuai (prinsip PASTI)"
         ],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message"]
@@ -1992,7 +1992,7 @@
         "checklist": [
           "Nama penerima pada konfirmasi tidak cocok dengan nama merchant",
           "Stiker QRIS ditempel di atas stiker lain atau mudah terkelupas",
-          "Nominal tidak muncul otomatis dan diminta mengetik manual",
+          "Stiker QRIS tidak mencantumkan NMID atau logo QRIS resmi",
           "Merchant tidak mengenali kode QRIS yang kamu pindai",
           "Diminta buru-buru menyelesaikan pembayaran tanpa memeriksa layar"
         ],
@@ -2120,7 +2120,7 @@
           "Bayar ke rekening pribadi"
         ],
         "level": 3,
-        "modulStatus": "segera",
+        "modulStatus": "lengkap",
         "scenarioId": null,
         "scenarioPlanned": null,
         "detectors": ["message", "link"]
