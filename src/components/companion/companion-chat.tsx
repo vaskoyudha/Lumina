@@ -10,9 +10,11 @@ import {
   PanelRightOpen,
   Paperclip,
   SquarePen,
+  Users,
   Workflow,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
 import { Mascot } from "@/components/brand/mascot";
@@ -1200,7 +1202,16 @@ export function CompanionChat({
                 />
               </Button>
 
-              <div className="flex h-[32px] min-w-0 items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 shadow-rest">
+              <div className="flex h-10 min-w-0 items-center gap-1.5 rounded-full border border-brand-line bg-panel pr-2 pl-1.5 shadow-rest">
+                <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-full bg-brand-soft">
+                  <Image
+                    alt=""
+                    src="/brand/companion-mascot.png"
+                    width={128}
+                    height={123}
+                    className="size-6 object-contain"
+                  />
+                </span>
                 <span className="truncate font-medium text-[12px] text-txt">
                   {showAgents
                     ? "Agen pemeriksa"
@@ -1267,7 +1278,7 @@ export function CompanionChat({
                 size="icon"
                 aria-label={copiedThread ? "Tautan disalin" : "Salin tautan"}
                 onClick={copyThreadLink}
-                className="hidden size-[32px] rounded-full bg-chip text-ink-soft hover:bg-chip-hover hover:text-ink lg:grid"
+                className="hidden size-10 shrink-0 rounded-full border border-line bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt lg:grid"
               >
                 <span className="relative grid size-4 place-items-center">
                   <Check
@@ -1296,7 +1307,7 @@ export function CompanionChat({
                 variant="ghost"
                 size="sm"
                 onClick={exportThread}
-                className="hidden h-[32px] gap-1.5 rounded-full bg-chip px-3 text-[12px] font-medium text-ink-soft hover:bg-chip-hover hover:text-ink lg:flex"
+                className="hidden h-10 gap-1.5 rounded-full border border-line bg-panel px-4 text-xs font-medium text-txt shadow-sm transition-colors hover:bg-panel-2 lg:flex"
               >
                 <Download aria-hidden strokeWidth={1.7} className="size-3.5" />
                 Ekspor percakapan
@@ -1327,9 +1338,12 @@ export function CompanionChat({
               <Button
                 asChild
                 size="sm"
-                className="hidden h-[32px] bg-ink px-3.5 text-[12px] font-medium text-bg hover:bg-ink-hover lg:inline-flex"
+                className="hidden h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-panel shadow-[0_10px_22px_-14px_color-mix(in_oklab,var(--lumina-brand)_85%,transparent)] hover:bg-brand-strong lg:inline-flex"
               >
-                <Link href="/komunitas">Komunitas</Link>
+                <Link href="/komunitas">
+                  <Users aria-hidden strokeWidth={1.9} className="size-3.5" />
+                  Komunitas
+                </Link>
               </Button>
               {!showAgents && evidenceCollapsed ? (
                 <Button
