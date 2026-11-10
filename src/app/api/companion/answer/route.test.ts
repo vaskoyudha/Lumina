@@ -354,7 +354,11 @@ describe("POST /api/companion/answer", () => {
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const response = await POST(
-      request({ lane: "lanjutan", question: "buatkan laporan ke OJK" }),
+      request({
+        lane: "lanjutan",
+        question: "buatkan laporan ke OJK",
+        hasVerdict: true,
+      }),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
@@ -420,21 +424,21 @@ describe("POST /api/companion/answer", () => {
     ).toContain("akun aku di hack");
   });
 
-  it("drops a report_draft call that names an unknown channel", async () => {
+  it("drops an unsolicited report tool on a plain question", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         choices: [
           {
             message: {
-              content: "Baik.",
+              content: "Laporan adalah catatan resmi.",
               tool_calls: [
                 {
-                  id: "call-3",
+                  id: "call-9",
                   type: "function",
                   function: {
                     name: "report_draft",
-                    arguments: JSON.stringify({ channel: "bank" }),
+                    arguments: JSON.stringify({}),
                   },
                 },
               ],
@@ -446,10 +450,210 @@ describe("POST /api/companion/answer", () => {
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const response = await POST(
-      request({ lane: "lanjutan", question: "buatkan laporan" }),
+      request({ lane: "tanya", question: "apa itu laporan penipuan?" }),
     );
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { toolCalls: unknown[] };
-    expect(body.toolCalls).toEqual([]);
+    expect(await response.json()).toMatchObject({ toolCalls: [] });
+
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      tools?: unknown;
+    };
+    expect(sent.tools).toBeUndefined();
+  });
+
+  it("does not offer report_draft for a how-to question", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: "Begini caranya.", tool_calls: [] } }],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await POST(
+      request({ lane: "tanya", question: "bagaimana cara buat laporan?" }),
+    );
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      tools?: unknown;
+    };
+    expect(sent.tools).toBeUndefined();
+  });
+
+  it("withholds tools on the final loop step", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Baik.",
+              tool_calls: [
+                {
+                  id: "call-10",
+                  type: "function",
+                  function: {
+                    name: "job_search",
+                    arguments: JSON.stringify({ query: "React" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "cari lowongan React",
+        final: true,
+      }),
+    );
+    expect(await response.json()).toMatchObject({ toolCalls: [] });
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      tools?: unknown;
+    };
+    expect(sent.tools).toBeUndefined();
+  });
+
+  it("rebuilds the transcript from a typed job observation", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Ada satu lowongan React yang bersih.",
+              tool_calls: [],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "cari lowongan React",
+        observations: [
+          {
+            name: "job_search",
+            callId: "call-1",
+            arguments: { query: "React" },
+            ok: true,
+            result: {
+              count: 1,
+              total: 1,
+              capped: false,
+              postings: [
+                {
+                  title: "Frontend Engineer",
+                  company: "Maju",
+                  sentinelStatus: "clean",
+                  luminaRisk: "bersih",
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      text: "Ada satu lowongan React yang bersih.",
+      toolCalls: [],
+    });
+
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      tools: { function: { name: string } }[];
+      messages: {
+        role: string;
+        tool_calls?: { id: string }[];
+        tool_call_id?: string;
+        content: string;
+      }[];
+    };
+    expect(sent.tools.map((tool) => tool.function.name)).toEqual([
+      "job_search",
+    ]);
+    expect(sent.messages[2]?.tool_calls?.[0]?.id).toBe("call-1");
+    expect(sent.messages[3]?.role).toBe("tool");
+    expect(sent.messages[3]?.tool_call_id).toBe("call-1");
+    expect(sent.messages[3]?.content).toContain("Frontend Engineer");
+  });
+
+  it("rejects an observation for a tool the question did not request", async () => {
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "apa itu pinjol?",
+        observations: [
+          {
+            name: "job_search",
+            callId: "call-1",
+            arguments: { query: "React" },
+            ok: true,
+            result: { count: 0, total: 0, capped: false, postings: [] },
+          },
+        ],
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: "invalid-observation",
+    });
+  });
+
+  it("carries attachment text only on an explicit content question", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          { message: { content: "Teksnya meminta OTP.", tool_calls: [] } },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "apa isi gambar ini?",
+        contentQuestion: true,
+        attachmentContext: [{ kind: "image", text: "Kirim OTP sekarang." }],
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      text: "Teksnya meminta OTP.",
+    });
+
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      messages: { content: string }[];
+    };
+    const payload = JSON.parse(sent.messages[1]?.content ?? "{}");
+    expect(payload.attachmentContext).toEqual([
+      { kind: "image", text: "Kirim OTP sekarang." },
+    ]);
+    expect(JSON.stringify(payload)).not.toContain("namafile");
+  });
+
+  it("rejects attachment text on a non-content request", async () => {
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "apa itu pinjol?",
+        attachmentContext: [{ kind: "text", text: "isi" }],
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: "invalid-attachment-context",
+    });
   });
 });

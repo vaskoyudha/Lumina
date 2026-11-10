@@ -122,10 +122,12 @@ describe("CompanionChat · real user intent regressions", () => {
     );
     await sendText(user, "itu isi kode nya apa");
     expect(
-      await screen.findByText(
-        /isi PDF, dokumen, dan berkas kode belum dapat saya baca/i,
-      ),
-    ).toBeInTheDocument();
+      (
+        await screen.findAllByText(
+          /Teks PDF belum bisa dibaca di perangkat ini/i,
+        )
+      ).length,
+    ).toBeGreaterThan(0);
     expect(scoreSpy).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
     const log = screen.getByRole("log", { name: /percakapan/i });
@@ -638,23 +640,28 @@ describe("CompanionChat · job search", () => {
   };
 
   it("renders the card and the summary when the model calls job_search", async () => {
+    let answerCalls = 0;
     const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/api/companion/answer")) {
+        answerCalls += 1;
         return {
           ok: true,
           status: 200,
-          json: async () => ({
-            ok: true,
-            text: "",
-            toolCalls: [
-              {
-                id: "call-1",
-                name: "job_search",
-                arguments: { query: "React" },
-              },
-            ],
-          }),
+          json: async () =>
+            answerCalls === 1
+              ? {
+                  ok: true,
+                  text: "",
+                  toolCalls: [
+                    {
+                      id: "call-1",
+                      name: "job_search",
+                      arguments: { query: "React" },
+                    },
+                  ],
+                }
+              : { ok: true, text: "Berikut lowongan React.", toolCalls: [] },
         } as unknown as Response;
       }
       if (url.includes("/api/companion/tools/summary")) {
@@ -682,10 +689,36 @@ describe("CompanionChat · job search", () => {
       await screen.findByText("Ada satu lowongan React."),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    const [, firstAnswer] = fetchMock.mock.calls[0] as unknown as [
+      unknown,
+      { body?: string },
+    ];
+    const firstBody = JSON.parse(String(firstAnswer.body)) as {
+      observations: unknown[];
+      final: boolean;
+    };
+    expect(firstBody.observations).toEqual([]);
+    expect(firstBody.final).toBe(false);
+
+    const [, secondAnswer] = fetchMock.mock.calls[1] as unknown as [
+      unknown,
+      { body?: string },
+    ];
+    const secondBody = JSON.parse(String(secondAnswer.body)) as {
+      observations: {
+        name: string;
+        result: { postings: { title: string }[] };
+      }[];
+    };
+    expect(secondBody.observations[0]?.name).toBe("job_search");
+    expect(secondBody.observations[0]?.result.postings[0]?.title).toBe(
+      "Frontend Engineer",
+    );
 
     // Privacy: the phase-2 summary carries postings, never the user's query.
-    const [, summaryInit] = fetchMock.mock.calls[1] as unknown as [
+    const [, summaryInit] = fetchMock.mock.calls[2] as unknown as [
       unknown,
       { body?: string },
     ];
