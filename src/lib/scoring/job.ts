@@ -12,7 +12,7 @@ import { normalizeWithMap, originalSpan } from "@/lib/scoring/normalize";
  */
 
 const JOB_CONTEXT =
-  /\b(?:lowongan|kerja|karier|recruiter|rekrut|kandidat|pelamar|gaji|upah|honor|interview|wawancara|bergabung|tim|posisi|magang|part\s*time|full\s*time|tugas\s+harian)\b/i;
+  /\b(?:lowongan|kerja|karier|recruiter|rekrut|kandidat|pelamar|gaji|upah|honor|interview|wawancara|bergabung|tim|posisi|magang|part\s*time|full\s*time|tugas\s+harian|tugas\s*(?:2|selanjutnya|berbayar))\b/i;
 
 /**
  * "Biaya ditanggung perusahaan" is a waiver; "ditanggung pelamar" is the
@@ -108,6 +108,14 @@ const JOB_RULES: readonly JobRule[] = [
     label: "Meminta deposit administrasi untuk proses rekrutmen",
     pattern:
       /\b(?:biaya administrasi|deposit)\b[^.!?]{0,60}\b(?:pendaftaran|penempatan|rekrutmen|kandidat)\b/i,
+  },
+  {
+    id: "job-task-payment",
+    weight: 0.82,
+    label:
+      "Tugas lanjutan meminta pembayaran/penarikan yang dikaitkan dengan tugas berikutnya",
+    pattern:
+      /\btugas\s*(?:2|selanjutnya)\b[\s\S]{0,160}\b(?:pembayaran|bayar|biaya|setor|transfer|penarikan|dicairkan)\b/i,
   },
   {
     id: "job-withdrawal",
