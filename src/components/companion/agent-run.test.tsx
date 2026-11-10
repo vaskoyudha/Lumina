@@ -76,6 +76,45 @@ describe("AgentRun", () => {
     );
   });
 
+  it("renders the standing crew with every agent card", () => {
+    render(<AgentRun trace={{ stages: [], totalMs: 0 }} />);
+
+    expect(screen.getByText("8 agen siap")).toBeInTheDocument();
+    expect(screen.getByText("Belum ada pemeriksaan")).toBeInTheDocument();
+    for (const id of [
+      "message",
+      "link",
+      "identity",
+      "conversation",
+      "job",
+      "marketplace",
+      "qris",
+      "evidence",
+    ]) {
+      expect(screen.getByTestId(`agent-card-${id}`)).toHaveAttribute(
+        "data-status",
+        "menunggu",
+      );
+    }
+  });
+
+  it("mirrors each agent's live status on its crew card", () => {
+    render(<AgentRun trace={trace} live />);
+
+    expect(screen.getByTestId("agent-card-message")).toHaveAttribute(
+      "data-status",
+      "temuan",
+    );
+    expect(screen.getByTestId("agent-card-link")).toHaveAttribute(
+      "data-status",
+      "dilewati",
+    );
+    expect(screen.getByTestId("agent-card-evidence")).toHaveAttribute(
+      "data-status",
+      "selesai",
+    );
+  });
+
   it("prints the voice name once, not twice", () => {
     const settled: AgentTrace = {
       ...trace,
@@ -283,12 +322,19 @@ describe("AgentRun", () => {
       totalMs: 12,
     };
     const { container } = render(<AgentRun trace={settled} />);
-    const head = container.querySelector("[data-run-state]");
+    expect(container.querySelector("[data-run-state]")).toBeInTheDocument();
+    const summary = screen.getByTestId("agent-summary");
 
     // 3 selesai + 1 dengan temuan + 4 dilewati = 8 agents, and 12 - 2.5 = 9.5.
-    expect(head).toHaveTextContent(
-      "3 selesai · 1 dengan temuan · 4 dilewati · 2 temuan · 9,5 ms",
-    );
+    for (const chip of [
+      "3 selesai",
+      "1 dengan temuan",
+      "4 dilewati",
+      "2 temuan",
+      "9,5 ms",
+    ]) {
+      expect(within(summary).getByText(chip)).toBeInTheDocument();
+    }
   });
 
   it("announces the settled summary once the run stops", () => {
@@ -432,8 +478,9 @@ describe("AgentRun", () => {
     };
     render(<AgentRun trace={withSearch} />);
     // 8 - 5 - 2 = 1 ms of detector work.
-    expect(
-      screen.getByText(/^1 selesai · 0 dilewati · 0 temuan · 1,0 ms$/),
-    ).toBeInTheDocument();
+    const summary = screen.getByTestId("agent-summary");
+    for (const chip of ["1 selesai", "0 dilewati", "0 temuan", "1,0 ms"]) {
+      expect(within(summary).getByText(chip)).toBeInTheDocument();
+    }
   });
 });
