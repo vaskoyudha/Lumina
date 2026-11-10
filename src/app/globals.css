@@ -535,6 +535,27 @@
   }
 
   /*
+    The product owns the viewport (full-height app shells, internal scroll
+    regions). A browser bounce or pull-to-refresh drags that shell off its
+    ground and exposes the document canvas above it — a white band on every
+    page. Keep native scrolling, drop the overscroll.
+  */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  /*
+    The canvas is painted from the body background by default, which is white.
+    Paint it with the workspace's warm paper instead, so a browser that still
+    rubber-bands (iOS Safari) reveals the same ground. Keep in sync with
+    `[data-workspace] { --lumina-bg }` in `styles/appnext-tokens.css`.
+  */
+  html:has([data-workspace]) {
+    background-color: #fff9f5;
+  }
+
+  /*
     Motion timing is deliberately asymmetric. Arriving at a control wants a
     fast answer; leaving wants a softer return, or the button snaps under the
     eye. Press is near-instant because it is the "the click landed" signal.
