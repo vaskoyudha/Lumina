@@ -42,6 +42,7 @@ import {
   CoverageGroup,
   CoverageStrip,
   FindingsSection,
+  PanelIcon,
   PanelSectionHeading,
   SpawnedSection,
   TraceDisclosure,
@@ -619,11 +620,7 @@ function RootNode({
         <div className="px-3.5 pt-3 pb-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-tint">
-                <span className="flex h-2.5 w-4 items-center justify-start rounded-full bg-brand px-0.5">
-                  <span className="size-1.5 rounded-full bg-white" />
-                </span>
-              </span>
+              <PanelIcon icon={ScanSearch} />
               {title}
             </div>
           </div>
@@ -692,9 +689,7 @@ function VoiceNode({
       ) : null}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
-            <PenLine aria-hidden className="size-3.5" />
-          </span>
+          <PanelIcon icon={PenLine} />
           <div className="min-w-0">
             <p className="truncate font-semibold text-[12px] text-ink">
               Penyusun bahasa
@@ -734,9 +729,7 @@ function LinkAgentRow({
 }) {
   return (
     <div className="flex items-start gap-2.5 rounded-xl border border-line bg-panel px-3 py-2.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
-        <Link2 aria-hidden className="size-4" />
-      </span>
+      <PanelIcon className="size-8" icon={Link2} />
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-medium">
           Bubu
@@ -811,35 +804,27 @@ export function SignalPanel({
         ? "text-warn"
         : "text-brand-ink";
 
-  const headerChip = result
+  const headerTone: "brand" | "warn" | "danger" | "muted" = result
     ? result.risk === "tinggi"
-      ? "bg-danger/10 text-danger"
+      ? "danger"
       : result.risk === "mencurigakan"
-        ? "bg-warn/10 text-warn"
-        : "bg-brand-soft text-brand"
+        ? "warn"
+        : "brand"
     : linkView
       ? linkView.verdict === "Risky"
-        ? "bg-danger/10 text-danger"
+        ? "danger"
         : linkView.verdict === "Suspicious"
-          ? "bg-warn/10 text-warn"
-          : "bg-brand-soft text-brand"
+          ? "warn"
+          : "brand"
       : linkPendingView
-        ? "bg-brand-soft text-brand"
-        : "bg-chip text-ink-mute";
+        ? "brand"
+        : "muted";
 
   const header = (
     <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2.5">
-          <span
-            aria-hidden
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-full",
-              headerChip,
-            )}
-          >
-            <ScanSearch className="size-3.5" strokeWidth={2} />
-          </span>
+          <PanelIcon icon={ScanSearch} size="lg" tone={headerTone} />
           <div className="min-w-0">
             <CardTitle>
               <h2
@@ -960,9 +945,7 @@ export function SignalPanel({
   const toolbar = (
     <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-3.5">
       <div className="pointer-events-auto flex items-center gap-0.5 rounded-full border border-edge bg-panel/95 px-1.5 py-1 shadow-lift backdrop-blur-md">
-        <span className="flex size-6 items-center justify-center rounded-full bg-chip text-ink">
-          <Workflow aria-hidden className="size-3.5" />
-        </span>
+        <PanelIcon icon={Workflow} size="sm" />
         <span className="mx-0.5 h-4 w-px bg-edge" />
         <Button
           aria-label="Perkecil kanvas"
@@ -1110,9 +1093,7 @@ export function SignalPanel({
                   data-status="pending"
                 />
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
-                    <Sparkles aria-hidden className="size-3.5" />
-                  </span>
+                  <PanelIcon icon={Sparkles} />
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-[12px] text-ink">
                       Sintesis temuan

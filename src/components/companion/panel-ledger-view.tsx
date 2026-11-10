@@ -78,6 +78,64 @@ function formatMs(ms: number): string {
 }
 
 /**
+ * The panel's one icon language, mirroring the reference card headers: a pale
+ * peach halo around a solid orange disc with a white glyph. No borders.
+ */
+export function PanelIcon({
+  icon: Icon,
+  size = "md",
+  tone = "brand",
+  className,
+  children,
+}: {
+  icon: LucideIcon;
+  size?: "sm" | "md" | "lg";
+  tone?: "brand" | "warn" | "danger" | "muted";
+  className?: string;
+  children?: ReactNode;
+}): ReactNode {
+  const outer = size === "sm" ? "size-6" : size === "lg" ? "size-9" : "size-7";
+  const inner = size === "sm" ? "size-4" : size === "lg" ? "size-7" : "size-5";
+  const glyph =
+    size === "sm" ? "size-2.5" : size === "lg" ? "size-4" : "size-3";
+
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full",
+        outer,
+        tone === "danger"
+          ? "bg-danger/15"
+          : tone === "warn"
+            ? "bg-warn/15"
+            : tone === "muted"
+              ? "bg-chip"
+              : "bg-brand-soft",
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          "flex items-center justify-center rounded-full",
+          inner,
+          tone === "danger"
+            ? "bg-danger text-white"
+            : tone === "warn"
+              ? "bg-warn text-white"
+              : tone === "muted"
+                ? "bg-panel text-ink-mute"
+                : "bg-brand text-white",
+        )}
+      >
+        <Icon className={glyph} strokeWidth={2.2} />
+      </span>
+      {children}
+    </span>
+  );
+}
+
+/**
  * A section heading in the panel's card style: a soft circular icon on the
  * left, one shared title size for every section, and room for a count on the
  * right. The icon is decoration and stays out of the accessible name.
@@ -99,19 +157,7 @@ export function PanelSectionHeading({
 }): ReactNode {
   return (
     <div className={cn("flex min-w-0 items-center gap-2", className)}>
-      <span
-        aria-hidden
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-full",
-          tone === "danger"
-            ? "bg-danger/10 text-danger"
-            : tone === "warn"
-              ? "bg-warn/10 text-warn"
-              : "bg-brand-soft text-brand",
-        )}
-      >
-        <Icon className="size-3.5" strokeWidth={2} />
-      </span>
+      <PanelIcon icon={Icon} tone={tone} />
       <h3
         className="min-w-0 flex-1 truncate font-semibold text-[12.5px] text-ink tracking-[-0.01em]"
         id={id}
@@ -201,9 +247,7 @@ export function FindingsSection({
                     onClick={() => onSelectAgent?.(agent.agent)}
                     type="button"
                   >
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border border-brand-edge bg-brand-soft text-brand-strong">
-                      <Icon aria-hidden className="size-3.5" />
-                    </span>
+                    <PanelIcon icon={Icon} size="sm" />
                     <span className="min-w-0 flex-1 truncate font-semibold text-[12px] text-ink">
                       {STAGE_LABEL[agent.agent].label}
                     </span>
@@ -294,15 +338,14 @@ export function SpawnedSection({
                 onClick={() => onSelectAgent?.(item.agent)}
                 type="button"
               >
-                <span className="relative flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-panel text-brand-strong">
+                <PanelIcon className="relative" icon={Icon}>
                   {live ? (
                     <StatusPulse
-                      className="absolute -top-1 -right-1 size-2 rounded-full bg-brand-strong"
+                      className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand-strong"
                       kind="opacity"
                     />
                   ) : null}
-                  <Icon aria-hidden className="size-3.5" />
-                </span>
+                </PanelIcon>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate font-medium text-[11.5px] text-txt">
@@ -357,12 +400,7 @@ export function CoverageGroup({
     <Collapsible defaultOpen={defaultOpen}>
       <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 rounded-[10px] border border-edge bg-panel px-3 py-2 text-left hover:border-brand-edge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
         <span className="flex min-w-0 items-center gap-2">
-          <span
-            aria-hidden
-            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand"
-          >
-            <Icon className="size-3.5" strokeWidth={2} />
-          </span>
+          <PanelIcon icon={Icon} />
           <span className="min-w-0 truncate font-semibold text-[12.5px] text-ink">
             {label}
           </span>
