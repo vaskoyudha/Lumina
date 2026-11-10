@@ -13,6 +13,7 @@ import {
   saveSimulation,
 } from "@/lib/learning/store";
 import type { SimulationSubmission } from "@/lib/learning/validation";
+import { patternForQuestion } from "@/lib/learning/pattern-map";
 
 jest.mock("server-only", () => ({}));
 jest.mock("@/lib/auth/database", () => ({ authDatabase: () => pool }));
@@ -109,9 +110,16 @@ suite("account learning PostgreSQL", () => {
     expect((await readAccountProgress(userA)).completedModules).toEqual([10]);
     await saveQuiz(userA, 10, wrong, false);
     expect((await readAccountProgress(userA)).completedModules).toEqual([10]);
-    expect((await readAccountProgress(userA)).missedPatterns).toHaveLength(
-      questions.length,
+    // Missed questions are stored as patterns, so four wrong questions that map
+    // to two tactics leave two entries, not four.
+    const expectedPatterns = new Set(
+      questions
+        .map((q) => patternForQuestion(q.id))
+        .filter((id): id is NonNullable<typeof id> => id !== null),
     );
+    const missed = (await readAccountProgress(userA)).missedPatterns;
+    expect(missed).toHaveLength(expectedPatterns.size);
+    expect(new Set(missed)).toEqual(expectedPatterns);
   });
   function success(): SimulationSubmission {
     const scenario = SIMULATION_FIXTURE.scenario;
