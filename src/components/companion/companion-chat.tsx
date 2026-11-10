@@ -140,6 +140,7 @@ import { useSavedLoker } from "@/lib/loker/use-saved";
 import { kalimatRekomendasi, ringkasRekomendasi } from "@/lib/loker/verdict";
 import { modusFor } from "@/lib/modus";
 import { streamOrchestrator } from "@/lib/orchestrator/client";
+import type { AgentRunSummary } from "@/lib/orchestrator/summary";
 import { extractEntities, extractedSignals } from "@/lib/scoring/extract";
 import { extractLinks } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
@@ -402,6 +403,7 @@ function summaryFallback(postings: readonly LokerView[]): string {
 export function CompanionChat({
   session = null,
   initialPanel,
+  latestRun = null,
   corpus = EMPTY_CORPUS,
   initialModule,
   orchestrator = false,
@@ -409,6 +411,7 @@ export function CompanionChat({
   session?: CompanionSession | null;
   /** Set when another surface links straight into the detector overview. */
   initialPanel?: "agen";
+  latestRun?: AgentRunSummary | null;
   /** The capped cumulative scan snapshot; the client filters it locally. */
   corpus?: LokerCorpus;
   initialModule?: { no: number; title: string };
@@ -2334,6 +2337,7 @@ export function CompanionChat({
               )}
             >
               <AgentsView
+                latestRun={latestRun}
                 onSelect={(agent) => {
                   setSelectedAgent(agent);
                   // Picking an agent is a request to read its explanation, so

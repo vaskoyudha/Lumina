@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
+import type { AgentRunSummary } from "@/lib/orchestrator/summary";
 import { cn } from "@/lib/utils";
 
 /**
@@ -85,12 +86,14 @@ export function AgentsView({
   onExport,
   onCopyLink,
   copied = false,
+  latestRun = null,
 }: {
   onSelect: (agent: DetectorAgent) => void;
   selected?: DetectorAgent | null;
   onExport: () => void;
   onCopyLink: () => void;
   copied?: boolean;
+  latestRun?: AgentRunSummary | null;
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-visible">
@@ -158,6 +161,48 @@ export function AgentsView({
           </div>
         </div>
       </header>
+
+      {latestRun ? (
+        <section
+          aria-label="Pemeriksaan terakhir"
+          className="mb-4 rounded-[14px] border border-line bg-panel px-3 py-2.5"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-[12px] text-txt">
+              Pemeriksaan terakhir
+            </p>
+            <span className="rounded-full bg-brand-soft px-2 py-0.5 font-mono text-[9.5px] text-brand-ink">
+              {latestRun.modus}
+            </span>
+            <span className="text-[10px] text-dim">
+              {latestRun.band} ·{" "}
+              {latestRun.totalMs >= 1000
+                ? `${(latestRun.totalMs / 1000).toFixed(1).replace(".", ",")} s`
+                : `${latestRun.totalMs} ms`}
+            </span>
+          </div>
+          <ul className="mt-1.5 flex flex-wrap gap-1.5">
+            {latestRun.agents.map((agent) => {
+              const display =
+                AGENT_DISPLAY_NAME[agent.id as keyof typeof AGENT_DISPLAY_NAME];
+              return (
+                <li
+                  key={`${agent.id}-${agent.ms}`}
+                  className="flex items-center gap-1.5 rounded-full border border-line bg-panel-2 px-2 py-0.5 text-[10px]"
+                >
+                  <span className="font-medium text-txt">
+                    {display ?? agent.label}
+                  </span>
+                  <span className="text-dim">{agent.status}</span>
+                  <span className="tabular text-[9px] text-dim">
+                    {agent.ms} ms
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="min-h-0 flex-1">
         {/*
