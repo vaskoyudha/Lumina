@@ -271,6 +271,19 @@ export function CompanionChat({
   /** `null` = the newest session, never a hardcoded id. */
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const inFlight = React.useRef<symbol | null>(null);
+  const attachmentUrls = React.useRef(new Set<string>());
+  const pendingControllers = React.useRef(new Set<AbortController>());
+  const pendingTimers = React.useRef(new Set<ReturnType<typeof setTimeout>>());
+  React.useEffect(
+    () => () => {
+      for (const control of pendingControllers.current) control.abort();
+      for (const timer of pendingTimers.current) clearTimeout(timer);
+      for (const url of attachmentUrls.current) URL.revokeObjectURL(url);
+      attachmentUrls.current.clear();
+    },
+    [],
+  );
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
   /** The center column's second view; the turns stay in state while it is away. */
@@ -389,6 +402,35 @@ export function CompanionChat({
       ),
     [sessions],
   );
+  const recentAgentRuns = React.useMemo(
+    () =>
+      sessions
+        .flatMap((item) =>
+          item.turns.flatMap((turn) =>
+            AGENT_SEQUENCE.flatMap((agent) => {
+              const stage = turn.trace?.stages.find(
+                (stage) =>
+                  stage.id === agent &&
+                  (stage.status === "selesai" || stage.status === "temuan"),
+              );
+              return stage
+                ? [
+                    {
+                      id: agent,
+                      key: `${turn.id}-${agent}`,
+                      sessionId: item.id,
+                      ms: stage.ms,
+                      turnId: turn.id,
+                    },
+                  ]
+                : [];
+            }),
+          ),
+        )
+        .sort((a, b) => b.turnId - a.turnId)
+        .slice(0, 4),
+    [sessions],
+  );
 
   /**
    * The panel describes one verdict, never the whole session. Bundling every
@@ -403,6 +445,7 @@ export function CompanionChat({
         return {
           result: turn.result,
           trace: turn.trace ?? null,
+          explanation: turn.explanation ?? null,
           source: turn.source ?? "",
           at: turn.at,
         };
@@ -437,13 +480,7 @@ export function CompanionChat({
   const panelTrace = liveCheck?.trace ?? latestTrace;
   const running = liveCheck != null;
 
-  const latestExplanation = React.useMemo(() => {
-    for (let i = turns.length - 1; i >= 0; i--) {
-      const hit = turns[i]?.explanation;
-      if (hit) return hit;
-    }
-    return null;
-  }, [turns]);
+  const latestExplanation = latestCheck?.explanation ?? null;
 
   const evidence = React.useMemo(
     () =>
@@ -474,10 +511,11 @@ export function CompanionChat({
     async (
       raw: string,
       attachments: Attachment[] = [],
-      options: { force?: "periksa" } = {},
+      options: { force?: "periksa"; recheckOf?: number } = {},
     ) => {
       const text = raw.trim();
-      if ((!text && attachments.length === 0) || busy) return;
+      if ((!text && attachments.length === 0) || busy || inFlight.current)
+        return;
 
       // Stamped here, never during render: Next 16 fails the prerender of a
       // client component that reads the clock while rendering.
@@ -485,585 +523,675 @@ export function CompanionChat({
 
       const target = activeId;
       if (target === undefined) return;
-
-      /*
-       * An image is evidence, not a concept question, so a turn with one is a
-       * check even when the typed words look like a question. The lane is
-       * therefore known before the pixels are read, which lets the user's
-       * message appear immediately instead of after the transcription.
-       */
-      const hasImages = attachments.some(isImageAttachment);
-
-      const userTurn: Turn = {
-        id: id(),
-        role: "user",
-        text,
-        attachments,
-        at: stamp,
-        lane: hasImages ? "periksa" : undefined,
+      const operation = Symbol();
+      inFlight.current = operation;
+      setBusy(true);
+      const release = () => {
+        if (inFlight.current !== operation) return;
+        inFlight.current = null;
+        setBusy(false);
       };
+      const control = new AbortController();
+      pendingControllers.current.add(control);
+      try {
+        // The composer owns its draft URLs and revokes them after submit. The
+        // transcript owns separate URLs until the conversation component closes.
+        const retainedAttachments = attachments.map((attachment) => {
+          const url = URL.createObjectURL(attachment.file);
+          attachmentUrls.current.add(url);
+          return { ...attachment, url };
+        });
+        const originalIndex = (active?.turns ?? []).findIndex(
+          (turn) => turn.id === options.recheckOf,
+        );
+        const privateIds = new Set(
+          originalIndex < 0
+            ? []
+            : (active?.turns ?? [])
+                .slice(Math.max(0, originalIndex - 1), originalIndex + 1)
+                .map((turn) => turn.id),
+        );
+        const protectRechecked = (items: Turn[]) =>
+          items.map((turn) =>
+            privateIds.has(turn.id)
+              ? { ...turn, lane: "periksa" as const, laneSource: undefined }
+              : turn,
+          );
 
-      if (hasImages) {
+        /*
+         * An image is evidence, not a concept question, so a turn with one is a
+         * check even when the typed words look like a question. The lane is
+         * therefore known before the pixels are read, which lets the user's
+         * message appear immediately instead of after the transcription.
+         */
+        const hasImages = attachments.some(isImageAttachment);
+
+        const userTurn: Turn = {
+          id: id(),
+          role: "user",
+          text,
+          attachments: retainedAttachments,
+          at: stamp,
+          lane: hasImages ? "periksa" : undefined,
+        };
+
+        if (hasImages) {
+          setBusy(true);
+          setSessions((prev) =>
+            prev.map((session) =>
+              session.id === target
+                ? {
+                    ...session,
+                    title:
+                      session.turns.length <= 1
+                        ? titleFor(text, attachments)
+                        : session.title,
+                    time: stamp.slice(11, 16),
+                    updatedAt: new Date(stamp).getTime(),
+                    turns: [...session.turns, userTurn],
+                  }
+                : session,
+            ),
+          );
+        }
+
+        /*
+         * The model reads pixels; it does not judge. The transcription joins the
+         * filenames and typed words as input to the deterministic engine, so a
+         * failed read degrades to the filename-only check rather than inventing
+         * a verdict.
+         */
+        const transcription = await transcribeImages(
+          attachments,
+          control.signal,
+        );
+
+        /*
+         * A failed pixel read is a receipt, not a silent fallback. Without it the
+         * turn still scores from the filename, and the reader would believe the
+         * screenshot itself was examined.
+         */
+        if (
+          hasImages &&
+          (transcription.failed > 0 || transcription.skipped > 0)
+        ) {
+          setSessions((prev) =>
+            prev.map((session) =>
+              session.id === target
+                ? {
+                    ...session,
+                    turns: session.turns.map((turn) =>
+                      turn.id === userTurn.id
+                        ? {
+                            ...turn,
+                            visionNote: [
+                              transcription.failed > 0
+                                ? transcription.failed ===
+                                  transcription.attempted
+                                  ? `${transcription.failed} gambar gagal dibaca; pemeriksaan hanya memakai nama berkas.`
+                                  : `${transcription.failed} dari ${transcription.attempted} gambar gagal dibaca; sisanya diperiksa.`
+                                : "",
+                              transcription.skipped > 0
+                                ? `${transcription.skipped} gambar tidak diperiksa; maksimal 3 gambar per pesan.`
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" "),
+                          }
+                        : turn,
+                    ),
+                  }
+                : session,
+            ),
+          );
+        }
+
+        const scored = [
+          transcription.text,
+          scoringTextWithAttachments(text, attachments),
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+
+        /*
+         * The question guard runs BEFORE scoring. Asking what a scam is must not
+         * produce a red card about the person asking: measured, "apa itu pinjol?"
+         * scored 70/tinggi and named the pinjol scheme. A question is not a
+         * message someone received, so the detectors never see it.
+         */
+        const asked =
+          options.force || attachments.length > 0
+            ? false
+            : isQuestionAbout(scored, {
+                hasPriorVerdict: latestResult !== null,
+              });
+
+        /*
+         * Prior *checked* user turns go to the Conversation Agent so escalation
+         * across messages is visible. Chat lanes are excluded on purpose: the
+         * Conversation Agent models messages the user received, and feeding it
+         * "apa itu dana?" because the word "dana" appears there would let a
+         * question manufacture an escalation.
+         */
+        const priorTurns = (active?.turns ?? [])
+          .filter(
+            (turn) =>
+              turn.role === "companion" &&
+              turn.result !== undefined &&
+              !!turn.source,
+          )
+          .map((turn) => ({ text: turn.source ?? "" }));
+
+        const { result, trace } = asked
+          ? { result: null, trace: null }
+          : scoreWithTrace({ text: scored, turns: priorTurns });
+
+        const plan = planTurn({
+          text: scored,
+          result,
+          lastResult: latestResult,
+          lastExplanation: latestExplanation,
+          asked,
+          attachments: attachments.length,
+        });
+
+        const lane: Lane = options.force ? "periksa" : plan.lane;
+
+        /*
+         * The card and the trace render on `result`, never on `risk`. The bench
+         * records 20/20 caught but 18/20 `tinggi`; gating on `tinggi` would drop
+         * two scam samples and turn a 20/20 claim into 18/20 on stage.
+         */
+        const checked = lane === "periksa" && result !== null;
+
+        /*
+         * The user turn carries the lane too. The chat-lane history is built by
+         * filtering on `turn.lane`, and user turns have no lane of their own
+         * unless it is set here — otherwise history would contain companion
+         * answers with no questions in between.
+         */
+        const stampedTurn: Turn = { ...userTurn, lane };
+
+        const evidenceStarted = performance.now();
+        const evidenceBundle = checked
+          ? buildEvidenceBundle([{ text: scored, at: stamp, result: result }])
+          : null;
+        const evidenceMs = performance.now() - evidenceStarted;
+        const artifacts = evidenceBundle?.artifacts.length ?? 0;
+
+        const evidenceStage: AgentStage | null =
+          trace && checked
+            ? {
+                id: "evidence",
+                ...STAGE_LABEL.evidence,
+                // No artifact means the stage did not produce evidence. It must
+                // not wear a finished tick over a bundle it never filled.
+                status: artifacts > 0 ? "selesai" : "dilewati",
+                findings: 0,
+                ms: evidenceMs,
+                note:
+                  artifacts > 0
+                    ? `${artifacts} kutipan tercatat untuk laporan`
+                    : "Tidak ada kutipan yang bisa dicatat.",
+              }
+            : null;
+
+        const stages: AgentStage[] =
+          trace && checked
+            ? [...trace.stages, ...(evidenceStage ? [evidenceStage] : [])]
+            : [];
+        const detectorMs = (trace?.totalMs ?? 0) + evidenceMs;
+
+        const companionId = id();
+        const voiceStartedAt = Date.now();
+
+        /*
+         * The language stage is attached immediately as `berjalan`, because it
+         * genuinely is running from this moment. Attaching it only at the end
+         * would let the header show a finished checkmark over work still in
+         * flight — the one dishonest state this card could produce.
+         */
+        const openTrace: AgentTrace | null = checked
+          ? {
+              stages: [
+                ...stages,
+                {
+                  id: "voice",
+                  ...STAGE_LABEL.voice,
+                  status: "berjalan",
+                  findings: 0,
+                  ms: 0,
+                },
+              ],
+              totalMs: detectorMs,
+            }
+          : null;
+
+        /*
+         * The teaching layer is a pure function of the verdict, so it is computed
+         * once here and reused when the turn seals. The card can then render the
+         * same explanation immediately, before the language layer has written a
+         * word — the verdict is not allowed to wait for the voice.
+         */
+        const explanation =
+          checked &&
+          result !== null &&
+          result.signals.some((signal) => signal.weight > 0)
+            ? explain(result, scored)
+            : undefined;
+
+        const conversationId = active?.serverId ?? crypto.randomUUID();
+        const nextTitle = active?.serverId
+          ? active.title
+          : (active?.turns.length ?? 0) <= 1
+            ? titleFor(text, attachments)
+            : (active?.title ?? titleFor(text, attachments));
+        const storedVerdict = checked ? result : latestResult;
+        const storedModus = modusFor(storedVerdict?.relatedModule ?? null);
+        // Local titles may quote the message. Persist only public labels.
+        const metadataTitle = storedVerdict
+          ? storedModus
+            ? `Pemeriksaan: ${storedModus.nama}`
+            : "Pemeriksaan pesan"
+          : "Percakapan Companion";
+
         setBusy(true);
         setSessions((prev) =>
           prev.map((session) =>
             session.id === target
               ? {
                   ...session,
-                  title:
-                    session.turns.length <= 1
-                      ? titleFor(text, attachments)
-                      : session.title,
+                  serverId: session.serverId ?? conversationId,
+                  title: session.serverId ? session.title : nextTitle,
                   time: stamp.slice(11, 16),
                   updatedAt: new Date(stamp).getTime(),
-                  turns: [...session.turns, userTurn],
+                  risk: checked ? (result?.risk ?? session.risk) : session.risk,
+                  turns: [
+                    ...protectRechecked(session.turns),
+                    ...(hasImages ? [] : [stampedTurn]),
+                    {
+                      id: companionId,
+                      role: "companion",
+                      text: "",
+                      at: stamp,
+                      streaming: true,
+                      voiceStartedAt,
+                      result: checked ? (result ?? undefined) : undefined,
+                      source: checked ? scored : undefined,
+                      explanation,
+                      trace: openTrace ?? undefined,
+                    },
+                  ],
                 }
               : session,
           ),
         );
-      }
+        persistSession({
+          id: conversationId,
+          title: metadataTitle,
+          turns: (active?.turns.length ?? 0) + 2,
+          risk: checked ? (result?.risk ?? active?.risk) : active?.risk,
+        });
 
-      /*
-       * The model reads pixels; it does not judge. The transcription joins the
-       * filenames and typed words as input to the deterministic engine, so a
-       * failed read degrades to the filename-only check rather than inventing
-       * a verdict.
-       */
-      const transcription = await transcribeImages(attachments);
-
-      /*
-       * A failed pixel read is a receipt, not a silent fallback. Without it the
-       * turn still scores from the filename, and the reader would believe the
-       * screenshot itself was examined.
-       */
-      if (hasImages && transcription.failed > 0) {
-        setSessions((prev) =>
-          prev.map((session) =>
-            session.id === target
-              ? {
-                  ...session,
-                  turns: session.turns.map((turn) =>
-                    turn.id === userTurn.id
-                      ? {
-                          ...turn,
-                          visionNote:
-                            transcription.failed === transcription.attempted
-                              ? `${transcription.failed} gambar gagal dibaca; pemeriksaan hanya memakai nama berkas.`
-                              : `${transcription.failed} dari ${transcription.attempted} gambar gagal dibaca; sisanya diperiksa.`,
-                        }
-                      : turn,
-                  ),
-                }
-              : session,
-          ),
-        );
-      }
-
-      const scored = [
-        transcription.text,
-        scoringTextWithAttachments(text, attachments),
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-
-      /*
-       * The question guard runs BEFORE scoring. Asking what a scam is must not
-       * produce a red card about the person asking: measured, "apa itu pinjol?"
-       * scored 70/tinggi and named the pinjol scheme. A question is not a
-       * message someone received, so the detectors never see it.
-       */
-      const asked =
-        options.force || hasImages
-          ? false
-          : isQuestionAbout(scored, { hasPriorVerdict: latestResult !== null });
-
-      /*
-       * Prior *checked* user turns go to the Conversation Agent so escalation
-       * across messages is visible. Chat lanes are excluded on purpose: the
-       * Conversation Agent models messages the user received, and feeding it
-       * "apa itu dana?" because the word "dana" appears there would let a
-       * question manufacture an escalation.
-       */
-      const priorTurns = (active?.turns ?? [])
-        .filter(
-          (turn) =>
-            turn.role === "user" &&
-            turn.lane === "periksa" &&
-            turn.text.trim().length > 0,
-        )
-        .map((turn) => ({ text: turn.text }));
-
-      const { result, trace } = asked
-        ? { result: null, trace: null }
-        : scoreWithTrace({ text: scored, turns: priorTurns });
-
-      const plan = planTurn({
-        text: scored,
-        result,
-        lastResult: latestResult,
-        lastExplanation: latestExplanation,
-        asked,
-        attachments: attachments.length,
-      });
-
-      const lane: Lane = options.force ? "periksa" : plan.lane;
-
-      /*
-       * The card and the trace render on `result`, never on `risk`. The bench
-       * records 20/20 caught but 18/20 `tinggi`; gating on `tinggi` would drop
-       * two scam samples and turn a 20/20 claim into 18/20 on stage.
-       */
-      const checked = lane === "periksa" && result !== null;
-
-      /*
-       * The user turn carries the lane too. The chat-lane history is built by
-       * filtering on `turn.lane`, and user turns have no lane of their own
-       * unless it is set here — otherwise history would contain companion
-       * answers with no questions in between.
-       */
-      const stampedTurn: Turn = { ...userTurn, lane };
-
-      const evidenceStarted = performance.now();
-      const evidenceBundle = checked
-        ? buildEvidenceBundle([{ text: scored, at: stamp, result: result }])
-        : null;
-      const evidenceMs = performance.now() - evidenceStarted;
-      const artifacts = evidenceBundle?.artifacts.length ?? 0;
-
-      const evidenceStage: AgentStage | null =
-        trace && checked
-          ? {
-              id: "evidence",
-              ...STAGE_LABEL.evidence,
-              // No artifact means the stage did not produce evidence. It must
-              // not wear a finished tick over a bundle it never filled.
-              status: artifacts > 0 ? "selesai" : "dilewati",
-              findings: 0,
-              ms: evidenceMs,
-              note:
-                artifacts > 0
-                  ? `${artifacts} kutipan tercatat untuk laporan`
-                  : "Tidak ada kutipan yang bisa dicatat.",
-            }
-          : null;
-
-      const stages: AgentStage[] =
-        trace && checked
-          ? [...trace.stages, ...(evidenceStage ? [evidenceStage] : [])]
-          : [];
-      const detectorMs = (trace?.totalMs ?? 0) + evidenceMs;
-
-      const companionId = id();
-      const voiceStartedAt = Date.now();
-
-      /*
-       * The language stage is attached immediately as `berjalan`, because it
-       * genuinely is running from this moment. Attaching it only at the end
-       * would let the header show a finished checkmark over work still in
-       * flight — the one dishonest state this card could produce.
-       */
-      const openTrace: AgentTrace | null = checked
-        ? {
-            stages: [
-              ...stages,
-              {
-                id: "voice",
-                ...STAGE_LABEL.voice,
-                status: "berjalan",
-                findings: 0,
-                ms: 0,
-              },
-            ],
-            totalMs: detectorMs,
-          }
-        : null;
-
-      /*
-       * The teaching layer is a pure function of the verdict, so it is computed
-       * once here and reused when the turn seals. The card can then render the
-       * same explanation immediately, before the language layer has written a
-       * word — the verdict is not allowed to wait for the voice.
-       */
-      const explanation =
-        checked &&
-        result !== null &&
-        result.signals.some((signal) => signal.weight > 0)
-          ? explain(result, scored)
-          : undefined;
-
-      const conversationId = active?.serverId ?? crypto.randomUUID();
-      const nextTitle = active?.serverId
-        ? active.title
-        : (active?.turns.length ?? 0) <= 1
-          ? titleFor(text, attachments)
-          : (active?.title ?? titleFor(text, attachments));
-      const nextTurns = (active?.turns.length ?? 0) + (hasImages ? 1 : 2);
-      const nextRisk = checked ? (result?.risk ?? active?.risk) : active?.risk;
-
-      setBusy(true);
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === target
-            ? {
-                ...session,
-                serverId: session.serverId ?? conversationId,
-                title: session.serverId ? session.title : nextTitle,
-                time: stamp.slice(11, 16),
-                updatedAt: new Date(stamp).getTime(),
-                risk: checked ? (result?.risk ?? session.risk) : session.risk,
-                turns: [
-                  ...session.turns,
-                  ...(hasImages ? [] : [stampedTurn]),
-                  {
-                    id: companionId,
-                    role: "companion",
-                    text: "",
-                    at: stamp,
-                    streaming: true,
-                    voiceStartedAt,
-                    result: checked ? (result ?? undefined) : undefined,
-                    source: checked ? scored : undefined,
-                    explanation,
-                    trace: openTrace ?? undefined,
-                  },
-                ],
-              }
-            : session,
-        ),
-      );
-      persistSession({
-        id: conversationId,
-        title: nextTitle,
-        turns: nextTurns,
-        risk: nextRisk,
-      });
-
-      const patchCompanion = (patch: (turn: Turn) => Turn) =>
-        setSessions((prev) =>
-          prev.map((session) =>
-            session.id === target
-              ? {
-                  ...session,
-                  turns: session.turns.map((turn) =>
-                    turn.id === companionId ? patch(turn) : turn,
-                  ),
-                }
-              : session,
-          ),
-        );
-
-      /**
-       * A chunk is only appended while the turn is still streaming.
-       *
-       * This is the epoch guard: once `finish()` seals a turn, a chunk that
-       * arrives late from a slow socket has nowhere to land. Without it, a
-       * timed-out turn could regain text after the template was shown.
-       */
-      const appendText = (chunk: string) =>
-        patchCompanion((turn) =>
-          turn.streaming ? { ...turn, text: turn.text + chunk } : turn,
-        );
-
-      /**
-       * Why the words came from a template, in the reader's language.
-       *
-       * Four different failures used to share one sentence, and that sentence
-       * claimed the model was not configured. When the real cause was a slow
-       * network, the interface was lying about its own setup.
-       */
-      const templateNote = (reason: VoiceOutcome): string => {
-        if (reason === "timeout") {
-          return "Model terlalu lambat menjawab; jawaban disusun dari templat.";
-        }
-        if (reason === "truncated") {
-          return "Jawaban model terpotong di tengah; jawaban disusun ulang dari templat.";
-        }
-        if (reason === "unconfigured") {
-          return "Model tidak dikonfigurasi; jawaban disusun dari templat.";
-        }
-        return "Model gagal dihubungi; jawaban disusun dari templat.";
-      };
-
-      const finish = (
-        finalText: string,
-        voice: "model" | "template",
-        reason?: VoiceOutcome,
-      ) => {
-        const voiceMs = Date.now() - voiceStartedAt;
-        patchCompanion((turn) => ({
-          ...turn,
-          text: finalText,
-          streaming: false,
-          voiceStartedAt: undefined,
-          lane,
-          laneSource: lane === "tanya" ? text : undefined,
-          result: checked ? (result ?? undefined) : undefined,
-          source: checked ? scored : undefined,
-          explanation,
-          trace: turn.trace
-            ? {
-                // Replace the open `berjalan` stage rather than appending a
-                // second one: one stage, one outcome.
-                stages: turn.trace.stages.map((stage) =>
-                  stage.id === "voice"
-                    ? {
-                        ...stage,
-                        status: voice === "model" ? "selesai" : "dilewati",
-                        ms: voiceMs,
-                        note:
-                          voice === "model"
-                            ? reason === "truncated"
-                              ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
-                              : undefined
-                            : templateNote(reason ?? "unconfigured"),
-                      }
-                    : stage,
-                ),
-                totalMs: detectorMs + voiceMs,
-              }
-            : undefined,
-        }));
-        setBusy(false);
-      };
-
-      /*
-       * The follow-up lane answers *from* the verdict it followed, so it must
-       * carry that verdict: `buildAnswerRequest` forwards the digest only for
-       * `lanjutan`, and the route's prompt expects one. Without this the model
-       * saw `digest: null` and could only speak from the tactics.
-       */
-      const digestOf = (verdict: ScoreResult): VoiceDigest =>
-        voiceDigest(
-          verdict,
-          modusFor(verdict.relatedModule)?.nama ?? verdict.modus,
-        );
-
-      const digest: VoiceDigest | null =
-        checked && result
-          ? digestOf(result)
-          : lane === "lanjutan" && latestResult
-            ? digestOf(latestResult)
-            : null;
-
-      /*
-       * History for the chat lane. A turn that was checked carries the message
-       * someone received, so it is filtered out here rather than trusted to be
-       * dropped inside the route: the schema is strict, but the client decides
-       * what it is allowed to see.
-       */
-      const chatHistory = (active?.turns ?? [])
-        .filter((turn) => turn.lane === "tanya" || turn.lane === "obrolan")
-        .map((turn) => ({
-          role: turn.role,
-          text: turn.text.slice(0, 2000),
-        }));
-
-      /*
-       * 23 s, above the route's 20 s so the server is always the one that
-       * gives up first. Before this the call passed no signal at all: a
-       * wedged socket left `busy` true and the composer disabled with no way
-       * back.
-       */
-      const controller = new AbortController();
-      const abortTimer = setTimeout(() => controller.abort(), 23000);
-
-      // Defensive: nothing below may leave `busy` stuck.
-      try {
-        if (lane === "periksa") {
-          if (!digest) {
-            finish(
-              composeReply(text || attachments[0]?.name || "", null, {
-                first: false,
-                containsContent: false,
-              }),
-              "template",
-              "unconfigured",
-            );
-            return;
-          }
-
-          const voice = await requestReply(
-            digest,
-            appendText,
-            controller.signal,
+        const patchCompanion = (patch: (turn: Turn) => Turn) =>
+          setSessions((prev) =>
+            prev.map((session) =>
+              session.id === target
+                ? {
+                    ...session,
+                    turns: session.turns.map((turn) =>
+                      turn.id === companionId ? patch(turn) : turn,
+                    ),
+                  }
+                : session,
+            ),
           );
 
-          /*
-           * A reply that was cut but had already said something is kept.
-           * `isComplete` treats a missing full stop as a failed answer, but the
-           * reader has been watching those words arrive for two seconds —
-           * replacing them is the "it is hardcoded" symptom. Below 40
-           * characters there is effectively nothing to keep, so the template
-           * takes over.
-           */
-          const partial = voice.text.trim();
-          const keepPartial =
-            voice.outcome === "truncated" && partial.length >= 40;
+        /**
+         * A chunk is only appended while the turn is still streaming.
+         *
+         * This is the epoch guard: once `finish()` seals a turn, a chunk that
+         * arrives late from a slow socket has nowhere to land. Without it, a
+         * timed-out turn could regain text after the template was shown.
+         */
+        const appendText = (chunk: string) =>
+          patchCompanion((turn) =>
+            turn.streaming ? { ...turn, text: turn.text + chunk } : turn,
+          );
 
-          if (voice.outcome === "model" || keepPartial) {
-            // `finish` turns the `truncated` reason into a trace note on the
-            // periksa card, so a kept partial answer is never labelled as a
-            // clean finish.
-            finish(partial, "model", keepPartial ? "truncated" : undefined);
-          } else {
-            finish(
-              composeReply(text || attachments[0]?.name || "", result, {
-                first: false,
-                containsContent: true,
-              }),
-              "template",
-              voice.outcome,
-            );
+        /**
+         * Why the words came from a template, in the reader's language.
+         *
+         * Four different failures used to share one sentence, and that sentence
+         * claimed the model was not configured. When the real cause was a slow
+         * network, the interface was lying about its own setup.
+         */
+        const templateNote = (reason: VoiceOutcome): string => {
+          if (reason === "timeout") {
+            return "Model terlalu lambat menjawab; jawaban disusun dari templat.";
           }
-          return;
-        }
-
-        const answer = await requestAnswer(
-          buildAnswerRequest(lane, text, {
-            history: chatHistory,
-            digest,
-            explanation: latestExplanation,
-          }),
-          controller.signal,
-        );
-
-        if (answer.outcome === "model") {
-          finish(answer.text, "model");
-
-          const call = answer.toolCalls[0];
-          if (!call) return;
-
-          /*
-           * The report tool carries intent, not content. The card is built from
-           * the last verdict on the device, so the model never sees the message
-           * and cannot author the text. Without a prior check there is nothing
-           * to report, so the call is ignored rather than inventing a verdict.
-           */
-          if (call.name === "report_draft") {
-            if (!latestResult || !latestExplanation) return;
-            const channels = latestExplanation.report;
-            const requested = call.arguments.channel ?? null;
-            const channel =
-              requested && channels.some((item) => item.id === requested)
-                ? requested
-                : null;
-            patchCompanion((turn) => ({
-              ...turn,
-              report: { channel, result: latestResult, channels },
-            }));
-            return;
+          if (reason === "truncated") {
+            return "Jawaban model terpotong di tengah; jawaban disusun ulang dari templat.";
           }
+          if (reason === "unconfigured") {
+            return "Model tidak dikonfigurasi; jawaban disusun dari templat.";
+          }
+          return "Model gagal dihubungi; jawaban disusun dari templat.";
+        };
 
-          const toolStarted = performance.now();
-          const matches = filterPostings(corpus.postings, call.arguments);
-          const toolMs = performance.now() - toolStarted;
-
-          const searchStage: AgentStage = {
-            id: "job-search",
-            ...STAGE_LABEL["job-search"],
-            status: "selesai",
-            findings: 0,
-            ms: toolMs,
-            note: `${matches.length} lowongan cocok`,
-          };
-
+        const finish = (
+          finalText: string,
+          voice: "model" | "template",
+          reason?: VoiceOutcome,
+        ) => {
+          if (sealed) return;
+          sealed = true;
+          const voiceMs = Date.now() - voiceStartedAt;
           patchCompanion((turn) => ({
             ...turn,
-            tool: {
-              args: call.arguments,
-              count: matches.length,
-              total: corpus.total,
-              capped: corpus.capped,
-              summary: null,
-              summaryState: "running",
-            },
+            text: finalText,
+            streaming: false,
+            voiceStartedAt: undefined,
+            lane,
+            laneSource: lane === "tanya" ? text : undefined,
+            result: checked ? (result ?? undefined) : undefined,
+            source: checked ? scored : undefined,
+            explanation,
             trace: turn.trace
               ? {
-                  stages: [...turn.trace.stages, searchStage],
-                  totalMs: turn.trace.totalMs + toolMs,
-                }
-              : { stages: [searchStage], totalMs: toolMs },
-          }));
-
-          /*
-           * Phase 2 carries titles, companies, verdicts, and a count. The
-           * query, descriptions, apply URLs, and the saved list never enter
-           * this object, so the privacy boundary is the payload.
-           */
-          const summaryControl = new AbortController();
-          const summaryTimer = setTimeout(() => summaryControl.abort(), 21000);
-          let summary: string | null = null;
-          try {
-            summary = await requestToolSummary(
-              {
-                count: matches.length,
-                postings: matches.slice(0, 20).map((item) => ({
-                  title: item.title,
-                  company: item.company,
-                  sentinelStatus: item.sentinelStatus,
-                  luminaRisk: item.luminaRisk,
-                })),
-              },
-              summaryControl.signal,
-            );
-          } finally {
-            clearTimeout(summaryTimer);
-          }
-
-          const sentence = summary ?? summaryFallback(matches);
-
-          patchCompanion((turn) => ({
-            ...turn,
-            tool: turn.tool
-              ? {
-                  ...turn.tool,
-                  summary: sentence,
-                  summaryState: summary ? "done" : "failed",
+                  // Replace the open `berjalan` stage rather than appending a
+                  // second one: one stage, one outcome.
+                  stages: turn.trace.stages.map((stage) =>
+                    stage.id === "voice"
+                      ? {
+                          ...stage,
+                          status: voice === "model" ? "selesai" : "dilewati",
+                          ms: voiceMs,
+                          note:
+                            voice === "model"
+                              ? reason === "truncated"
+                                ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
+                                : undefined
+                              : templateNote(reason ?? "unconfigured"),
+                        }
+                      : stage,
+                  ),
+                  totalMs: detectorMs + voiceMs,
                 }
               : undefined,
           }));
+          release();
+        };
+        let sealed = false;
 
-          /*
-           * The summary is a second companion bubble only while the tool turn
-           * is still the last thing in the thread. If the reader already sent
-           * another message, appending it would answer a question they moved
-           * past.
-           */
-          const summaryTurn: Turn = {
-            id: id(),
-            role: "companion",
-            text: sentence,
-            at: stamp,
-          };
-          setSessions((prev) =>
-            prev.map((item) => {
-              if (item.id !== target) return item;
-              const last = item.turns[item.turns.length - 1];
-              if (last?.id !== companionId) return item;
-              return { ...item, turns: [...item.turns, summaryTurn] };
-            }),
+        /*
+         * The follow-up lane answers *from* the verdict it followed, so it must
+         * carry that verdict: `buildAnswerRequest` forwards the digest only for
+         * `lanjutan`, and the route's prompt expects one. Without this the model
+         * saw `digest: null` and could only speak from the tactics.
+         */
+        const digestOf = (verdict: ScoreResult): VoiceDigest =>
+          voiceDigest(
+            verdict,
+            modusFor(verdict.relatedModule)?.nama ?? verdict.modus,
           );
-          return;
-        }
 
-        finish(
-          composeAnswerFallback(lane),
-          "template",
-          answer.outcome as VoiceOutcome,
-        );
-      } catch {
-        finish(
-          lane === "periksa"
-            ? composeReply(text || attachments[0]?.name || "", result, {
-                first: false,
-                containsContent: checked,
-              })
-            : composeAnswerFallback(lane),
-          "template",
-          "failed",
-        );
+        const digest: VoiceDigest | null =
+          checked && result
+            ? digestOf(result)
+            : lane === "lanjutan" && latestResult
+              ? digestOf(latestResult)
+              : null;
+
+        /*
+         * History for the chat lane. A turn that was checked carries the message
+         * someone received, so it is filtered out here rather than trusted to be
+         * dropped inside the route: the schema is strict, but the client decides
+         * what it is allowed to see.
+         */
+        const chatHistory = (active?.turns ?? [])
+          .filter(
+            (turn) =>
+              !privateIds.has(turn.id) &&
+              turn.text.trim().length > 0 &&
+              (turn.lane === "tanya" || turn.lane === "obrolan"),
+          )
+          .map((turn) => ({
+            role: turn.role,
+            text: turn.text.slice(0, 2000),
+          }));
+
+        /*
+         * 23 s, above the route's 20 s so the server is always the one that
+         * gives up first. Before this the call passed no signal at all: a
+         * wedged socket left `busy` true and the composer disabled with no way
+         * back.
+         */
+        const controller = control;
+        const abortTimer = setTimeout(() => controller.abort(), 23000);
+        pendingTimers.current.add(abortTimer);
+
+        // Defensive: nothing below may leave `busy` stuck.
+        try {
+          if (lane !== "periksa" && text.length > 2000) {
+            finish(
+              "Pertanyaan maksimal 2.000 karakter. Ringkas pertanyaanmu lalu kirim lagi.",
+              "template",
+              "failed",
+            );
+            return;
+          }
+          if (lane === "periksa") {
+            if (!digest) {
+              finish(
+                composeReply(text || attachments[0]?.name || "", null, {
+                  first: false,
+                  containsContent: false,
+                }),
+                "template",
+                "unconfigured",
+              );
+              return;
+            }
+
+            const voice = await requestReply(
+              digest,
+              appendText,
+              controller.signal,
+            );
+
+            /*
+             * A reply that was cut but had already said something is kept.
+             * `isComplete` treats a missing full stop as a failed answer, but the
+             * reader has been watching those words arrive for two seconds —
+             * replacing them is the "it is hardcoded" symptom. Below 40
+             * characters there is effectively nothing to keep, so the template
+             * takes over.
+             */
+            const partial = voice.text.trim();
+            const keepPartial =
+              voice.outcome === "truncated" && partial.length >= 40;
+
+            if (voice.outcome === "model" || keepPartial) {
+              // `finish` turns the `truncated` reason into a trace note on the
+              // periksa card, so a kept partial answer is never labelled as a
+              // clean finish.
+              finish(partial, "model", keepPartial ? "truncated" : undefined);
+            } else {
+              finish(
+                composeReply(text || attachments[0]?.name || "", result, {
+                  first: false,
+                  containsContent: true,
+                }),
+                "template",
+                voice.outcome,
+              );
+            }
+            return;
+          }
+
+          const answer = await requestAnswer(
+            buildAnswerRequest(lane, text, {
+              history: chatHistory,
+              digest,
+              explanation: latestExplanation,
+            }),
+            controller.signal,
+          );
+
+          if (answer.outcome === "model") {
+            const call = answer.toolCalls[0];
+            if (
+              call?.name === "report_draft" &&
+              (!latestResult || !latestExplanation)
+            ) {
+              finish(
+                "Periksa pesan yang mencurigakan terlebih dahulu agar template laporan memakai temuan yang benar.",
+                "template",
+                "failed",
+              );
+              return;
+            }
+            finish(answer.text, "model");
+            if (!call) return;
+
+            if (call.name === "report_draft") {
+              if (!latestResult || !latestExplanation) return;
+              const channels = latestExplanation.report;
+              const requested = call.arguments.channel ?? null;
+              const channel =
+                requested && channels.some((item) => item.id === requested)
+                  ? requested
+                  : null;
+              patchCompanion((turn) => ({
+                ...turn,
+                report: { channel, result: latestResult, channels },
+              }));
+              return;
+            }
+
+            const toolStarted = performance.now();
+            const matches = filterPostings(corpus.postings, call.arguments);
+            const toolMs = performance.now() - toolStarted;
+
+            const searchStage: AgentStage = {
+              id: "job-search",
+              ...STAGE_LABEL["job-search"],
+              status: "selesai",
+              findings: 0,
+              ms: toolMs,
+              note: `${matches.length} lowongan cocok`,
+            };
+
+            patchCompanion((turn) => ({
+              ...turn,
+              tool: {
+                args: call.arguments,
+                count: matches.length,
+                total: corpus.total,
+                capped: corpus.capped,
+                summary: null,
+                summaryState: "running",
+              },
+              trace: turn.trace
+                ? {
+                    stages: [...turn.trace.stages, searchStage],
+                    totalMs: turn.trace.totalMs + toolMs,
+                  }
+                : { stages: [searchStage], totalMs: toolMs },
+            }));
+
+            /*
+             * Phase 2 carries titles, companies, verdicts, and a count. The
+             * query, descriptions, apply URLs, and the saved list never enter
+             * this object, so the privacy boundary is the payload.
+             */
+            const summaryControl = new AbortController();
+            pendingControllers.current.add(summaryControl);
+            const summaryTimer = setTimeout(
+              () => summaryControl.abort(),
+              21000,
+            );
+            pendingTimers.current.add(summaryTimer);
+            let summary: string | null = null;
+            try {
+              summary = await requestToolSummary(
+                {
+                  count: matches.length,
+                  postings: matches.slice(0, 20).map((item) => ({
+                    title: item.title,
+                    company: item.company,
+                    sentinelStatus: item.sentinelStatus,
+                    luminaRisk: item.luminaRisk,
+                  })),
+                },
+                summaryControl.signal,
+              );
+            } finally {
+              clearTimeout(summaryTimer);
+              pendingTimers.current.delete(summaryTimer);
+              pendingControllers.current.delete(summaryControl);
+            }
+
+            const sentence = summary ?? summaryFallback(matches);
+
+            patchCompanion((turn) => ({
+              ...turn,
+              tool: turn.tool
+                ? {
+                    ...turn.tool,
+                    summary: sentence,
+                    summaryState: summary ? "done" : "failed",
+                  }
+                : undefined,
+            }));
+
+            /*
+             * The summary is a second companion bubble only while the tool turn
+             * is still the last thing in the thread. If the reader already sent
+             * another message, appending it would answer a question they moved
+             * past.
+             */
+            const summaryTurn: Turn = {
+              id: id(),
+              role: "companion",
+              text: sentence,
+              at: stamp,
+            };
+            setSessions((prev) =>
+              prev.map((item) => {
+                if (item.id !== target) return item;
+                const last = item.turns[item.turns.length - 1];
+                if (last?.id !== companionId) return item;
+                return { ...item, turns: [...item.turns, summaryTurn] };
+              }),
+            );
+            return;
+          }
+
+          finish(
+            composeAnswerFallback(lane),
+            "template",
+            answer.outcome as VoiceOutcome,
+          );
+        } catch {
+          finish(
+            lane === "periksa"
+              ? composeReply(text || attachments[0]?.name || "", result, {
+                  first: false,
+                  containsContent: checked,
+                })
+              : composeAnswerFallback(lane),
+            "template",
+            "failed",
+          );
+        } finally {
+          clearTimeout(abortTimer);
+          pendingTimers.current.delete(abortTimer);
+        }
       } finally {
-        clearTimeout(abortTimer);
+        pendingControllers.current.delete(control);
+        release();
       }
     },
     [
@@ -1088,7 +1216,7 @@ export function CompanionChat({
    * summary is skipped on purpose.
    */
   const openJobSearch = React.useCallback(() => {
-    if (busy) return;
+    if (busy || inFlight.current) return;
     const target = activeId;
     if (target === undefined) return;
 
@@ -1547,11 +1675,14 @@ export function CompanionChat({
 
                 <div className="mt-4 w-full">
                   <CompanionQuickCards
+                    name={session?.nama}
+                    history={recentAgentRuns}
                     onFeature={prefillComposer}
                     onOpenHistory={() => setShowAgents(true)}
-                    onResume={(title) =>
-                      prefillComposer(`Lanjutkan sesi ${title}`)
-                    }
+                    onResume={(sessionId) => {
+                      setSelectedId(sessionId);
+                      setShowAgents(false);
+                    }}
                   />
                 </div>
               </div>
@@ -1698,6 +1829,7 @@ export function CompanionChat({
                             onClick={() =>
                               send(turn.laneSource ?? "", [], {
                                 force: "periksa",
+                                recheckOf: turn.id,
                               })
                             }
                           >

@@ -9,6 +9,9 @@ async function main() {
   try {
     for (const table of ["sessions", "oauth_states", "auth_attempts"])
       await pool.query(`DELETE FROM ${table} WHERE expires_at <= now()`);
+    await pool.query(`DELETE FROM simulation_intrusion_timers t
+      WHERE t.started_at < now()-interval '1 day'
+      AND NOT EXISTS(SELECT 1 FROM simulation_results r WHERE r.attempt_id=t.attempt_id)`);
   } finally {
     await pool.end();
   }

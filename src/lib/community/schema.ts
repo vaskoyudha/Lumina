@@ -116,7 +116,7 @@ export type CommunityReply = {
   isOwner: boolean;
 };
 export type MutationResult =
-  | { ok: true; id?: string }
+  | { ok: true; id?: string; replyId?: string; page?: number }
   | { ok: false; error: string };
 export const PAGE_SIZE = 12;
 export const REPLY_PAGE_SIZE = 20;

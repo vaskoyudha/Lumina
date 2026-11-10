@@ -66,9 +66,14 @@ export async function publishReply(input: unknown): Promise<MutationResult> {
   try {
     const session = await actor("balasan");
     const parsed = ReplyInputSchema.parse(input);
-    const id = await writeReply(session.id, parsed);
-    refresh(id);
-    return { ok: true, id };
+    const result = await writeReply(session.id, parsed);
+    refresh(result.postId);
+    return {
+      ok: true,
+      id: result.postId,
+      replyId: result.replyId,
+      page: result.page,
+    };
   } catch (e) {
     return failed(e);
   }

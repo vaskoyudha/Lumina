@@ -3,6 +3,16 @@
 import { z } from "zod";
 import { authDatabase } from "@/lib/auth/database";
 import { getSession } from "@/lib/auth/server-session";
+import { MODUS } from "@/lib/modus";
+
+const publicTitles = new Set([
+  "Percakapan Companion",
+  "Pemeriksaan pesan",
+  ...MODUS.map((m) => `Pemeriksaan: ${m.nama}`),
+]);
+function privateTitle(title: string) {
+  return publicTitles.has(title) ? title : "Percakapan Companion";
+}
 
 /**
  * Account-scoped conversation metadata. The transcript itself never leaves the
@@ -39,7 +49,7 @@ export async function listConversationHistory() {
       ok: true as const,
       conversations: rows.map((row) => ({
         id: row.id,
-        title: row.title,
+        title: privateTitle(row.title),
         turns: row.turns,
         risk: row.risk,
         updatedAt: row.updated_at.toISOString(),
@@ -69,7 +79,7 @@ export async function saveConversationHistory(input: SaveInput) {
          updated_at=now()
        WHERE companion_conversations.user_id=EXCLUDED.user_id
        RETURNING id`,
-      [id, session.id, title, turns, risk ?? null],
+      [id, session.id, privateTitle(title), turns, risk ?? null],
     );
     if (!result.rowCount)
       return { ok: false as const, error: "Percakapan tidak tersedia." };

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { CommunityAside } from "@/components/community/community-aside";
 import {
   PostEditor,
+  ReplyEditor,
   TimelineComposer,
 } from "@/components/community/community-editor";
 import { EXPLORE_EVENT } from "@/components/community/community-explore";
@@ -52,6 +53,25 @@ const post: CommunityPost = {
   isOwner: false,
   hidden: false,
 };
+
+it("navigates a new reply to its actual page and anchor", async () => {
+  const replyId = "892e48bd-9178-461d-bd83-c32fc614bb24";
+  jest
+    .mocked(publishReply)
+    .mockResolvedValueOnce({ ok: true, id: post.id, replyId, page: 2 });
+  const user = userEvent.setup();
+  render(<ReplyEditor postId={post.id} inline />);
+  await user.type(
+    screen.getByRole("textbox", { name: "Tulis balasan" }),
+    "Balasan baru setelah halaman pertama penuh.",
+  );
+  await user.click(screen.getByRole("button", { name: "Kirim balasan" }));
+  await waitFor(() =>
+    expect(push).toHaveBeenCalledWith(
+      `/komunitas/${post.id}?page=2#balasan-${replyId}`,
+    ),
+  );
+});
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(publishPost).mockResolvedValue({ ok: true, id: post.id });
