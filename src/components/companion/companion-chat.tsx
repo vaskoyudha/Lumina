@@ -767,6 +767,7 @@ export function CompanionChat({
         return {
           result: turn.result,
           trace: turn.trace ?? null,
+          orchestration: turn.orchestration ?? null,
           explanation: turn.explanation ?? null,
           source: turn.source ?? "",
           at: turn.at,
@@ -778,6 +779,7 @@ export function CompanionChat({
 
   const latestResult = latestCheck?.result ?? null;
   const latestTrace = latestCheck?.trace ?? null;
+  const latestOrchestration = latestCheck?.orchestration ?? null;
 
   const latestLink = React.useMemo(() => {
     for (let i = turns.length - 1; i >= 0; i--) {
@@ -825,6 +827,7 @@ export function CompanionChat({
     ? (liveCheck?.result ?? latestResult)
     : null;
   const panelTrace = liveCheck?.trace ?? latestTrace;
+  const panelOrchestration = liveCheck?.orchestration ?? latestOrchestration;
   const panelLink = panelBandReady ? (panelResult ? null : latestLink) : null;
   const panelLinkPending = panelResult || panelLink ? null : latestLinkPrompt;
   const running = liveCheck != null;
@@ -3303,6 +3306,7 @@ export function CompanionChat({
                 sequence={AGENT_SEQUENCE}
                 titleId="panel-bukti-title"
                 trace={panelTrace}
+                orchestration={panelOrchestration}
                 running={running}
               />
             </div>
@@ -3364,6 +3368,7 @@ export function CompanionChat({
                 sequence={AGENT_SEQUENCE}
                 titleId="panel-bukti-title-sheet"
                 trace={panelTrace}
+                orchestration={panelOrchestration}
                 running={running}
               />
             )}

@@ -2,12 +2,21 @@
 
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
-import { AGENT_REGISTRY } from "@/components/companion/agents";
+import { AgentInfoHint } from "@/components/companion/agent-info-popover";
+import {
+  AGENT_REGISTRY,
+  type DetectorAgent,
+} from "@/components/companion/agents";
 import type {
   PanelAgent,
   PanelLedger,
   PanelOutcome,
 } from "@/components/companion/panel-ledger";
+import type {
+  SpawnedAgent,
+  SpawnStatus,
+} from "@/components/companion/spawn-ledger";
+import { StatusPulse } from "@/components/companion/status-pulse";
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,6 +32,20 @@ const OUTCOME_TICK: Record<PanelOutcome, string> = {
   failed: "bg-danger",
   live: "bg-brand-strong",
   pending: "bg-dot",
+};
+
+const SPAWN_LABEL: Record<SpawnStatus, string> = {
+  berjalan: "Berjalan",
+  selesai: "Selesai",
+  gagal: "Gagal",
+  dilewati: "Dilewati",
+};
+
+const SPAWN_TONE: Record<SpawnStatus, string> = {
+  berjalan: "bg-brand-soft text-brand",
+  selesai: "bg-chip text-dim",
+  gagal: "bg-danger/10 text-danger",
+  dilewati: "bg-chip text-dim",
 };
 
 const OUTCOME_LABEL: Record<PanelOutcome, string> = {
@@ -92,10 +115,12 @@ export function FindingsSection({
   agents,
   titleId,
   onSelectEvidence,
+  onSelectAgent,
 }: {
   agents: readonly PanelAgent[];
   titleId: string;
   onSelectEvidence?: (evidence: string) => void;
+  onSelectAgent?: (agent: DetectorAgent) => void;
 }): ReactNode {
   const total = agents.reduce((sum, agent) => sum + agent.count, 0);
 
@@ -121,13 +146,21 @@ export function FindingsSection({
                 key={agent.agent}
               >
                 <div className="flex items-center gap-2 border-edge-soft border-b px-3 py-2">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border border-brand-edge bg-brand-soft text-brand-strong">
-                    <Icon aria-hidden className="size-3.5" />
-                  </span>
-                  <p className="min-w-0 flex-1 truncate font-semibold text-[12px] text-ink">
-                    {STAGE_LABEL[agent.agent].label}
-                  </p>
-                  <span className="rounded bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
+                  <button
+                    aria-label={`Tampilkan info ${STAGE_LABEL[agent.agent].label}`}
+                    className="group/info flex min-w-0 flex-1 items-center gap-2 rounded-[8px] text-left outline-none transition-colors hover:bg-txt/[0.03] focus-visible:ring-2 focus-visible:ring-brand-strong"
+                    onClick={() => onSelectAgent?.(agent.agent)}
+                    type="button"
+                  >
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border border-brand-edge bg-brand-soft text-brand-strong">
+                      <Icon aria-hidden className="size-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-semibold text-[12px] text-ink">
+                      {STAGE_LABEL[agent.agent].label}
+                    </span>
+                    <AgentInfoHint />
+                  </button>
+                  <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
                     {agent.count} temuan
                   </span>
                 </div>
@@ -167,15 +200,107 @@ export function FindingsSection({
   );
 }
 
+/**
+ * The spawn list: only agents the orchestrator actually started. Unlike the
+ * engine roster below, a detector the planner never chose has no row here.
+ */
+export function SpawnedSection({
+  agents,
+  titleId,
+  onSelectAgent,
+}: {
+  agents: readonly SpawnedAgent[];
+  titleId: string;
+  onSelectAgent?: (agent: DetectorAgent) => void;
+}): ReactNode {
+  if (agents.length === 0) return null;
+
+  return (
+    <section aria-labelledby={`${titleId}-spawned`} className="mt-3">
+      <h3
+        className="font-mono text-[9px] text-dim uppercase tracking-[0.14em]"
+        id={`${titleId}-spawned`}
+      >
+        Sub-agen dijalankan · {agents.length}
+      </h3>
+      <ul
+        aria-label="Sub-agen yang dijalankan"
+        className="mt-2 flex flex-col gap-1.5"
+      >
+        {agents.map((item) => {
+          const profile = AGENT_REGISTRY[item.agent];
+          const Icon = profile.icon;
+          const live = item.status === "berjalan";
+
+          return (
+            <li
+              className={cn(
+                "rounded-[12px] border px-2.5 py-2",
+                live
+                  ? "border-brand-edge bg-brand-soft"
+                  : "border-edge-soft bg-bg",
+              )}
+              key={item.agent}
+            >
+              <button
+                aria-label={`Tampilkan info sub-agen ${profile.label}`}
+                className="group/info flex w-full items-start gap-2 rounded-[8px] text-left outline-none transition-colors hover:bg-txt/[0.03] focus-visible:ring-2 focus-visible:ring-brand-strong"
+                onClick={() => onSelectAgent?.(item.agent)}
+                type="button"
+              >
+                <span className="relative flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-panel text-brand-strong">
+                  {live ? (
+                    <StatusPulse
+                      className="absolute -top-1 -right-1 size-2 rounded-full bg-brand-strong"
+                      kind="opacity"
+                    />
+                  ) : null}
+                  <Icon aria-hidden className="size-3.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="truncate font-medium text-[11.5px] text-txt">
+                      {profile.displayName}
+                    </span>
+                    <span className="truncate text-[10px] text-dim">
+                      {profile.label}
+                    </span>
+                    <AgentInfoHint className="size-2.5" />
+                  </span>
+                  <span className="mt-0.5 block truncate text-[10.5px] text-dim">
+                    {item.task}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 rounded px-1.5 py-0.5 font-mono text-[9.5px]",
+                    SPAWN_TONE[item.status],
+                  )}
+                >
+                  {item.status === "selesai" && item.findings > 0
+                    ? `${item.findings} temuan`
+                    : SPAWN_LABEL[item.status]}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 /** A compact group for agents that did not produce a finding. */
 export function CoverageGroup({
   label,
   agents,
   defaultOpen = false,
+  onSelectAgent,
 }: {
   label: string;
   agents: readonly PanelAgent[];
   defaultOpen?: boolean;
+  onSelectAgent?: (agent: DetectorAgent) => void;
 }): ReactNode {
   if (agents.length === 0) return null;
 
@@ -200,16 +325,24 @@ export function CoverageGroup({
               className="rounded-[9px] border border-edge-soft bg-bg px-2.5 py-1.5"
               key={agent.agent}
             >
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[11px] text-txt">
-                  {STAGE_LABEL[agent.agent].label}
+              <button
+                aria-label={`Tampilkan info ${STAGE_LABEL[agent.agent].label}`}
+                className="group/info flex w-full items-baseline justify-between gap-2 rounded-[6px] text-left outline-none transition-colors hover:bg-txt/[0.03] focus-visible:ring-2 focus-visible:ring-brand-strong"
+                onClick={() => onSelectAgent?.(agent.agent)}
+                type="button"
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-[11px] text-txt">
+                    {STAGE_LABEL[agent.agent].label}
+                  </span>
+                  <AgentInfoHint className="size-2.5" />
                 </span>
                 {agent.ms != null ? (
                   <span className="shrink-0 font-mono text-[10px] text-dim">
                     {formatMs(agent.ms)}
                   </span>
                 ) : null}
-              </div>
+              </button>
               <p className="mt-0.5 text-[10.5px] text-dim leading-snug">
                 {agent.note ??
                   (agent.outcome === "pending"

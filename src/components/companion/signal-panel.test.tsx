@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
+import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
 import { RISK_LABEL } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { scoreWithTrace } from "@/lib/scoring/score";
@@ -144,6 +145,164 @@ describe("SignalPanel", () => {
       screen.getByRole("list", { name: /temuan terdeteksi/i }),
     );
     expect(findings.getAllByText(/agent/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows the agent description inside the panel, not a floating popover", async () => {
+    const user = userEvent.setup();
+    const { result, trace } = scoreWithTrace({ text: PRIZE_MESSAGE });
+    render(
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /tampilkan info conversation agent/i,
+      }),
+    );
+
+    expect(
+      screen.getByText(/membandingkan pesan dengan giliran/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Riwayat giliran")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /tutup detail agen/i }),
+    );
+    expect(
+      screen.queryByText(/membandingkan pesan dengan giliran/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lists only the sub-agents the orchestrator actually started", async () => {
+    const user = userEvent.setup();
+    const { result, trace } = scoreWithTrace({ text: PRIZE_MESSAGE });
+    const orchestration: OrchestratorEvent[] = [
+      {
+        type: "agent_start",
+        runId: "run-1",
+        seq: 1,
+        at: 1,
+        agent: "message",
+        label: "Mochi · Message Agent",
+        task: "Membaca kata yang dipakai untuk menekan.",
+        skills: [],
+        tools: [],
+      },
+      {
+        type: "agent_start",
+        runId: "run-1",
+        seq: 2,
+        at: 2,
+        agent: "link",
+        label: "Bubu · Link Agent",
+        task: "Membongkar tautan pada pesan.",
+        skills: [],
+        tools: [],
+      },
+      {
+        type: "agent_result",
+        runId: "run-1",
+        seq: 3,
+        at: 3,
+        agent: "link",
+        label: "Bubu · Link Agent",
+        status: "selesai",
+        summary: "",
+        findings: ["domain mirip"],
+        points: [],
+        ms: 8,
+      },
+    ];
+
+    render(
+      <SignalPanel
+        orchestration={orchestration}
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
+    );
+
+    expect(screen.getByText("Sub-agen dijalankan · 2")).toBeInTheDocument();
+
+    const spawned = within(
+      screen.getByRole("list", { name: /sub-agen yang dijalankan/i }),
+    );
+    expect(
+      spawned.getByText("Membaca kata yang dipakai untuk menekan."),
+    ).toBeInTheDocument();
+    expect(
+      spawned.getByText("Membongkar tautan pada pesan."),
+    ).toBeInTheDocument();
+    expect(spawned.getByText("1 temuan")).toBeInTheDocument();
+
+    // Conversation Agent has a finding in this message but was never spawned.
+    expect(spawned.queryByText("Conversation Agent")).not.toBeInTheDocument();
+
+    await user.click(
+      spawned.getByRole("button", {
+        name: /tampilkan info sub-agen message agent/i,
+      }),
+    );
+    expect(screen.getByText(/membaca nada pesan/i)).toBeInTheDocument();
+  });
+
+  it("shows the spawn list while the run is still streaming", async () => {
+    const user = userEvent.setup();
+    const orchestration: OrchestratorEvent[] = [
+      {
+        type: "agent_start",
+        runId: "run-1",
+        seq: 1,
+        at: 1,
+        agent: "message",
+        label: "Mochi · Message Agent",
+        task: "Membaca kata yang dipakai untuk menekan.",
+        skills: [],
+        tools: [],
+      },
+    ];
+
+    render(
+      <SignalPanel
+        orchestration={orchestration}
+        result={null}
+        sequence={AGENT_SEQUENCE}
+      />,
+    );
+
+    const spawned = within(
+      screen.getByRole("list", { name: /sub-agen yang dijalankan/i }),
+    );
+    expect(
+      spawned.getByText("Membaca kata yang dipakai untuk menekan."),
+    ).toBeInTheDocument();
+    expect(spawned.getByText("Berjalan")).toBeInTheDocument();
+
+    await user.click(
+      spawned.getByRole("button", {
+        name: /tampilkan info sub-agen message agent/i,
+      }),
+    );
+    expect(screen.getByText(/membaca nada pesan/i)).toBeInTheDocument();
+  });
+
+  it("omits the spawn section when no orchestration ran", () => {
+    const { result, trace } = scoreWithTrace({ text: PRIZE_MESSAGE });
+    render(
+      <SignalPanel
+        result={result}
+        sequence={AGENT_SEQUENCE}
+        trace={withEvidenceStage(trace)}
+      />,
+    );
+
+    expect(screen.queryByText(/sub-agen dijalankan/i)).not.toBeInTheDocument();
   });
 
   it("credits each finding to the agent that produced it, with its quote", () => {

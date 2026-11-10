@@ -9,6 +9,7 @@ import {
   Sparkles,
   TriangleAlert,
   Workflow,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,6 +23,10 @@ import {
   useState,
 } from "react";
 import {
+  AgentInfoHint,
+  AgentProfileDetails,
+} from "@/components/companion/agent-info-popover";
+import {
   AGENT_REGISTRY,
   type DetectorAgent,
 } from "@/components/companion/agents";
@@ -30,6 +35,7 @@ import {
   CoverageGroup,
   CoverageStrip,
   FindingsSection,
+  SpawnedSection,
   TraceDisclosure,
 } from "@/components/companion/panel-ledger-view";
 import {
@@ -39,6 +45,7 @@ import {
   type WireHead,
   type WireTone,
 } from "@/components/companion/panel-wires";
+import { buildSpawnLedger } from "@/components/companion/spawn-ledger";
 import { StatusPulse } from "@/components/companion/status-pulse";
 import { ValidationNote } from "@/components/companion/validation-note";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +54,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyTitle } from "@/components/ui/empty";
 import { type AgentTrace, STAGE_LABEL } from "@/lib/contracts/agent-run";
 import type { EvidenceBundle } from "@/lib/contracts/evidence";
+import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
 import {
   type AgentId,
   RISK_LABEL,
@@ -742,6 +750,7 @@ export function SignalPanel({
   sequence,
   evidence,
   trace,
+  orchestration,
   link,
   linkPending,
   running = false,
@@ -756,6 +765,8 @@ export function SignalPanel({
   evidence?: EvidenceBundle | null;
   /** What the pipeline actually did. Omit on surfaces that do not measure. */
   trace?: AgentTrace | null;
+  /** The orchestrator's own events: the only source of spawn truth. */
+  orchestration?: readonly OrchestratorEvent[] | null;
   /** A completed manual link scan; shown instead of the message pipeline. */
   link?: LinkVerdict | null;
   /** A link waiting for the reader's approval; no URL has been sent yet. */
@@ -772,12 +783,16 @@ export function SignalPanel({
   onSelectEvidence?: (evidence: string) => void;
 }) {
   const [zoom, setZoom] = useState(100);
+  const [selectedAgent, setSelectedAgent] = useState<DetectorAgent | null>(
+    null,
+  );
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const { attachCanvas, height, width, wires } = useGraphWires(canvasRef);
   const findings = result
     ? result.signals.filter((signal) => signal.weight > 0)
     : [];
   const ledger = buildPanelLedger(sequence, trace, findings);
+  const spawned = buildSpawnLedger(orchestration);
   const linkView = !result && link ? link : null;
   const linkPendingView = !result && !link && linkPending ? linkPending : null;
   const linkSurface = Boolean(linkView || linkPendingView);
@@ -960,6 +975,26 @@ export function SignalPanel({
     </div>
   );
 
+  const agentDetail = selectedAgent ? (
+    <div className="shrink-0 border-edge-soft border-b bg-panel px-3.5 py-2.5">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <AgentProfileDetails agent={selectedAgent} />
+        </div>
+        <Button
+          aria-label="Tutup detail agen"
+          className="size-6 shrink-0 rounded-full text-ink-mute hover:bg-chip"
+          onClick={() => setSelectedAgent(null)}
+          size="icon-xs"
+          type="button"
+          variant="ghost"
+        >
+          <X aria-hidden className="size-3.5" />
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   if (!result) {
     return (
       <Card
@@ -970,8 +1005,14 @@ export function SignalPanel({
         )}
       >
         {header}
+        {agentDetail}
         <div className="relative flex min-h-0 flex-1 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-16">
+            <SpawnedSection
+              agents={spawned}
+              onSelectAgent={setSelectedAgent}
+              titleId={titleId}
+            />
             <div
               className="relative origin-top transition-transform duration-150"
               ref={attachCanvas}
@@ -1133,6 +1174,8 @@ export function SignalPanel({
     >
       {header}
 
+      {agentDetail}
+
       <div className="relative flex min-h-0 flex-1 flex-col">
         <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-4">
           <ValidationNote trace={trace} />
@@ -1186,8 +1229,15 @@ export function SignalPanel({
             </output>
           </RootNode>
 
+          <SpawnedSection
+            agents={spawned}
+            onSelectAgent={setSelectedAgent}
+            titleId={titleId}
+          />
+
           <FindingsSection
             agents={ledger.findingAgents}
+            onSelectAgent={setSelectedAgent}
             onSelectEvidence={onSelectEvidence}
             titleId={titleId}
           />
@@ -1197,11 +1247,13 @@ export function SignalPanel({
               agents={ledger.cleanAgents}
               defaultOpen={coverageDefaultOpen}
               label="Diperiksa, nihil"
+              onSelectAgent={setSelectedAgent}
             />
             <CoverageGroup
               agents={ledger.noObjectAgents}
               defaultOpen={coverageDefaultOpen}
               label="Tanpa objek"
+              onSelectAgent={setSelectedAgent}
             />
             <CoverageGroup
               agents={ledger.pendingAgents}
@@ -1211,6 +1263,7 @@ export function SignalPanel({
                 ledger.noObjectAgents.length === 0
               }
               label="Belum tercatat"
+              onSelectAgent={setSelectedAgent}
             />
           </div>
 
@@ -1228,9 +1281,17 @@ export function SignalPanel({
                     className="rounded-[10px] border border-danger/30 bg-danger/5 px-2.5 py-2"
                     key={agent.agent}
                   >
-                    <p className="font-medium text-[11.5px] text-danger">
-                      {STAGE_LABEL[agent.agent].label} gagal
-                    </p>
+                    <button
+                      aria-label={`Tampilkan info ${STAGE_LABEL[agent.agent].label}`}
+                      className="group/info inline-flex items-center gap-1 rounded-[6px] text-left outline-none transition-colors hover:bg-txt/[0.03] focus-visible:ring-2 focus-visible:ring-brand-strong"
+                      onClick={() => setSelectedAgent(agent.agent)}
+                      type="button"
+                    >
+                      <span className="font-medium text-[11.5px] text-danger">
+                        {STAGE_LABEL[agent.agent].label} gagal
+                      </span>
+                      <AgentInfoHint className="size-2.5" />
+                    </button>
                     <p className="mt-0.5 text-[10.5px] text-dim leading-snug">
                       {agent.note ?? "Tidak ada catatan."}
                     </p>
@@ -1258,9 +1319,17 @@ export function SignalPanel({
                       className="size-2 rounded-full bg-brand-strong"
                       kind="opacity"
                     />
-                    <span className="text-[11.5px] text-txt">
-                      {STAGE_LABEL[agent.agent].label}
-                    </span>
+                    <button
+                      aria-label={`Tampilkan info ${STAGE_LABEL[agent.agent].label}`}
+                      className="group/info flex min-w-0 items-center gap-1.5 rounded-[6px] text-left outline-none transition-colors hover:bg-txt/[0.03] focus-visible:ring-2 focus-visible:ring-brand-strong"
+                      onClick={() => setSelectedAgent(agent.agent)}
+                      type="button"
+                    >
+                      <span className="text-[11.5px] text-txt">
+                        {STAGE_LABEL[agent.agent].label}
+                      </span>
+                      <AgentInfoHint className="size-2.5" />
+                    </button>
                   </li>
                 ))}
               </ul>
