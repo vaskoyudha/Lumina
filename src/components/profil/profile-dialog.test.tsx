@@ -17,6 +17,14 @@ jest.mock("next/link", () => {
 
 jest.mock("@/lib/auth/actions", () => ({
   logout: jest.fn(),
+  updateNama: jest.fn(),
+  changePasswordAction: jest.fn(),
+  revokeSessionAction: jest.fn(),
+  logoutEverywhere: jest.fn(),
+}));
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: jest.fn() }),
 }));
 
 const session = {
@@ -115,5 +123,58 @@ describe("ProfileDialog settings shell", () => {
     expect(within(dialog).getAllByText(/jenis akun/i).length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("saves a new display name and refreshes the identity row", async () => {
+    const { updateNama } = jest.requireMock("@/lib/auth/actions");
+    updateNama.mockResolvedValue({
+      ok: true,
+      account: { nama: "Siti Baru", email: "siti@lumina.id" },
+    });
+    const user = userEvent.setup();
+    render(
+      <ProfileDialog
+        session={session}
+        section="profil"
+        onOpenChange={jest.fn()}
+      />,
+    );
+
+    const input = await screen.findByLabelText(/nama tampilan/i);
+    await user.clear(input);
+    await user.type(input, "Siti Baru");
+    await user.click(screen.getByRole("button", { name: /simpan nama/i }));
+
+    expect(updateNama).toHaveBeenCalled();
+    expect(await screen.findByRole("status")).toHaveTextContent(/diperbarui/i);
+    expect(screen.getAllByText("Siti Baru").length).toBeGreaterThan(0);
+  });
+
+  it("shows a password error from the action", async () => {
+    const { changePasswordAction } = jest.requireMock("@/lib/auth/actions");
+    changePasswordAction.mockResolvedValue({
+      ok: false,
+      error: "Password saat ini salah.",
+    });
+    const user = userEvent.setup();
+    render(
+      <ProfileDialog
+        session={session}
+        section="profil"
+        onOpenChange={jest.fn()}
+      />,
+    );
+
+    await user.type(await screen.findByLabelText(/password saat ini/i), "lama");
+    await user.type(screen.getByLabelText(/^password baru$/i), "password456");
+    await user.type(
+      screen.getByLabelText(/ulangi password baru/i),
+      "password456",
+    );
+    await user.click(screen.getByRole("button", { name: /ubah password/i }));
+
+    expect(
+      (await screen.findAllByText(/password saat ini salah/i)).length,
+    ).toBeGreaterThan(0);
   });
 });

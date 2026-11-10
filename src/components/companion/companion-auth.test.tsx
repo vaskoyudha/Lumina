@@ -23,6 +23,10 @@ jest.mock("@/lib/auth/actions", () => ({
   login: jest.fn(),
   register: jest.fn(),
   logout: jest.fn(),
+  updateNama: jest.fn(),
+  changePasswordAction: jest.fn(),
+  revokeSessionAction: jest.fn(),
+  logoutEverywhere: jest.fn(),
 }));
 
 beforeAll(() => {
