@@ -2,6 +2,7 @@
 
 **Status:** post-submission feature. Spec:
 `docs/superpowers/specs/2026-11-09-loker-tool-design.md`.
+Screenshots and a card walkthrough: `docs/loker-guide.md`.
 
 ## What it does
 
