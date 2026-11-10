@@ -22,9 +22,16 @@ export const ReportFactsSchema = z
   })
   .strict();
 
+export const ReportChannelIdSchema = z.enum([
+  "iasc",
+  "komdigi",
+  "patrolisiber",
+  "cekrekening",
+]);
+
 export const ReportPolishRequestSchema = z
   .object({
-    channelId: z.enum(["iasc", "komdigi", "patrolisiber", "cekrekening"]),
+    channelId: ReportChannelIdSchema,
     draft: ReportDraftSchema,
     facts: ReportFactsSchema,
   })
