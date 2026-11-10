@@ -36,9 +36,9 @@ const SHOP_RULES: readonly ShopRule[] = [
   {
     id: "mkt-overpayment",
     weight: 0.7,
-    label: "Mengaku kelebihan bayar dan meminta refund ke rekening berbeda",
+    label: "Mengaku kelebihan bayar lalu meminta refund",
     pattern:
-      /\bkelebihan\s+(?:bayar|transfer)\b[^.!?]{0,100}\b(?:refund|kembalikan|pengembalian)\b[^.!?]{0,70}\brekening\s+(?:lain|berbeda)\b/i,
+      /\bkelebihan\s+(?:(?:bayar|transfer|dana|uang)\s+)?(?:rp\s*)?\d[\d.]*\b[^.!?]{0,100}\b(?:refund|kembalikan|pengembalian|balikin|transfer\s+balik)\b[^.!?]{0,80}\b(?:rekening|akun|dana|ovo|gopay|shopeepay)\b|\bkelebihan\s+(?:bayar|transfer)\b[^.!?]{0,100}\b(?:tolong|mohon|minta|harap)\b[^.!?]{0,30}\b(?:refund|kembalikan|pengembalian|balikin|transfer\s+balik)\b[^.!?]{0,80}\b(?:rekening|akun|dana|ovo|gopay|shopeepay)\b/i,
   },
   {
     id: "mkt-offplatform",
