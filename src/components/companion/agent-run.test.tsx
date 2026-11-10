@@ -407,6 +407,37 @@ describe("AgentRun", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers real link verification on the Link Agent's evidence", async () => {
+    const user = userEvent.setup();
+    const result: ScoreResult = {
+      score: 60,
+      risk: "tinggi",
+      signals: [
+        {
+          label: "Domain meniru brand — bukan situs resmi",
+          weight: 0.85,
+          evidence: "https://bcaa.xyz/login",
+          agent: "link",
+        },
+      ],
+      modus: "tidak-dikenali",
+      advice: [],
+      relatedModule: null,
+      hardOverride: false,
+    };
+    const linked: AgentTrace = {
+      stages: [stage({ id: "link", status: "temuan", findings: 1, ms: 2 })],
+      totalMs: 2,
+    };
+    render(<AgentRun trace={linked} result={result} />);
+
+    const link = screen.getByTestId("agent-link");
+    await user.click(within(link).getByRole("button", { name: /link agent/i }));
+    expect(
+      within(link).getByRole("button", { name: /periksa tautan/i }),
+    ).toBeInTheDocument();
+  });
+
   it("renders the full skip or failure note in the expanded body", async () => {
     const user = userEvent.setup();
     const note = "Model terlalu lambat menjawab; jawaban disusun dari templat.";
