@@ -45,6 +45,12 @@ describe("halaman misi simulasi", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/3 kemungkinan akhir/i)).toBeInTheDocument();
 
+    const status = screen.getByRole("region", { name: "Status simulasi" });
+    expect(within(status).getAllByRole("listitem")).toHaveLength(3);
+    expect(
+      within(status).getByRole("timer", { name: /sisa waktu/i }),
+    ).toBeInTheDocument();
+
     const chapters = screen.getByRole("region", { name: "Alur misi" });
     expect(within(chapters).getAllByRole("listitem")).toHaveLength(3);
 

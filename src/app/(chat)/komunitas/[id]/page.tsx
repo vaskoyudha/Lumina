@@ -52,6 +52,7 @@ export async function ThreadContent({ params, searchParams }: Props) {
       replies={replies}
       canWrite={!!session}
       page={page}
+      viewerName={session?.nama}
     />
   );
 }

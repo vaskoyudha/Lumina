@@ -1,27 +1,51 @@
 import { type ReactNode, Suspense } from "react";
-import { CommunityFrame } from "@/components/community/community-frame";
+import { CommunityAside } from "@/components/community/community-aside";
+import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import { getSession } from "@/lib/auth/server-session";
 import { isCommunityModerator } from "@/lib/community/access";
-import "@/styles/community-twitter.css";
+import { QuerySchema } from "@/lib/community/schema";
+import { listPosts } from "@/lib/community/store";
 
+/**
+ * `/komunitas` uses the same workspace chrome as Companion, Belajar, and
+ * Simulasi: one shared left sidebar, a scrolling content column, and the
+ * community rail on the right. The session read for the moderator link sits in
+ * `Suspense` so the shell paints before the cookie resolves.
+ */
 export default function CommunityLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense
-      fallback={<CommunityFrame session={null}>{children}</CommunityFrame>}
+    <WorkspaceShell
+      label="Komunitas"
+      aside={
+        <Suspense fallback={<CommunityAside />}>
+          <CommunityAsideWithSession />
+        </Suspense>
+      }
     >
-      <CommunityWithSession>{children}</CommunityWithSession>
-    </Suspense>
+      {children}
+    </WorkspaceShell>
   );
 }
 
-async function CommunityWithSession({ children }: { children: ReactNode }) {
+async function CommunityAsideWithSession() {
   const session = await getSession();
+  let latest: Awaited<ReturnType<typeof listPosts>>["posts"] = [];
+  let trending: Awaited<ReturnType<typeof listPosts>>["posts"] = [];
+  try {
+    const [newest, busiest] = await Promise.all([
+      listPosts(QuerySchema.parse({ sort: "terbaru" }), null),
+      listPosts(QuerySchema.parse({ sort: "ramai" }), null),
+    ]);
+    latest = newest.posts;
+    trending = busiest.posts;
+  } catch {
+    // The feed shows its own unavailable state; the rail stays empty instead.
+  }
   return (
-    <CommunityFrame
-      session={session ? { nama: session.nama, email: session.email } : null}
+    <CommunityAside
       moderator={session ? isCommunityModerator(session.id) : false}
-    >
-      {children}
-    </CommunityFrame>
+      latest={latest}
+      trending={trending}
+    />
   );
 }
