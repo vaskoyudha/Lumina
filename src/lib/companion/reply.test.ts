@@ -1,4 +1,5 @@
 import {
+  composeAnswerFallback,
   composeReply,
   isGreeting,
   suggestedActions,
@@ -8,6 +9,27 @@ import { scoreText } from "@/lib/scoring/score";
 
 const APK =
   "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim.";
+
+describe("conversational fallback", () => {
+  it("does not redirect a failed question to scam checking", () => {
+    expect(composeAnswerFallback("tanya", "timeout")).toMatch(/terlalu lama/i);
+    expect(composeAnswerFallback("tanya", "unconfigured")).toMatch(
+      /belum dikonfigurasi/i,
+    );
+    expect(composeAnswerFallback("tanya")).not.toMatch(/tempel|penipuan/i);
+  });
+
+  it("gives useful incident guidance when the model is unavailable", () => {
+    const reply = composeAnswerFallback("obrolan", "failed", {
+      question: "akun aku di hack dan uang aku hilang",
+      history: [],
+    });
+    expect(reply).toMatch(/pemulihan akun/i);
+    expect(reply).toMatch(/transaksi yang tidak kamu lakukan/i);
+    expect(reply).toMatch(/tidak dijamin/i);
+    expect(reply).not.toMatch(/tidak ada pola penipuan|lowongan/i);
+  });
+});
 
 describe("isGreeting", () => {
   it("recognises Indonesian openers", () => {

@@ -14,7 +14,12 @@ import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
  * never leaves the device" testable.
  */
 
-export const AnswerLaneSchema = z.enum(["tanya", "lanjutan", "obrolan"]);
+export const AnswerLaneSchema = z.enum([
+  "tanya",
+  "lanjutan",
+  "obrolan",
+  "belajar",
+]);
 export type AnswerLane = z.infer<typeof AnswerLaneSchema>;
 
 export const AnswerHistoryEntrySchema = z
@@ -44,6 +49,7 @@ export const AnswerTacticSchema = z
 export const AnswerRequestSchema = z
   .object({
     lane: AnswerLaneSchema,
+    moduleNo: z.number().int().min(1).max(99).optional(),
     /** What the user typed. Never a message they received. */
     question: z.string().min(1).max(2000),
     /** Chat-lane turns only. The client filters checked turns out. */

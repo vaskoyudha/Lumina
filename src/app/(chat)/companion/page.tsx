@@ -26,10 +26,14 @@ function CompanionBoot() {
   );
 }
 
-export default function CompanionPage() {
+export default function CompanionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ panel?: string; modul?: string }>;
+}) {
   return (
     <Suspense fallback={<CompanionBoot />}>
-      <CompanionWithSession />
+      <CompanionWithSession searchParams={searchParams} />
     </Suspense>
   );
 }

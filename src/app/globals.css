@@ -454,6 +454,10 @@
   --lumina-agent-message: oklch(0.52 0.1 245);
   --lumina-agent-link: oklch(0.52 0.1 200);
   --lumina-agent-identity: oklch(0.52 0.1 155);
+  --lumina-agent-email: var(--lumina-agent-identity);
+  --lumina-agent-email-soft: var(--lumina-agent-identity-soft);
+  --lumina-agent-injection: var(--lumina-agent-message);
+  --lumina-agent-injection-soft: var(--lumina-agent-message-soft);
   --lumina-agent-conversation: oklch(0.52 0.1 290);
   --lumina-agent-job: oklch(0.52 0.1 110);
   --lumina-agent-marketplace: oklch(0.52 0.1 335);

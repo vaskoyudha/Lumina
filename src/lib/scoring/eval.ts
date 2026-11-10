@@ -18,6 +18,15 @@ export interface EvalModusGroup {
 }
 
 export interface EvalReport {
+  byStratum: {
+    tag: string;
+    total: number;
+    caught: number;
+    legitTotal: number;
+    falsePositives: number;
+  }[];
+  missedCases: string[];
+  falsePositiveCases: string[];
   scamTotal: number;
   caught: number;
   nailed: number;
@@ -66,6 +75,29 @@ export function runEval(): EvalReport {
   let slowestCpuMs = 0;
   let classification = 0;
   const groups = new Map<string, EvalModusGroup>();
+  const strata = new Map<
+    string,
+    {
+      tag: string;
+      total: number;
+      caught: number;
+      legitTotal: number;
+      falsePositives: number;
+    }
+  >();
+  const missedCases: string[] = [];
+  const falsePositiveCases: string[] = [];
+  const stratum = (tag: string) => {
+    const value = strata.get(tag) ?? {
+      tag,
+      total: 0,
+      caught: 0,
+      legitTotal: 0,
+      falsePositives: 0,
+    };
+    strata.set(tag, value);
+    return value;
+  };
 
   for (const testCase of SCAM_CASES) {
     const { value: result, cpuMs } = measured(() =>
@@ -73,7 +105,12 @@ export function runEval(): EvalReport {
     );
     slowestCpuMs = Math.max(slowestCpuMs, cpuMs);
 
-    if (isRisky(result.risk)) caught += 1;
+    const groupByTag = stratum(testCase.tag);
+    groupByTag.total++;
+    if (isRisky(result.risk)) {
+      caught += 1;
+      groupByTag.caught++;
+    } else missedCases.push(testCase.id);
     if (result.risk === "tinggi") nailed += 1;
 
     if (testCase.wantModus) {
@@ -97,10 +134,20 @@ export function runEval(): EvalReport {
       scoreText({ text: testCase.text }),
     );
     slowestCpuMs = Math.max(slowestCpuMs, cpuMs);
-    if (isRisky(result.risk)) falsePositives += 1;
+    const groupByTag = stratum(testCase.tag);
+    groupByTag.total++;
+    groupByTag.legitTotal++;
+    if (isRisky(result.risk)) {
+      falsePositives += 1;
+      groupByTag.falsePositives++;
+      falsePositiveCases.push(testCase.id);
+    }
   }
 
   return {
+    byStratum: [...strata.values()].sort((a, b) => a.tag.localeCompare(b.tag)),
+    missedCases,
+    falsePositiveCases,
     scamTotal: SCAM_CASES.length,
     caught,
     nailed,

@@ -44,7 +44,6 @@ function normalizeMediaType(raw: string, fallback: string): string {
   const type = (raw || fallback || "").toLowerCase();
   return type === "image/jpg" ? "image/jpeg" : type;
 }
-
 function readImage(
   file: File,
   signal: AbortSignal,

@@ -1,4 +1,5 @@
 import type { Signal } from "@/lib/contracts/score";
+import { annotateSignal } from "@/lib/scoring/mechanism";
 
 /**
  * QRIS Agent — EMVCo merchant-presented QR, parsed locally.
@@ -175,5 +176,16 @@ export function qrisSignals(text: string): QrisResult {
     }
   }
 
-  return { signals };
+  if (
+    parsed.tags.some((t) => t.tag === "01" && t.value === "11") &&
+    /\b(?:harus|wajib)\s+(?:qris\s+)?dinamis\b/i.test(typed)
+  )
+    signals.push({
+      label: "QRIS statis diberikan saat konteks menyebut QRIS dinamis",
+      weight: 0.25,
+      evidence: payload.slice(0, 12),
+      agent: "qris",
+      ruleId: "qris.static-context",
+    });
+  return { signals: signals.map((s) => annotateSignal(s)) };
 }
