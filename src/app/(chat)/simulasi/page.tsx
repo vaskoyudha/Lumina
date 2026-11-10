@@ -325,24 +325,23 @@ export async function SimulasiContent() {
           </section>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
+            <Card className="relative min-h-[210px] gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
               <div
                 aria-hidden="true"
-                className="aspect-[2048/869] w-full bg-[url('/simulasi/card-laptop.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
+                className="absolute inset-0 bg-[url('/simulasi/card-laptop.webp')] bg-cover bg-[position:left_center] bg-no-repeat"
               />
-              <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:right-0 min-[1680px]:ml-auto min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="flex items-center gap-2 font-bold text-[15px] text-txt">
-                    <ListChecks aria-hidden className="size-4 text-brand" />
-                    Ringkasan Misi
-                  </h2>
-                  <Link
-                    href={`/simulasi/${featured.scenario.scenario.id}`}
-                    className="shrink-0 whitespace-nowrap font-semibold text-[11px] text-brand-strong hover:underline"
-                  >
-                    Lihat detail →
-                  </Link>
-                </div>
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--lumina-brand-tint)_62%,transparent)_0%,color-mix(in_srgb,var(--lumina-brand-tint)_38%,transparent)_58%,transparent_82%)] sm:bg-[linear-gradient(90deg,transparent_0%,color-mix(in_srgb,var(--lumina-brand-tint)_55%,transparent)_36%,var(--lumina-brand-tint)_54%)]"
+              />
+              <div className="relative flex w-full flex-col justify-center p-5 sm:ml-auto sm:max-w-[60%]">
+                <h2 className="flex items-center gap-1.5 font-bold text-[14px] text-txt">
+                  <ListChecks
+                    aria-hidden
+                    className="size-4 shrink-0 text-brand"
+                  />
+                  Ringkasan Misi
+                </h2>
                 <ul className="mt-3 list-none space-y-2.5 p-0">
                   {SUMMARY_POINTS.map((point) => (
                     <li key={point} className="flex gap-2.5">
@@ -355,16 +354,26 @@ export async function SimulasiContent() {
                     </li>
                   ))}
                 </ul>
+                <Link
+                  href={`/simulasi/${featured.scenario.scenario.id}`}
+                  className="mt-1 self-end font-semibold text-[11px] text-brand-strong hover:underline"
+                >
+                  Lihat detail →
+                </Link>
               </div>
             </Card>
 
-            <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
+            <Card className="relative min-h-[210px] gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
               <div
                 aria-hidden="true"
-                className="aspect-[2048/869] w-full bg-[url('/simulasi/card-shield.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
+                className="absolute inset-0 bg-[url('/simulasi/card-shield.webp')] bg-cover bg-[position:right_center] bg-no-repeat"
               />
-              <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:left-0 min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
-                <h2 className="flex items-center gap-2 font-bold text-[15px] text-txt">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[linear-gradient(270deg,color-mix(in_srgb,var(--lumina-brand-tint)_62%,transparent)_0%,color-mix(in_srgb,var(--lumina-brand-tint)_38%,transparent)_58%,transparent_82%)] sm:bg-[linear-gradient(270deg,transparent_0%,color-mix(in_srgb,var(--lumina-brand-tint)_55%,transparent)_36%,var(--lumina-brand-tint)_54%)]"
+              />
+              <div className="relative flex w-full flex-col justify-center p-5 sm:max-w-[60%]">
+                <h2 className="flex items-center gap-1.5 font-bold text-[14px] text-txt">
                   <Lightbulb aria-hidden className="size-4 text-brand" />
                   Tips Penting
                 </h2>

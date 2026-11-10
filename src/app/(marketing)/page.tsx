@@ -18,6 +18,7 @@ import PowderWhy from "@/components/marketing/powder/sections/Why";
 import SectionReveal from "@/components/marketing/section-reveal";
 import { About } from "@/components/marketing/sections/about";
 import { Contact } from "@/components/marketing/sections/contact";
+import { Faq } from "@/components/marketing/sections/faq";
 import { Hero } from "@/components/marketing/sections/hero";
 import { Pricing } from "@/components/marketing/sections/pricing";
 import { Programs } from "@/components/marketing/sections/programs";
@@ -60,6 +61,7 @@ export default function LandingPage() {
         <PowderTestimonials />
       </PowderLayer>
       <Pricing />
+      <Faq />
       <Contact />
       <PowderLayer>
         <PowderCTA />

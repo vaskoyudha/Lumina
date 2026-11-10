@@ -47,19 +47,19 @@ const BG_CLASSES = [
 const SLIDES = [
   {
     file: "ZCUolRzdTgZF2qcr3flePPx2dk",
-    alt: "Tanya: tampilan awal dengan pintasan pertanyaan, riwayat percakapan di samping, tema gelap berlatar senja.",
+    alt: "Tanya: pratinjau companion dengan contoh pesan APK undangan dan tugas top-up.",
   },
   {
     file: "v9Yr4trFZsygSFKIZye6oMUY4",
-    alt: "Jawaban Lumina tentang ketersediaan paket SSO dengan panel kutipan yang menunjukkan sumbernya.",
+    alt: "Periksa: skor 0 sampai 100 dengan kutipan alasan dan panel bukti dari delapan agen.",
   },
   {
     file: "hg3Tg24LlqTuZEp7hHXSGwPQ9U",
-    alt: "Alur membuat tiket dengan pratinjau langkah dan konfirmasi persetujuan.",
+    alt: "Langkah: langkah berikutnya untuk pesan yang sudah diklik atau ditransfer.",
   },
   {
     file: "eFufq0tptTi9Qq7gFHic5a5E",
-    alt: "Dasbor analitik dukungan berisi tren, waktu penyelesaian, pertanyaan terbanyak, dan panel wawasan.",
+    alt: "Ukur: ringkasan pola yang pernah ditemui dan progres belajar per akun.",
   },
 ] as const;
 
@@ -883,7 +883,7 @@ export default function Features() {
               style={{ width: "100%" }}
             >
               <div className="framer-1aga6xl">
-                <FeatureGallery active={active} live={false} radius={12} />
+                <FeatureGallery active={active} radius={12} />
               </div>
               <FeatureCaption
                 label={TABS[active]}

@@ -35,6 +35,9 @@ jest.mock("next/navigation", () => ({
 const post: CommunityPost = {
   id: "892e48bd-9178-461d-bd83-c32fc614bb23",
   author: "Rina",
+  authorKind: "member",
+  agentId: null,
+  verified: false,
   category: "modus-baru",
   title: "Pesan kurir meminta APK baru",
   body: "Pesan mengaku kurir meminta memasang aplikasi. Bagaimana cara memeriksanya?",
@@ -493,6 +496,62 @@ it("does not print a composer-derived title twice in the timeline body", () => {
   expect(
     screen.getByText("Nomor asing mengirim tautan pemasangan."),
   ).toBeInTheDocument();
+});
+
+it("labels an agent post with its field and an admin-verified badge", () => {
+  render(
+    <CommunityFeed
+      posts={[
+        {
+          ...post,
+          author: "Mochi",
+          authorKind: "agent",
+          agentId: "message",
+          verified: true,
+        },
+      ]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite={false}
+    />,
+  );
+  expect(screen.getByText("Mochi")).toBeInTheDocument();
+  expect(
+    screen.getByText("Agen Lumina · Pesan & rekayasa sosial"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Terverifikasi admin")).toBeInTheDocument();
+  expect(
+    screen.getByText("Ditinjau admin · terverifikasi"),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("Dibagikan anggota · belum terverifikasi"),
+  ).not.toBeInTheDocument();
+});
+
+it("does not claim an unverified agent post was approved", () => {
+  render(
+    <CommunityFeed
+      posts={[
+        {
+          ...post,
+          author: "Bao",
+          authorKind: "agent",
+          agentId: "evidence",
+          verified: false,
+        },
+      ]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite={false}
+    />,
+  );
+  expect(
+    screen.getByText("Agen Lumina · Bukti & pelaporan"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Agen Lumina · belum ditinjau admin"),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Terverifikasi admin")).not.toBeInTheDocument();
 });
 
 it("opens the filter panel when the rail asks for it, and never hides text", async () => {
