@@ -2,17 +2,16 @@
 
 import {
   ArrowRight,
-  BarChart2,
   Briefcase,
   ChevronRight,
   Clock,
   Compass,
+  History,
   type LucideIcon,
   MessageSquare,
   MoreVertical,
   Sparkles,
   TrendingUp,
-  User,
 } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
@@ -101,55 +100,38 @@ const QUICK_FEATURES: readonly QuickFeature[] = [
   },
 ];
 
-interface AgentHistoryItem {
-  id: string;
-  agent: DetectorAgent;
-  title: string;
+interface AgentHistorySeed {
+  id: DetectorAgent;
   time: string;
   unreadDot?: boolean;
-  icon: LucideIcon;
   tone: Tone;
   filled?: boolean;
 }
 
-const AGENT_HISTORY: readonly AgentHistoryItem[] = [
+const AGENT_HISTORY_SEEDS: readonly AgentHistorySeed[] = [
   {
-    id: "h1",
-    agent: "job",
-    title: "Pencari Lowongan",
+    id: "job",
     time: "2 menit yang lalu",
     unreadDot: true,
-    icon: Briefcase,
     tone: "brand",
     filled: true,
   },
+  { id: "marketplace", time: "1 jam yang lalu", tone: "marketplace" },
+  { id: "identity", time: "3 jam yang lalu", tone: "evidence", filled: true },
   {
-    id: "h2",
-    agent: "marketplace",
-    title: "Pesaing Agent",
-    time: "1 jam yang lalu",
-    icon: BarChart2,
-    tone: "marketplace",
-  },
-  {
-    id: "h3",
-    agent: "identity",
-    title: "Identitas Agent",
-    time: "3 jam yang lalu",
-    icon: User,
-    tone: "evidence",
-    filled: true,
-  },
-  {
-    id: "h4",
-    agent: "conversation",
-    title: "Conversation Insights",
+    id: "conversation",
     time: "1 hari yang lalu",
-    icon: MessageSquare,
     tone: "message",
     filled: true,
   },
 ];
+
+const AGENT_HISTORY = AGENT_HISTORY_SEEDS.map((seed) => ({
+  ...seed,
+  name: AGENT_REGISTRY[seed.id].displayName,
+  icon: AGENT_REGISTRY[seed.id].icon,
+  portrait: AGENT_REGISTRY[seed.id].portrait,
+}));
 
 export function CompanionQuickCards({
   onFeature,
@@ -227,8 +209,15 @@ export function CompanionQuickCards({
 
       {/* BOTTOM CARD: Riwayat Agen */}
       <div className="rounded-[24px] border border-edge-soft bg-panel p-4 shadow-rest">
-        <div className="mb-3.5 flex items-center justify-between">
-          <h2 className="text-[14px] font-bold text-ink">Riwayat Agen</h2>
+        <div className="mb-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft">
+              <div className="flex size-6 items-center justify-center rounded-full bg-brand text-panel">
+                <History aria-hidden strokeWidth={2.3} className="size-3.5" />
+              </div>
+            </div>
+            <h2 className="text-[14px] font-bold text-ink">Riwayat Agen</h2>
+          </div>
           <button
             type="button"
             onClick={onOpenHistory}
@@ -243,7 +232,6 @@ export function CompanionQuickCards({
           {AGENT_HISTORY.map((item) => {
             const Icon = item.icon;
             const tone = TONE[item.tone];
-            const portrait = AGENT_REGISTRY[item.agent].portrait;
             return (
               <div
                 key={item.id}
@@ -257,9 +245,9 @@ export function CompanionQuickCards({
                   <span
                     className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${tone.box}`}
                   >
-                    {portrait ? (
+                    {item.portrait ? (
                       <Image
-                        src={portrait}
+                        src={item.portrait}
                         alt=""
                         width={40}
                         height={40}
@@ -277,7 +265,7 @@ export function CompanionQuickCards({
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5">
                       <span className="truncate text-[12.5px] font-bold text-ink transition-colors group-hover:text-brand-strong">
-                        {item.title}
+                        {item.name}
                       </span>
                       {item.unreadDot ? (
                         <span className="size-1.5 shrink-0 rounded-full bg-brand" />
@@ -297,7 +285,7 @@ export function CompanionQuickCards({
                         prev === item.id ? null : item.id,
                       )
                     }
-                    aria-label={`Menu riwayat ${item.title}`}
+                    aria-label={`Menu riwayat ${item.name}`}
                     aria-expanded={openMenuId === item.id}
                     className="flex size-7 items-center justify-center rounded-lg text-ink-mute hover:bg-edge-soft"
                   >
@@ -320,7 +308,7 @@ export function CompanionQuickCards({
                         type="button"
                         onClick={() => {
                           setOpenMenuId(null);
-                          onResume(item.title);
+                          onResume(item.name);
                         }}
                         className="w-full px-3 py-1.5 text-left font-medium text-brand-strong hover:bg-panel-2"
                       >
