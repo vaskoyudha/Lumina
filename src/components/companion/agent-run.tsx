@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpen,
   Check,
   ChevronRight,
   Circle,
@@ -480,12 +481,15 @@ export function AgentRun({
   result,
   live = false,
   announce = true,
+  mode = "detector",
 }: {
   trace: AgentTrace;
   result?: ScoreResult;
   live?: boolean;
   /** The chat shell owns the live region; standalone use keeps its own. */
   announce?: boolean;
+  /** A content question reads an attachment; it is not a 10-agent run. */
+  mode?: "detector" | "reader";
 }) {
   const byId = new Map(trace.stages.map((stage) => [stage.id, stage]));
   const scoring = byId.get("scoring");
@@ -527,6 +531,51 @@ export function AgentRun({
     }
     if (wasLive.current) setAnnouncement(runAnnouncement(trace));
   }, [announce, live, trace]);
+
+  /*
+   * A content question has a reader and a writer, not a ten-agent crew. The
+   * detector view below is built around the standing roster; reusing it here
+   * made a plain follow-up look like the orchestrator had started.
+   */
+  if (mode === "reader") {
+    const readerStages = trace.stages.filter(
+      (stage) => stage.id === "evidence" || stage.id === "voice",
+    );
+    return (
+      <section
+        className="flex w-full flex-col gap-1.5"
+        data-live={voiceLive ? "true" : undefined}
+        data-run-state={runState(readerStages)}
+      >
+        <p className="flex items-center gap-2 py-1 text-[12px] text-dim">
+          <BookOpen aria-hidden className="size-3.5" />
+          <span className="font-semibold text-[13px] text-txt">
+            Pembaca lampiran
+          </span>
+          <span className="tabular text-[11px]">
+            {readerStages.length} langkah
+          </span>
+        </p>
+        <ol className="flex flex-col gap-1.5">
+          {readerStages.map((stage) => (
+            <li key={stage.id} className="min-w-0">
+              <AgentBubble
+                stage={stage}
+                result={result}
+                live={live && stage.status === "berjalan"}
+                reduced={reduce ?? false}
+              />
+            </li>
+          ))}
+        </ol>
+        {announce ? (
+          <output className="sr-only" aria-live="polite">
+            {announcement}
+          </output>
+        ) : null}
+      </section>
+    );
+  }
 
   return (
     <section

@@ -60,6 +60,38 @@ describe("AgentRun", () => {
     expect(screen.queryByTestId("agent-scoring")).not.toBeInTheDocument();
   });
 
+  it("reader mode hides the standing orchestrator roster", () => {
+    render(
+      <AgentRun
+        mode="reader"
+        live
+        trace={{
+          stages: [
+            stage({
+              id: "evidence",
+              label: "Pembaca Lampiran",
+              task: "Memakai teks lampiran yang dikirim sebelumnya",
+              note: "Teks dari lampiran sebelumnya dipakai.",
+            }),
+            stage({
+              id: "voice",
+              label: "Penyusun bahasa",
+              status: "berjalan",
+              ms: 0,
+            }),
+          ],
+          totalMs: 1,
+        }}
+      />,
+    );
+
+    expect(screen.queryByText(/orkestrator/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("agent-card-message")).not.toBeInTheDocument();
+    expect(screen.getByText("Pembaca lampiran")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-evidence")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-voice")).toBeInTheDocument();
+  });
+
   it("prints the real status for every bubble", () => {
     render(<AgentRun trace={trace} live />);
     expect(screen.getByTestId("agent-message")).toHaveAttribute(

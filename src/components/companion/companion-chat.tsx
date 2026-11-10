@@ -768,9 +768,9 @@ export function CompanionChat({
   const liveCheck = React.useMemo(() => {
     for (let i = turns.length - 1; i >= 0; i--) {
       const turn = turns[i];
-      if (turn?.streaming && turn.trace) {
+      if (turn?.streaming && turn.trace && turn.result) {
         return {
-          result: turn.result ?? null,
+          result: turn.result,
           trace: turn.trace,
           orchestration: turn.orchestration,
         };
@@ -2644,6 +2644,7 @@ export function CompanionChat({
                           result={turn.result}
                           live={turn.streaming === true}
                           announce={false}
+                          mode={turn.contentQuestion ? "reader" : "detector"}
                         />
                       ) : null}
 
