@@ -1,6 +1,12 @@
 import { z } from "zod";
 import raw from "@/data/official-domains.json";
 import type { Signal } from "@/lib/contracts/score";
+import { annotateSignal } from "@/lib/scoring/mechanism";
+import {
+  hostSkeleton,
+  mixedScripts,
+  unicodeHost,
+} from "@/lib/scoring/unicode-host";
 
 /**
  * Link Agent — deterministic, no network call in the demo path.
@@ -225,6 +231,7 @@ export interface LinkFinding {
     | "credential-path"
     | "brand-subdomain"
     | "unknown";
+  /** Unicode checks are independent of ordinary ASCII typo matching. */
   /** Brand being imitated, when `kind` is "typosquat" or "brand-subdomain". */
   imitates?: string;
   weight: number;
@@ -246,6 +253,20 @@ export function classifyLink(raw: string): LinkFinding | null {
   const link = parseLink(raw);
   if (!link) return null;
 
+  const rawHost = raw.replace(/^https?:\/\//i, "").split(/[/?#]/)[0];
+  const decoded = unicodeHost(link.host);
+  const disguised =
+    /[\u200B-\u200D\u2060\uFEFF]/u.test(rawHost) || mixedScripts(decoded);
+  const skeleton = hostSkeleton(decoded);
+  const confusableBrand =
+    decoded !== skeleton &&
+    OFFICIAL.some((o) =>
+      skeleton
+        .split(".")
+        .some((label) => label.includes(o.domain.split(".")[0])),
+    );
+  if (disguised || confusableBrand)
+    return { link, kind: "punycode", weight: WEIGHTS.punycode };
   if (OFFICIAL_SET.has(link.registrable)) {
     return { link, kind: "official", weight: 0 };
   }
@@ -264,9 +285,7 @@ export function classifyLink(raw: string): LinkFinding | null {
    * strong one. Running the path check first would downgrade it from 0.85 to
    * 0.50.
    */
-  if (link.host.includes("xn--") || /[\u0400-\u04FF]/.test(link.host)) {
-    return { link, kind: "punycode", weight: WEIGHTS.punycode };
-  }
+  // An IDN alone is not proof of deception; only a disguise above is a finding.
 
   const subdomainHit = brandInSubdomain(link);
   if (subdomainHit) {
@@ -488,12 +507,17 @@ export function linkSignals(text: string): Signal[] {
                     ? `Domain berekstensi ".${link.tld}" yang sering dipakai penipuan`
                     : "Tautan tidak ada di daftar domain resmi";
 
-    signals.push({
-      label,
-      weight: finding.weight,
-      evidence: raw,
-      agent: "link",
-    });
+    signals.push(
+      annotateSignal(
+        {
+          label,
+          weight: finding.weight,
+          evidence: raw,
+          agent: "link",
+        },
+        `link.${kind === "typosquat" ? "lookalike" : kind}`,
+      ),
+    );
   }
 
   return signals;

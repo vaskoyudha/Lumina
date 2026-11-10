@@ -12,6 +12,7 @@
  *   5. `relatedModule` is a module number from `modus.json`, or null.
  */
 
+import type { MechanismId } from "@/lib/scoring/mechanism";
 export type Risk = "bersih" | "rendah" | "mencurigakan" | "tinggi";
 
 export interface Signal {
@@ -23,6 +24,8 @@ export interface Signal {
   evidence: string;
   /** Which detector produced it. Lets the UI show agents working one by one. */
   agent?: AgentId;
+  mechanism?: MechanismId;
+  ruleId?: string;
 }
 
 export type AgentId =
@@ -33,6 +36,8 @@ export type AgentId =
   | "job"
   | "marketplace"
   | "qris"
+  | "email"
+  | "injection"
   | "evidence"
   | "scoring";
 
