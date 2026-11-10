@@ -38,8 +38,7 @@ import {
 import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
 import { LokerTool } from "@/components/companion/loker-tool";
-import { ScenarioCards } from "@/components/companion/scenario-cards";
-import type { Scenario } from "@/components/companion/scenarios";
+import { CompanionQuickCards } from "@/components/companion/quick-cards";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
@@ -250,9 +249,14 @@ export function CompanionChat({
   const [showSessions, setShowSessions] = React.useState(false);
   /** The center column's second view; the turns stay in state while it is away. */
   const [showAgents, setShowAgents] = React.useState(initialPanel === "agen");
-  /** Which agent's brief the right pane highlights while the overview is open. */
+  /** Seed for the empty-state composer: a nonce remounts it with new text. */
+  const [composerSeed, setComposerSeed] = React.useState({
+    text: "",
+    nonce: 0,
+  });
+  /** Which agent's brief the right pane shows while the overview is open. */
   const [selectedAgent, setSelectedAgent] =
-    React.useState<DetectorAgent | null>(null);
+    React.useState<DetectorAgent | null>(AGENT_SEQUENCE[0]);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -284,6 +288,11 @@ export function CompanionChat({
   const selectEvidence = React.useCallback((evidence: string) => {
     setShowEvidence(false);
     setActiveEvidence((current) => (current === evidence ? null : evidence));
+  }, []);
+
+  /** Loads a prompt into the empty-state composer without sending it. */
+  const prefillComposer = React.useCallback((text: string) => {
+    setComposerSeed((prev) => ({ text, nonce: prev.nonce + 1 }));
   }, []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on session change
@@ -1103,7 +1112,7 @@ export function CompanionChat({
 
   return (
     <div
-      data-workspace
+      data-workspace={showAgents ? "" : undefined}
       className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
     >
       {/*
@@ -1135,7 +1144,7 @@ export function CompanionChat({
           agentsActive={showAgents}
           onShowAgents={() => {
             setShowAgents(true);
-            setSelectedAgent(null);
+            setSelectedAgent(AGENT_SEQUENCE[0]);
             setShowSessions(false);
             setAgentsAnnouncement("");
           }}
@@ -1168,7 +1177,12 @@ export function CompanionChat({
         ) : null}
 
         {/* Main panel: the white conversation column of the frame. */}
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-panel">
+        <section
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            showAgents ? "bg-transparent" : "bg-panel",
+          )}
+        >
           <header
             className={cn(
               "relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5",
@@ -1327,16 +1341,18 @@ export function CompanionChat({
           </header>
 
           {showAgents ? (
-            <AgentsView
-              onSelect={setSelectedAgent}
-              selected={selectedAgent}
-              onExport={exportThread}
-              onCopyLink={copyThreadLink}
-              copied={copiedThread}
-            />
+            <div className="min-h-0 flex-1 py-4 pr-2.5 pl-4 xl:py-5 xl:pr-3 xl:pl-5">
+              <AgentsView
+                onSelect={setSelectedAgent}
+                selected={selectedAgent}
+                onExport={exportThread}
+                onCopyLink={copyThreadLink}
+                copied={copiedThread}
+              />
+            </div>
           ) : empty ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4 sm:px-6">
-              <div className="mx-auto my-auto flex w-full max-w-[520px] flex-col items-center py-2">
+              <div className="mx-auto my-auto flex w-full max-w-[840px] flex-col items-center py-2">
                 <div className="mb-2 flex items-center justify-center">
                   <Mascot
                     className="pointer-events-none h-[94px] w-[129px] select-none"
@@ -1353,8 +1369,10 @@ export function CompanionChat({
                   kamu percaya.
                 </h2>
 
-                <div className="mt-5 w-full">
+                <div className="mt-5 w-full max-w-[520px]">
                   <Composer
+                    key={composerSeed.nonce}
+                    initialDraft={composerSeed.text}
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
                     onSearchJobs={openJobSearch}
@@ -1363,8 +1381,14 @@ export function CompanionChat({
                   />
                 </div>
 
-                <div className="mt-3.5 w-full">
-                  <ScenarioCards onPick={(s: Scenario) => send(s.text, [])} />
+                <div className="mt-4 w-full">
+                  <CompanionQuickCards
+                    onFeature={prefillComposer}
+                    onOpenHistory={() => setShowAgents(true)}
+                    onResume={(title) =>
+                      prefillComposer(`Lanjutkan sesi ${title}`)
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -1550,7 +1574,10 @@ export function CompanionChat({
 
         <aside
           className={cn(
-            "cortex-dots hidden shrink-0 overflow-hidden border-hairline border-l bg-bg lg:block",
+            "hidden shrink-0 lg:block",
+            showAgents
+              ? "border-0 bg-transparent"
+              : "cortex-dots border-hairline border-l bg-bg",
             evidenceCollapsed ? "w-[48px]" : "w-[376px] xl:w-[396px]",
           )}
         >
@@ -1586,25 +1613,28 @@ export function CompanionChat({
               </span>
             </div>
           ) : showAgents ? (
-            <AgentsDetailPanel
-              action={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="Ciutkan panel detail"
-                  aria-expanded
-                  onClick={() => setEvidenceCollapsed(true)}
-                  className="size-8 rounded-full text-dim hover:text-txt"
-                >
-                  <PanelRightClose
-                    aria-hidden
-                    strokeWidth={1.6}
-                    className="size-3.5"
-                  />
-                </Button>
-              }
-              selected={selectedAgent}
-            />
+            <div className="h-full py-4 pr-4 pl-2.5 xl:py-5 xl:pr-5 xl:pl-3">
+              <AgentsDetailPanel
+                action={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Ciutkan panel detail"
+                    aria-expanded
+                    onClick={() => setEvidenceCollapsed(true)}
+                    className="size-8 rounded-full text-dim hover:text-txt"
+                  >
+                    <PanelRightClose
+                      aria-hidden
+                      strokeWidth={1.6}
+                      className="size-3.5"
+                    />
+                  </Button>
+                }
+                className="rounded-[22px] bg-panel shadow-lift ring-1 ring-edge/50"
+                selected={selectedAgent}
+              />
+            </div>
           ) : (
             <SignalPanel
               action={

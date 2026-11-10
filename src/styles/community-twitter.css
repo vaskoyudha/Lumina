@@ -1,0 +1,68 @@
+/* ccrsxx/twitter-clone light theme and layout port, MIT (62a9588).
+   Product-owner request: match the clone on /komunitas. Scoped so the
+   existing AppNext and warm workspace palettes keep their own surfaces. */
+.appnext .community-twitter {
+  --appnext-white: #fff;
+  --appnext-ink: #0f1419;
+  --appnext-ink-2: #0f1419;
+  --appnext-muted: #536471;
+  --appnext-surface: #f7f9f9;
+  --appnext-line: #eff3f4;
+  --lumina-bg: #fff;
+  --lumina-panel: #fff;
+  --lumina-panel-2: #f7f9f9;
+  --lumina-field: #eff3f4;
+  --lumina-txt: #0f1419;
+  --lumina-dim: #536471;
+  --lumina-line: #eff3f4;
+  --lumina-brand: #1d9bf0;
+  --lumina-brand-strong: #1a8cd8;
+  --lumina-brand-soft: #e8f5fd;
+  --lumina-brand-ink: #0069a8;
+  --background: #fff;
+  --foreground: #0f1419;
+  --card: #fff;
+  --card-foreground: #0f1419;
+  --primary: #1d9bf0;
+  --primary-foreground: #fff;
+  --secondary: #f7f9f9;
+  --secondary-foreground: #0f1419;
+  --muted: #eff3f4;
+  --muted-foreground: #536471;
+  --accent: #eff3f4;
+  --accent-foreground: #0f1419;
+  --border: #eff3f4;
+  --input: #cfd9de;
+  --ring: #1d9bf0;
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: normal;
+  background-image: none;
+}
+
+.community-twitter :where(h1, h2, h3, p, li) {
+  letter-spacing: normal;
+}
+
+.appnext .community-twitter :focus-visible {
+  outline-color: var(--lumina-brand-ink);
+}
+
+.community-twitter [data-community-header] {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--lumina-bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.community-twitter [data-community-panel] {
+  border-radius: 16px;
+  background-color: var(--lumina-panel-2);
+  box-shadow: none;
+}
+
+@media (max-width: 499px) {
+  .community-twitter nav[aria-label="Navigasi komunitas"] {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}

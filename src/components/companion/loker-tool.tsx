@@ -2,10 +2,15 @@
 
 import {
   Briefcase,
+  ChevronDown,
   Loader2,
+  MapPin,
+  Play,
   RefreshCw,
+  RotateCcw,
   Search,
   TriangleAlert,
+  Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -22,6 +27,7 @@ import type {
   SavedLoker,
   ScanRunStatus,
 } from "@/lib/loker/types";
+import { cn } from "@/lib/utils";
 
 type ScanState = "idle" | "starting" | "running" | "done" | "failed";
 
@@ -32,6 +38,29 @@ function parseRupiah(value: string): number | undefined {
   return Number.isSafeInteger(amount) ? amount : undefined;
 }
 
+/** One cell of the 2×2 criteria grid: soft icon tile, label, inline field. */
+function Criterion({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3.5 p-3.5 transition-colors focus-within:bg-panel hover:bg-panel">
+      <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <span className="block text-[12.5px] font-bold text-txt">{title}</span>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /**
  * The inline job-search surface.
  *
@@ -40,9 +69,9 @@ function parseRupiah(value: string): number | undefined {
  * removed. The scan button only refills the corpus for the next search; it
  * never blocks the results already on screen.
  *
- * One surface, not a card inside a card: the shell carries the border and every
- * posting is a row separated by a hairline. That keeps a five-posting result
- * reading as one list instead of five competing panels.
+ * The layout is ported from the Lumina dashboard reference: a single card whose
+ * criteria live in a divided 2×2 grid, with the rarer toggle tucked behind
+ * "Opsi Lanjutan" so the surface reads as one calm panel rather than a form.
  */
 export function LokerTool({
   corpus,
@@ -63,6 +92,7 @@ export function LokerTool({
   const [args, setArgs] = React.useState<LokerSearchArgs>(initialArgs);
   const [scan, setScan] = React.useState<ScanState>("idle");
   const [lastRun, setLastRun] = React.useState<ScanRunStatus | null>(null);
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
 
   React.useEffect(() => {
     if (!canRefresh) return;
@@ -123,92 +153,97 @@ export function LokerTool({
   return (
     <section
       aria-label="Pencari lowongan"
-      className="flex min-w-0 flex-col overflow-hidden rounded-[16px] border border-line bg-panel"
+      className="flex min-w-0 flex-col rounded-[24px] border border-line bg-panel p-4 shadow-rest sm:p-5"
     >
-      <header className="flex items-start gap-2.5 p-3.5">
-        <span
-          aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-brand-soft text-brand-ink"
-        >
-          <Briefcase className="size-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[13px] font-semibold text-txt leading-tight">
-            Lowongan kerja
-          </h3>
-          <p className="tabular mt-0.5 text-[11px] text-dim leading-snug">
-            {results.length} dari {corpus.postings.length} lowongan
-            {lastScan
-              ? ` · dipindai ${lastScan.slice(0, 10)}`
-              : " · belum dipindai"}
-          </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft">
+            <div className="flex size-6 items-center justify-center rounded-full bg-brand">
+              <Play
+                aria-hidden
+                className="ml-0.5 size-3 fill-white text-white"
+              />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-[15px] font-bold text-txt leading-snug">
+              Pencari Lowongan
+            </h2>
+            <p className="text-[11.5px] text-dim">
+              Temukan lowongan pekerjaan yang sesuai denganmu
+            </p>
+            <p className="tabular mt-0.5 text-[11px] text-dim leading-snug">
+              {results.length} dari {corpus.postings.length} lowongan
+              {lastScan
+                ? ` · dipindai ${lastScan.slice(0, 10)}`
+                : " · belum dipindai"}
+            </p>
+          </div>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={refresh}
-          disabled={!canRefresh || scanning}
-          aria-label={
-            canRefresh ? "Pindai ulang lowongan" : "Masuk untuk memindai"
-          }
-          className="h-8 shrink-0 rounded-full border-line bg-panel px-3 text-[11px] font-medium text-txt hover:bg-panel-2"
-        >
-          {scanning ? (
-            <Loader2 aria-hidden className="animate-spin" />
-          ) : (
-            <RefreshCw aria-hidden />
-          )}
-          {!canRefresh
-            ? "Masuk untuk memindai"
-            : scanning
-              ? "Memindai…"
-              : "Pindai ulang"}
-        </Button>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setArgs(initialArgs)}
+            aria-label="Setel ulang filter"
+            className="h-[32px] rounded-full border-line bg-panel px-3 text-[11.5px] font-medium text-txt hover:bg-panel-2"
+          >
+            <RotateCcw aria-hidden />
+            Setel ulang
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            disabled={!canRefresh || scanning}
+            aria-label={
+              canRefresh ? "Pindai ulang lowongan" : "Masuk untuk memindai"
+            }
+            className="h-[32px] rounded-full border-line bg-panel px-3 text-[11px] font-medium text-txt hover:bg-panel-2"
+          >
+            {scanning ? (
+              <Loader2 aria-hidden className="animate-spin" />
+            ) : (
+              <RefreshCw aria-hidden />
+            )}
+            {!canRefresh
+              ? "Masuk untuk memindai"
+              : scanning
+                ? "Memindai…"
+                : "Pindai ulang"}
+          </Button>
+        </div>
       </header>
 
-      <div className="flex flex-col gap-2 px-3.5 pb-3">
-        <div className="relative">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-dim"
-          />
-          <Input
-            id="loker-kata-kunci"
-            value={args.query}
-            onChange={(event) =>
-              setArgs((prev) => ({ ...prev, query: event.target.value }))
-            }
-            placeholder="React, data analyst…"
-            aria-label="Kata kunci lowongan"
-            className="h-10 rounded-[11px] border-field bg-panel pl-9 text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <label
-            htmlFor="loker-lokasi"
-            className="col-span-2 flex flex-col gap-1 sm:col-span-1"
+      <div className="grid grid-cols-1 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-panel-2/40 md:grid-cols-2 md:divide-x md:divide-y-0">
+        <div className="divide-y divide-line">
+          <Criterion
+            title="Pencarian Lowongan"
+            icon={<Briefcase aria-hidden className="size-5 text-brand-ink" />}
           >
-            <span className="text-[11px] font-medium text-dim">Lokasi</span>
             <Input
-              id="loker-lokasi"
-              value={args.location ?? ""}
+              id="loker-kata-kunci"
+              value={args.query}
               onChange={(event) =>
-                setArgs((prev) => ({
-                  ...prev,
-                  location: event.target.value || undefined,
-                }))
+                setArgs((prev) => ({ ...prev, query: event.target.value }))
               }
-              placeholder="Jakarta"
-              aria-label="Lokasi lowongan"
-              className="h-9 rounded-[10px] border-field bg-panel text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
+              placeholder="React, data analyst…"
+              aria-label="Kata kunci lowongan"
+              className="mt-0.5 h-6 border-0 bg-transparent px-0 py-0 text-[11px] text-dim leading-tight shadow-none placeholder:text-dim/70 focus-visible:border-0 focus-visible:ring-0"
             />
-          </label>
-          <label htmlFor="loker-gaji-min" className="flex flex-col gap-1">
-            <span className="text-[11px] font-medium text-dim">
-              Gaji min (Rp)
-            </span>
+          </Criterion>
+
+          <Criterion
+            title="Gaji Minimum"
+            icon={
+              <span className="flex size-6 items-center justify-center rounded-full bg-brand text-[9.5px] font-bold text-white">
+                Rp
+              </span>
+            }
+          >
             <Input
               id="loker-gaji-min"
               inputMode="numeric"
@@ -221,13 +256,35 @@ export function LokerTool({
               }
               placeholder="8000000"
               aria-label="Gaji minimum"
-              className="tabular h-9 rounded-[10px] border-field bg-panel text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
+              className="tabular mt-0.5 h-6 border-0 bg-transparent px-0 py-0 text-[11px] text-dim leading-tight shadow-none placeholder:text-dim/70 focus-visible:border-0 focus-visible:ring-0"
             />
-          </label>
-          <label htmlFor="loker-gaji-max" className="flex flex-col gap-1">
-            <span className="text-[11px] font-medium text-dim">
-              Gaji maks (Rp)
-            </span>
+          </Criterion>
+        </div>
+
+        <div className="divide-y divide-line">
+          <Criterion
+            title="Posisi & Lokasi"
+            icon={<MapPin aria-hidden className="size-5 text-brand-ink" />}
+          >
+            <Input
+              id="loker-lokasi"
+              value={args.location ?? ""}
+              onChange={(event) =>
+                setArgs((prev) => ({
+                  ...prev,
+                  location: event.target.value || undefined,
+                }))
+              }
+              placeholder="Jakarta"
+              aria-label="Lokasi lowongan"
+              className="mt-0.5 h-6 border-0 bg-transparent px-0 py-0 text-[11px] text-dim leading-tight shadow-none placeholder:text-dim/70 focus-visible:border-0 focus-visible:ring-0"
+            />
+          </Criterion>
+
+          <Criterion
+            title="Gaji Maksimum"
+            icon={<Wallet aria-hidden className="size-5 text-brand-ink" />}
+          >
             <Input
               id="loker-gaji-max"
               inputMode="numeric"
@@ -240,29 +297,51 @@ export function LokerTool({
               }
               placeholder="15000000"
               aria-label="Gaji maksimum"
-              className="tabular h-9 rounded-[10px] border-field bg-panel text-[13px] placeholder:text-dim/70 focus-visible:border-brand-edge focus-visible:ring-brand-soft"
+              className="tabular mt-0.5 h-6 border-0 bg-transparent px-0 py-0 text-[11px] text-dim leading-tight shadow-none placeholder:text-dim/70 focus-visible:border-0 focus-visible:ring-0"
             />
-          </label>
+          </Criterion>
         </div>
-
-        <label
-          htmlFor="loker-sembunyikan-ditandai"
-          className="flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-[10px] bg-panel-2/70 px-3 text-[12px] text-txt"
-        >
-          <Checkbox
-            id="loker-sembunyikan-ditandai"
-            checked={args.hideFlagged ?? false}
-            onCheckedChange={(checked) =>
-              setArgs((prev) => ({ ...prev, hideFlagged: checked === true }))
-            }
-            className="data-checked:border-brand-strong data-checked:bg-brand-strong"
-          />
-          Sembunyikan yang ditandai salah satu penilaian
-        </label>
       </div>
 
+      <div className="my-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((prev) => !prev)}
+          aria-expanded={showAdvanced}
+          className="flex h-[30px] items-center gap-1.5 rounded-full border border-line bg-panel px-4 text-[11.5px] font-semibold text-txt shadow-rest transition-colors hover:bg-panel-2"
+        >
+          <span>Opsi Lanjutan</span>
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "size-3.5 text-dim transition-transform",
+              showAdvanced && "rotate-180",
+            )}
+          />
+        </button>
+      </div>
+
+      {showAdvanced ? (
+        <div className="mb-3.5 rounded-2xl border border-line bg-panel-2/40 p-3.5">
+          <label
+            htmlFor="loker-sembunyikan-ditandai"
+            className="flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-xl bg-panel px-3 text-[12px] text-txt"
+          >
+            <Checkbox
+              id="loker-sembunyikan-ditandai"
+              checked={args.hideFlagged ?? false}
+              onCheckedChange={(checked) =>
+                setArgs((prev) => ({ ...prev, hideFlagged: checked === true }))
+              }
+              className="data-checked:border-brand data-checked:bg-brand"
+            />
+            Sembunyikan yang ditandai salah satu penilaian
+          </label>
+        </div>
+      ) : null}
+
       {hasNotice ? (
-        <div className="flex flex-col gap-1.5 px-3.5 pb-3">
+        <div className="flex flex-col gap-1.5">
           {scan === "failed" ? (
             <p className="flex items-start gap-1.5 rounded-[8px] bg-danger/5 px-2.5 py-2 text-[11px] text-danger leading-snug">
               <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
@@ -296,7 +375,7 @@ export function LokerTool({
         </div>
       ) : null}
 
-      <div className="border-t border-line">
+      <div className="mt-3">
         {results.length === 0 ? (
           <div className="flex flex-col items-center px-4 py-8 text-center">
             <span
@@ -319,7 +398,7 @@ export function LokerTool({
             </p>
           </div>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="flex flex-col gap-3">
             {results.map((posting) => (
               <LokerCard
                 key={posting.urlKey}
