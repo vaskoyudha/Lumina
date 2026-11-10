@@ -2,11 +2,9 @@ export type NavLink = { label: string; id?: string; href?: string };
 
 export const navLinks: NavLink[] = [
   { label: "Beranda", id: "section-home" },
-  { label: "Modus", id: "section-programs" },
   { label: "Belajar", href: "/belajar" },
   { label: "Simulasi", href: "/simulasi" },
   { label: "Komunitas", href: "/komunitas" },
-  { label: "Kontak", id: "section-contact" },
 ];
 
 export const brand = {
