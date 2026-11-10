@@ -149,6 +149,7 @@ function SlideLayer({ slide, active }: { slide: Slide; active: boolean }) {
           decoding="async"
           width={1450}
           height={1925}
+          loading="lazy"
           sizes={SIZES}
           srcSet={`${BASE}${slide.file} 771w, ${BASE}${slide.file} 1450w`}
           src={`${BASE}${slide.file}`}

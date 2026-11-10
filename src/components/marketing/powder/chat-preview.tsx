@@ -215,6 +215,7 @@ export function ChatPreview({
           alt=""
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
           src={backdropSrc}
         />
       </div>

@@ -52,6 +52,10 @@ export function LuminaLogo({
  * The marketing header sits on a themed hero, so it needs both wordmarks.
  * The pair is swapped by the `[data-theme="black"]` rules in powder-theme.css;
  * rendering both keeps the swap CSS-only, with no theme state in React.
+ *
+ * Only the light lockup preloads: the dark one is hidden on first paint in the
+ * default theme, so preloading it would compete with the hero art for the
+ * initial connection.
  */
 export function ThemedLuminaLogo({
   className,
@@ -67,7 +71,6 @@ export function ThemedLuminaLogo({
       <LuminaLogo
         tone="onDark"
         className={cn("brand-logo-on-dark", className)}
-        priority={priority}
       />
     </>
   );

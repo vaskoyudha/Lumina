@@ -36,6 +36,7 @@ export function Mascot({
             className="mascot-bloom absolute inset-0 h-full w-full scale-105 object-contain opacity-40 blur-md saturate-150"
             draggable={false}
             height={152}
+            loading="lazy"
             src="/brand/mascot/mascot-v1.png"
             width={208}
           />
@@ -47,6 +48,7 @@ export function Mascot({
         className="relative h-full w-full object-contain motion-reduce:hidden"
         draggable={false}
         height={152}
+        loading="lazy"
         src="/brand/mascot/mascot-v1.apng"
         width={208}
       />
@@ -56,6 +58,7 @@ export function Mascot({
         className="relative hidden h-full w-full object-contain motion-reduce:block"
         draggable={false}
         height={152}
+        loading="lazy"
         src="/brand/mascot/mascot-v1.png"
         width={208}
       />
