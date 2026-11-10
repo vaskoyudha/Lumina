@@ -7,12 +7,14 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import {
   AccountProgressContext,
-  type AccountProgressState,
+  createAccountProgressStore,
+  EMPTY_ACCOUNT_SNAPSHOT,
   useAccountProgress,
   useStoredProgress,
 } from "@/components/belajar/account-progress-context";
@@ -37,12 +39,7 @@ export function AccountProgressProvider({
   modules: LearningSummary[];
 }) {
   const pathname = usePathname();
-  const [progress, setProgress] = useState<StoredProgress | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [simulations, setSimulations] = useState<
-    AccountProgressState["simulations"]
-  >([]);
+  const [store] = useState(createAccountProgressStore);
   const requestId = useRef(0);
   const refresh = useCallback(async () => {
     const current = ++requestId.current;
@@ -50,48 +47,57 @@ export function AccountProgressProvider({
       const result = await getAccountProgress();
       if (current !== requestId.current) return;
       if (result.ok) {
-        setProgress(result.progress);
-        setSimulations(result.simulations);
-        setError(null);
-        setAuthenticated(true);
+        store.set({
+          progress: result.progress,
+          simulations: result.simulations,
+          error: null,
+          authenticated: true,
+        });
       } else {
-        setProgress(EMPTY_PROGRESS);
-        setSimulations([]);
-        setError(result.error);
-        setAuthenticated(false);
+        store.set({
+          progress: EMPTY_PROGRESS,
+          simulations: [],
+          error: result.error,
+          authenticated: false,
+        });
       }
     } catch {
       if (current !== requestId.current) return;
-      setProgress(EMPTY_PROGRESS);
-      setSimulations([]);
-      setAuthenticated(false);
-      setError("Progres belum bisa dimuat. Coba lagi.");
+      store.set({
+        progress: EMPTY_PROGRESS,
+        simulations: [],
+        authenticated: false,
+        error: "Progres belum bisa dimuat. Coba lagi.",
+      });
     }
-  }, []);
+  }, [store]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: route changes must discard the previous account snapshot
   useEffect(() => {
-    setProgress(null);
-    setSimulations([]);
-    setAuthenticated(false);
+    store.set(EMPTY_ACCOUNT_SNAPSHOT);
     void refresh();
     const read = () => {
       void refresh();
     };
     window.addEventListener("focus", read);
     return () => window.removeEventListener("focus", read);
-  }, [refresh, pathname]);
-  return (
-    <AccountProgressContext.Provider
-      value={{
-        modules,
+  }, [refresh, pathname, store]);
+  const update = useCallback(
+    (progress: StoredProgress) => {
+      store.set({
         progress,
-        error,
-        authenticated,
-        simulations,
-        refresh,
-        update: setProgress,
-      }}
-    >
+        simulations: store.getSnapshot().simulations,
+        error: null,
+        authenticated: true,
+      });
+    },
+    [store],
+  );
+  const value = useMemo(
+    () => ({ modules, store, refresh, update }),
+    [modules, store, refresh, update],
+  );
+  return (
+    <AccountProgressContext.Provider value={value}>
       {children}
     </AccountProgressContext.Provider>
   );
