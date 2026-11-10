@@ -51,7 +51,9 @@ function parseWorktrees(porcelain) {
 }
 
 const root = git(["rev-parse", "--show-toplevel"], process.cwd());
-const worktrees = parseWorktrees(git(["worktree", "list", "--porcelain"], root));
+const worktrees = parseWorktrees(
+  git(["worktree", "list", "--porcelain"], root),
+);
 
 const rows = [];
 let needsAttention = 0;
@@ -65,7 +67,10 @@ for (const worktree of worktrees) {
   const untracked = lines.filter((line) => line.startsWith("??")).length;
   const tracked = lines.length - untracked;
 
-  const counts = maybeGit(["rev-list", "--left-right", "--count", "origin/main...HEAD"], where);
+  const counts = maybeGit(
+    ["rev-list", "--left-right", "--count", "origin/main...HEAD"],
+    where,
+  );
   let behind = null;
   let ahead = null;
   if (counts) {
@@ -80,7 +85,7 @@ for (const worktree of worktrees) {
   );
   const unpushed = upstream
     ? Number(maybeGit(["rev-list", "--count", "@{upstream}..HEAD"], where) ?? 0)
-    : ahead ?? 0;
+    : (ahead ?? 0);
 
   const atRisk = tracked > 0 || unpushed > 0;
   if (atRisk) needsAttention += 1;
@@ -123,14 +128,18 @@ for (const row of rows) {
 
   console.log(`${verdict.padEnd(8)} ${row.label}`);
   console.log(`         ${row.where}`);
-  console.log(`         ${position} | ${push} | ${dirty || "no local changes"}`);
+  console.log(
+    `         ${position} | ${push} | ${dirty || "no local changes"}`,
+  );
 }
 
 console.log("");
 if (needsAttention === 0) {
   console.log("All worktrees are clean and pushed.");
 } else {
-  console.log(`${needsAttention} worktree(s) hold work that a branch switch could hide.`);
+  console.log(
+    `${needsAttention} worktree(s) hold work that a branch switch could hide.`,
+  );
   console.log("Commit by path and push the branch before switching.");
 }
 
