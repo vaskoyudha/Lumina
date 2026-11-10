@@ -1417,6 +1417,19 @@ export function CompanionChat({
              * the OCR step. Any failure falls through to the voice call below.
              */
             if (orchestrator) {
+              /*
+               * An attachment can contain a URL, but the orchestrator's link
+               * specialist pre-calls url.vet without the Companion consent
+               * card. Redact attachment URLs before the agent sees them; the
+               * local detector already scored the original text.
+               */
+              const orchestratorMessage = hasAttachments
+                ? extractLinks(scored).reduce(
+                    (clean, link) =>
+                      clean.split(link).join("[tautan tidak dipindai]"),
+                    scored,
+                  )
+                : scored;
               const orchestrated = await streamOrchestrator(
                 {
                   lane: "periksa",
@@ -1427,7 +1440,7 @@ export function CompanionChat({
                       : "Periksa lampiran ini.")
                   ).slice(0, 2_000),
                   message:
-                    scored.slice(0, 20_000) ||
+                    orchestratorMessage.slice(0, 20_000) ||
                     attachments[0]?.name ||
                     "Lampiran tanpa teks.",
                   history: chatHistory.slice(-10),
