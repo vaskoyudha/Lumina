@@ -799,4 +799,34 @@ describe("runOrchestrator", () => {
       expect(next?.type === "agent_result" ? next.agent : null).toBe(agent.id);
     }
   });
+
+  it("emits a start before the result for agents skipped by an abort", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const chat = serialChat(() => plannerCallWith(sixAgents));
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+      signal: controller.signal,
+    });
+
+    expect(
+      result.trace.agents.every((agent) => agent.status === "dilewati"),
+    ).toBe(true);
+    expect(result.trace.agents.length).toBeGreaterThanOrEqual(sixAgents.length);
+
+    const agentEvents = result.events.filter(
+      (event) => event.type === "agent_start" || event.type === "agent_result",
+    );
+    for (const agent of result.trace.agents) {
+      if (agent.status !== "dilewati") continue;
+      const startIndex = agentEvents.findIndex(
+        (event) => event.type === "agent_start" && event.agent === agent.id,
+      );
+      expect(startIndex).toBeGreaterThanOrEqual(0);
+      const next = agentEvents[startIndex + 1];
+      expect(next?.type).toBe("agent_result");
+      expect(next?.type === "agent_result" ? next.agent : null).toBe(agent.id);
+    }
+  });
 });

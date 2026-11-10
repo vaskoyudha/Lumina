@@ -132,7 +132,7 @@ export function commanderUserPrompt(input: {
     `Modus dasar: ${input.modus}; skor dasar: ${input.score}/100 (${input.risk}).`,
     "Sebut modus atau pola; jangan cetak skor atau band di pengantar.",
     input.priorTurns.length
-      ? `<prior_turns>\n${input.priorTurns.map((turn, index) => `[${index + 1}] ${turn}`).join("\n")}\n</prior_turns>`
+      ? `<prior_turns>\n${input.priorTurns.map((turn, index) => `[${index + 1}] ${turn.replaceAll("</prior_turns>", "")}`).join("\n")}\n</prior_turns>`
       : "Tidak ada percakapan sebelumnya.",
     "<message>",
     input.message.replaceAll("</message>", ""),

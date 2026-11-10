@@ -1059,6 +1059,14 @@ export async function runOrchestrator(
         ms: 0,
       };
       emit({
+        type: "agent_start",
+        agent: skipped.agent,
+        label: skipped.label,
+        task: step.task,
+        skills: step.skills,
+        tools: step.tools,
+      });
+      emit({
         type: "agent_result",
         agent: skipped.agent,
         label: skipped.label,
@@ -1108,9 +1116,8 @@ export async function runOrchestrator(
     });
     return result;
   };
-  const crewStarted = performance.now();
   for (const step of plan.steps) {
-    if (performance.now() - crewStarted >= deadlineMs) {
+    if (performance.now() - started >= deadlineMs) {
       const spec = SPECIALISTS[step.agent];
       const skipped: SubagentResult = {
         agent: spec.id,

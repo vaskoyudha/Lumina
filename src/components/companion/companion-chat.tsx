@@ -212,6 +212,8 @@ interface Turn {
   trace?: AgentTrace;
   /** The real multi-agent run: planner, specialists, tool calls, synthesis. */
   orchestration?: OrchestratorEvent[];
+  /** True when this turn ran the agent orchestrator, so the band waits for it. */
+  orchestrated?: boolean;
   /** The teaching layer: tactics, anatomy, checks, and where to report. */
   explanation?: Explanation;
   /** True while the language layer is still writing. */
@@ -727,7 +729,7 @@ export function CompanionChat({
   const activeTurn = [...turns].reverse().find((turn) => turn.streaming);
   const panelBandReady =
     !activeTurn ||
-    !orchestrator ||
+    !activeTurn.orchestrated ||
     (activeTurn.orchestration !== undefined &&
       runSettled(activeTurn.orchestration));
   const panelResult = panelBandReady
@@ -1185,6 +1187,7 @@ export function CompanionChat({
                       voiceStartedAt,
                       result: checked ? (result ?? undefined) : undefined,
                       source: checked ? scored : undefined,
+                      orchestrated: checked && orchestrator ? true : undefined,
                       explanation,
                       contentQuestion,
                       attachmentText:
@@ -2769,7 +2772,7 @@ export function CompanionChat({
 
                       {turn.result &&
                       (!turn.streaming ||
-                        !orchestrator ||
+                        !turn.orchestrated ||
                         (turn.orchestration !== undefined &&
                           runSettled(turn.orchestration))) ? (
                         <>

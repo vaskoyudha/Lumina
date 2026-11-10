@@ -102,9 +102,11 @@ const summary: AgentRunSummary = {
   });
 
   it("never returns another account's run", async () => {
+    await saveAgentRun(userA, { ...summary, runId: "run-a" });
     await saveAgentRun(userB, { ...summary, runId: "run-b" });
     const latest = await latestAgentRun(userA);
 
-    expect(latest?.runId).toBe("run-2");
+    expect(latest?.runId).toBe("run-a");
+    expect(latest?.runId).not.toBe("run-b");
   });
 });
