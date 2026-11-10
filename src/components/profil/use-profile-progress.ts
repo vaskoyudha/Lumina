@@ -1,13 +1,17 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
-import { AccountProgressContext } from "@/components/belajar/account-progress-context";
+import {
+  AccountProgressContext,
+  useAccountProgress,
+} from "@/components/belajar/account-progress-context";
 import { MODUS } from "@/lib/modus";
 import { type Progress, ProgressSchema } from "@/lib/progress";
 
 /** Profile controls also live on routes without the learning provider. */
 export function useProfileProgress(open: boolean) {
   const context = useContext(AccountProgressContext);
+  const account = useAccountProgress();
   const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(MODUS.length);
@@ -48,8 +52,8 @@ export function useProfileProgress(open: boolean) {
   }, [open, context]);
 
   return {
-    progress: context?.progress ?? progress,
-    error: context?.error ?? error,
+    progress: context ? account.progress : progress,
+    error: context ? account.error : error,
     total: context?.modules.length || total,
   };
 }
