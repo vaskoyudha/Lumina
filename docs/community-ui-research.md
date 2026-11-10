@@ -81,11 +81,11 @@ Sumber: ccrsxx/twitter-clone `62a9588577ec6f5ce6d28b50d30bf46d2229453d`.
 
 | Sumber clone | Port Lumina |
 | --- | --- |
-| `layout/main-layout.tsx`, `sidebar/sidebar.tsx`, `sidebar/sidebar-link.tsx`, `sidebar/sidebar-profile.tsx` | `src/components/community/community-frame.tsx`: susunan kolom, sidebar tetap, rail ikon, navigasi bawah, tombol menulis, dan menu akun. Destinasi memakai rute Lumina yang tersedia. |
+| `layout/main-layout.tsx`, `sidebar/sidebar.tsx`, `sidebar/sidebar-link.tsx`, `sidebar/sidebar-profile.tsx` | **Ditolak pada revisi 10 November 2026.** Kerangka kolom tidak dipakai; `/komunitas` memakai `WorkspaceShell` bersama. Yang tersisa hanya pola rail kanan di `src/components/community/community-aside.tsx`. |
 | `home/main-container.tsx`, `home/main-header.tsx` | `app/(chat)/komunitas/layout.tsx` dan header feed/detail: timeline maksimal `max-w-xl`, pembatas vertikal, header sticky. Pembaca sesi berada dalam Suspense. |
 | `input/input.tsx` | `TimelineComposer` dalam `community-editor.tsx`: grid avatar/textarea, status publik, kategori, tombol kirim. Mutasi memakai `publishPost`, tanpa Firebase atau unggah media. |
 | `tweet/tweet.tsx` | `community-view.tsx`: baris avatar dan metadata, teks, menu opsi, aksi balasan/Membantu; detail serta balasan menggunakan model Komunitas. Link dipisahkan dari tombol untuk menghindari elemen interaktif bersarang. |
-| `styles/globals.scss`, `tailwind.config.js` | `src/styles/community-twitter.css`: palet terang upstream dengan token scoped; breakpoint `xs:500px` diubah menjadi utility Tailwind 4 `min-[500px]`. Font menggunakan Arial/Helvetica, tanpa menyalin font Twitter. |
+| `styles/globals.scss`, `tailwind.config.js` | **Tidak dipakai.** `src/styles/community-twitter.css` dan palet biru Twitter dihapus; warna memakai token AppNext `--lumina-*` agar sama dengan shell lain. |
 
 File sumber tambahan yang ditinjau: [sidebar](https://github.com/ccrsxx/twitter-clone/blob/62a9588577ec6f5ce6d28b50d30bf46d2229453d/src/components/sidebar/sidebar.tsx),
 [main container](https://github.com/ccrsxx/twitter-clone/blob/62a9588577ec6f5ce6d28b50d30bf46d2229453d/src/components/home/main-container.tsx),

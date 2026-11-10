@@ -75,6 +75,8 @@ export type CommunityPost = {
   title: string;
   body: string;
   sourceUrl: string | null;
+  /** Seed/demo cover under /images/community; never user-supplied. */
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
   replies: number;

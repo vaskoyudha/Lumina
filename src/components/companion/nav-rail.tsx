@@ -38,7 +38,7 @@ const DESTINATIONS: {
   /** Rendered separately at the bottom: it is not a peer of the others. */
   emergency?: boolean;
 }[] = [
-  { href: "/companion", label: "Companion", icon: MessageSquare },
+  { href: "/companion", label: "AI Companion", icon: MessageSquare },
   { href: "/belajar", label: "Belajar", icon: GraduationCap },
   { href: "/simulasi", label: "Simulasi", icon: Swords },
   { href: "/komunitas", label: "Komunitas", icon: UsersRound },

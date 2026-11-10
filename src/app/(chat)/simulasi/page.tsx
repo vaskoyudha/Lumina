@@ -21,6 +21,7 @@ import {
 } from "@/components/belajar/content-state";
 import { ProfilePopup } from "@/components/profil/profile-popup";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
+import { MissionStatusBar } from "@/components/simulasi/mission-status-bar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { LearningSummary } from "@/lib/content/schema";
@@ -184,6 +185,7 @@ export async function SimulasiContent() {
         aside={<SimulasiAside planned={PLANNED} />}
       >
         <div className="flex w-full flex-col gap-6">
+          <MissionStatusBar />
           <section className="relative overflow-hidden rounded-card border border-brand-line shadow-[var(--appnext-shadow-soft)]">
             <div
               aria-hidden="true"
@@ -347,7 +349,7 @@ export async function SimulasiContent() {
                       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-brand text-bg">
                         <Check aria-hidden className="size-2.5" />
                       </span>
-                      <p className="text-dim text-xs leading-relaxed">
+                      <p className="text-ink-soft text-xs leading-relaxed">
                         {point}
                       </p>
                     </li>
@@ -372,7 +374,9 @@ export async function SimulasiContent() {
                       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-brand text-bg">
                         <Check aria-hidden className="size-2.5" />
                       </span>
-                      <p className="text-dim text-xs leading-relaxed">{tip}</p>
+                      <p className="text-ink-soft text-xs leading-relaxed">
+                        {tip}
+                      </p>
                     </li>
                   ))}
                 </ul>

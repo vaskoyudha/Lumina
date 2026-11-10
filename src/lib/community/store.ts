@@ -21,6 +21,7 @@ type PostRow = {
   title: string;
   body: string;
   source_url: string | null;
+  image_url: string | null;
   created_at: Date;
   updated_at: Date;
   reply_count: number;
@@ -44,6 +45,7 @@ function post(row: PostRow): CommunityPost {
     title: row.title,
     body: row.body,
     sourceUrl: row.source_url,
+    imageUrl: row.image_url,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     replies: row.reply_count,
@@ -152,7 +154,7 @@ export async function removeOwnContent(userId: string, target: Target) {
   const table =
     target.kind === "post" ? "community_posts" : "community_replies";
   const result = await authDatabase().query(
-    `UPDATE ${table} SET deleted_at=now(),body='[Konten ini telah dihapus oleh penulis.]' ${target.kind === "post" ? ",title='Topik dihapus',source_url=NULL" : ""} WHERE id=$1 AND author_id=$2 AND deleted_at IS NULL RETURNING ${target.kind === "post" ? "id" : "post_id"} AS post_id`,
+    `UPDATE ${table} SET deleted_at=now(),body='[Konten ini telah dihapus oleh penulis.]' ${target.kind === "post" ? ",title='Topik dihapus',source_url=NULL,image_url=NULL" : ""} WHERE id=$1 AND author_id=$2 AND deleted_at IS NULL RETURNING ${target.kind === "post" ? "id" : "post_id"} AS post_id`,
     [target.id, userId],
   );
   if (!result.rowCount)
