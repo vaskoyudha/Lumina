@@ -1,9 +1,10 @@
 import { z } from "zod";
 import type { ScoreResult, Signal } from "@/lib/contracts/score";
+import type { SpecialistId } from "@/lib/contracts/orchestrator";
 import { verifyLink } from "@/lib/link-verify/urlvet";
 import { DETECTOR_IDS, type DetectorId } from "@/lib/scoring/detector-ids";
 import { extractEntities } from "@/lib/scoring/extract";
-import { extractLinks } from "@/lib/scoring/link";
+import { extractLinks, parseLink } from "@/lib/scoring/link";
 import type { scoreWithTrace } from "@/lib/scoring/score";
 
 /**
@@ -13,6 +14,8 @@ import type { scoreWithTrace } from "@/lib/scoring/score";
  */
 
 export interface ToolContext {
+  /** The specialist calling the tool; used to scope shared engine output. */
+  agent: SpecialistId;
   message: string;
   priorTurns: string[];
   signal: AbortSignal;
@@ -37,6 +40,11 @@ const UrlArgs = z
       .refine((value) => /^https?:\/\//i.test(value), "invalid-url"),
   })
   .strict();
+const DomainArgs = z
+  .object({
+    domain: z.string().min(1).max(2048),
+  })
+  .strict();
 
 function signalView(signal: Signal) {
   return {
@@ -52,21 +60,120 @@ function stageView(result: ScoreResult) {
   return result.signals.slice(0, 12).map(signalView);
 }
 
+interface RdapEntity {
+  roles?: string[];
+  vcardArray?: unknown[];
+}
+
+interface RdapResponse {
+  status?: string[];
+  events?: { eventAction?: string; eventDate?: string }[];
+  entities?: RdapEntity[];
+}
+
+interface DomainLookup {
+  ok: boolean;
+  host: string;
+  registrar?: string | null;
+  registeredAt?: string | null;
+  ageDays?: number | null;
+  statuses?: string[];
+  error?: string;
+  cached?: boolean;
+}
+
+const domainCache = new Map<string, { at: number; value: DomainLookup }>();
+const DOMAIN_CACHE_MS = 60 * 60 * 1000;
+
+function domainHost(raw: string): string | null {
+  return parseLink(raw.trim())?.host ?? null;
+}
+
+function registrarOf(data: RdapResponse): string | null {
+  const entity = data.entities?.find((item) =>
+    item.roles?.includes("registrar"),
+  );
+  const vcard = entity?.vcardArray;
+  if (!Array.isArray(vcard) || !Array.isArray(vcard[1])) return null;
+  const fn = (vcard[1] as unknown[]).find(
+    (item) => Array.isArray(item) && item[0] === "fn",
+  );
+  return Array.isArray(fn) && typeof fn[3] === "string" ? fn[3] : null;
+}
+
+async function lookupDomain(
+  host: string,
+  signal: AbortSignal,
+): Promise<DomainLookup> {
+  const cached = domainCache.get(host);
+  if (cached && Date.now() - cached.at < DOMAIN_CACHE_MS) {
+    return { ...cached.value, cached: true };
+  }
+
+  const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  signal.addEventListener("abort", onAbort, { once: true });
+  if (signal.aborted) controller.abort();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(`https://rdap.org/domain/${host}`, {
+      signal: controller.signal,
+      headers: { accept: "application/rdap+json" },
+    });
+    if (!response.ok) {
+      return { ok: false, host, error: `rdap-${response.status}` };
+    }
+    const data = (await response.json()) as RdapResponse;
+    const registeredAt =
+      data.events?.find((event) => event.eventAction === "registration")
+        ?.eventDate ?? null;
+    const parsedAt = registeredAt ? Date.parse(registeredAt) : Number.NaN;
+    const value: DomainLookup = {
+      ok: true,
+      host,
+      registrar: registrarOf(data),
+      registeredAt,
+      ageDays: Number.isFinite(parsedAt)
+        ? Math.max(0, Math.floor((Date.now() - parsedAt) / 86_400_000))
+        : null,
+      statuses: data.status ?? [],
+    };
+    domainCache.set(host, { at: Date.now(), value });
+    return value;
+  } catch (error) {
+    const aborted = error instanceof Error && error.name === "AbortError";
+    return {
+      ok: false,
+      host,
+      error: aborted ? "rdap-timeout" : "rdap-unavailable",
+    };
+  } finally {
+    clearTimeout(timer);
+    signal.removeEventListener("abort", onAbort);
+  }
+}
+
 export const TOOL_DEFS: Record<string, ToolDef> = {
   score_message: {
     name: "score_message",
     description:
-      "Run Lumina's deterministic scorer over the message and prior turns. Returns the authoritative score, risk band, modus, and the strongest signals. Use this before forming an opinion; never invent a score.",
+      "Run Lumina's deterministic scorer over the message and prior turns. Returns the authoritative score, risk band, modus, and only the signals owned by your assigned detector. Use this before forming an opinion; never invent a score.",
     schema: NoArgs,
     execute: async (_args, context) => {
       const { result, trace } = context.score();
+      const scoped =
+        context.agent === "evidence"
+          ? stageView(result)
+          : stageView(result).filter(
+              (signal) => signal.agent === context.agent,
+            );
       return {
         score: result.score,
         risk: result.risk,
         modus: result.modus,
         relatedModule: result.relatedModule,
         advice: result.advice,
-        signals: stageView(result),
+        signals: scoped,
         stages: trace.stages.map((stage) => ({
           id: stage.id,
           label: stage.label,
@@ -147,6 +254,25 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
       }
       const verdict = await verifyLink(url, context.signal);
       return verdict;
+    },
+  },
+
+  domain_lookup: {
+    name: "domain_lookup",
+    description:
+      "Look up a domain's public registration data through RDAP: registrar, registration date, domain age, and status flags. Use only for a host that appears in the message. A young domain is supporting evidence, not proof of fraud.",
+    schema: DomainArgs,
+    execute: async (args, context) => {
+      const { domain } = args as { domain: string };
+      const host = domainHost(domain);
+      if (!host) throw new Error("invalid-domain");
+      const allowed = new Set(
+        extractLinks(context.message)
+          .map((raw) => parseLink(raw)?.host)
+          .filter((value): value is string => Boolean(value)),
+      );
+      if (!allowed.has(host)) throw new Error("domain-not-in-message");
+      return lookupDomain(host, context.signal);
     },
   },
 

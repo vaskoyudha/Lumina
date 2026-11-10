@@ -462,6 +462,7 @@ async function runSpecialist(
   const toolNames = requestedTools?.length ? requestedTools : spec.tools;
   const started = performance.now();
   const toolContext: ToolContext = {
+    agent: spec.id,
     message: request.message,
     priorTurns: request.priorTurns,
     signal,
