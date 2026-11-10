@@ -150,5 +150,5 @@ export const MODUL_09 = {
     "Laporkan pinjol ke OJK dan IASC; sertakan nama aplikasi serta nomor pelaku.",
     "Laporkan pemerasan ke polisi dan beri tahu kontak terdekat agar tidak panik.",
   ],
-  scenarioId: null,
+  scenarioId: "L3-pinjol-fiktif",
 } satisfies ModuleContent;

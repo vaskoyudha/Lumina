@@ -16,8 +16,9 @@ registerHooks({
   },
 });
 const { ContentBundleSchema } = await import("../src/lib/content/schema.ts");
+const args = process.argv.slice(2).filter((arg) => arg !== "--replace");
 const input =
-  process.argv[2] ||
+  args[0] ||
   fileURLToPath(new URL("../content/competition.json", import.meta.url));
 const replace = process.argv.includes("--replace");
 const pool = new pg.Pool({

@@ -1,14 +1,14 @@
 import { CONTENT_FIXTURE, SIMULATION_FIXTURE } from "@/lib/content/fixtures";
 import { ContentBundleSchema, SimulationSchema } from "@/lib/content/schema";
 
-it("seeds all twelve complete modules and the real playable scenario", () => {
+it("seeds all twelve complete modules and the playable scenarios", () => {
   expect(CONTENT_FIXTURE.modules).toHaveLength(12);
   expect(
     CONTENT_FIXTURE.modules.every(
       (m) => m.content && m.content.kuis.length >= 3,
     ),
   ).toBe(true);
-  expect(CONTENT_FIXTURE.simulations).toHaveLength(1);
+  expect(CONTENT_FIXTURE.simulations).toHaveLength(5);
 });
 it("rejects broken graph edges before import or rendering", () => {
   const content = JSON.parse(JSON.stringify(SIMULATION_FIXTURE));

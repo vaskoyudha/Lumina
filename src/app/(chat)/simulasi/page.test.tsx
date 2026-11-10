@@ -58,8 +58,11 @@ describe("halaman misi simulasi", () => {
       screen.getByRole("link", { name: "Mulai briefing" }),
     ).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
     const planned = screen.getByRole("region", { name: "Level lain" });
-    expect(within(planned).getAllByText("Rencana")).toHaveLength(4);
-    expect(within(planned).queryByRole("link")).not.toBeInTheDocument();
+    expect(within(planned).getAllByRole("link")).toHaveLength(4);
+    expect(within(planned).queryByText("Rencana")).not.toBeInTheDocument();
+    expect(
+      within(planned).getByRole("link", { name: /Tautan sebelum saldo/i }),
+    ).toHaveAttribute("href", "/simulasi/L2-phishing-tautan");
   });
 });
 
