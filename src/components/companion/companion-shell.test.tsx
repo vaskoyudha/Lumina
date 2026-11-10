@@ -23,8 +23,22 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+const APK_MESSAGE =
+  "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim, isinya lengkap dengan lokasi acara.";
+const BLOCKED_MESSAGE =
+  "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa agar akun tidak ditutup permanen.";
+
+async function sendMessage(
+  user: ReturnType<typeof userEvent.setup>,
+  text: string,
+) {
+  await user.click(screen.getByPlaceholderText(/tempel pesan/i));
+  await user.paste(text);
+  await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+}
+
 describe("CompanionChat · shell", () => {
-  it("opens on a new-chat state with the scenario track and composer", () => {
+  it("opens on a new-chat state with the quick access and agent history cards", () => {
     render(<CompanionChat />);
 
     expect(
@@ -35,7 +49,13 @@ describe("CompanionChat · shell", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/pesan/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /apk undangan/i }),
+      screen.getByRole("heading", { name: /butuh apa lagi, tamu\?/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /riwayat agen/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /analisis iklan lowongan/i }),
     ).toBeInTheDocument();
   });
 
@@ -43,7 +63,7 @@ describe("CompanionChat · shell", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /akun diblokir/i }));
+    await sendMessage(user, BLOCKED_MESSAGE);
 
     // The header and the sidebar entry both take the message as their title.
     await waitFor(() => {
@@ -57,7 +77,7 @@ describe("CompanionChat · shell", () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
-    await user.click(screen.getByRole("button", { name: /apk undangan/i }));
+    await sendMessage(user, APK_MESSAGE);
     await waitFor(() => {
       expect(screen.getAllByText(/risiko tinggi/i).length).toBeGreaterThan(0);
     });
@@ -75,7 +95,7 @@ describe("CompanionChat · shell", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: /kamu percaya/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/apk undangan/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/selamat siang bu/i).length).toBeGreaterThan(0);
   });
 
   it("keeps blank new-chat screens out of history until a message is sent", async () => {
@@ -100,7 +120,7 @@ describe("CompanionChat · shell", () => {
     // Only the button carries that label; no empty thread row may join it.
     expect(sidebarScope.getAllByText("Percakapan baru")).toHaveLength(1);
 
-    await user.click(screen.getByRole("button", { name: /akun diblokir/i }));
+    await sendMessage(user, BLOCKED_MESSAGE);
 
     await waitFor(() => {
       expect(
@@ -266,26 +286,28 @@ describe("CompanionChat · shell", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Panel bukti")).not.toBeInTheDocument();
 
-    // All briefs are visible at once; selection only highlights one.
-    for (const purpose of [
-      /membaca nada pesan/i,
-      /membongkar setiap tautan/i,
-      /memeriksa identitas pengirim/i,
-      /membandingkan pesan dengan giliran/i,
-      /memeriksa tawaran kerja/i,
-      /mengikuti alur jual-beli/i,
-      /membaca payload qris/i,
-      /merangkum temuan menjadi kutipan/i,
-    ]) {
-      expect(screen.getByText(purpose)).toBeInTheDocument();
-    }
+    // The pane is the long form for one agent, not a wall of all eight. The
+    // first card is selected by default; clicking another lane swaps the brief.
+    const detail = screen.getByRole("region", { name: "Detail agen" });
+    expect(within(detail).getByText(/membaca nada pesan/i)).toBeInTheDocument();
+    expect(
+      within(detail).queryByText(/membongkar setiap tautan/i),
+    ).not.toBeInTheDocument();
 
     const mochi = screen.getByRole("button", { name: /lihat detail mochi/i });
-    await user.click(mochi);
+    const bubu = screen.getByRole("button", { name: /lihat detail bubu/i });
     expect(mochi).toHaveAttribute("aria-pressed", "true");
+    expect(bubu).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(bubu);
+    expect(bubu).toHaveAttribute("aria-pressed", "true");
+    expect(mochi).toHaveAttribute("aria-pressed", "false");
     expect(
-      screen.getByRole("button", { name: /lihat detail bubu/i }),
-    ).toHaveAttribute("aria-pressed", "false");
+      within(detail).getByText(/membongkar setiap tautan/i),
+    ).toBeInTheDocument();
+    expect(
+      within(detail).queryByText(/membaca nada pesan/i),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
 

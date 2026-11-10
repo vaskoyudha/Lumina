@@ -1,5 +1,5 @@
 "use client";
-import { Flag, Pencil, ThumbsUp, Trash2 } from "lucide-react";
+import { Flag, Heart, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +21,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -64,17 +65,24 @@ function useMutation() {
 export function HelpfulButton({
   post,
   canWrite,
+  compact = false,
 }: {
   post: CommunityPost;
   canWrite: boolean;
+  compact?: boolean;
 }) {
   const m = useMutation();
+  const label = `${post.hasHelped ? "Sudah membantu" : "Membantu"} · ${post.helpful}`;
+  const className = compact
+    ? "min-h-11 rounded-full px-3 text-xs text-dim aria-pressed:bg-brand-soft aria-pressed:text-brand-ink"
+    : "min-h-11 rounded-full";
   return (
-    <div>
+    <div className="min-w-0">
       {canWrite ? (
         <Button
-          variant="outline"
-          className="min-h-11 rounded-full"
+          variant={compact ? "ghost" : "outline"}
+          className={className}
+          aria-label={label}
           aria-pressed={post.hasHelped}
           disabled={m.pending}
           onClick={() =>
@@ -83,13 +91,20 @@ export function HelpfulButton({
             )
           }
         >
-          <ThumbsUp aria-hidden />
-          {post.hasHelped ? "Sudah membantu" : "Membantu"} · {post.helpful}
+          <Heart aria-hidden fill={post.hasHelped ? "currentColor" : "none"} />
+          {label}
         </Button>
       ) : (
-        <Button asChild variant="outline" className="min-h-11 rounded-full">
-          <Link href="/masuk">
-            <ThumbsUp aria-hidden />
+        <Button
+          asChild
+          variant={compact ? "ghost" : "outline"}
+          className={className}
+        >
+          <Link
+            href="/masuk"
+            aria-label={`Masuk untuk memberi reaksi Membantu · ${post.helpful}`}
+          >
+            <Heart aria-hidden />
             Membantu · {post.helpful}
           </Link>
         </Button>
@@ -106,10 +121,12 @@ export function ContentControls({
   post,
   reply,
   canWrite,
+  compact = false,
 }: {
   post: CommunityPost;
   reply?: CommunityReply;
   canWrite: boolean;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const m = useMutation();
@@ -123,16 +140,69 @@ export function ContentControls({
   };
   return (
     <div className="flex flex-col gap-2">
+      {compact && canWrite && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 rounded-full text-dim"
+              aria-label={`Opsi kiriman oleh ${item.author}`}
+              disabled={m.pending}
+            >
+              <MoreHorizontal aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              {item.isOwner ? (
+                <>
+                  <DropdownMenuItem onSelect={() => setEditing(true)}>
+                    <Pencil aria-hidden />
+                    Ubah
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setDeleting(true)}>
+                    <Trash2 aria-hidden />
+                    Hapus
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                [
+                  ["data-pribadi", "Laporkan data pribadi"],
+                  ["spam", "Laporkan spam atau promosi"],
+                  ["berbahaya", "Laporkan konten berbahaya"],
+                ].map(([reason, label]) => (
+                  <DropdownMenuItem
+                    key={reason}
+                    disabled={reported}
+                    onSelect={() =>
+                      void m.run(
+                        () => flagContent({ ...target, reason }),
+                        () => setReported(true),
+                      )
+                    }
+                  >
+                    <Flag aria-hidden />
+                    {label}
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <div className="flex flex-wrap items-center gap-1">
         {item.isOwner && (
           <>
             <Dialog open={editing} onOpenChange={setEditing}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="min-h-11">
-                  <Pencil aria-hidden />
-                  Ubah
-                </Button>
-              </DialogTrigger>
+              {!compact && (
+                <DialogTrigger asChild>
+                  <Button variant="ghost" className="min-h-11">
+                    <Pencil aria-hidden />
+                    Ubah
+                  </Button>
+                </DialogTrigger>
+              )}
               <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>
@@ -154,12 +224,14 @@ export function ContentControls({
               </DialogContent>
             </Dialog>
             <Dialog open={deleting} onOpenChange={setDeleting}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="min-h-11">
-                  <Trash2 aria-hidden />
-                  Hapus
-                </Button>
-              </DialogTrigger>
+              {!compact && (
+                <DialogTrigger asChild>
+                  <Button variant="ghost" className="min-h-11">
+                    <Trash2 aria-hidden />
+                    Hapus
+                  </Button>
+                </DialogTrigger>
+              )}
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
@@ -204,7 +276,7 @@ export function ContentControls({
             </Dialog>
           </>
         )}
-        {canWrite && !item.isOwner && (
+        {!compact && canWrite && !item.isOwner && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

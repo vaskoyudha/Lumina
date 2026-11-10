@@ -100,6 +100,7 @@ export function Composer({
   submitLabel = "Kirim",
   autoFocus = false,
   className,
+  initialDraft = "",
   onSearchJobs,
 }: {
   /** Called with the typed text and the attachments for this turn. */
@@ -109,10 +110,12 @@ export function Composer({
   submitLabel?: string;
   autoFocus?: boolean;
   className?: string;
+  /** Seeds the field once; remount the composer (a `key`) to seed it again. */
+  initialDraft?: string;
   /** Opens the job-search card with no query; no model call. */
   onSearchJobs?: () => void;
 }) {
-  const [draft, setDraft] = React.useState("");
+  const [draft, setDraft] = React.useState(initialDraft);
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
   const [dragging, setDragging] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);

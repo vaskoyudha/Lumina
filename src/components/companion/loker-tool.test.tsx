@@ -94,6 +94,7 @@ describe("LokerTool", () => {
     const user = userEvent.setup();
     render(<LokerTool {...baseProps} />);
     expect(screen.getByText("Backend Engineer")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /opsi lanjutan/i }));
     await user.click(
       screen.getByRole("checkbox", { name: /sembunyikan yang ditandai/i }),
     );
