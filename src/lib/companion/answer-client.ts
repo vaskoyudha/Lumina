@@ -56,6 +56,10 @@ export function buildAnswerRequest(
     contentQuestion?: boolean;
     attachmentContext?: AnswerAttachment[];
     hasVerdict?: boolean;
+    /** Set only when the reader tapped the link confirmation card. */
+    linkApproved?: string;
+    /** Signed-in display name; the only profile field the model sees. */
+    userName?: string;
   },
 ): AnswerRequest {
   const contentQuestion = lane !== "belajar" && state.contentQuestion === true;
@@ -75,6 +79,8 @@ export function buildAnswerRequest(
         ? state.attachmentContext.slice(0, 3)
         : [],
     hasVerdict: state.hasVerdict === true,
+    linkApproved: lane === "tanya" ? state.linkApproved : undefined,
+    userName: state.userName?.trim() || undefined,
     observations: [],
     final: false,
   };

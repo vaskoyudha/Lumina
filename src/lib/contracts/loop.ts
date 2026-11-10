@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { JobSearchArgsSchema } from "@/lib/contracts/tool";
+import { CheckLinkArgsSchema, JobSearchArgsSchema } from "@/lib/contracts/tool";
 
 /**
  * Bounded agent-loop contracts.
@@ -30,7 +30,7 @@ const PostingObservationSchema = z
  * `report_draft` is terminal: it opens a local card and ends the loop, so there
  * is no second model request to carry its result.
  */
-export const ToolObservationSchema = z
+const JobObservationSchema = z
   .object({
     name: z.literal("job_search"),
     callId: z.string().min(1).max(100),
@@ -48,5 +48,46 @@ export const ToolObservationSchema = z
       .strict(),
   })
   .strict();
+
+/**
+ * A link scan is a public, deterministic verdict about one URL.
+ *
+ * The scanner's free-form reasons are capped and the URL is carried only in
+ * `arguments`; there is no field for the message or attachment that mentioned
+ * the link.
+ */
+const LinkObservationSchema = z
+  .object({
+    name: z.literal("check_link"),
+    callId: z.string().min(1).max(100),
+    arguments: CheckLinkArgsSchema,
+    ok: z.boolean(),
+    result: z
+      .object({
+        verdict: z.enum(["Safe", "Suspicious", "Risky"]).optional(),
+        score: z.number().min(0).max(100).optional(),
+        badReasons: z.array(z.string().max(240)).max(5).default([]),
+        goodReasons: z.array(z.string().max(240)).max(5).default([]),
+        incomplete: z.boolean().default(false),
+        domain: z.string().max(255).nullable().optional(),
+        error: z
+          .enum([
+            "rate-limited",
+            "upstream-timeout",
+            "upstream-invalid",
+            "upstream-failed",
+            "not-configured",
+          ])
+          .optional(),
+        note: z.string().max(300).optional(),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const ToolObservationSchema = z.discriminatedUnion("name", [
+  JobObservationSchema,
+  LinkObservationSchema,
+]);
 
 export type ToolObservation = z.infer<typeof ToolObservationSchema>;

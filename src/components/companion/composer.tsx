@@ -390,16 +390,7 @@ export function Composer({
         </div>
       </div>
 
-      {/*
-        Plan §11.6 requires one permanent line under the field, not a
-        dismissible dialog. The line stays short so it does not become a wall of
-        grey text; the fuller image and storage detail lives in the DOM for
-        screen readers only.
-      */}
-      <p className="mt-2 text-[10.5px] leading-relaxed text-ink-faint">
-        Percakapan ini dikirim ke model untuk menyusun jawaban. Pemeriksaan
-        tetap di perangkat ini.
-      </p>
+      {/* Plan §11.6: the notice stays in the DOM for assistive tech only. */}
       <p className="sr-only">
         Isi pesan lengkap yang diperiksa tidak dikirim: pemeriksaan berjalan di
         perangkat ini. Pertanyaan, riwayat obrolan yang tidak diperiksa, dan

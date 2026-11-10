@@ -17,6 +17,39 @@ const inter = localFont({
 });
 
 /**
+ * DeepTutor typography, scoped to Companion only.
+ *
+ * DeepTutor uses Geist for the workspace chrome and user bubbles, and Lora for
+ * assistant prose, the chat title, and the empty-state greeting. Both are
+ * vendored here (OFL, latin subset) so the offline demo never waits on Google
+ * Fonts. The `companion-font` class in globals.css remaps --font-sans/--font-serif
+ * inside the Companion shell; the rest of Lumina keeps Inter.
+ */
+const geist = localFont({
+  src: "./fonts/geist-variable.woff2",
+  variable: "--font-geist",
+  weight: "100 900",
+  display: "swap",
+});
+
+const lora = localFont({
+  src: [
+    {
+      path: "./fonts/lora-variable.woff2",
+      weight: "400 700",
+      style: "normal",
+    },
+    {
+      path: "./fonts/lora-italic-variable.woff2",
+      weight: "400 700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-lora",
+  display: "swap",
+});
+
+/**
  * Root shell only carries the document and the design-token ground.
  *
  * `body.appnext` installs the measured AppNext light palette once; the
@@ -43,7 +76,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`font-sans ${inter.variable}`}>
+    <html
+      lang="id"
+      className={`font-sans ${inter.variable} ${geist.variable} ${lora.variable}`}
+    >
       <body
         className="appnext min-h-dvh bg-bg text-txt antialiased"
         suppressHydrationWarning

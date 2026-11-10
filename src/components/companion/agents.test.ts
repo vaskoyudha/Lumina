@@ -1,8 +1,10 @@
 import {
   AGENT_REGISTRY,
   AGENT_SEQUENCE,
+  CREW_SEQUENCE,
   type DetectorAgent,
 } from "@/components/companion/agents";
+import { AGENT_IDENTITIES, CREW_IDS } from "@/lib/agents/identities";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
 import { DETECTOR_IDS } from "@/lib/scoring/detector-ids";
 
@@ -13,6 +15,20 @@ describe("agent registry", () => {
     expect(AGENT_SEQUENCE).toEqual(IDS);
     for (const id of IDS) {
       expect(AGENT_REGISTRY[id].id).toBe(id);
+    }
+  });
+
+  it("keeps the crew sequence identical to the canonical identity registry", () => {
+    expect(CREW_SEQUENCE).toEqual(CREW_IDS);
+    expect(CREW_SEQUENCE).toHaveLength(8);
+    for (const id of CREW_IDS) {
+      expect(AGENT_REGISTRY[id].displayName).toBe(
+        AGENT_IDENTITIES[id].displayName,
+      );
+      expect(AGENT_REGISTRY[id].purpose).toBe(AGENT_IDENTITIES[id].purpose);
+      expect(AGENT_REGISTRY[id].mechanism).toEqual(
+        AGENT_IDENTITIES[id].mechanisms,
+      );
     }
   });
 

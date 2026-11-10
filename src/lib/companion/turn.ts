@@ -149,6 +149,27 @@ export function isQuestionShape(text: string): boolean {
 }
 
 /**
+ * A request to look something up on the web.
+ *
+ * Lumina has no browsing tool, so this is routed to the chat lane and answered
+ * honestly instead of being scored as a received message. The guard rejects
+ * anything that carries a message artifact, because a pasted scam can mention
+ * "berita terbaru" too.
+ */
+export function isWebLookupQuestion(text: string): boolean {
+  const t = normalized(text);
+  if (t.length === 0 || MESSAGE_ARTIFACT.test(t)) return false;
+  return (
+    /\b(?:cari|carikan|search|telusuri|googling|browsing)\b.{0,40}\b(?:di|ke|lewat|pakai|pada)?\s*(?:web|internet|google|berita|sumber|online)\b/i.test(
+      t,
+    ) ||
+    /\b(?:berita|informasi|kabar)\b.{0,30}\b(?:terbaru|terkini|hari ini)\b/i.test(
+      t,
+    )
+  );
+}
+
+/**
  * True when the text is a question *about* scams, not a message that uses one.
  *
  * The guard runs before `scoreWithTrace`, so "apa itu pinjol?" is never scored
