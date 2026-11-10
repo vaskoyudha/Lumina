@@ -365,29 +365,28 @@ describe("CompanionChat · shell", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("moves the detail reopen control into the header while the pane is collapsed", async () => {
+  it("reopens the detail pane when another agent is picked while collapsed", async () => {
     const user = userEvent.setup();
     render(<CompanionChat initialPanel="agen" />);
 
+    await user.click(
+      screen.getByRole("button", { name: "Ciutkan panel detail" }),
+    );
+    expect(
+      screen.queryByRole("region", { name: "Detail agen" }),
+    ).not.toBeInTheDocument();
+    // The separate reopen icon is gone; picking an agent is the way back.
     expect(
       screen.queryByRole("button", { name: "Buka panel detail" }),
     ).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", { name: "Ciutkan panel detail" }),
+      screen.getByRole("button", { name: /lihat detail bubu/i }),
     );
 
+    const detail = screen.getByRole("region", { name: "Detail agen" });
     expect(
-      screen.queryByRole("region", { name: "Detail agen" }),
-    ).not.toBeInTheDocument();
-
-    const reopen = screen.getByRole("button", { name: "Buka panel detail" });
-    expect(reopen).toHaveAttribute("aria-expanded", "false");
-
-    await user.click(reopen);
-
-    expect(
-      screen.getByRole("region", { name: "Detail agen" }),
+      within(detail).getByText(/membongkar setiap tautan/i),
     ).toBeInTheDocument();
   });
 

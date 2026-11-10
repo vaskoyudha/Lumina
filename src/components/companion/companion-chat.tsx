@@ -1625,13 +1625,17 @@ export function CompanionChat({
           {showAgents ? (
             <div className="min-h-0 flex-1 py-4 pr-2.5 pl-4 xl:py-5 xl:pr-3 xl:pl-5">
               <AgentsView
-                onSelect={setSelectedAgent}
+                onSelect={(agent) => {
+                  setSelectedAgent(agent);
+                  // Picking an agent is a request to read its explanation, so
+                  // reopen the detail column instead of leaving the user to
+                  // discover the separate top-right toggle.
+                  setEvidenceCollapsed(false);
+                }}
                 selected={selectedAgent}
                 onExport={exportThread}
                 onCopyLink={copyThreadLink}
                 copied={copiedThread}
-                panelCollapsed={evidenceCollapsed}
-                onOpenPanel={() => setEvidenceCollapsed(false)}
               />
             </div>
           ) : empty ? (
