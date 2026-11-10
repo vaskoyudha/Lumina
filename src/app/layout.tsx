@@ -44,7 +44,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={`font-sans ${inter.variable}`}>
-      <body className="appnext min-h-dvh bg-bg text-txt antialiased">
+      <body
+        className="appnext min-h-dvh bg-bg text-txt antialiased"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
