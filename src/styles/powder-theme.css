@@ -125,7 +125,9 @@
 /*
   The hero keeps the glass rim: a 24px pad leaves 16px visible around the
   panel's -m-2, and the 36px outer radius stays concentric with the panel's
-  20px at that inset.
+  20px at that inset. The landscape and the peach band in front of the panel's
+  lower lip are the published site's own layering (see `framer-13cc0rb`), so
+  the rim stays translucent glass the way production ships it.
 */
 .framer-site .framer-oJiFP .framer-dqdt72 {
   padding: 24px;
@@ -180,6 +182,73 @@
 .framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk,
 .framer-site .framer-oJiFP .framer-x2ps8j .framer-dqdt72 {
   max-width: none;
+}
+
+/*
+  The hero demo keeps the live site's app-window frame: full column width, the
+  published 4:3 ratio and 24px glass rim. At 1907×1032 that is 1552×1164, the
+  same panel the production landing page ships, so the window sits between the
+  earlier compact preview and the full poster instead of shrinking to a
+  floating card.
+*/
+.framer-site .framer-oJiFP .framer-x2ps8j .framer-dqdt72 {
+  aspect-ratio: 4 / 3;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  /*
+    The panel is a flex item in the hero column, so its automatic minimum size
+    is its content's min-content height. The routing graph is taller than the
+    4:3 window, and that intrinsic height was winning over the ratio, growing
+    the panel to 1704px. Zero the minimum and clip so the ratio is authoritative.
+  */
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 0;
+  /* One 24px rim on every side, so the glass reads even, not top-heavy. */
+  padding: 24px;
+  border-radius: 36px;
+  gap: 0;
+  /*
+    No z-index. The published section paints the grass foreground
+    (`framer-13cc0rb`) over the panel's bottom lip, and the panel has to stay
+    below it: raising the window here would hide that landscape and the
+    landmark it gives the hero.
+  */
+}
+
+/*
+  Content padding stops at the panel. The published section ends there too, so
+  the foreground hills sit right under the window's lower lip instead of at the
+  bottom of a 210px gap.
+*/
+.framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk {
+  gap: clamp(40px, 5vw, 64px);
+  padding: 112px 0 0;
+}
+
+/* Short laptop screens: lift the demo so more of the window clears the fold. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk {
+    padding-top: 88px;
+  }
+}
+
+/* Tablet and phone: the same 4:3 window, bounded by the viewport. */
+@media (max-width: 1023.98px) {
+  /*
+    The demo impression has no bottom padding either: the glass rim's lower lip
+    is where the foreground hills begin, as on the published section.
+  */
+  .framer-site .framer-oJiFP .framer-x2ps8j .framer-1i5w2fk {
+    padding: 96px 0 0;
+  }
+
+  .framer-site .framer-oJiFP .framer-x2ps8j .framer-dqdt72 {
+    aspect-ratio: 4 / 3;
+    max-width: min(720px, calc((100svh - 200px) * 4 / 3));
+    height: auto;
+  }
 }
 
 /*
