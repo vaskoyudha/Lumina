@@ -80,4 +80,22 @@ describe("ReportTemplate", () => {
 
     expect(screen.getByText(/nomor di belakang kartu/i)).toBeInTheDocument();
   });
+
+  it("opens immediately and preselects a channel the model asked for", () => {
+    const result = scoreText({ text: PHISH });
+    render(
+      <ReportTemplate
+        result={result}
+        channels={REPORT_CHANNELS["phishing-tautan"]}
+        defaultOpen
+        initialChannel="iasc"
+      />,
+    );
+
+    expect(screen.getByLabelText(/Nama pelapor/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Telepon 157/i })).toHaveAttribute(
+      "href",
+      "tel:157",
+    );
+  });
 });

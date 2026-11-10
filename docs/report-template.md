@@ -1,7 +1,7 @@
 # Report template tool
 
 **Date:** 2026-11-10
-**Status:** implemented on `codex/report-template`
+**Status:** implemented on `codex/report-template`; `report_draft` agent tool on `codex/report-tool`
 **Spec:** `docs/superpowers/specs/2026-11-10-report-template-design.md`
 **Plan:** `docs/superpowers/plans/2026-11-10-report-template.md`
 **Contacts:** `docs/report-template-channels.md`
@@ -118,7 +118,35 @@ c. Polish runs only when the user presses **Rapikan**, so an offline demo never
 
 ---
 
-## 5. Privacy boundary
+## 5. Agent tool: `report_draft`
+
+The card is also reachable when the model decides it is time. The tool carries
+**intent only**:
+
+```
+model  → report_draft({ channel?: "iasc" | "komdigi" | "patrolisiber" | "cekrekening" })
+client → opens ReportTemplate on the last ScoreResult
+builder → the same deterministic text as the button
+```
+
+a. Contract: `ReportDraftArgsSchema` in `src/lib/contracts/tool.ts` is
+   `.strict()` with a single optional `channel`. `ToolCallSchema` is now a
+   discriminated union over `job_search` and `report_draft`.
+b. Offer: `REPORT_TOOL` is sent beside `JOB_SEARCH_TOOL` in
+   `src/app/api/companion/answer/route.ts`; the system prompt calls it only when
+   the user asks for a report.
+c. Drop, do not forward: an unknown `channel`, a non-function call, or any extra
+   key (message, verdict, body) discards the call, same as `job_search`.
+d. No prior check: `companion-chat.tsx` ignores the call when `latestResult` or
+   `latestExplanation` is missing. It never scores anything itself.
+e. Preselect: a valid requested channel opens on that chip; otherwise the first
+   channel of the verdict's explanation.
+
+Privacy is unchanged: the model receives no message text and writes no report
+body. It only chooses *whether* to show a card that the device already knows how
+to build.
+
+## 6. Privacy boundary
 
 a. Detection and drafting happen on the device.
 b. The polish payload contains only typed fields, the scheme name, the channel
@@ -130,7 +158,7 @@ d. `mailto:` and `wa.me` bodies are built in the browser from the draft the user
 
 ---
 
-## 6. Failure modes
+## 7. Failure modes
 
 | Failure | Behaviour |
 |---|---|
@@ -143,7 +171,7 @@ d. `mailto:` and `wa.me` bodies are built in the browser from the draft the user
 
 ---
 
-## 7. Fold-in fix
+## 8. Fold-in fix
 
 An OTP-only message used to score 100 / `tinggi` while `classifyModus()` returned
 `tidak-dikenali`, and `explain()` returned no reporting channels at all — the
@@ -154,7 +182,7 @@ messages still get no channel.
 
 ---
 
-## 8. Tests
+## 9. Tests
 
 a. `src/data/report-contacts.test.ts` — four channels, https sources, `62`
    prefix for WhatsApp, digits for `tel`.
@@ -168,6 +196,13 @@ e. `src/components/companion/report-template.test.tsx` — disclosure, typing,
    `tel:`/`mailto:` hrefs, bank note.
 f. `src/components/companion/explanation-card.test.tsx` — OTP-only case shows the
    report block; verification still precedes reporting.
+g. `src/lib/contracts/tool.test.ts` — `report_draft` rejects a message, a body,
+   an unknown channel, and job-search arguments.
+h. `src/app/api/companion/answer/route.test.ts` — both tools are offered; a
+   valid `report_draft` returns with no message content; an unknown channel is
+   dropped.
+i. `src/components/companion/report-template.test.tsx` — `defaultOpen` +
+   `initialChannel` render the preselected institution.
 
 `npm run verify` on 2026-11-10: typecheck, Biome, 999 tests passed (39 skipped,
 8 DB-integration suites without `TEST_DATABASE_URL`), production build included
@@ -175,7 +210,7 @@ f. `src/components/companion/explanation-card.test.tsx` — OTP-only case shows 
 
 ---
 
-## 9. Files
+## 10. Files
 
 New:
 
@@ -191,7 +226,13 @@ Changed:
 - `src/data/tactics.ts` — `ReportChannel` gained `id`; `IASC`/`KOMDIGI` exported
 - `src/lib/companion/explain.ts` — unrecognized-high fallback
 - `src/components/companion/explanation-card.tsx` — builder mounted, note fixed
-- `src/components/companion/companion-chat.tsx` — passes `result` to the card
+- `src/components/companion/companion-chat.tsx` — passes `result` to the card;
+  dispatches `report_draft` to the card
+- `src/components/companion/report-template.tsx` — `defaultOpen` +
+  `initialChannel` for the agent path
+- `src/lib/contracts/tool.ts` — `report_draft` contract + `REPORT_TOOL`
+- `src/lib/contracts/report.ts` — shared `ReportChannelIdSchema`
+- `src/app/api/companion/answer/route.ts` — offers and validates both tools
 
 Shared surfaces touched: `api/companion`, `components/companion`,
 `lib/companion`. Call this out in the commit/PR per AGENTS.md.
