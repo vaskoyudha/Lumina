@@ -38,7 +38,7 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
-import { ExplanationCard } from "@/components/companion/explanation-card";
+import { ExplanationCard, type AgentFinding } from "@/components/companion/explanation-card";
 import {
   DetectionText,
   HighlightExplanation,
@@ -173,6 +173,17 @@ import { inspectFileMetadata } from "@/lib/verify/file";
  *   c. The sidebar second row is the manipulated risk band, not a timestamp —
  *      a judge scanning threads needs the verdict before opening one.
  */
+
+function agentFindingsFrom(events?: OrchestratorEvent[]): AgentFinding[] {
+  const findings: AgentFinding[] = [];
+  for (const event of events ?? []) {
+    if (event.type !== "agent_result") continue;
+    for (const point of event.points) {
+      findings.push({ agent: event.label, point });
+    }
+  }
+  return findings;
+}
 
 interface Turn {
   id: number;
@@ -2758,6 +2769,7 @@ export function CompanionChat({
                                 null
                               }
                               result={turn.result}
+                              agentFindings={agentFindingsFrom(turn.orchestration)}
                               hideReport={Boolean(turn.report)}
                             />
                           ) : null}
