@@ -31,7 +31,11 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { AccountPayload, AccountView } from "@/lib/auth/account-view";
+import type {
+  AccountPayload,
+  AccountView,
+  SessionView,
+} from "@/lib/auth/account-view";
 import { useSavedLoker } from "@/lib/loker/use-saved";
 import { MODUS } from "@/lib/modus";
 import { BADGE_LABEL } from "@/lib/progress";
@@ -81,6 +85,7 @@ export function ProfileDialog({
   const [active, setActive] = useState<ProfileSection>("profil");
   const [account, setAccount] = useState<AccountView | null>(null);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [sessions, setSessions] = useState<SessionView[] | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -100,7 +105,10 @@ export function ProfileDialog({
 
   useEffect(() => {
     if (section === null) return;
-    if (typeof fetch !== "function") return;
+    if (typeof fetch !== "function") {
+      setSessions([]);
+      return;
+    }
     void reloadKey;
     let alive = true;
     setLoadError(null);
@@ -112,12 +120,14 @@ export function ProfileDialog({
       .then((data) => {
         if (!alive) return;
         setAccount(data.account ?? null);
+        setSessions(Array.isArray(data.sessions) ? data.sessions : []);
         setHasPassword(
           typeof data.hasPassword === "boolean" ? data.hasPassword : null,
         );
       })
       .catch(() => {
         if (!alive) return;
+        setSessions([]);
         setLoadError(
           "Pengaturan akun tidak dapat dimuat. Tutup lalu buka lagi.",
         );
@@ -264,7 +274,9 @@ export function ProfileDialog({
                   {item.id === "loker" ? (
                     <JobsPanel savedCount={saved.length} />
                   ) : null}
-                  {item.id === "privasi" ? <SecurityPanel /> : null}
+                  {item.id === "privasi" ? (
+                    <SecurityPanel sessions={sessions} />
+                  ) : null}
                 </section>
               ))}
             </div>
