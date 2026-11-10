@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CREW_IDS, type CrewId } from "@/lib/agents/identities";
 import { AnswerHistoryEntrySchema } from "@/lib/contracts/answer";
+import type { ScoreResult } from "@/lib/contracts/score";
 import { ReportPointSchema } from "@/lib/orchestrator/report";
 
 /**
@@ -149,8 +150,8 @@ export const OrchestratorEventSchema = z.discriminatedUnion("type", [
   }).strict(),
   BaseEventSchema.extend({
     type: z.literal("score_decision"),
-    result: z.unknown(),
-    baseline: z.unknown(),
+    result: z.custom<ScoreResult>(),
+    baseline: z.custom<ScoreResult>(),
     rationale: z.string().min(1).max(600),
     source: z.enum(["model", "fallback"]),
   }).strict(),
@@ -222,8 +223,8 @@ export const OrchestrationTraceSchema = z
     synthesis: z.string(),
     totalMs: z.number().int().min(0),
     degraded: z.boolean(),
-    baselineScore: z.unknown().optional(),
-    finalScore: z.unknown().optional(),
+    baselineScore: z.custom<ScoreResult>().optional(),
+    finalScore: z.custom<ScoreResult>().optional(),
     consensus: z.array(ConsensusGroupSchema).optional(),
   })
   .strict();

@@ -79,6 +79,14 @@ export function ProcessTrace({
     (event): event is Extract<OrchestratorEvent, { type: "commander_say" }> =>
       event.type === "commander_say",
   );
+  const consensus = events.find(
+    (event): event is Extract<OrchestratorEvent, { type: "consensus" }> =>
+      event.type === "consensus",
+  );
+  const decision = events.find(
+    (event): event is Extract<OrchestratorEvent, { type: "score_decision" }> =>
+      event.type === "score_decision",
+  );
   if (!runStart && !plan && blocks.length === 0) return null;
 
   const phase: CommanderPhase = synthesis
@@ -128,6 +136,28 @@ export function ProcessTrace({
           source={commander?.source}
           startedAt={startedAt}
         />
+
+        {consensus?.groups[0] || decision ? (
+          <section
+            aria-label="Konsensus agen"
+            className="ml-1.5 flex flex-col gap-1 border-line border-l pl-3"
+          >
+            {consensus?.groups[0] ? (
+              <p className="text-dim text-[11px]">
+                {consensus.groups[0].agents.length} agen sepakat ·{" "}
+                {consensus.groups[0].pattern}
+              </p>
+            ) : null}
+            {decision ? (
+              <p className="text-txt text-[11px]">
+                Skor akhir {decision.result.score}/100 ·{" "}
+                {decision.source === "model"
+                  ? "dinilai Lumina"
+                  : "skor engine dipertahankan"}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
 
         {plan || blocks.length > 0 ? (
           <section

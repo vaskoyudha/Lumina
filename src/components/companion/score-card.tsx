@@ -133,6 +133,17 @@ export function ScoreCard({
             tinggi, apa pun skornya.
           </p>
         ) : null}
+
+        {result.source === "consensus" ? (
+          <p className="text-dim text-xs">
+            Dinilai Lumina dari konsensus {result.consensus?.agents.length ?? 0}{" "}
+            agen
+            {result.baselineScore !== undefined &&
+            result.baselineScore !== result.score
+              ? ` · Engine ${result.baselineScore} · akhir ${result.score}`
+              : ""}
+          </p>
+        ) : null}
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4 px-4 py-4">
@@ -157,7 +168,17 @@ export function ScoreCard({
                     key={`${signal.label}-${signal.evidence}`}
                     className="rounded-md border border-line bg-panel-2 px-3 py-2"
                   >
-                    <p className="text-sm text-txt">{signal.label}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm text-txt">{signal.label}</p>
+                      {signal.source === "consensus" ? (
+                        <Badge
+                          variant="outline"
+                          className="border-brand-edge bg-brand-soft text-[0.65rem] text-brand-ink"
+                        >
+                          konsensus agen
+                        </Badge>
+                      ) : null}
+                    </div>
                     {signal.evidence ? (
                       <p className="mt-1 text-dim text-xs">
                         Kutipan:{" "}
