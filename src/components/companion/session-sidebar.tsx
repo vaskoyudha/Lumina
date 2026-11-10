@@ -433,7 +433,7 @@ export function SessionSidebar({
             <p className="font-bold text-[12px] text-txt leading-[1.25]">
               Saling jaga, bersama.
             </p>
-            <p className="mt-1 mb-2.5 text-[9.5px] text-dim leading-[1.35]">
+            <p className="mt-1 mb-2.5 text-[11.5px] text-dim leading-[1.35]">
               Bagikan pola baru dan belajar dari pengalaman anggota.
             </p>
             <Button
