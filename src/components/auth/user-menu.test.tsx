@@ -21,6 +21,10 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/lib/auth/actions", () => ({
   logout: jest.fn(),
+  updateNama: jest.fn(),
+  changePasswordAction: jest.fn(),
+  revokeSessionAction: jest.fn(),
+  logoutEverywhere: jest.fn(),
 }));
 
 beforeAll(() => {

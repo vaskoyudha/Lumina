@@ -7,7 +7,13 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useAccountProgress } from "@/components/belajar/account-progress-context";
 import {
   AccountPanel,
@@ -74,6 +80,8 @@ export function ProfileDialog({
 }) {
   const [active, setActive] = useState<ProfileSection>("profil");
   const [account, setAccount] = useState<AccountView | null>(null);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { progress, modules } = useAccountProgress();
@@ -93,6 +101,7 @@ export function ProfileDialog({
   useEffect(() => {
     if (section === null) return;
     if (typeof fetch !== "function") return;
+    void reloadKey;
     let alive = true;
     setLoadError(null);
     fetch("/api/account", { cache: "no-store" })
@@ -103,6 +112,9 @@ export function ProfileDialog({
       .then((data) => {
         if (!alive) return;
         setAccount(data.account ?? null);
+        setHasPassword(
+          typeof data.hasPassword === "boolean" ? data.hasPassword : null,
+        );
       })
       .catch(() => {
         if (!alive) return;
@@ -113,7 +125,7 @@ export function ProfileDialog({
     return () => {
       alive = false;
     };
-  }, [section]);
+  }, [section, reloadKey]);
 
   function moveTab(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const forward = event.key === "ArrowDown" || event.key === "ArrowRight";
@@ -129,6 +141,20 @@ export function ProfileDialog({
     setActive(SECTIONS[next].id);
     tabRefs.current[next]?.focus();
   }
+
+  const handleAccountSaved = useCallback(
+    (next: { nama: string; email: string }) =>
+      setAccount((current) => ({
+        nama: next.nama,
+        email: next.email,
+        createdAt: current?.createdAt ?? session.createdAt ?? null,
+      })),
+    [session.createdAt],
+  );
+
+  const handlePasswordChanged = useCallback(() => {
+    setReloadKey((key) => key + 1);
+  }, []);
 
   return (
     <Dialog open={section !== null} onOpenChange={onOpenChange}>
@@ -219,7 +245,13 @@ export function ProfileDialog({
                     </p>
                   </header>
                   {item.id === "profil" ? (
-                    <AccountPanel session={session} account={account} />
+                    <AccountPanel
+                      session={session}
+                      account={account}
+                      hasPassword={hasPassword}
+                      onAccountSaved={handleAccountSaved}
+                      onPasswordChanged={handlePasswordChanged}
+                    />
                   ) : null}
                   {item.id === "kemajuan" ? (
                     <ProgressPanel
