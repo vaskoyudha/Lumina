@@ -20,6 +20,10 @@ import {
 } from "@/components/belajar/content-state";
 import { ProfilePopup } from "@/components/profil/profile-popup";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
+import {
+  type LevelEntry,
+  LevelPicker,
+} from "@/components/simulasi/level-picker";
 import { MissionStatusBar } from "@/components/simulasi/mission-status-bar";
 import {
   SURFACE_BADGE,
@@ -60,7 +64,20 @@ const PLANNED_COPY: Record<string, { title?: string; note: string }> = {
   "fake-call": { note: "Kenali identitas dengan cermat" },
 };
 
-function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
+const PLANNED_IMAGES = [
+  "/simulasi/card-laptop.webp",
+  "/simulasi/card-shield.webp",
+  "/simulasi/parcel-playground.png",
+  "/simulasi/hero-gift.webp",
+];
+
+function SimulasiAside({
+  planned: PLANNED,
+  levels,
+}: {
+  planned: LearningSummary[];
+  levels: { available: LevelEntry[]; planned: LevelEntry[] };
+}) {
   return (
     <div className={cn("flex flex-col gap-2", SURFACE_RAIL)}>
       <section
@@ -150,6 +167,8 @@ function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
           </div>
         </div>
       </section>
+
+      <LevelPicker available={levels.available} planned={levels.planned} />
     </div>
   );
 }
@@ -188,6 +207,21 @@ export async function SimulasiContent() {
   const endingCount = featured.scenario.nodes.filter(
     (n) => n.type === "ending",
   ).length;
+  const levels = {
+    available: simulations.map((item) => ({
+      id: item.scenario.scenario.id,
+      title: item.mission.title,
+      note: `Level ${item.scenario.scenario.level} · ${item.mission.duration}`,
+      image: "/simulasi/hero-gift.webp",
+      href: `/simulasi/${item.scenario.scenario.id}`,
+    })),
+    planned: PLANNED.map((modus, index) => ({
+      id: modus.id,
+      title: PLANNED_COPY[modus.id]?.title ?? modus.nama,
+      note: PLANNED_COPY[modus.id]?.note ?? modus.ciri[0],
+      image: PLANNED_IMAGES[index % PLANNED_IMAGES.length],
+    })),
+  };
   const TITLE_WORDS = MISSION.title.split(" "),
     TITLE_LEAD = TITLE_WORDS.slice(0, -1).join(" "),
     TITLE_TAIL = TITLE_WORDS.at(-1) ?? "";
@@ -195,7 +229,7 @@ export async function SimulasiContent() {
     <AccountProgressProvider modules={summaries}>
       <WorkspaceShell
         label="Simulasi"
-        aside={<SimulasiAside planned={PLANNED} />}
+        aside={<SimulasiAside planned={PLANNED} levels={levels} />}
       >
         <div className="flex w-full flex-col gap-6">
           <MissionStatusBar />
