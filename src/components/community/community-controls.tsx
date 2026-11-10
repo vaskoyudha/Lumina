@@ -1,5 +1,12 @@
 "use client";
-import { Flag, Heart, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Bookmark,
+  Flag,
+  Heart,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,6 +36,7 @@ import {
   deleteContent,
   flagContent,
   markHelpful,
+  markSaved,
   moderateContent,
 } from "@/lib/community/actions";
 import type {
@@ -106,6 +114,63 @@ export function HelpfulButton({
           >
             <Heart aria-hidden />
             Membantu · {post.helpful}
+          </Link>
+        </Button>
+      )}
+      {m.message && (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          {m.message}
+        </p>
+      )}
+    </div>
+  );
+}
+export function SaveButton({
+  post,
+  canWrite,
+  compact = false,
+}: {
+  post: CommunityPost;
+  canWrite: boolean;
+  compact?: boolean;
+}) {
+  const m = useMutation();
+  const label = post.hasSaved ? "Tersimpan" : "Simpan";
+  const className = compact
+    ? "min-h-11 rounded-full px-3 text-xs text-dim aria-pressed:bg-brand-soft aria-pressed:text-brand-ink"
+    : "min-h-11 rounded-full";
+  return (
+    <div className="min-w-0">
+      {canWrite ? (
+        <Button
+          variant={compact ? "ghost" : "outline"}
+          className={className}
+          aria-label={
+            post.hasSaved
+              ? "Hapus dari diskusi tersimpan"
+              : "Simpan diskusi ini"
+          }
+          aria-pressed={post.hasSaved}
+          disabled={m.pending}
+          onClick={() =>
+            void m.run(() => markSaved({ id: post.id, value: !post.hasSaved }))
+          }
+        >
+          <Bookmark
+            aria-hidden
+            fill={post.hasSaved ? "currentColor" : "none"}
+          />
+          {label}
+        </Button>
+      ) : (
+        <Button
+          asChild
+          variant={compact ? "ghost" : "outline"}
+          className={className}
+        >
+          <Link href="/masuk" aria-label="Masuk untuk menyimpan diskusi">
+            <Bookmark aria-hidden />
+            Simpan
           </Link>
         </Button>
       )}

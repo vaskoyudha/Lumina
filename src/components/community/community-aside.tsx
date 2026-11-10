@@ -171,19 +171,6 @@ export function CommunityAside({
           <Link href="/komunitas/moderasi">Tinjau laporan komunitas</Link>
         </Button>
       )}
-
-      <footer className="flex flex-wrap gap-x-3 gap-y-1 px-1 text-xs text-dim">
-        <Link href="/" className="hover:text-txt hover:underline">
-          Tentang Lumina
-        </Link>
-        <Link href="/belajar" className="hover:text-txt hover:underline">
-          Belajar
-        </Link>
-        <Link href="/companion" className="hover:text-txt hover:underline">
-          Companion
-        </Link>
-        <span>© Lumina</span>
-      </footer>
     </div>
   );
 }
