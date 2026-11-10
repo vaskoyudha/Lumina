@@ -14,6 +14,7 @@ import {
   CommanderCard,
   type CommanderPhase,
 } from "@/components/companion/commander-card";
+import { SHIMMER_TEXT_CLASS } from "@/components/companion/thinking-row";
 import { AGENT_IDENTITIES } from "@/lib/agents/identities";
 import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
@@ -108,25 +109,26 @@ export function ProcessTrace({
   const subordinateCount = plan?.agents.length ?? blocks.length;
 
   return (
-    <details open className={cn("group max-w-[92%] text-[12px]", className)}>
-      <summary className="flex cursor-pointer select-none items-center gap-2 py-1 font-medium">
+    <div className={cn("max-w-[92%] text-[12px]", className)}>
+      <p className="flex select-none items-center gap-2 py-1">
         <Workflow aria-hidden className="size-3.5" />
-        Proses agen
-        <span className="font-normal text-dim">{stepCount} langkah</span>
+        <span
+          className={cn(
+            "font-semibold text-[15px] leading-5",
+            live && !synthesis ? SHIMMER_TEXT_CLASS : "text-txt",
+          )}
+        >
+          Proses agen
+        </span>
+        <span className="tabular font-normal text-[11px] text-dim">
+          {stepCount} langkah
+        </span>
         {synthesis ? (
           <span className="ml-auto flex items-center gap-1 font-normal text-[10.5px] text-dim">
             <Check aria-hidden className="size-3" /> selesai
           </span>
         ) : null}
-        <ChevronRight
-          aria-hidden
-          className={cn(
-            "size-3.5 text-dim transition-transform",
-            synthesis ? "" : "ml-auto",
-            "group-open:rotate-90",
-          )}
-        />
-      </summary>
+      </p>
 
       <div className="mt-2 flex flex-col gap-2.5">
         <CommanderCard
@@ -138,10 +140,7 @@ export function ProcessTrace({
         />
 
         {consensus?.groups[0] || decision ? (
-          <section
-            aria-label="Konsensus agen"
-            className="ml-1.5 flex flex-col gap-1 border-line border-l pl-3"
-          >
+          <section aria-label="Konsensus agen" className="flex flex-col gap-1">
             {consensus?.groups[0] ? (
               <p className="text-dim text-[11px]">
                 {consensus.groups[0].agents.length} agen sepakat ·{" "}
@@ -162,7 +161,7 @@ export function ProcessTrace({
         {plan || blocks.length > 0 ? (
           <section
             aria-label="Agen di bawah komando Lumina"
-            className="ml-1.5 flex flex-col gap-2.5 border-line border-l pl-3"
+            className="flex flex-col gap-2.5"
           >
             <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
               Sub-agen
@@ -402,6 +401,6 @@ export function ProcessTrace({
           </section>
         ) : null}
       </div>
-    </details>
+    </div>
   );
 }

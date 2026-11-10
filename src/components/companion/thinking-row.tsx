@@ -1,6 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
+
+/**
+ * Text-clipped 105° gradient swept by the `thinking-shimmer` keyframes.
+ * Pair with a solid colour for the reduced-motion fallback already baked in.
+ */
+export const SHIMMER_TEXT_CLASS =
+  "bg-[linear-gradient(105deg,var(--lumina-dim)_0%,var(--lumina-dim)_39%,var(--lumina-panel)_48%,var(--lumina-panel)_52%,var(--lumina-dim)_61%,var(--lumina-dim)_100%)] bg-[length:300%_100%] bg-clip-text text-transparent motion-safe:animate-[thinking-shimmer_2.2s_linear_infinite] motion-reduce:bg-none motion-reduce:text-dim";
 
 /**
  * Streaming indicator, extracted from the reference's `LiveReasoningStatus.vue`.
@@ -53,7 +61,12 @@ export function ThinkingRow({
 
   return (
     <output className="flex h-10 items-center gap-2.5">
-      <span className="bg-[linear-gradient(105deg,var(--lumina-dim)_0%,var(--lumina-dim)_39%,var(--lumina-panel)_48%,var(--lumina-panel)_52%,var(--lumina-dim)_61%,var(--lumina-dim)_100%)] bg-[length:300%_100%] bg-clip-text font-semibold text-[15px] text-transparent leading-5 motion-safe:animate-[thinking-shimmer_2.2s_linear_infinite] motion-reduce:bg-none motion-reduce:text-dim">
+      <span
+        className={cn(
+          SHIMMER_TEXT_CLASS,
+          "font-semibold text-[15px] leading-5",
+        )}
+      >
         {label}
       </span>
       <span className="tabular min-w-[3.5rem] text-[11px] text-dim">

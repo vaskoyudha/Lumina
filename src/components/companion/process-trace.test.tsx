@@ -158,8 +158,8 @@ describe("ProcessTrace", () => {
       ),
     ).toBeInTheDocument();
 
-    const process = screen.getByText("Proses agen").closest("details");
-    expect(process?.hasAttribute("open")).toBe(true);
+    const process = screen.getByText("Proses agen");
+    expect(process.closest("details")).toBeNull();
     const thoughts = screen.getByText("Pemikiran agen").closest("details");
     expect(thoughts?.hasAttribute("open")).toBe(false);
   });
