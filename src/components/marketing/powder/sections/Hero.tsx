@@ -62,11 +62,11 @@ export default function Hero() {
               <div className="framer-yb4kbr">
                 <div className="framer-1ke5g3l hero-anim" data-framer-component-type="RichTextContainer" style={{opacity: "0.001", transform: "translateY(24px)", "--hero-y": "24px", "--hero-dur": "1s", "--hero-delay": "0.1s"} as React.CSSProperties}>
                   <h1 className="framer-text framer-styles-preset-7hjh4k" data-styles-preset="bM7WzBkv5" dir="auto" style={{"--framer-text-alignment": "center"}}>
-                    <strong className="framer-text">Satu percakapan untuk tahu: aman atau jebakan</strong>
+                    <strong className="framer-text">Lumina menemanimu melindungi diri dari kejahatan digital</strong>
                   </h1>
                 </div>
                 <div className="framer-jzdou5 hero-anim" data-framer-component-type="RichTextContainer" style={{opacity: "0.001", transform: "translateY(24px)", "--hero-y": "24px", "--hero-dur": "1s", "--hero-delay": "0.2s"} as React.CSSProperties}>
-                  <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-alignment": "center"}}>Tanya bebas, dapat jawaban yang bisa diperiksa, lalu lanjut ke langkah berikutnya.</p>
+                  <p className="framer-text framer-styles-preset-1fhxhj6" data-styles-preset="O0790qsZT" dir="auto" style={{"--framer-text-alignment": "center"}}>Delapan agen memeriksa pesan, tautan, dan tawaran mencurigakan, lalu menunjukkan alasannya.</p>
                 </div>
               </div>
             </div>
