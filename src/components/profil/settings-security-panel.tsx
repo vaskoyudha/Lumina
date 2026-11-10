@@ -29,9 +29,14 @@ export function SecurityPanel({
   function revoke(id: string) {
     setError(null);
     startTransition(async () => {
-      const result = await revokeSessionAction(id);
-      if (result.ok) setItems((current) => current.filter((s) => s.id !== id));
-      else setError(result.error ?? "Sesi tidak dapat dikeluarkan.");
+      try {
+        const result = await revokeSessionAction(id);
+        if (result.ok)
+          setItems((current) => current.filter((s) => s.id !== id));
+        else setError(result.error ?? "Sesi tidak dapat dikeluarkan.");
+      } catch {
+        setError("Sesi tidak dapat dikeluarkan.");
+      }
     });
   }
 

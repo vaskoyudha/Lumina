@@ -236,4 +236,57 @@ describe("ProfileDialog settings shell", () => {
       screen.getByRole("button", { name: /keluar dari semua perangkat/i }),
     ).toBeInTheDocument();
   });
+
+  it("keeps the session and shows an inline error when revocation fails", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        account: session,
+        hasPassword: true,
+        sessions: [
+          {
+            id: "a".repeat(64),
+            device: "Firefox · Linux",
+            ip: "103.28.1.2",
+            signedIn: "2026-11-10T04:30:00.000Z",
+            lastActive: "2026-11-10T04:30:00.000Z",
+            current: true,
+          },
+          {
+            id: "b".repeat(64),
+            device: "Chrome · Windows",
+            ip: null,
+            signedIn: "2026-10-13T15:23:00.000Z",
+            lastActive: "2026-10-13T15:23:00.000Z",
+            current: false,
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+    const { revokeSessionAction } = jest.requireMock("@/lib/auth/actions");
+    revokeSessionAction.mockResolvedValue({
+      ok: false,
+      error: "Sesi itu sudah tidak aktif.",
+    });
+
+    const user = userEvent.setup();
+    render(
+      <ProfileDialog
+        session={session}
+        section="privasi"
+        onOpenChange={jest.fn()}
+      />,
+    );
+
+    await screen.findAllByText(/chrome · windows/i);
+    await user.click(
+      screen.getByRole("button", { name: /keluarkan chrome · windows/i }),
+    );
+
+    expect(
+      (await screen.findAllByText(/sesi itu sudah tidak aktif/i)).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/chrome · windows/i).length).toBeGreaterThan(0);
+  });
 });
