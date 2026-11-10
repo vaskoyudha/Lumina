@@ -24,19 +24,19 @@ export default function NewPostPage() {
 async function NewPostContent() {
   const session = await getSession();
   return (
-    <div className="flex w-full min-w-0 flex-col pb-8">
-      <header data-community-header className="border-b border-line px-4 py-2">
-        <Button asChild variant="ghost" className="min-h-11 w-fit px-0">
+    <div className="flex w-full min-w-0 flex-col gap-3.5 pb-8">
+      <header data-community-header>
+        <Button asChild variant="ghost" className="min-h-11 w-fit px-3">
           <Link href="/komunitas">
             <ArrowLeft aria-hidden />
             Semua diskusi
           </Link>
         </Button>
       </header>
-      <Card className="gap-4 rounded-none shadow-none ring-0">
+      <Card className="gap-4 rounded-card border border-line shadow-[var(--appnext-shadow-ambient)] ring-0">
         <CardHeader>
           <CardTitle>
-            <h1 className="text-2xl font-medium">Mulai diskusi</h1>
+            <h1 className="text-2xl font-semibold">Mulai diskusi</h1>
           </CardTitle>
           <CardDescription>
             Bagikan hal yang bisa membantu orang lain mengenali polanya.

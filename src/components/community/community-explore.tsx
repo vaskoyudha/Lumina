@@ -48,7 +48,7 @@ export function ExplorePanel({
       id="jelajahi"
       open={open}
       onToggle={() => setOpen(ref.current?.open ?? false)}
-      className="scroll-mt-16 border-b border-line"
+      className="scroll-mt-16"
     >
       {children}
     </details>

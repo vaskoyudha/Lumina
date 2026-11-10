@@ -30,9 +30,20 @@ di `lib/community/store.ts`, dan pool PostgreSQL yang sama dengan akun.
 ## Data dan batas lomba
 
 Migrasi `004_community.sql` menambah `community_posts`, `community_replies`,
-`community_helpful`, dan `community_reports`. Tidak ada seed percakapan/anggota
-palsu. Akun dan progres yang ada tidak dihapus. Migrasi juga mengganti hanya
-kalimat bawaan skenario yang masih mengarahkan ke panduan Darurat.
+`community_helpful`, dan `community_reports`. Migrasi `005_community_images.sql`
+menambah kolom `image_url` yang dibatasi ke awalan `/images/community/`. Akun dan
+progres yang ada tidak dihapus. Migrasi 004 juga mengganti hanya kalimat bawaan
+skenario yang masih mengarahkan ke panduan Darurat.
+
+Seed demo opsional tersedia lewat `npm run db:seed:community`. Perintah itu
+membuat beberapa anggota contoh, sembilan ringkasan modus penipuan Indonesia
+beserta sampul, balasan, dan reaksi Membantu agar feed tidak kosong saat
+presentasi lokal. Ringkasan itu fiktif, tidak mengutip korban atau media nyata,
+dan setiap `source_url` tetap null. Sampul hanya aset seed di
+`public/images/community/` (sumber dan lisensi dicatat di folder itu), bukan
+unggahan anggota. Data seed diberi tanda domain `@contoh.lumina`, idempoten
+(boleh diulang), dan **tidak boleh dijalankan pada database produksi**; produksi
+tetap memakai percakapan anggota sungguhan.
 
 Penghapusan penulis menghapus isi asli dari baris konten, lalu menandai baris
 sebagai dihapus. Topik yang dihapus/ditahan tidak muncul di publik beserta
@@ -47,8 +58,9 @@ disamarkan. Draf hanya berada dalam state tab, tidak disimpan di localStorage.
 Batas tulis persisten per akun per menit: 5 penulisan topik, 15 penulisan balasan,
 60 aksi lain. Tamu/sesi kedaluwarsa ditolak; server memeriksa kepemilikan setiap
 edit/hapus. Akses moderator diperiksa kembali pada setiap aksi, bukan dari UI.
-Versi ini tidak memuat DM, realtime, email/notifikasi, unggah gambar, karma,
-penggabungan topik, analitik, atau CMS besar.
+Versi ini tidak memuat DM, realtime, email/notifikasi, unggah gambar anggota,
+karma, penggabungan topik, analitik, atau CMS besar. Sampul seed adalah
+pengecualian: kolomnya tidak diekspos ke editor.
 
 ## Menjalankan dan deploy
 
@@ -86,13 +98,16 @@ tinjau memakai akun moderator. Route lama `/darurat` kini 404.
 
 ## Referensi desain
 
-UI pada branch `codex/community-social-ui` mengikuti layout
-[ccrsxx/twitter-clone](https://github.com/ccrsxx/twitter-clone) sesuai pilihan
-pemilik produk 10 November 2026. Sidebar, timeline maksimal 576px, panel kanan,
-composer, dan breakpoint 500/1024/1280px diport dari sumber upstream ke App
-Router. Di ponsel navigasi pindah ke bawah; menu tambahan membuka Belajar dan
-Simulasi. Palet terang Twitter dibatasi ke `.community-twitter`, tanpa mengubah
-shell Companion/Belajar/Simulasi. Brand dan isi tetap Lumina.
+Revisi 10 November 2026: `/komunitas` memakai **shell workspace yang sama**
+dengan Companion, Belajar, dan Simulasi (`WorkspaceShell`), bukan sidebar
+Twitter-clone tersendiri. Sidebar kiri, kolom konten yang menggulir, dan rail
+kanan 340px berbagi navigasi, akun, dan token `--lumina-*`. Rail kanan hanya
+memuat pencarian, aturan komunitas, dan pintu moderasi. Palet biru Twitter dan
+`src/styles/community-twitter.css` dihapus; warna mengikuti AppNext (brand
+oranye, panel terang, garis `--lumina-line`) dan tombol memakai komponen
+`Button` yang sama dengan halaman lain. Pola kartu, metadata penulis, dan
+composer tetap diadaptasi dari [ccrsxx/twitter-clone](https://github.com/ccrsxx/twitter-clone)
+(MIT) tanpa mempertahankan kerangka kolomnya.
 
 Composer di feed menerbitkan teks melalui Server Actions yang sama; judul
 diturunkan dari baris pertama (atau teks awal bila baris pertama terlalu pendek).

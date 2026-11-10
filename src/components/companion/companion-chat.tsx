@@ -7,7 +7,6 @@ import {
   History,
   Link2,
   PanelLeftOpen,
-  PanelRightClose,
   PanelRightOpen,
   Paperclip,
   SquarePen,
@@ -1112,7 +1111,7 @@ export function CompanionChat({
 
   return (
     <div
-      data-workspace={showAgents ? "" : undefined}
+      data-workspace
       className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
     >
       {/*
@@ -1176,13 +1175,8 @@ export function CompanionChat({
           />
         ) : null}
 
-        {/* Main panel: the white conversation column of the frame. */}
-        <section
-          className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
-            showAgents ? "bg-transparent" : "bg-panel",
-          )}
-        >
+        {/* Main panel: the conversation column shares the workspace ground. */}
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header
             className={cn(
               "relative z-20 flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5",
@@ -1337,6 +1331,23 @@ export function CompanionChat({
               >
                 <Link href="/komunitas">Komunitas</Link>
               </Button>
+              {!showAgents && evidenceCollapsed ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Buka panel bukti"
+                  aria-expanded={false}
+                  onClick={() => setEvidenceCollapsed(false)}
+                  className="hidden size-10 shrink-0 rounded-[10px] border border-hairline-strong bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt lg:grid"
+                >
+                  <PanelRightOpen
+                    aria-hidden
+                    strokeWidth={1.7}
+                    className="size-4"
+                  />
+                </Button>
+              ) : null}
             </div>
           </header>
 
@@ -1348,6 +1359,8 @@ export function CompanionChat({
                 onExport={exportThread}
                 onCopyLink={copyThreadLink}
                 copied={copiedThread}
+                panelCollapsed={evidenceCollapsed}
+                onOpenPanel={() => setEvidenceCollapsed(false)}
               />
             </div>
           ) : empty ? (
@@ -1574,45 +1587,12 @@ export function CompanionChat({
 
         <aside
           className={cn(
-            "hidden shrink-0 lg:block",
-            showAgents
-              ? "border-0 bg-transparent"
-              : "cortex-dots border-hairline border-l bg-bg",
+            "hidden shrink-0 bg-transparent",
+            evidenceCollapsed ? "" : "lg:block",
             evidenceCollapsed ? "w-[48px]" : "w-[376px] xl:w-[396px]",
           )}
         >
-          {evidenceCollapsed ? (
-            <div className="flex h-full flex-col items-center gap-2 py-2.5">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={
-                  showAgents ? "Buka panel detail" : "Buka panel bukti"
-                }
-                aria-expanded={false}
-                onClick={() => setEvidenceCollapsed(false)}
-                className="size-9 shrink-0 rounded-[6px] text-ink-faint hover:bg-txt/[0.05] hover:text-ink"
-              >
-                <PanelRightOpen
-                  aria-hidden
-                  strokeWidth={1.7}
-                  className="size-4"
-                />
-              </Button>
-              {showAgents ? null : (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-1.5 shrink-0 rounded-full",
-                    latestResult ? RISK_DOT[latestResult.risk] : "bg-dim/50",
-                  )}
-                />
-              )}
-              <span className="mt-1 font-medium text-[10.5px] text-ink-faint [writing-mode:vertical-rl]">
-                {showAgents ? "Detail agen" : "Panel bukti"}
-              </span>
-            </div>
-          ) : showAgents ? (
+          {evidenceCollapsed ? null : showAgents ? (
             <div className="h-full py-4 pr-4 pl-2.5 xl:py-5 xl:pr-5 xl:pl-3">
               <AgentsDetailPanel
                 action={
@@ -1622,13 +1602,9 @@ export function CompanionChat({
                     aria-label="Ciutkan panel detail"
                     aria-expanded
                     onClick={() => setEvidenceCollapsed(true)}
-                    className="size-8 rounded-full text-dim hover:text-txt"
+                    className="size-8 rounded-[9px] border border-hairline-strong bg-panel text-ink-mute shadow-sm hover:bg-panel-2 hover:text-txt"
                   >
-                    <PanelRightClose
-                      aria-hidden
-                      strokeWidth={1.6}
-                      className="size-3.5"
-                    />
+                    <X aria-hidden strokeWidth={1.8} className="size-4" />
                   </Button>
                 }
                 className="rounded-[22px] bg-panel shadow-lift ring-1 ring-edge/50"
@@ -1636,31 +1612,30 @@ export function CompanionChat({
               />
             </div>
           ) : (
-            <SignalPanel
-              action={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="Ciutkan panel bukti"
-                  aria-expanded
-                  onClick={() => setEvidenceCollapsed(true)}
-                  className="size-8 rounded-full text-dim hover:text-txt"
-                >
-                  <PanelRightClose
-                    aria-hidden
-                    strokeWidth={1.6}
-                    className="size-3.5"
-                  />
-                </Button>
-              }
-              evidence={evidence}
-              onSelectEvidence={selectEvidence}
-              result={panelResult}
-              sequence={AGENT_SEQUENCE}
-              titleId="panel-bukti-title"
-              trace={panelTrace}
-              running={running}
-            />
+            <div className="h-full py-4 pr-4 pl-2.5 xl:py-5 xl:pr-5 xl:pl-3">
+              <SignalPanel
+                action={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Ciutkan panel bukti"
+                    aria-expanded
+                    onClick={() => setEvidenceCollapsed(true)}
+                    className="size-8 rounded-[9px] border border-hairline-strong bg-panel text-ink-mute shadow-sm hover:bg-panel-2 hover:text-txt"
+                  >
+                    <X aria-hidden strokeWidth={1.8} className="size-4" />
+                  </Button>
+                }
+                className="rounded-[22px] bg-panel shadow-lift ring-1 ring-edge/50"
+                evidence={evidence}
+                onSelectEvidence={selectEvidence}
+                result={panelResult}
+                sequence={AGENT_SEQUENCE}
+                titleId="panel-bukti-title"
+                trace={panelTrace}
+                running={running}
+              />
+            </div>
           )}
         </aside>
 
@@ -1684,7 +1659,7 @@ export function CompanionChat({
                   <SheetClose asChild>
                     <Button
                       aria-label="Tutup detail agen"
-                      className="size-11 rounded-full text-dim hover:text-txt"
+                      className="size-11 rounded-[10px] border border-hairline-strong bg-panel text-ink-mute shadow-sm hover:bg-panel-2 hover:text-txt"
                       size="icon-xs"
                       variant="ghost"
                     >
@@ -1702,7 +1677,7 @@ export function CompanionChat({
                   <SheetClose asChild>
                     <Button
                       aria-label="Tutup panel bukti"
-                      className="size-11 rounded-full text-dim hover:text-txt"
+                      className="size-11 rounded-[10px] border border-hairline-strong bg-panel text-ink-mute shadow-sm hover:bg-panel-2 hover:text-txt"
                       size="icon-xs"
                       variant="ghost"
                     >
