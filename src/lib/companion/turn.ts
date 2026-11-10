@@ -84,7 +84,43 @@ export function isContentQuestion(text: string): boolean {
     /^(ini|itu)\s+(apa|isi(?:nya|\s+nya)?(?:\s+(?:kode|file|berkas|dokumen|gambar)(?:nya|\s+nya)?)?\s+apa|(?:kode|file|berkas|dokumen|gambar)(?:nya|\s+nya)?\s+apa)(?:\s+(?:ya|sih))?[?!.]*$/i,
     /^(apa|gimana|bagaimana)\s+(isi|maksud|arti|fungsi)(?:nya)?\b/i,
     /^(?:(?:tolong|coba|bisa(?:kah)?|boleh(?:kah)?)\s+)*(?:kamu\s+)?(jelaskan|jelasin|ringkas|rangkum|bacakan|baca)\b/i,
+    /^(?:apa|apa\s+isi|isi|maksud|arti)(?:nya)?\s+(?:dari\s+)?(?:gambar|foto|ss|screenshot|berkas|file|dokumen|lampiran|tautan|link)\b/i,
+    /^(?:gambar|foto|ss|screenshot|berkas|file|dokumen|lampiran|tautan|link)\s+(?:ini|itu)\s+(?:apa|isinya|maksudnya|berisi)\b/i,
+    /^(?:baca(?:kan)?|jelaskan|rangkum|ringkas|terjemahkan)\b.{0,50}\b(?:gambar|foto|berkas|file|dokumen|lampiran|tautan|link)\b/i,
   ].some((pattern) => pattern.test(t));
+}
+
+/**
+ * A report *request*, not a question about reports.
+ *
+ * The old regex was `buat|bikin|susun … laporan`, which offered the tool for
+ * "bagaimana cara buat laporan?" and "jangan buat laporan dulu". The guard is
+ * intentionally narrow: an explicit request verb, a report noun, and no
+ * negation, learning, or how-to framing.
+ */
+export function wantsReportDraft(text: string): boolean {
+  const t = normalized(text);
+  if (
+    /\b(jangan|bukan|nggak|gak|ga|tidak|belum)\b.{0,35}\b(laporan|template)\b/i.test(
+      t,
+    )
+  ) {
+    return false;
+  }
+  if (/\b(belajar|cara|tutorial|panduan|contoh)\b/i.test(t)) return false;
+  if (isQuestionAbout(t)) return false;
+  return /\b(?:buat(?:kan)?|bikin(?:kan)?|susun(?:kan)?|membuat|menyusun)\b.{0,50}\b(laporan|template)\b/i.test(
+    t,
+  );
+}
+
+/** Explicit safety-check wording, used to separate a check from a content ask. */
+export function wantsSafetyCheck(text: string): boolean {
+  const t = normalized(text);
+  return (
+    /\b(?:cek|periksa|analisis|analisa)\b/i.test(t) ||
+    /\b(?:aman|berbahaya|penipuan|scam|phishing|virus|malware)\b/i.test(t)
+  );
 }
 
 /** Things only a received message carries. Their presence blocks the guard. */

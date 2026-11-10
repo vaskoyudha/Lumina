@@ -45,7 +45,13 @@ afterEach(() => {
 describe("transcribeImages", () => {
   it("returns nothing when the turn carries no image", async () => {
     const result = await transcribeImages([]);
-    expect(result).toEqual({ text: "", attempted: 0, failed: 0, skipped: 0 });
+    expect(result).toEqual({
+      text: "",
+      attempted: 0,
+      failed: 0,
+      skipped: 0,
+      items: [],
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -79,7 +85,13 @@ describe("transcribeImages", () => {
     });
 
     const result = await transcribeImages([imageAttachment()]);
-    expect(result).toEqual({ text: "", attempted: 1, failed: 1, skipped: 0 });
+    expect(result).toEqual({
+      text: "",
+      attempted: 1,
+      failed: 1,
+      skipped: 0,
+      items: [],
+    });
   });
   it("reports a FileReader exception as a failed read", async () => {
     const read = jest

@@ -5,6 +5,8 @@ import {
   PASTE_LENGTH,
   planTurn,
   SHORTEST_SCAM,
+  wantsReportDraft,
+  wantsSafetyCheck,
 } from "@/lib/companion/turn";
 import { LEGIT_CASES, SCAM_CASES } from "@/lib/scoring/bench-cases";
 import { scoreText } from "@/lib/scoring/score";
@@ -246,6 +248,28 @@ describe("isQuestionAbout · payment words do not turn a question into a check",
         lastExplanation: null,
       }).lane,
     ).toBe("periksa");
+  });
+});
+
+describe("wantsReportDraft · a request is not a question about reports", () => {
+  it("rejects how-to, negation, and learning questions", () => {
+    expect(wantsReportDraft("apa itu laporan penipuan?")).toBe(false);
+    expect(wantsReportDraft("bagaimana cara buat laporan?")).toBe(false);
+    expect(wantsReportDraft("apakah saya harus buat laporan?")).toBe(false);
+    expect(wantsReportDraft("jangan buat laporan dulu")).toBe(false);
+    expect(wantsReportDraft("aku mau belajar bikin laporan")).toBe(false);
+  });
+
+  it("accepts an explicit request", () => {
+    expect(wantsReportDraft("tolong buatkan laporan")).toBe(true);
+    expect(wantsReportDraft("buatkan template laporan ke OJK")).toBe(true);
+    expect(wantsReportDraft("saya mau membuat laporan")).toBe(true);
+  });
+
+  it("separates a safety check from a content question", () => {
+    expect(wantsSafetyCheck("apa isi gambar ini?")).toBe(false);
+    expect(wantsSafetyCheck("apakah ini penipuan?")).toBe(true);
+    expect(wantsSafetyCheck("periksa gambar ini")).toBe(true);
   });
 });
 

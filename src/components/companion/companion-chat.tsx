@@ -69,20 +69,19 @@ import {
 import type { ReportChannelId } from "@/data/report-contacts";
 import type { ReportChannel } from "@/data/tactics";
 import { caseMetrics, sessionCases } from "@/lib/agent/case-store";
+import { runAgentLoop } from "@/lib/companion/agent-loop";
+import { buildAnswerRequest } from "@/lib/companion/answer-client";
 import {
-  buildAnswerRequest,
-  requestAnswer,
-} from "@/lib/companion/answer-client";
+  describeReads,
+  readAttachments,
+  attachmentContext as toAttachmentContext,
+} from "@/lib/companion/attachment-reader";
 import { type Explanation, explain } from "@/lib/companion/explain";
 import {
   listConversationHistory,
   saveConversationHistory,
 } from "@/lib/companion/history";
-import {
-  conversationIntent,
-  learningModulesFor,
-  wantsJobSearch,
-} from "@/lib/companion/intent";
+import { conversationIntent, learningModulesFor } from "@/lib/companion/intent";
 import {
   composeAnswerFallback,
   composeReply,
@@ -95,6 +94,7 @@ import {
   isQuestionAbout,
   type Lane,
   planTurn,
+  wantsSafetyCheck,
 } from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
 import {
@@ -104,7 +104,9 @@ import {
   type VoiceDigest,
   voiceDigest,
 } from "@/lib/contracts/agent-run";
+import type { ToolObservation } from "@/lib/contracts/loop";
 import type { ScoreResult, Signal } from "@/lib/contracts/score";
+import type { ToolCall } from "@/lib/contracts/tool";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
 import { filterPostings } from "@/lib/loker/search";
 import type {
@@ -116,6 +118,7 @@ import { useSavedLoker } from "@/lib/loker/use-saved";
 import { kalimatRekomendasi, ringkasRekomendasi } from "@/lib/loker/verdict";
 import { modusFor } from "@/lib/modus";
 import { extractEntities, extractedSignals } from "@/lib/scoring/extract";
+import { extractLinks } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
 import { inspectFileMetadata } from "@/lib/verify/file";
@@ -164,6 +167,12 @@ interface Turn {
   attachments?: Attachment[];
   /** Why an attached image could not be read; absent when every image was read. */
   visionNote?: string;
+  /** Local transcript for an attachment the user asked about. Never from a check. */
+  attachmentText?: string;
+  /** A local note when an attachment could not be read. */
+  attachmentNote?: string;
+  /** True when this turn asked about attachment content, not its safety. */
+  contentQuestion?: boolean;
   /** What the agents actually did for this turn, measured. */
   trace?: AgentTrace;
   /** The teaching layer: tactics, anatomy, checks, and where to report. */
@@ -606,18 +615,28 @@ export function CompanionChat({
           );
 
         /*
-         * An image is evidence, not a concept question, so a turn with one is a
-         * check even when the typed words look like a question. The lane is
-         * therefore known before the pixels are read, which lets the user's
-         * message appear immediately instead of after the transcription.
+         * Intent first, medium second.
+         *
+         * The old rule made every image a check, so "apa isi gambar ini?" was
+         * scored and explained as a scam report. A content question is now a
+         * conversation lane even when it carries a screenshot; only a safety
+         * question (or an attachment with no question at all) goes to the
+         * detector. This decision is made before OCR, so the user turn can still
+         * appear immediately.
          */
         const hasImages = !tutorModule && attachments.some(isImageAttachment);
-        const asksAboutAttachment =
+        const hasAttachments = !tutorModule && attachments.length > 0;
+        const hasLinks = !tutorModule && extractLinks(text).length > 0;
+        const contentQuestion =
           !options.force &&
-          !tutorModule &&
-          attachments.length > 0 &&
-          attachments.every((attachment) => !isImageAttachment(attachment)) &&
-          (isContentQuestion(text) || isQuestionAbout(text));
+          (hasAttachments || hasLinks) &&
+          isContentQuestion(text) &&
+          !wantsSafetyCheck(text);
+        const safetyCheck =
+          !options.force &&
+          hasAttachments &&
+          !contentQuestion &&
+          (wantsSafetyCheck(text) || text.trim().length === 0);
 
         const userTurn: Turn = {
           id: id(),
@@ -625,7 +644,11 @@ export function CompanionChat({
           text,
           attachments: retainedAttachments,
           at: stamp,
-          lane: hasImages ? "periksa" : undefined,
+          lane: contentQuestion
+            ? "tanya"
+            : hasAttachments && !tutorModule
+              ? "periksa"
+              : undefined,
         };
 
         if (hasImages) {
@@ -652,7 +675,8 @@ export function CompanionChat({
          * The model reads pixels; it does not judge. The transcription joins the
          * filenames and typed words as input to the deterministic engine, so a
          * failed read degrades to the filename-only check rather than inventing
-         * a verdict.
+         * a verdict. A content question reads the same pixels, but only for the
+         * text it was asked about.
          */
         const transcription = await transcribeImages(
           tutorModule ? [] : attachments,
@@ -699,6 +723,21 @@ export function CompanionChat({
           );
         }
 
+        /*
+         * Attachment reading is its own agent step. Images come from the OCR
+         * result; text-like files are read on the device. Unsupported files are
+         * named as unsupported rather than silently scored from a filename.
+         */
+        const readStarted = performance.now();
+        const readResult = contentQuestion
+          ? await readAttachments(attachments, transcription, control.signal)
+          : null;
+        const readMs = performance.now() - readStarted;
+        const links = hasLinks ? extractLinks(text) : [];
+        const modelAttachments = readResult
+          ? toAttachmentContext(readResult.reads)
+          : [];
+
         const scored = [
           transcription.text,
           scoringTextWithAttachments(text, attachments),
@@ -713,7 +752,7 @@ export function CompanionChat({
          * message someone received, so the detectors never see it.
          */
         const asked =
-          asksAboutAttachment ||
+          contentQuestion ||
           (options.force || attachments.length > 0
             ? false
             : isQuestionAbout(scored, {
@@ -773,7 +812,11 @@ export function CompanionChat({
           ? "periksa"
           : tutorModule
             ? "belajar"
-            : plan.lane;
+            : contentQuestion
+              ? "tanya"
+              : safetyCheck
+                ? "periksa"
+                : plan.lane;
 
         /*
          * The card and the trace render on `result`, never on `risk`. The bench
@@ -809,16 +852,46 @@ export function CompanionChat({
                 ms: evidenceMs,
                 note:
                   artifacts > 0
-                    ? `${artifacts} kutipan tercatat untuk laporan`
+                    ? `${artifacts} kutipan tercatat`
                     : "Tidak ada kutipan yang bisa dicatat.",
               }
             : null;
 
-        const stages: AgentStage[] =
-          trace && checked
-            ? [...trace.stages, ...(evidenceStage ? [evidenceStage] : [])]
+        /*
+         * A content question has its own first step: reading the attachment.
+         * The stage id is reused, but the label names what actually happened, so
+         * the trace cannot imply a report was being prepared.
+         */
+        const readerStage: AgentStage | null =
+          contentQuestion && readResult
+            ? {
+                id: "evidence",
+                label: "Pembaca Lampiran",
+                task: "Membaca teks dari lampiran yang ditanyakan",
+                status:
+                  readResult.readable > 0 || hasLinks ? "selesai" : "dilewati",
+                findings: 0,
+                ms: readMs,
+                note:
+                  readResult.readable > 0
+                    ? `${readResult.readable} lampiran terbaca`
+                    : hasLinks
+                      ? `${links.length} tautan dibaca dari pertanyaan`
+                      : (readResult.reads.find((read) => read.note)?.note ??
+                        "Tidak ada teks yang bisa dibaca."),
+              }
+            : null;
+
+        const stages: AgentStage[] = checked
+          ? [
+              ...(trace?.stages ?? []),
+              ...(evidenceStage ? [evidenceStage] : []),
+            ]
+          : readerStage
+            ? [readerStage]
             : [];
-        const detectorMs = (trace?.totalMs ?? 0) + evidenceMs;
+        const detectorMs =
+          (trace?.totalMs ?? 0) + (checked ? evidenceMs : readMs);
 
         const companionId = id();
         const voiceStartedAt = Date.now();
@@ -829,21 +902,22 @@ export function CompanionChat({
          * would let the header show a finished checkmark over work still in
          * flight — the one dishonest state this card could produce.
          */
-        const openTrace: AgentTrace | null = checked
-          ? {
-              stages: [
-                ...stages,
-                {
-                  id: "voice",
-                  ...STAGE_LABEL.voice,
-                  status: "berjalan",
-                  findings: 0,
-                  ms: 0,
-                },
-              ],
-              totalMs: detectorMs,
-            }
-          : null;
+        const openTrace: AgentTrace | null =
+          checked || contentQuestion
+            ? {
+                stages: [
+                  ...stages,
+                  {
+                    id: "voice",
+                    ...STAGE_LABEL.voice,
+                    status: "berjalan",
+                    findings: 0,
+                    ms: 0,
+                  },
+                ],
+                totalMs: detectorMs,
+              }
+            : null;
 
         /*
          * The teaching layer is a pure function of the verdict, so it is computed
@@ -897,6 +971,19 @@ export function CompanionChat({
                       result: checked ? (result ?? undefined) : undefined,
                       source: checked ? scored : undefined,
                       explanation,
+                      contentQuestion,
+                      attachmentText:
+                        readResult && readResult.readable > 0
+                          ? readResult.text
+                          : undefined,
+                      attachmentNote:
+                        readResult &&
+                        readResult.readable === 0 &&
+                        !hasLinks &&
+                        modelAttachments.length === 0
+                          ? (readResult.reads.find((read) => read.note)?.note ??
+                            "Tidak ada teks yang bisa dibaca dari lampiran itu.")
+                          : undefined,
                       learningModules:
                         intent === "learning"
                           ? learningModulesFor(
@@ -1079,13 +1166,11 @@ export function CompanionChat({
           }));
 
         /*
-         * 23 s, above the route's 20 s so the server is always the one that
-         * gives up first. Before this the call passed no signal at all: a
-         * wedged socket left `busy` true and the composer disabled with no way
-         * back.
+         * 45 s for a bounded multi-step turn: three model calls, each with the
+         * route's own 20 s ceiling. A single call still returns much sooner.
          */
         const controller = control;
-        const abortTimer = setTimeout(() => controller.abort(), 23000);
+        const abortTimer = setTimeout(() => controller.abort(), 45000);
         pendingTimers.current.add(abortTimer);
         const fallbackContext = {
           question: text,
@@ -1107,10 +1192,13 @@ export function CompanionChat({
             );
             return;
           }
-          if (asksAboutAttachment) {
+          if (contentQuestion && modelAttachments.length === 0 && !hasLinks) {
             finish(
-              "Saya belum bisa menjelaskan isi lampiran ini. Pembacaan gambar saat ini hanya untuk pemeriksaan pesan; isi PDF, dokumen, dan berkas kode belum dapat saya baca. Salin bagian yang ingin dibahas dan tulis pertanyaanmu tentang bagian itu.",
+              readResult
+                ? describeReads(readResult)
+                : "Saya belum menemukan teks yang bisa dibaca dari lampiran itu.",
               "template",
+              "failed",
             );
             return;
           }
@@ -1171,24 +1259,109 @@ export function CompanionChat({
             return;
           }
 
-          const answer = await requestAnswer(
-            {
-              ...buildAnswerRequest(lane, text, {
-                history: chatHistory,
-                digest,
-                explanation: latestExplanation,
-              }),
-              ...(tutorModule ? { moduleNo: tutorModule.no } : {}),
-            },
-            controller.signal,
-          );
+          const agentRequest = {
+            ...buildAnswerRequest(lane, text, {
+              history: chatHistory,
+              digest,
+              explanation: latestExplanation,
+              contentQuestion,
+              attachmentContext: modelAttachments,
+              hasVerdict: checked || latestResult !== null,
+            }),
+            ...(tutorModule ? { moduleNo: tutorModule.no } : {}),
+          };
 
-          if (answer.outcome === "model") {
-            const call = answer.toolCalls[0];
-            if (
-              call?.name === "report_draft" &&
-              (!latestResult || !latestExplanation)
-            ) {
+          const jobToolRef: {
+            current: {
+              args: LokerSearchArgs;
+              matches: ReturnType<typeof filterPostings>;
+            } | null;
+          } = { current: null };
+          let reportBlocked = false;
+
+          const loop = await runAgentLoop({
+            request: agentRequest,
+            signal: controller.signal,
+            execute: async (call: ToolCall) => {
+              if (call.name === "report_draft") {
+                if (!latestResult) {
+                  reportBlocked = true;
+                  return { kind: "terminal", terminal: "report" } as const;
+                }
+                const channels =
+                  latestExplanation?.report ?? explain(latestResult, "").report;
+                const requested = call.arguments.channel ?? null;
+                const channel =
+                  requested && channels.some((item) => item.id === requested)
+                    ? requested
+                    : null;
+                patchCompanion((turn) => ({
+                  ...turn,
+                  report: { channel, result: latestResult, channels },
+                }));
+                return { kind: "terminal", terminal: "report" } as const;
+              }
+
+              const toolStarted = performance.now();
+              const matches = filterPostings(corpus.postings, call.arguments);
+              const toolMs = performance.now() - toolStarted;
+              jobToolRef.current = { args: call.arguments, matches };
+
+              const searchStage: AgentStage = {
+                id: "job-search",
+                ...STAGE_LABEL["job-search"],
+                status: "selesai",
+                findings: 0,
+                ms: toolMs,
+                note: `${matches.length} lowongan cocok`,
+              };
+
+              patchCompanion((turn) => ({
+                ...turn,
+                tool: {
+                  args: call.arguments,
+                  count: matches.length,
+                  total: corpus.total,
+                  capped: corpus.capped,
+                  summary: null,
+                  summaryState: "running",
+                },
+                trace: turn.trace
+                  ? {
+                      stages: [...turn.trace.stages, searchStage],
+                      totalMs: turn.trace.totalMs + toolMs,
+                    }
+                  : { stages: [searchStage], totalMs: toolMs },
+              }));
+
+              /*
+               * Phase 2 carries titles, companies, verdicts, and a count. The
+               * query, descriptions, apply URLs, and the saved list never enter
+               * this object, so the privacy boundary is the payload.
+               */
+              const observation: ToolObservation = {
+                name: "job_search",
+                callId: call.id,
+                arguments: call.arguments,
+                ok: true,
+                result: {
+                  count: matches.length,
+                  total: corpus.total,
+                  capped: corpus.capped,
+                  postings: matches.slice(0, 5).map((item) => ({
+                    title: item.title,
+                    company: item.company,
+                    sentinelStatus: item.sentinelStatus,
+                    luminaRisk: item.luminaRisk,
+                  })),
+                },
+              };
+              return { kind: "observation", observation } as const;
+            },
+          });
+
+          if (loop.terminal === "report") {
+            if (reportBlocked) {
               finish(
                 "Periksa pesan yang mencurigakan terlebih dahulu agar template laporan memakai temuan yang benar.",
                 "template",
@@ -1196,61 +1369,24 @@ export function CompanionChat({
               );
               return;
             }
-            finish(answer.text, "model");
-            if (!call) return;
-            if (call.name === "job_search" && !wantsJobSearch(text)) return;
+            finish(
+              loop.text || "Template laporan sudah dibuka di bawah.",
+              "model",
+            );
+            return;
+          }
 
-            if (call.name === "report_draft") {
-              if (!latestResult || !latestExplanation) return;
-              const channels = latestExplanation.report;
-              const requested = call.arguments.channel ?? null;
-              const channel =
-                requested && channels.some((item) => item.id === requested)
-                  ? requested
-                  : null;
-              patchCompanion((turn) => ({
-                ...turn,
-                report: { channel, result: latestResult, channels },
-              }));
-              return;
-            }
-
-            const toolStarted = performance.now();
-            const matches = filterPostings(corpus.postings, call.arguments);
-            const toolMs = performance.now() - toolStarted;
-
-            const searchStage: AgentStage = {
-              id: "job-search",
-              ...STAGE_LABEL["job-search"],
-              status: "selesai",
-              findings: 0,
-              ms: toolMs,
-              note: `${matches.length} lowongan cocok`,
-            };
-
-            patchCompanion((turn) => ({
-              ...turn,
-              tool: {
-                args: call.arguments,
-                count: matches.length,
-                total: corpus.total,
-                capped: corpus.capped,
-                summary: null,
-                summaryState: "running",
-              },
-              trace: turn.trace
-                ? {
-                    stages: [...turn.trace.stages, searchStage],
-                    totalMs: turn.trace.totalMs + toolMs,
-                  }
-                : { stages: [searchStage], totalMs: toolMs },
-            }));
+          if (loop.outcome === "model") {
+            finish(loop.text, "model");
+            const jobTool = jobToolRef.current;
+            if (!jobTool) return;
 
             /*
-             * Phase 2 carries titles, companies, verdicts, and a count. The
-             * query, descriptions, apply URLs, and the saved list never enter
-             * this object, so the privacy boundary is the payload.
+             * The job summary is a second bubble only while the tool turn is
+             * still the last thing in the thread. It runs after the loop so the
+             * final answer is not pushed above its own card.
              */
+            const { args, matches } = jobTool;
             const summaryControl = new AbortController();
             pendingControllers.current.add(summaryControl);
             const summaryTimer = setTimeout(
@@ -1279,24 +1415,18 @@ export function CompanionChat({
             }
 
             const sentence = summary ?? summaryFallback(matches);
-
             patchCompanion((turn) => ({
               ...turn,
               tool: turn.tool
                 ? {
                     ...turn.tool,
+                    args,
                     summary: sentence,
                     summaryState: summary ? "done" : "failed",
                   }
                 : undefined,
             }));
 
-            /*
-             * The summary is a second companion bubble only while the tool turn
-             * is still the last thing in the thread. If the reader already sent
-             * another message, appending it would answer a question they moved
-             * past.
-             */
             const summaryTurn: Turn = {
               id: id(),
               role: "companion",
@@ -1315,9 +1445,9 @@ export function CompanionChat({
           }
 
           finish(
-            composeAnswerFallback(lane, answer.outcome, fallbackContext),
+            composeAnswerFallback(lane, loop.outcome, fallbackContext),
             "template",
-            answer.outcome as VoiceOutcome,
+            loop.outcome as VoiceOutcome,
           );
         } catch {
           finish(
@@ -1988,6 +2118,23 @@ export function CompanionChat({
                         </p>
                       ) : null}
 
+                      {turn.attachmentNote ? (
+                        <p className="max-w-[92%] text-[12px] text-dim">
+                          {turn.attachmentNote}
+                        </p>
+                      ) : null}
+
+                      {turn.attachmentText ? (
+                        <details className="max-w-[92%] rounded-[10px] border border-line bg-panel-2 px-3 py-2 text-[12px] text-txt">
+                          <summary className="cursor-pointer select-none text-[11px] font-medium text-dim">
+                            Teks yang terbaca dari lampiran
+                          </summary>
+                          <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap font-sans text-[12px] leading-relaxed">
+                            {turn.attachmentText}
+                          </pre>
+                        </details>
+                      ) : null}
+
                       {turn.tool ? (
                         <LokerTool
                           corpus={corpus}
@@ -2081,6 +2228,7 @@ export function CompanionChat({
                                 null
                               }
                               result={turn.result}
+                              hideReport={Boolean(turn.report)}
                             />
                           ) : null}
                           <ActionRow result={turn.result} />

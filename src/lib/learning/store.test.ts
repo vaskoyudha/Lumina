@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { testDatabaseUrl } from "@/lib/auth/test-database";
 import { CONTENT_FIXTURE, SIMULATION_FIXTURE } from "@/lib/content/fixtures";
 import { getModule } from "@/lib/content/store";
+import { patternForQuestion } from "@/lib/learning/pattern-map";
 import {
   readAccountProgress,
   readSimulationResults,
@@ -13,7 +14,6 @@ import {
   saveSimulation,
 } from "@/lib/learning/store";
 import type { SimulationSubmission } from "@/lib/learning/validation";
-import { patternForQuestion } from "@/lib/learning/pattern-map";
 
 jest.mock("server-only", () => ({}));
 jest.mock("@/lib/auth/database", () => ({ authDatabase: () => pool }));

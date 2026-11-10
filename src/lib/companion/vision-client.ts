@@ -28,11 +28,21 @@ const SUPPORTED_TYPES = new Set([
   "image/gif",
 ]);
 
+export interface TranscribedImage {
+  /** Attachment id, so callers can pair a read with the original file. */
+  id: string;
+  /** Filename for the local UI only. Never sent to the model. */
+  name: string;
+  text: string;
+}
+
 export interface ImageTranscription {
   text: string;
   attempted: number;
   failed: number;
   skipped: number;
+  /** Per-image results, in attachment order. */
+  items: TranscribedImage[];
 }
 
 interface ImagePayload {
@@ -162,7 +172,7 @@ async function normalizeImage(
 async function transcribeOne(
   attachment: Attachment,
   signal: AbortSignal,
-): Promise<string | null> {
+): Promise<TranscribedImage | null> {
   try {
     const image = await normalizeImage(attachment.file, signal);
     if (!image || signal.aborted) return null;
@@ -183,7 +193,7 @@ async function transcribeOne(
 
     const text = payload.text.trim();
     if (text.length === 0) return null;
-    return `[${attachment.name}]\n${text}`;
+    return { id: attachment.id, name: attachment.name, text };
   } catch {
     return null;
   }
@@ -202,7 +212,7 @@ export async function transcribeImages(
   const images = allImages.slice(0, MAX_IMAGES);
 
   if (images.length === 0) {
-    return { text: "", attempted: 0, failed: 0, skipped: 0 };
+    return { text: "", attempted: 0, failed: 0, skipped: 0, items: [] };
   }
 
   const control = new AbortController();
@@ -210,7 +220,7 @@ export async function transcribeImages(
   if (signal?.aborted) abort();
   else signal?.addEventListener("abort", abort, { once: true });
   const timer = setTimeout(abort, IMAGE_READ_TIMEOUT_MS);
-  let results: (string | null)[];
+  let results: (TranscribedImage | null)[];
   try {
     results = await Promise.all(
       images.map((attachment) => transcribeOne(attachment, control.signal)),
@@ -219,14 +229,16 @@ export async function transcribeImages(
     clearTimeout(timer);
     signal?.removeEventListener("abort", abort);
   }
-  const text = results
-    .filter((part): part is string => part !== null)
-    .join("\n\n");
+  const items = results.filter(
+    (part): part is TranscribedImage => part !== null,
+  );
+  const text = items.map((item) => `[${item.name}]\n${item.text}`).join("\n\n");
 
   return {
     text,
     attempted: images.length,
     failed: results.filter((part) => part === null).length,
     skipped: allImages.length - images.length,
+    items,
   };
 }

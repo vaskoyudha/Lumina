@@ -67,6 +67,7 @@ flowchart TB
 | Privilege escalation to moderator | UUID allowlist checked server-side on every action; no browser input or registration path. | Allowlist misconfiguration. |
 | IDOR on community/learning | Every mutation scopes by session `user_id`; ownership checked. | A future query missing the scope. Enforce in review. |
 | Message exfiltration to model | Strict outbound schemas with no message/evidence field; voice digest drops `evidence`. | A future schema change could add a field. Tests and review must catch it. |
+| Attachment content asked about | Only when `contentQuestion` is true: extracted text with no filename/URL, max 3 parts and 12,000 chars, never on `periksa`/`belajar`; the prompt treats it as data. | The user's own document text is sent to the provider; provider logs are outside our control. |
 | Prompt injection in checked message | The message is not sent to the model; injection is itself a detector. | Model output could still be influenced by user questions, but it cannot change the score. |
 | Malicious file upload | No community uploads; vision accepts images only and returns text; no file storage. | Image parser/provider risk is delegated to the provider. |
 | SSRF via link verification | Only an http/https URL is sent to a separate scanner; the app does not fetch the URL itself. `/api/verify-link` performs bounded public lookups with a URL guard. | Scanner-side SSRF risk is the scanner's responsibility. |

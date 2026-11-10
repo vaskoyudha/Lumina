@@ -4,6 +4,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
+import * as scoring from "@/lib/scoring/score";
+
+jest.mock("@/lib/scoring/score", () => {
+  const actual = jest.requireActual<typeof scoring>("@/lib/scoring/score");
+  return { ...actual, scoreWithTrace: jest.fn(actual.scoreWithTrace) };
+});
 
 jest.mock("@/lib/companion/history", () => ({
   listConversationHistory: jest.fn(async () => ({
@@ -66,6 +72,7 @@ const originalFetch = global.fetch;
 let fetchMock: jest.Mock;
 
 beforeEach(() => {
+  jest.mocked(scoring.scoreWithTrace).mockClear();
   fetchMock = jest.fn();
   global.fetch = fetchMock as unknown as typeof fetch;
   fetchMock.mockImplementation(async (url: string) => {
@@ -129,6 +136,68 @@ describe("CompanionChat · images are read, then scored locally", () => {
     );
     expect(voiceCall).toBeDefined();
     expect(String(voiceCall?.[1]?.body)).not.toContain("Undangan pernikahan");
+  });
+
+  it("answers a content question from OCR instead of scoring it as a report", async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      const href = String(url);
+      if (href === "/api/companion/vision") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true, text: TRANSCRIPTION }),
+        };
+      }
+      if (href === "/api/companion/answer") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            text: "Gambar ini meminta kamu menginstal berkas APK undangan.",
+            toolCalls: [],
+          }),
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    });
+
+    const user = userEvent.setup();
+    const { container } = render(<CompanionChat />);
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement | null;
+    if (!input) throw new Error("file input missing");
+
+    await user.upload(input, uploadedImage());
+    await user.type(
+      screen.getByPlaceholderText(/tempel pesan/i),
+      "apa isi gambar ini?",
+    );
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    expect(
+      await screen.findByText(/Gambar ini meminta kamu menginstal/i),
+    ).toBeInTheDocument();
+    expect(scoring.scoreWithTrace).not.toHaveBeenCalled();
+    expect(
+      fetchMock.mock.calls.some(
+        ([url]) => String(url) === "/api/companion/voice",
+      ),
+    ).toBe(false);
+
+    const answerCall = fetchMock.mock.calls.find(
+      ([url]) => String(url) === "/api/companion/answer",
+    );
+    const body = JSON.parse(String(answerCall?.[1]?.body)) as {
+      contentQuestion: boolean;
+      attachmentContext: { kind: string; text: string }[];
+      observations: unknown[];
+    };
+    expect(body.contentQuestion).toBe(true);
+    expect(body.attachmentContext[0]?.kind).toBe("image");
+    expect(body.attachmentContext[0]?.text).toContain("Undangan pernikahan");
+    expect(JSON.stringify(body)).not.toContain("tangkap.png");
   });
 
   it("surfaces a failed image read instead of pretending it was checked", async () => {

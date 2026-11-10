@@ -112,6 +112,7 @@ export function ExplanationCard({
   explanation,
   schemeName,
   result,
+  hideReport = false,
   className,
 }: {
   explanation: Explanation;
@@ -119,6 +120,8 @@ export function ExplanationCard({
   schemeName: string | null;
   /** The verdict this explanation was built from; the report tool needs it. */
   result: ScoreResult;
+  /** The model already opened a report card for this turn. */
+  hideReport?: boolean;
   className?: string;
 }) {
   const { tactics, anatomy, verify, report, unrecognized } = explanation;
@@ -225,7 +228,7 @@ export function ExplanationCard({
         </Card>
       ) : null}
 
-      {report.length > 0 ? (
+      {report.length > 0 && !hideReport ? (
         <Card className="gap-0 overflow-hidden rounded-[12px] border border-line bg-panel py-0 ring-0">
           <CardHeader className="border-line border-b bg-panel-2/60 py-3">
             <CardTitle className="font-medium text-sm text-txt">

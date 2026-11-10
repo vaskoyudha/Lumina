@@ -110,7 +110,7 @@ export const STAGE_LABEL: Record<StageId, { label: string; task: string }> = {
   },
   evidence: {
     label: "Evidence Agent",
-    task: "Menyusun kutipan, nominal, dan kontak untuk laporan",
+    task: "Menyusun kutipan dan bukti dari pesan yang diperiksa",
   },
   scoring: {
     label: "Scoring Orchestrator",
