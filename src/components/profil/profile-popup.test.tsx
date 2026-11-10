@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfilePopup } from "@/components/profil/profile-popup";
+import { EMPTY_PROGRESS } from "@/lib/progress";
 
 jest.mock("next/link", () => {
   const Link = ({
@@ -34,10 +35,13 @@ jest.mock("@/lib/learning/actions", () => ({
 }));
 
 function mockSession(session: unknown) {
-  global.fetch = jest.fn().mockResolvedValue({
+  global.fetch = jest.fn().mockImplementation(async (url: string) => ({
     ok: true,
-    json: async () => ({ ok: true, session }),
-  }) as unknown as typeof fetch;
+    json: async () =>
+      url === "/api/account/progress"
+        ? { ok: true, progress: EMPTY_PROGRESS, moduleCount: 12 }
+        : { ok: true, session },
+  })) as unknown as typeof fetch;
 }
 
 beforeAll(() => {
@@ -79,7 +83,7 @@ describe("ProfilePopup", () => {
 
     expect(await screen.findByText("siti@lumina.id")).toBeInTheDocument();
     expect(screen.getAllByText(/kemajuan belajar/i).length).toBeGreaterThan(0);
-    expect(screen.getByText("0/12 modul")).toBeInTheDocument();
+    expect(await screen.findByText("0/12 modul")).toBeInTheDocument();
     expect(screen.getAllByText(/lowongan tersimpan/i).length).toBeGreaterThan(
       0,
     );
@@ -117,5 +121,28 @@ describe("ProfilePopup", () => {
     ).toBeGreaterThan(0);
     expect(within(dialog).getByText("2 Januari 2026")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /profil saya/i })).toBeNull();
+  });
+  it("updates the account trigger after a successful rename", async () => {
+    mockSession({ nama: "Siti Rahma", email: "siti@lumina.id" });
+    const { updateNama } = jest.requireMock("@/lib/auth/actions");
+    updateNama.mockResolvedValue({
+      ok: true,
+      account: { nama: "Siti Baru", email: "siti@lumina.id" },
+    });
+    const user = userEvent.setup();
+    render(<ProfilePopup />);
+    await user.click(
+      await screen.findByRole("button", { name: "Akun Siti Rahma" }),
+    );
+    await user.click(screen.getByRole("menuitem", { name: "Profil saya" }));
+    const field = await screen.findByRole("textbox", { name: "Nama tampilan" });
+    await user.clear(field);
+    await user.type(field, "Siti Baru");
+    await user.click(screen.getByRole("button", { name: "Simpan nama" }));
+    await screen.findByText("Nama diperbarui.");
+    await user.click(screen.getByRole("button", { name: "Tutup pengaturan" }));
+    expect(
+      await screen.findByRole("button", { name: "Akun Siti Baru" }),
+    ).toHaveTextContent("SB");
   });
 });

@@ -61,7 +61,10 @@ import {
 } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import type { SimulationContent } from "@/lib/content/schema";
-import { submitSimulation } from "@/lib/learning/actions";
+import {
+  startSimulationIntrusion,
+  submitSimulation,
+} from "@/lib/learning/actions";
 import type { SimulationSubmission } from "@/lib/learning/validation";
 import { messageClock } from "@/lib/simulasi/clock";
 import type {
@@ -143,6 +146,7 @@ export function Runner({
     (node): node is Ending => node.type === "ending",
   ) as Ending;
   const [attemptId, setAttemptId] = useState("");
+  const intrusionReceipt = useRef<Promise<unknown> | null>(null);
   const [steps, setSteps] = useState<SimulationSubmission["steps"]>([]);
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -180,6 +184,7 @@ export function Runner({
     if (!persist || !ended || !attemptId) return;
     setSaveState("saving");
     try {
+      if (failure && intrusionReceipt.current) await intrusionReceipt.current;
       const result = await submitSimulation({
         attemptId,
         scenarioId: scenario.scenario.id,
@@ -378,7 +383,15 @@ export function Runner({
       { kind: "reply", id: active.id, text: choice.label },
     ]);
     setDecisions((current) => [...current, choice]);
-    if (choice.compromisesDevice) setCompromised(true);
+    if (choice.compromisesDevice) {
+      if (persist && mode === "tantangan" && !intrusionReceipt.current) {
+        intrusionReceipt.current = startSimulationIntrusion({
+          attemptId,
+          scenarioId: scenario.scenario.id,
+        }).catch(() => undefined);
+      }
+      setCompromised(true);
+    }
     const nextPanic = Math.min(
       scenario.hud.panic.max,
       panic + (choice.panic ?? 0),
@@ -399,6 +412,7 @@ export function Runner({
     }
   }
   function reset() {
+    intrusionReceipt.current = null;
     setAttemptId("");
     setSteps([]);
     setSaveState("idle");

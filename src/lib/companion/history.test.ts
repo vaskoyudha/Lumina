@@ -81,7 +81,7 @@ const signedIn = (id: string) => ({
     expect(
       await saveConversationHistory({
         id,
-        title: "Kurir palsu kirim APK",
+        title: "Pemeriksaan pesan",
         turns: 2,
         risk: "tinggi",
       }),
@@ -90,7 +90,7 @@ const signedIn = (id: string) => ({
     const mine = await listConversationHistory();
     expect(mine.ok).toBe(true);
     expect(mine.conversations.find((item) => item.id === id)).toMatchObject({
-      title: "Kurir palsu kirim APK",
+      title: "Pemeriksaan pesan",
       turns: 2,
       risk: "tinggi",
     });
@@ -107,7 +107,7 @@ const signedIn = (id: string) => ({
     jest.mocked(getSession).mockResolvedValue(signedIn(userA));
     const after = await listConversationHistory();
     expect(after.conversations.find((item) => item.id === id)).toMatchObject({
-      title: "Kurir palsu kirim APK",
+      title: "Pemeriksaan pesan",
       turns: 2,
     });
   });
@@ -115,10 +115,14 @@ const signedIn = (id: string) => ({
   it("updates title, turns and risk in place without duplicating the row", async () => {
     const id = randomUUID();
     jest.mocked(getSession).mockResolvedValue(signedIn(userA));
-    await saveConversationHistory({ id, title: "Awal", turns: 1 });
     await saveConversationHistory({
       id,
-      title: "Awal diperpanjang",
+      title: "Percakapan Companion",
+      turns: 1,
+    });
+    await saveConversationHistory({
+      id,
+      title: "Pemeriksaan pesan",
       turns: 4,
       risk: "rendah",
     });
@@ -126,7 +130,7 @@ const signedIn = (id: string) => ({
     const rows = list.conversations.filter((item) => item.id === id);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
-      title: "Awal diperpanjang",
+      title: "Pemeriksaan pesan",
       turns: 4,
       risk: "rendah",
     });
@@ -158,5 +162,40 @@ const signedIn = (id: string) => ({
         })
       ).ok,
     ).toBe(false);
+  });
+
+  it("never stores arbitrary message excerpts as history titles", async () => {
+    const id = randomUUID();
+    jest.mocked(getSession).mockResolvedValue(signedIn(userA));
+    await saveConversationHistory({
+      id,
+      title: "Rahasia nomor rekening pribadi 12345",
+      turns: 2,
+    });
+    const stored = await pool.query(
+      "SELECT title FROM companion_conversations WHERE id=$1",
+      [id],
+    );
+    expect(stored.rows[0].title).toBe("Percakapan Companion");
+    // Legacy labels must not leak through reads before the cleanup migration runs.
+    await pool.query(
+      "UPDATE companion_conversations SET title='Rahasia lama' WHERE id=$1",
+      [id],
+    );
+    const list = await listConversationHistory();
+    expect(list.conversations.find((item) => item.id === id)?.title).toBe(
+      "Percakapan Companion",
+    );
+    await pool.query(
+      await readFile("migrations/010_companion_private_titles.sql", "utf8"),
+    );
+    const cleaned = await pool.query(
+      "SELECT title,turns FROM companion_conversations WHERE id=$1",
+      [id],
+    );
+    expect(cleaned.rows[0]).toEqual({
+      title: "Percakapan Companion",
+      turns: 2,
+    });
   });
 });

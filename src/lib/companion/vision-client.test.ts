@@ -10,7 +10,10 @@ import {
   jest,
 } from "@jest/globals";
 import type { Attachment } from "@/components/companion/composer";
-import { transcribeImages } from "@/lib/companion/vision-client";
+import {
+  IMAGE_READ_TIMEOUT_MS,
+  transcribeImages,
+} from "@/lib/companion/vision-client";
 
 const originalFetch = global.fetch;
 type FetchFn = (...args: Parameters<typeof fetch>) => Promise<unknown>;
@@ -42,7 +45,7 @@ afterEach(() => {
 describe("transcribeImages", () => {
   it("returns nothing when the turn carries no image", async () => {
     const result = await transcribeImages([]);
-    expect(result).toEqual({ text: "", attempted: 0, failed: 0 });
+    expect(result).toEqual({ text: "", attempted: 0, failed: 0, skipped: 0 });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -76,6 +79,61 @@ describe("transcribeImages", () => {
     });
 
     const result = await transcribeImages([imageAttachment()]);
-    expect(result).toEqual({ text: "", attempted: 1, failed: 1 });
+    expect(result).toEqual({ text: "", attempted: 1, failed: 1, skipped: 0 });
+  });
+  it("reports a FileReader exception as a failed read", async () => {
+    const read = jest
+      .spyOn(FileReader.prototype, "readAsDataURL")
+      .mockImplementation(() => {
+        throw new Error("unreadable");
+      });
+    try {
+      await expect(
+        transcribeImages([imageAttachment()]),
+      ).resolves.toMatchObject({ attempted: 1, failed: 1 });
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      read.mockRestore();
+    }
+  });
+  it("counts images beyond the limit as skipped", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, text: "Pesan pada gambar" }),
+    });
+    const result = await transcribeImages(
+      Array.from({ length: 4 }, imageAttachment),
+    );
+    expect(result).toMatchObject({ attempted: 3, failed: 0, skipped: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+  it("aborts a stalled image upload and releases the caller", async () => {
+    const read = jest
+      .spyOn(FileReader.prototype, "readAsDataURL")
+      .mockImplementation(function (this: FileReader) {
+        Object.defineProperty(this, "result", {
+          value: "data:image/png;base64,abcdefghijklmnop",
+        });
+        this.onload?.(new ProgressEvent("load") as ProgressEvent<FileReader>);
+      });
+    jest.useFakeTimers();
+    fetchMock.mockImplementation(
+      (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        }),
+    );
+    try {
+      const pending = transcribeImages([imageAttachment()]);
+      await jest.advanceTimersByTimeAsync(IMAGE_READ_TIMEOUT_MS);
+      await expect(pending).resolves.toMatchObject({ attempted: 1, failed: 1 });
+    } finally {
+      jest.useRealTimers();
+      read.mockRestore();
+    }
   });
 });
