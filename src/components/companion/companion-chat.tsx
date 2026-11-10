@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Mascot } from "@/components/brand/mascot";
 import { AgentRun, runAnnouncement } from "@/components/companion/agent-run";
@@ -265,6 +266,11 @@ export function CompanionChat({
   /** The capped cumulative scan snapshot; the client filters it locally. */
   corpus?: LokerCorpus;
 }) {
+  const router = useRouter();
+  // `null` outside a mounted router (and in tests); the agent route check below
+  // then reads false and the shell keeps its in-place behavior.
+  const pathname = usePathname();
+  const onAgentRoute = pathname === "/agen";
   const [sessions, setSessions] = React.useState<Session[]>(() => [
     newSession(),
   ]);
@@ -1287,6 +1293,15 @@ export function CompanionChat({
   }, [activeId, busy, corpus]);
 
   const startNew = () => {
+    /*
+     * `/agen` is the overview's own address. A blank conversation is a
+     * different surface, so leave the agent route instead of rendering the
+     * composer under an `/agen` URL.
+     */
+    if (onAgentRoute) {
+      router.push("/companion");
+      return;
+    }
     setShowSessions(false);
     setShowAgents(false);
     setSelectedAgent(null);
@@ -1404,6 +1419,11 @@ export function CompanionChat({
           sessions={conversations}
           activeId={activeId}
           onSelect={(sessionId) => {
+            // A conversation belongs to `/companion`; `/agen` is the overview.
+            if (onAgentRoute) {
+              router.push("/companion");
+              return;
+            }
             setSelectedId(sessionId);
             setShowSessions(false);
             setShowAgents(false);

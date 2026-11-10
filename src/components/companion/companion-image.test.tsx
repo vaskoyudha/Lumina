@@ -13,6 +13,11 @@ jest.mock("@/lib/companion/history", () => ({
   saveConversationHistory: jest.fn(async () => ({ ok: true })),
 }));
 
+jest.mock("next/navigation", () => ({
+  usePathname: () => "/companion",
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+}));
+
 /**
  * This suite renders the whole conversation client and drives the vision route
  * plus the deterministic pipeline. The full run executes it beside ~60 other
