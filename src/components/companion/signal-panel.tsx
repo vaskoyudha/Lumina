@@ -1,11 +1,18 @@
 "use client";
 
 import {
+  Activity,
+  CircleCheck,
+  CircleDashed,
+  CircleSlash,
+  CircleX,
   Link2,
   Lock,
   Minus,
+  Paperclip,
   PenLine,
   Plus,
+  ScanSearch,
   Sparkles,
   TriangleAlert,
   Workflow,
@@ -35,6 +42,8 @@ import {
   CoverageGroup,
   CoverageStrip,
   FindingsSection,
+  PanelIcon,
+  PanelSectionHeading,
   SpawnedSection,
   TraceDisclosure,
 } from "@/components/companion/panel-ledger-view";
@@ -611,11 +620,7 @@ function RootNode({
         <div className="px-3.5 pt-3 pb-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-tint">
-                <span className="flex h-2.5 w-4 items-center justify-start rounded-full bg-brand px-0.5">
-                  <span className="size-1.5 rounded-full bg-white" />
-                </span>
-              </span>
+              <PanelIcon icon={ScanSearch} />
               {title}
             </div>
           </div>
@@ -684,9 +689,7 @@ function VoiceNode({
       ) : null}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
-            <PenLine aria-hidden className="size-3.5" />
-          </span>
+          <PanelIcon icon={PenLine} />
           <div className="min-w-0">
             <p className="truncate font-semibold text-[12px] text-ink">
               Penyusun bahasa
@@ -726,9 +729,7 @@ function LinkAgentRow({
 }) {
   return (
     <div className="flex items-start gap-2.5 rounded-xl border border-line bg-panel px-3 py-2.5">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
-        <Link2 aria-hidden className="size-4" />
-      </span>
+      <PanelIcon className="size-8" icon={Link2} />
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-medium">
           Bubu
@@ -803,49 +804,51 @@ export function SignalPanel({
         ? "text-warn"
         : "text-brand-ink";
 
+  const headerTone: "brand" | "warn" | "danger" | "muted" = result
+    ? result.risk === "tinggi"
+      ? "danger"
+      : result.risk === "mencurigakan"
+        ? "warn"
+        : "brand"
+    : linkView
+      ? linkView.verdict === "Risky"
+        ? "danger"
+        : linkView.verdict === "Suspicious"
+          ? "warn"
+          : "brand"
+      : linkPendingView
+        ? "brand"
+        : "muted";
+
   const header = (
     <CardHeader className="shrink-0 border-edge border-b bg-panel/85 px-3.5 pt-3 pb-2.5 backdrop-blur-md [.border-b]:pb-2.5">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <CardTitle>
-            <h2
-              className="flex items-center gap-1.5 font-semibold text-[12px] text-txt"
-              id={titleId}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  result
-                    ? RISK_TEXT[result.risk]
-                    : linkView
-                      ? linkView.verdict === "Risky"
-                        ? "bg-danger"
-                        : linkView.verdict === "Suspicious"
-                          ? "bg-warn"
-                          : "bg-brand"
-                      : linkPendingView
-                        ? "bg-brand"
-                        : "bg-dim/50",
-                )}
-              />
-              {linkSurface ? "Verifikasi tautan" : "Panel bukti"}
-            </h2>
-          </CardTitle>
-          <p className="mt-0.5 truncate text-[10.5px] text-dim">
-            {linkView
-              ? "Diperiksa oleh url.vet"
-              : linkPendingView
-                ? "Menunggu persetujuan pengiriman URL"
-                : running
-                  ? "Pemeriksaan sedang berjalan"
-                  : result == null
-                    ? "Menunggu pesan untuk diperiksa"
-                    : trace
-                      ? "Pemeriksaan terakhir selesai"
-                      : "Diperbarui setelah pemeriksaan terakhir"}
-          </p>
-          {result ? <CoverageStrip ledger={ledger} /> : null}
+        <div className="flex min-w-0 items-start gap-2.5">
+          <PanelIcon icon={ScanSearch} size="lg" tone={headerTone} />
+          <div className="min-w-0">
+            <CardTitle>
+              <h2
+                className="flex items-center gap-1.5 font-semibold text-[12.5px] text-txt leading-snug"
+                id={titleId}
+              >
+                {linkSurface ? "Verifikasi tautan" : "Panel bukti"}
+              </h2>
+            </CardTitle>
+            <p className="mt-0.5 truncate text-[10.5px] text-dim">
+              {linkView
+                ? "Diperiksa oleh url.vet"
+                : linkPendingView
+                  ? "Menunggu persetujuan pengiriman URL"
+                  : running
+                    ? "Pemeriksaan sedang berjalan"
+                    : result == null
+                      ? "Menunggu pesan untuk diperiksa"
+                      : trace
+                        ? "Pemeriksaan terakhir selesai"
+                        : "Diperbarui setelah pemeriksaan terakhir"}
+            </p>
+            {result ? <CoverageStrip ledger={ledger} /> : null}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
@@ -942,9 +945,7 @@ export function SignalPanel({
   const toolbar = (
     <div className="pointer-events-none absolute inset-x-0 bottom-2.5 z-20 flex justify-center px-3.5">
       <div className="pointer-events-auto flex items-center gap-0.5 rounded-full border border-edge bg-panel/95 px-1.5 py-1 shadow-lift backdrop-blur-md">
-        <span className="flex size-6 items-center justify-center rounded-full bg-chip text-ink">
-          <Workflow aria-hidden className="size-3.5" />
-        </span>
+        <PanelIcon icon={Workflow} size="sm" />
         <span className="mx-0.5 h-4 w-px bg-edge" />
         <Button
           aria-label="Perkecil kanvas"
@@ -1092,9 +1093,7 @@ export function SignalPanel({
                   data-status="pending"
                 />
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
-                    <Sparkles aria-hidden className="size-3.5" />
-                  </span>
+                  <PanelIcon icon={Sparkles} />
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-[12px] text-ink">
                       Sintesis temuan
@@ -1246,12 +1245,14 @@ export function SignalPanel({
             <CoverageGroup
               agents={ledger.cleanAgents}
               defaultOpen={coverageDefaultOpen}
+              icon={CircleCheck}
               label="Diperiksa, nihil"
               onSelectAgent={setSelectedAgent}
             />
             <CoverageGroup
               agents={ledger.noObjectAgents}
               defaultOpen={coverageDefaultOpen}
+              icon={CircleSlash}
               label="Tanpa objek"
               onSelectAgent={setSelectedAgent}
             />
@@ -1262,6 +1263,7 @@ export function SignalPanel({
                 ledger.cleanAgents.length === 0 &&
                 ledger.noObjectAgents.length === 0
               }
+              icon={CircleDashed}
               label="Belum tercatat"
               onSelectAgent={setSelectedAgent}
             />
@@ -1269,12 +1271,13 @@ export function SignalPanel({
 
           {ledger.failedAgents.length > 0 ? (
             <section aria-labelledby={`${titleId}-failed`} className="mt-3">
-              <h3
-                className="font-mono text-[9px] text-danger uppercase tracking-[0.14em]"
+              <PanelSectionHeading
+                icon={CircleX}
                 id={`${titleId}-failed`}
+                tone="danger"
               >
                 Gagal · {ledger.failedAgents.length}
-              </h3>
+              </PanelSectionHeading>
               <ul className="mt-2 flex flex-col gap-1.5">
                 {ledger.failedAgents.map((agent) => (
                   <li
@@ -1303,12 +1306,9 @@ export function SignalPanel({
 
           {ledger.liveAgents.length > 0 ? (
             <section aria-labelledby={`${titleId}-live`} className="mt-3">
-              <h3
-                className="font-mono text-[9px] text-brand uppercase tracking-[0.14em]"
-                id={`${titleId}-live`}
-              >
+              <PanelSectionHeading icon={Activity} id={`${titleId}-live`}>
                 Berjalan · {ledger.liveAgents.length}
-              </h3>
+              </PanelSectionHeading>
               <ul className="mt-2 flex flex-col gap-1.5">
                 {ledger.liveAgents.map((agent) => (
                   <li
@@ -1340,24 +1340,19 @@ export function SignalPanel({
             aria-labelledby={`${titleId}-synthesis`}
             className="mt-3 rounded-[14px] border border-brand-line bg-panel px-3.5 py-2.5 shadow-rest"
           >
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-brand-edge bg-brand-soft text-brand-strong">
-                  <Sparkles aria-hidden className="size-3.5" />
-                </span>
-                <div className="min-w-0">
-                  <h3
-                    className="truncate font-semibold text-[12px] text-ink"
-                    id={`${titleId}-synthesis`}
-                  >
-                    Sintesis temuan
-                  </h3>
-                  <p className="font-mono text-[9.5px] text-ink-mute uppercase tracking-[0.08em]">
-                    {findings.length === 0
-                      ? "Tidak ada temuan"
-                      : `${ledger.findingAgents.length} agen menemukan`}
-                  </p>
-                </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <PanelSectionHeading
+                  icon={Sparkles}
+                  id={`${titleId}-synthesis`}
+                >
+                  Sintesis temuan
+                </PanelSectionHeading>
+                <p className="mt-0.5 ps-9 font-mono text-[9.5px] text-ink-mute uppercase tracking-[0.08em]">
+                  {findings.length === 0
+                    ? "Tidak ada temuan"
+                    : `${ledger.findingAgents.length} agen menemukan`}
+                </p>
               </div>
               <span className="tabular shrink-0 rounded-[5px] border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand">
                 {findings.length} temuan
@@ -1405,12 +1400,9 @@ export function SignalPanel({
           {/* 2 · Proof. Artifacts are chips, not a second list of findings. */}
           {artifactGroups.length > 0 ? (
             <section aria-labelledby={`${titleId}-artifacts`} className="mt-3">
-              <h3
-                className="font-medium text-[10.5px] text-dim uppercase tracking-[0.07em]"
-                id={`${titleId}-artifacts`}
-              >
+              <PanelSectionHeading icon={Paperclip} id={`${titleId}-artifacts`}>
                 Bukti tercatat
-              </h3>
+              </PanelSectionHeading>
               <ul className="mt-2 flex flex-col gap-2">
                 {artifactGroups.slice(0, 3).map((group) => (
                   <li
