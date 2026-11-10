@@ -31,6 +31,14 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+const mockPush = jest.fn();
+let mockPathname = "/companion";
+
+jest.mock("next/navigation", () => ({
+  usePathname: () => mockPathname,
+  useRouter: () => ({ push: mockPush, refresh: jest.fn() }),
+}));
+
 const APK_MESSAGE =
   "Selamat siang Bu, ini undangan pernikahan anak kami. Mohon dibuka ya file Undangan-Pernikahan.apk yang saya kirim, isinya lengkap dengan lokasi acara.";
 const BLOCKED_MESSAGE =
@@ -47,6 +55,8 @@ async function sendMessage(
 
 describe("CompanionChat · shell", () => {
   beforeEach(() => {
+    mockPathname = "/companion";
+    mockPush.mockClear();
     jest.mocked(listConversationHistory).mockClear();
     jest
       .mocked(listConversationHistory)
@@ -316,6 +326,21 @@ describe("CompanionChat · shell", () => {
       "aria-current",
       "page",
     );
+  });
+
+  it("sends a new conversation from /agen back to /companion", async () => {
+    const user = userEvent.setup();
+    mockPathname = "/agen";
+    render(<CompanionChat initialPanel="agen" />);
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Percakapan baru" })[0],
+    );
+
+    expect(mockPush).toHaveBeenCalledWith("/companion");
+    expect(
+      screen.getByRole("heading", { name: "Agen pemeriksa" }),
+    ).toBeInTheDocument();
   });
 
   it("swaps the evidence panel for agent detail only while the overview is open", async () => {

@@ -68,7 +68,7 @@ export function WorkspaceFrame({
         onClose={() => setMobileOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((open) => !open)}
-        onShowAgents={() => router.push("/companion?panel=agen")}
+        onShowAgents={() => router.push("/agen")}
         auth={(iconsOnly) => (
           <CompanionAuth session={session} iconsOnly={iconsOnly} />
         )}

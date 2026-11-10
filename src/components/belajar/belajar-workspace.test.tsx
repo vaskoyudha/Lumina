@@ -69,6 +69,6 @@ describe("BelajarWorkspace", () => {
 
     await user.click(screen.getByRole("button", { name: /agen pemeriksa/i }));
 
-    expect(push).toHaveBeenCalledWith("/companion?panel=agen");
+    expect(push).toHaveBeenCalledWith("/agen");
   });
 });
