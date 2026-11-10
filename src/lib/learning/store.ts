@@ -1,6 +1,13 @@
 import "server-only";
 import { authDatabase } from "@/lib/auth/database";
 import { getModule, getSimulation } from "@/lib/content/store";
+import { migrateMisses } from "@/lib/learning/pattern-map";
+import {
+  learningTransaction,
+  readLearningAttempts,
+  readLearningReviews,
+  recordQuizLearning,
+} from "@/lib/learning/review-store";
 import type { SimulationSubmission } from "@/lib/learning/validation";
 import {
   BADGE_FOR_MODULE,
@@ -23,13 +30,34 @@ export async function readAccountProgress(userId: string): Promise<Progress> {
   const completedModules = rows
     .filter((r) => r.completed_at)
     .map((r) => r.module_no);
+  const [reviews, attempts] = await Promise.all([
+    readLearningReviews(userId),
+    readLearningAttempts(userId),
+  ]);
+  const missed = migrateMisses([
+    ...new Set(rows.flatMap((r) => r.missed_patterns)),
+  ]);
   return {
     ...EMPTY_PROGRESS,
     completedModules,
     badges: completedModules
       .map((no) => BADGE_FOR_MODULE[no])
       .filter((id): id is string => !!id),
-    missedPatterns: [...new Set(rows.flatMap((r) => r.missed_patterns))],
+    reviews,
+    attempts,
+    missedPatterns: [
+      ...new Set([
+        ...missed.filter(
+          (id) =>
+            !reviews.some(
+              (r) => r.patternId === id && r.wrong > 0 && r.box > 0,
+            ),
+        ),
+        ...reviews
+          .filter((r) => r.box === 0 && r.wrong > 0)
+          .map((r) => r.patternId),
+      ]),
+    ],
     updatedAt: rows.length
       ? new Date(
           Math.max(...rows.map((r) => r.updated_at.getTime())),
@@ -43,6 +71,7 @@ export async function saveQuiz(
   no: number,
   answers: Record<string, string>,
   complete: boolean,
+  attemptId?: string,
 ) {
   const module = await getModule(no);
   if (!module?.content) throw new LearningError("Modul tidak tersedia.");
@@ -60,21 +89,31 @@ export async function saveQuiz(
     throw new LearningError(
       "Lulus kuis minimal 60% untuk menyelesaikan modul.",
     );
-  await authDatabase().query(
-    `INSERT INTO learning_progress(user_id,module_no,answers,score,total,missed_patterns,completed_at)
+  await learningTransaction(userId, async (client) => {
+    await recordQuizLearning(
+      client,
+      userId,
+      no,
+      answers,
+      Object.fromEntries(questions.map((q) => [q.id, q.correctId])),
+      attemptId,
+    );
+    await client.query(
+      `INSERT INTO learning_progress(user_id,module_no,answers,score,total,missed_patterns,completed_at)
     VALUES ($1,$2,$3,$4,$5,$6,CASE WHEN $7 THEN now() ELSE NULL END)
     ON CONFLICT(user_id,module_no) DO UPDATE SET answers=EXCLUDED.answers,score=EXCLUDED.score,total=EXCLUDED.total,
       missed_patterns=EXCLUDED.missed_patterns,completed_at=COALESCE(learning_progress.completed_at,EXCLUDED.completed_at),updated_at=now()`,
-    [
-      userId,
-      no,
-      JSON.stringify(answers),
-      score,
-      questions.length,
-      missed,
-      complete,
-    ],
-  );
+      [
+        userId,
+        no,
+        JSON.stringify(answers),
+        score,
+        questions.length,
+        missed,
+        complete,
+      ],
+    );
+  });
   return readAccountProgress(userId);
 }
 

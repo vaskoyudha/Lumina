@@ -14,7 +14,11 @@ import {
 } from "@/components/belajar/content-state";
 import type { KatalogItem } from "@/components/belajar/modul-katalog";
 import { Card, CardContent } from "@/components/ui/card";
-import { listModules, moduleSummaries } from "@/lib/content/store";
+import {
+  listModules,
+  listSimulations,
+  moduleSummaries,
+} from "@/lib/content/store";
 
 import { formattedLaporan } from "@/lib/modus";
 
@@ -36,8 +40,10 @@ export default function BelajarPage() {
 export async function BelajarContent() {
   await connection();
   let sorted: ReturnType<typeof moduleSummaries>;
+  let playable: string[] = [];
   try {
     sorted = moduleSummaries(await listModules());
+    playable = (await listSimulations()).map((s) => s.scenario.scenario.id);
   } catch {
     return <ContentUnavailable />;
   }
@@ -82,6 +88,7 @@ export async function BelajarContent() {
         items={items}
         featured={featured}
         total={sorted.length}
+        playable={playable}
       />
 
       <CardNote complete={complete} total={sorted.length} />
