@@ -396,11 +396,12 @@ export function Composer({
         composer, so the sentence lives in the DOM for every user and screen
         reader but does not add a line of chrome.
       */}
-      <p className="sr-only">
-        Isi pesan lengkap tidak dikirim: pemeriksaan berjalan di perangkat ini.
-        Yang bisa sampai ke lapisan bahasa hanya ringkasan temuan tanpa kutipan,
-        dan gambar yang kamu lampirkan dikirim ke layanan baca gambar untuk
-        disalin teksnya. Percakapan tidak disimpan.
+      <p className="mt-2 text-xs leading-relaxed text-dim">
+        Isi pesan lengkap yang diperiksa tidak dikirim: pemeriksaan berjalan di
+        perangkat ini. Pertanyaan, riwayat obrolan yang tidak diperiksa, dan
+        ringkasan temuan tanpa kutipan dapat dikirim ke layanan AI. Gambar
+        lampiran dikirim untuk disalin teksnya. Percakapan tidak disimpan di
+        server.
       </p>
     </div>
   );

@@ -8,6 +8,7 @@ import { getModule } from "@/lib/content/store";
 import {
   readAccountProgress,
   readSimulationResults,
+  recordSimulationIntrusion,
   saveQuiz,
   saveSimulation,
 } from "@/lib/learning/store";
@@ -153,5 +154,37 @@ suite("account learning PostgreSQL", () => {
     expect(await readSimulationResults(userA)).toHaveLength(1);
     expect(await readSimulationResults(userB)).toHaveLength(0);
     await expect(saveSimulation(userB, run)).rejects.toThrow(/tidak cocok/);
+  });
+  it("rejects premature timer failures and accepts only an elapsed account-owned receipt", async () => {
+    const submission: SimulationSubmission = {
+      attemptId: randomUUID(),
+      scenarioId: SIMULATION_FIXTURE.scenario.scenario.id,
+      mode: "tantangan",
+      outcome: "failed",
+      steps: [{ nodeId: "decision", choiceIndex: 2 }],
+    };
+    await expect(saveSimulation(userA, submission)).rejects.toThrow(
+      /belum selesai/,
+    );
+    await recordSimulationIntrusion(userA, submission);
+    await expect(saveSimulation(userA, submission)).rejects.toThrow(
+      /belum selesai/,
+    );
+    await pool.query(
+      "UPDATE simulation_intrusion_timers SET started_at=now()-interval '60 seconds' WHERE attempt_id=$1",
+      [submission.attemptId],
+    );
+    await recordSimulationIntrusion(userA, submission); // retry must not reset the clock
+    await expect(recordSimulationIntrusion(userB, submission)).rejects.toThrow(
+      /tidak cocok/,
+    );
+    await expect(saveSimulation(userB, submission)).rejects.toThrow();
+    await saveSimulation(userA, submission);
+    await saveSimulation(userA, submission);
+    expect(
+      (await readSimulationResults(userA)).filter(
+        (r) => r.outcome === "failed",
+      ),
+    ).toHaveLength(1);
   });
 });

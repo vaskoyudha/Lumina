@@ -1,17 +1,26 @@
 /** @jest-environment node */
+
+import { consumeAttempt } from "@/lib/auth/accounts";
 import { getSession } from "@/lib/auth/server-session";
 import {
   getAccountProgress,
+  startSimulationIntrusion,
   submitQuiz,
   submitSimulation,
 } from "@/lib/learning/actions";
-import { saveQuiz, saveSimulation } from "@/lib/learning/store";
+import {
+  recordSimulationIntrusion,
+  saveQuiz,
+  saveSimulation,
+} from "@/lib/learning/store";
 import { EMPTY_PROGRESS } from "@/lib/progress";
 
 jest.mock("@/lib/auth/server-session", () => ({ getSession: jest.fn() }));
+jest.mock("@/lib/auth/accounts", () => ({ consumeAttempt: jest.fn() }));
 jest.mock("@/lib/learning/store", () => ({
   saveQuiz: jest.fn(),
   saveSimulation: jest.fn(),
+  recordSimulationIntrusion: jest.fn(),
   readAccountProgress: jest.fn(),
   readSimulationResults: jest.fn(),
   LearningError: class extends Error {},
@@ -22,8 +31,26 @@ it("rejects guests and expired sessions without writing", async () => {
   expect((await submitQuiz({})).ok).toBe(false);
   expect((await submitSimulation({})).ok).toBe(false);
   expect((await getAccountProgress()).ok).toBe(false);
+  expect((await startSimulationIntrusion({})).ok).toBe(false);
+  expect(recordSimulationIntrusion).not.toHaveBeenCalled();
   expect(saveQuiz).not.toHaveBeenCalled();
   expect(saveSimulation).not.toHaveBeenCalled();
+});
+it("records a rate-limited intrusion timer only for the signed-in account", async () => {
+  jest.mocked(getSession).mockResolvedValue({ id: "account-a" } as never);
+  const input = {
+    attemptId: "892e48bd-9178-461d-bd83-c32fc614bb23",
+    scenarioId: "L1-kurir-apk",
+  };
+  expect(
+    (await startSimulationIntrusion({ ...input, userId: "account-b" })).ok,
+  ).toBe(true);
+  expect(consumeAttempt).toHaveBeenCalledWith(
+    "simulation:timer:account-a",
+    30,
+    60000,
+  );
+  expect(recordSimulationIntrusion).toHaveBeenCalledWith("account-a", input);
 });
 it("takes ownership from the session, ignoring a client-supplied user id", async () => {
   jest.mocked(getSession).mockResolvedValue({

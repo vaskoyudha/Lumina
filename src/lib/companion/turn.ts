@@ -166,7 +166,7 @@ export function planTurn(input: {
     };
   }
 
-  if (input.lastResult && input.lastExplanation && FOLLOW_UP.test(text)) {
+  if (input.lastResult && FOLLOW_UP.test(text)) {
     return {
       lane: "lanjutan",
       hasFindings,

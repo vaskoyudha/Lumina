@@ -10,11 +10,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useAccountProgress } from "@/components/belajar/account-progress-context";
 import {
   ProfileDialog,
   type ProfileSection,
 } from "@/components/profil/profile-dialog";
+import { useProfileProgress } from "@/components/profil/use-profile-progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,7 +28,6 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { logout } from "@/lib/auth/actions";
 import { useSavedLoker } from "@/lib/loker/use-saved";
-import { MODUS } from "@/lib/modus";
 import { BADGE_LABEL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +55,8 @@ export function ProfilePopup({ className }: { className?: string }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [section, setSection] = useState<ProfileSection | null>(null);
-  const { progress, modules } = useAccountProgress();
+  const [open, setOpen] = useState(false);
+  const { progress, error: progressError, total } = useProfileProgress(open);
   const { saved } = useSavedLoker();
 
   useEffect(() => {
@@ -84,7 +84,6 @@ export function ProfilePopup({ className }: { className?: string }) {
 
   const initial = initialsFor(account.nama);
   const done = progress?.completedModules.length ?? 0;
-  const total = modules.length || MODUS.length;
   const pct = Math.min(100, Math.round((done / total) * 100));
   const badges = Object.entries(BADGE_LABEL)
     .filter(([id]) => progress?.badges.includes(id))
@@ -103,7 +102,7 @@ export function ProfilePopup({ className }: { className?: string }) {
       : null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -150,7 +149,9 @@ export function ProfilePopup({ className }: { className?: string }) {
               Kemajuan belajar
             </span>
             <span className="tabular text-[11px] text-dim">
-              {done}/{total} modul
+              {progress && !progressError
+                ? `${done}/${total} modul`
+                : `—/${total} modul`}
             </span>
           </div>
           <Progress
@@ -159,9 +160,12 @@ export function ProfilePopup({ className }: { className?: string }) {
             className="mt-2 h-1.5 bg-panel-2 [&>[data-slot=progress-indicator]]:bg-brand"
           />
           <p className="mt-1.5 text-[10.5px] text-dim">
-            {badges.length > 0
-              ? `Lencana: ${badges.join(", ")}.`
-              : "Belum ada lencana. Selesaikan satu modul untuk mulai."}
+            {progressError ||
+              (!progress
+                ? "Memuat progres akun…"
+                : badges.length > 0
+                  ? `Lencana: ${badges.join(", ")}.`
+                  : "Belum ada lencana. Selesaikan satu modul untuk mulai.")}
           </p>
         </div>
 
@@ -241,6 +245,9 @@ export function ProfilePopup({ className }: { className?: string }) {
       </DropdownMenuContent>
 
       <ProfileDialog
+        onAccountSaved={(next) =>
+          setAccount((current) => (current ? { ...current, ...next } : current))
+        }
         session={{
           nama: account.nama,
           email: account.email,

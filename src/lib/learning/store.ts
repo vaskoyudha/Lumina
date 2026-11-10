@@ -129,6 +129,13 @@ export async function saveSimulation(
       const choice = node.choices[step.choiceIndex];
       if (!choice) throw new LearningError("Pilihan tidak valid.");
       panic = Math.min(scenario.hud.panic.max, panic + (choice.panic ?? 0));
+      if (
+        panic >= scenario.hud.panic.fail_at &&
+        stepIndex < submission.steps.length
+      )
+        throw new LearningError(
+          "Simulasi sudah berakhir saat batas panik tercapai.",
+        );
       compromised ||= !!choice.compromisesDevice;
       id = choice.next;
     } else if (node.type === "tool_task" && step.choiceIndex === undefined) {
@@ -137,12 +144,27 @@ export async function saveSimulation(
     } else throw new LearningError("Langkah simulasi tidak valid.");
   }
   const final = skipMessages();
-  const failure =
-    panic >= scenario.hud.panic.fail_at ||
-    (submission.mode === "tantangan" &&
-      compromised &&
-      !isolated &&
-      final?.type !== "ending");
+  let intrusionFailed = false;
+  if (
+    submission.outcome === "failed" &&
+    submission.mode === "tantangan" &&
+    compromised &&
+    !isolated &&
+    final?.type !== "ending"
+  ) {
+    const { start, max, rate_per_second: rate } = scenario.hud.intrusion;
+    if (Number.isFinite(rate) && rate > 0) {
+      // Allow one display tick of scheduling/network skew. Paused time cannot
+      // be proved from a browser, but an immediate fabricated failure is rejected.
+      const seconds = Math.max(0, (max - start) / rate - 1);
+      const timer = await authDatabase().query(
+        "SELECT 1 FROM simulation_intrusion_timers WHERE attempt_id=$1 AND user_id=$2 AND scenario_id=$3 AND started_at <= now()-$4*interval '1 second'",
+        [submission.attemptId, userId, submission.scenarioId, seconds],
+      );
+      intrusionFailed = !!timer.rowCount;
+    }
+  }
+  const failure = panic >= scenario.hud.panic.fail_at || intrusionFailed;
   const outcome = failure
     ? "failed"
     : final?.type === "ending"
@@ -177,4 +199,23 @@ export async function saveSimulation(
     if (!duplicate.rowCount)
       throw new LearningError("Percobaan tidak cocok. Mulai misi baru.");
   }
+}
+
+/** Idempotent receipt of the first compromised-device event, scoped to an account. */
+export async function recordSimulationIntrusion(
+  userId: string,
+  input: { attemptId: string; scenarioId: string },
+) {
+  if (!(await getSimulation(input.scenarioId)))
+    throw new LearningError("Simulasi tidak tersedia.");
+  await authDatabase().query(
+    "INSERT INTO simulation_intrusion_timers(attempt_id,user_id,scenario_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+    [input.attemptId, userId, input.scenarioId],
+  );
+  const found = await authDatabase().query(
+    "SELECT 1 FROM simulation_intrusion_timers WHERE attempt_id=$1 AND user_id=$2 AND scenario_id=$3",
+    [input.attemptId, userId, input.scenarioId],
+  );
+  if (!found.rowCount)
+    throw new LearningError("Percobaan tidak cocok. Mulai misi baru.");
 }
