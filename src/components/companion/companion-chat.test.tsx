@@ -341,7 +341,6 @@ describe("CompanionChat · verdict before voice", () => {
   });
 
   it("announces the settled summary after opening the Agents view mid-run", async () => {
-    mockPathname = "/agen";
     let resolveReply: (value: unknown) => void = () => undefined;
     fetchMock.mockImplementation(
       () =>
@@ -351,13 +350,15 @@ describe("CompanionChat · verdict before voice", () => {
     );
 
     const user = userEvent.setup();
-    render(<CompanionChat />);
+    const { rerender } = render(<CompanionChat />);
 
     await sendApk(user);
     // The verdict is already on screen; the voice model is still pending.
     await screen.findAllByText("File APK via WhatsApp");
 
-    await user.click(screen.getByRole("button", { name: /^agen/i }));
+    // Following the /agen link swaps the address; the transcript unmounts.
+    mockPathname = "/agen";
+    rerender(<CompanionChat />);
     expect(
       screen.getByRole("heading", { name: "Agen pemeriksa" }),
     ).toBeInTheDocument();
