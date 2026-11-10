@@ -85,6 +85,17 @@ export const AnswerRequestSchema = z
     attachmentContext: z.array(AnswerAttachmentSchema).max(3).default([]),
     /** Whether the client holds a verdict the report tool may use. */
     hasVerdict: z.boolean().default(false),
+    /**
+     * The signed-in user's display name, for a natural address. This is the
+     * user's own profile field, never a message they received.
+     */
+    userName: z.string().min(1).max(80).optional(),
+    /**
+     * The URL the reader just approved in the confirmation card. It must be
+     * present verbatim in `question`; the route offers `check_link` only then.
+     * Omitted on every ordinary turn.
+     */
+    linkApproved: z.string().min(1).max(2048).optional(),
     /** Tool results from earlier loop steps, in order. */
     observations: z
       .array(ToolObservationSchema)

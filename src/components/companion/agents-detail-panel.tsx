@@ -6,7 +6,7 @@ import { type ReactNode, useState } from "react";
 import {
   AGENT_DISPLAY_NAME,
   AGENT_REGISTRY,
-  AGENT_SEQUENCE,
+  CREW_SEQUENCE,
   type DetectorAgent,
   LUMINA_STEPS,
 } from "@/components/companion/agents";
@@ -52,7 +52,7 @@ export function AgentsDetailPanel({
 }) {
   const activeId = selected ?? "message";
   const profile = AGENT_REGISTRY[activeId];
-  const index = AGENT_SEQUENCE.indexOf(activeId);
+  const index = CREW_SEQUENCE.indexOf(activeId);
   const Icon = profile.icon;
   const { label } = STAGE_LABEL[activeId];
   const [tab, setTab] = useState<PanelTab>("detail");
@@ -192,7 +192,7 @@ export function AgentsDetailPanel({
                 <p className="mt-2 font-bold text-[20px] text-ink tabular-nums leading-none">
                   {String(index + 1).padStart(2, "0")}
                   <span className="text-[12px] font-medium text-ink-faint">
-                    /{String(AGENT_SEQUENCE.length).padStart(2, "0")}
+                    /{String(CREW_SEQUENCE.length).padStart(2, "0")}
                   </span>
                 </p>
                 <p className="mt-1 text-[10px] text-dim leading-none">

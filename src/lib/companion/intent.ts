@@ -52,6 +52,31 @@ export function wantsJobSearch(text: string): boolean {
   );
 }
 
+const EXPLICIT_URL = /https?:\/\/[^\s<>"']+/i;
+const LINK_NOUN = /\b(link|tautan|url|website|situs|domain|alamat)\b/i;
+const LINK_VERB =
+  /\b(cek|periksa|pindai|scan|analisis|analisa|verifikasi|validasi|telusuri)\b/i;
+const LINK_SAFETY =
+  /\b(aman|berbahaya|bahaya|penipuan|phishing|scam|palsu|asli|resmi|kredibel|terpercaya)\b/i;
+const LINK_NEGATED =
+  /\b(jangan|bukan|nggak|gak|tidak|belum)\b.{0,12}\b(cek|periksa|pindai|scan|analisis|analisa|verifikasi|validasi|telusuri)\b/i;
+
+/**
+ * Explicit link inspection, never inferred from a pasted URL alone.
+ *
+ * The URL leaves the browser only because the reader asked the agent to check
+ * it. A bare link in a message still goes through the local scorer and the
+ * opt-in button; it does not authorize a server-side scan by itself.
+ */
+export function wantsLinkCheck(text: string): boolean {
+  return (
+    EXPLICIT_URL.test(text) &&
+    LINK_NOUN.test(text) &&
+    (LINK_VERB.test(text) || LINK_SAFETY.test(text)) &&
+    !LINK_NEGATED.test(text)
+  );
+}
+
 export function conversationIntent(text: string): ConversationIntent | null {
   if (isIncidentNarrative(text)) return "incident";
   if (wantsLearning(text)) return "learning";

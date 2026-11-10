@@ -195,6 +195,39 @@
 }
 
 /*
+ * Companion typography — mirrors DeepTutor's workspace:
+ *   Geist for chrome and user words, Lora for assistant prose and display
+ *   headings. Scope only this class; every other Lumina surface keeps Inter.
+ */
+.companion-font {
+  --font-sans:
+    var(--font-geist), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans SC", system-ui, sans-serif;
+  --font-serif:
+    var(--font-lora), "Songti SC", "STSong", "Noto Serif SC",
+    "Source Han Serif SC", SimSun, Georgia, serif;
+  font-family: var(--font-sans);
+}
+
+/* A caret on the final rendered block while an answer is still streaming. */
+.companion-prose.is-streaming > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-inline-start: 3px;
+  vertical-align: -0.12em;
+  background: currentColor;
+  animation: companion-caret 1s steps(2, start) infinite;
+}
+
+@keyframes companion-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/*
  * Streaming shimmer, extracted from the reference's `thinking-label-shimmer`:
  * a 300%-wide gradient swept from 100% to 0% over 2.2s, linear and infinite.
  * The gradient itself lives in `thinking-row.tsx` because it must be clipped to

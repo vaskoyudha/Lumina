@@ -2,6 +2,7 @@ import { explain } from "@/lib/companion/explain";
 import {
   isContentQuestion,
   isQuestionAbout,
+  isWebLookupQuestion,
   PASTE_LENGTH,
   planTurn,
   SHORTEST_SCAM,
@@ -270,6 +271,42 @@ describe("wantsReportDraft · a request is not a question about reports", () => 
     expect(wantsSafetyCheck("apa isi gambar ini?")).toBe(false);
     expect(wantsSafetyCheck("apakah ini penipuan?")).toBe(true);
     expect(wantsSafetyCheck("periksa gambar ini")).toBe(true);
+  });
+});
+
+describe("isWebLookupQuestion · lookup requests are chat, not evidence", () => {
+  it("recognises an explicit web lookup", () => {
+    expect(
+      isWebLookupQuestion(
+        "cari di web berita terbaru hari ini tentang penipuan QRIS, lalu beri tahu sumbernya",
+      ),
+    ).toBe(true);
+    expect(isWebLookupQuestion("carikan berita terbaru soal QRIS")).toBe(true);
+    expect(isWebLookupQuestion("tolong search di internet soal pinjol")).toBe(
+      true,
+    );
+  });
+
+  it("does not let a pasted message claim the chat lane", () => {
+    expect(
+      isWebLookupQuestion(
+        "Halo, ini dari BCA. Cek berita terbaru di https://bca-verif.xyz",
+      ),
+    ).toBe(false);
+    expect(isWebLookupQuestion("apa itu QRIS?")).toBe(false);
+  });
+
+  it("routes the lookup to tanya when the guard claims it", () => {
+    const text = "cari di web berita terbaru hari ini tentang penipuan QRIS";
+    expect(
+      planTurn({
+        text,
+        result: scoreText({ text }),
+        lastResult: null,
+        lastExplanation: null,
+        asked: isWebLookupQuestion(text),
+      }).lane,
+    ).toBe("tanya");
   });
 });
 
