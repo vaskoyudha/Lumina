@@ -456,8 +456,10 @@ async function runSpecialist(
   } = {},
 ): Promise<SubagentResult> {
   const { session, model } = options;
-  const toolNames =
-    options.tools?.filter((tool) => spec.tools.includes(tool)) ?? spec.tools;
+  const requestedTools = options.tools?.filter((tool) =>
+    spec.tools.includes(tool),
+  );
+  const toolNames = requestedTools?.length ? requestedTools : spec.tools;
   const started = performance.now();
   const toolContext: ToolContext = {
     message: request.message,
