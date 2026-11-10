@@ -28,9 +28,7 @@ export function Faq() {
           <h2 className="font-semibold text-3xl text-ls-ink sm:text-4xl">
             {faqCopy.title}
           </h2>
-          <p className="mt-1.5 text-ls-ink-3 text-sm">
-            {faqCopy.body}
-          </p>
+          <p className="mt-1.5 text-ls-ink-3 text-sm">{faqCopy.body}</p>
         </div>
 
         <Tabs

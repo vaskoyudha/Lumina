@@ -73,9 +73,7 @@ export function Pricing() {
             <h2 className="mt-3 font-semibold text-3xl text-ls-ink sm:text-4xl">
               {pricingCopy.title}
             </h2>
-            <p className="mt-1.5 text-ls-ink-2 text-sm">
-              {pricingCopy.body}
-            </p>
+            <p className="mt-1.5 text-ls-ink-2 text-sm">{pricingCopy.body}</p>
           </div>
 
           <div className="grid flex-1 grid-cols-1 gap-6 sm:grid-cols-2">

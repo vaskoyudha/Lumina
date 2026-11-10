@@ -459,7 +459,6 @@ function effectBackground(definition: EffectDefinition, mode: EffectMode) {
 }
 
 function buildFocusedDocument(definition: EffectDefinition, mode: EffectMode) {
-  const background = effectBackground(definition, mode);
   const targetJson = JSON.stringify(definition.targets).replace(
     /</g,
     "\\u003c",
