@@ -53,7 +53,7 @@ export function MissionStatusBar({
     <section
       aria-label="Status simulasi"
       className={cn(
-        "relative overflow-hidden rounded-card border border-line bg-panel shadow-[var(--appnext-shadow-ambient)]",
+        "relative overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 shadow-[var(--appnext-shadow-ambient)]",
         className,
       )}
     >

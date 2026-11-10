@@ -2,15 +2,23 @@
 
 import {
   ArrowRight,
+  BookOpen,
   Check,
+  CheckCircle2,
   ChevronDown,
   Coffee,
   FileWarning,
   Flag,
   KeyRound,
+  LayoutGrid,
+  Lightbulb,
+  MessageSquare,
   Pause,
   Play,
+  Shield,
+  ShieldAlert,
   ShieldCheck,
+  Shuffle,
   WifiOff,
   Wind,
   Zap,
@@ -74,9 +82,9 @@ function Meter({
   end?: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 lg:gap-1.5">
-      <div className="flex items-baseline justify-between gap-2 text-[11px] lg:text-sm">
-        <span className="font-medium text-txt">{label}</span>
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex items-baseline justify-between gap-2 text-[10.5px] font-bold lg:text-xs">
+        <span className="text-txt">{label}</span>
         <span className="tabular text-dim">
           {Math.round(value)} / {max}
         </span>
@@ -89,10 +97,10 @@ function Meter({
         aria-valuemax={max}
         aria-valuenow={Math.round(value)}
         className={cn(
-          "h-1.5 lg:h-2.5",
+          "h-2 rounded-full bg-brand-tint lg:h-2.5",
           danger
             ? "[&_[data-slot=progress-indicator]]:bg-danger"
-            : "[&_[data-slot=progress-indicator]]:bg-brand",
+            : "[&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-brand-glow [&_[data-slot=progress-indicator]]:to-brand",
         )}
       />
       {start && end && (
@@ -455,25 +463,45 @@ export function Runner({
 
   if (!started)
     return (
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-5">
-          <header>
-            <p className="flex items-center gap-1.5 font-medium text-dim text-xs">
-              {persist
-                ? `Misi · Level ${scenario.scenario.level}`
-                : `Latihan modul ${content.moduleNo ?? ""}`.trim()}
-            </p>
-            <h1 className="mt-1 font-bold text-2xl text-txt tracking-tight sm:text-[30px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-4">
+          <header className="relative overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 p-5 shadow-[var(--appnext-shadow-soft)] sm:p-6">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-brand-glow/20 blur-3xl"
+            />
+            <div className="relative flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-panel/80 px-2.5 py-1 font-bold text-[10.5px] text-brand-ink">
+                <ShieldCheck aria-hidden="true" className="size-3.5" />
+                {persist
+                  ? `Misi · Level ${scenario.scenario.level}`
+                  : `Latihan modul ${content.moduleNo ?? ""}`.trim()}
+              </span>
+              <span aria-hidden="true" className="text-brand-line">
+                ·
+              </span>
+              <span className="rounded-full bg-brand-soft px-2.5 py-1 font-bold text-[10.5px] text-brand-chip-ink">
+                {persist ? "Fiktif" : "Latihan"}
+              </span>
+            </div>
+            <h1 className="relative mt-3 font-extrabold text-2xl text-txt leading-tight tracking-tight sm:text-[30px]">
               {MISSION.title}
             </h1>
-            <p className="mt-1 text-dim text-sm">
-              {MISSION.duration} · {MISSION.chapters.length} babak
+            <p className="relative mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-[11.5px] text-dim">
+              <span>{MISSION.duration}</span>
+              <span aria-hidden="true">·</span>
+              <span>{MISSION.chapters.length} babak</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {scenario.nodes.filter((node) => node.type === "ending").length}{" "}
+                kemungkinan akhir
+              </span>
             </p>
           </header>
 
           {!persist && (
-            <Alert className="rounded-2xl border-line">
-              <ShieldCheck aria-hidden />
+            <Alert className="rounded-2xl border-brand-line bg-brand-tint/60">
+              <ShieldCheck aria-hidden="true" />
               <AlertTitle>Latihan dari modul</AlertTitle>
               <AlertDescription>
                 Ini latihan keputusan dari modul yang sudah kamu selesaikan.
@@ -482,26 +510,35 @@ export function Runner({
             </Alert>
           )}
 
-          <Card className="rounded-card border border-line ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <CardHeader>
-              <p className="font-semibold text-[11px] text-dim uppercase tracking-wide">
-                Briefing misi
-              </p>
-              <CardTitle role="heading" aria-level={2} className="text-xl">
-                Siap jadi pemeran utama?
-              </CardTitle>
-              <CardDescription className="text-sm leading-relaxed">
-                {MISSION.role} · {MISSION.context}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <div className="rounded-xl bg-panel-2 p-4">
-                <p className="font-medium text-sm text-txt">Tujuan misi</p>
-                <p className="mt-0.5 text-dim text-sm">{MISSION.objective}</p>
+          <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <CardContent className="flex flex-col gap-5 p-5 sm:p-6">
+              <div>
+                <p className="font-semibold text-[10.5px] text-dim uppercase tracking-[0.12em]">
+                  Briefing misi
+                </p>
+                <CardTitle
+                  role="heading"
+                  aria-level={2}
+                  className="mt-1 font-extrabold text-xl text-txt"
+                >
+                  Siap jadi pemeran utama?
+                </CardTitle>
+                <CardDescription className="mt-1.5 text-sm leading-relaxed">
+                  {MISSION.role} · {MISSION.context}
+                </CardDescription>
+              </div>
+
+              <div className="rounded-[16px] border border-brand-line bg-gradient-to-br from-brand-tint/70 to-panel p-4">
+                <p className="font-bold text-[13px] text-brand-ink">
+                  Tujuan misi
+                </p>
+                <p className="mt-1 text-sm text-txt leading-relaxed">
+                  {MISSION.objective}
+                </p>
               </div>
 
               <div>
-                <h2 className="font-bold text-[15px] text-txt">
+                <h2 className="font-extrabold text-[15px] text-txt">
                   Pilih cara bermain
                 </h2>
                 <p className="mt-0.5 text-dim text-xs">
@@ -515,14 +552,16 @@ export function Runner({
                     aria-pressed={mode === "santai"}
                     data-mode="santai"
                     className={cn(
-                      "h-auto justify-start gap-3 whitespace-normal px-4 py-3 text-left",
-                      mode === "santai" && "border-brand-line bg-brand-soft",
+                      "h-auto justify-start gap-3 whitespace-normal rounded-[16px] px-4 py-3 text-left",
+                      mode === "santai"
+                        ? "border-brand-line bg-brand-soft/70"
+                        : "border-line bg-panel",
                     )}
                     onClick={() => setMode("santai")}
                   >
                     <Coffee aria-hidden="true" className="shrink-0" />
                     <span className="min-w-0">
-                      <span className="block font-medium">Santai</span>
+                      <span className="block font-bold">Santai</span>
                       <span className="block text-dim text-xs">
                         Tanpa tekanan waktu otomatis
                       </span>
@@ -534,14 +573,16 @@ export function Runner({
                     aria-pressed={mode === "tantangan"}
                     data-mode="tantangan"
                     className={cn(
-                      "h-auto justify-start gap-3 whitespace-normal px-4 py-3 text-left",
-                      mode === "tantangan" && "border-brand-line bg-brand-soft",
+                      "h-auto justify-start gap-3 whitespace-normal rounded-[16px] px-4 py-3 text-left",
+                      mode === "tantangan"
+                        ? "border-brand-line bg-brand-soft/70"
+                        : "border-line bg-panel",
                     )}
                     onClick={() => setMode("tantangan")}
                   >
                     <Zap aria-hidden="true" className="shrink-0" />
                     <span className="min-w-0">
-                      <span className="block font-medium">Tantangan</span>
+                      <span className="block font-bold">Tantangan</span>
                       <span className="block text-dim text-xs">
                         Tekanan naik jika akses aplikasi terbuka
                       </span>
@@ -550,10 +591,10 @@ export function Runner({
                 </fieldset>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 border-line border-t pt-4">
+              <div className="flex flex-wrap items-center gap-2 border-brand-line border-t pt-4">
                 <Button
                   data-pressable
-                  className="h-11 rounded-xl px-5"
+                  className="h-11 rounded-full bg-gradient-to-b from-brand-glow via-brand to-brand-strong px-5 font-bold text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105"
                   onClick={() => {
                     setAttemptId(crypto.randomUUID());
                     setStarted(true);
@@ -565,7 +606,7 @@ export function Runner({
                 <Button
                   asChild
                   variant="outline"
-                  className="h-11 rounded-xl"
+                  className="h-11 rounded-full border-brand-line bg-panel font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
                   data-pressable
                 >
                   <Link
@@ -590,16 +631,16 @@ export function Runner({
 
         <aside
           aria-label="Ringkasan briefing"
-          className="flex flex-col gap-5 lg:sticky lg:top-0"
+          className="flex flex-col gap-4 lg:sticky lg:top-0"
         >
-          <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
-            <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
+          <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <h2 className="font-extrabold text-sm text-txt">Ringkasan misi</h2>
+            <dl className="mt-3 grid grid-cols-3 gap-1 rounded-[14px] border border-brand-line bg-gradient-to-b from-brand-tint/70 to-brand-soft/40 p-2.5">
               <div className="flex flex-col items-center py-1.5">
                 <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
                   Babak
                 </dt>
-                <dd className="order-1 tabular font-bold text-sm text-txt">
+                <dd className="order-1 tabular font-extrabold text-sm text-txt">
                   {MISSION.chapters.length}
                 </dd>
               </div>
@@ -607,7 +648,7 @@ export function Runner({
                 <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
                   Akhir
                 </dt>
-                <dd className="order-1 tabular font-bold text-sm text-txt">
+                <dd className="order-1 tabular font-extrabold text-sm text-txt">
                   {
                     scenario.nodes.filter((node) => node.type === "ending")
                       .length
@@ -618,7 +659,7 @@ export function Runner({
                 <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
                   Menit
                 </dt>
-                <dd className="order-1 tabular font-bold text-sm text-txt">
+                <dd className="order-1 tabular font-extrabold text-sm text-txt">
                   3–5
                 </dd>
               </div>
@@ -629,8 +670,8 @@ export function Runner({
             </p>
           </Card>
 
-          <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-            <h2 className="font-bold text-sm text-txt">Cara dinilai</h2>
+          <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+            <h2 className="font-extrabold text-sm text-txt">Cara dinilai</h2>
             <ul className="mt-2 flex flex-col gap-2 text-dim text-xs leading-relaxed">
               <li>Setiap pilihan punya konsekuensi tetap pada cerita.</li>
               <li>
@@ -641,8 +682,8 @@ export function Runner({
             </ul>
           </Card>
 
-          <Alert className="rounded-2xl border-line">
-            <ShieldCheck aria-hidden />
+          <Alert className="rounded-2xl border-brand-line bg-brand-tint/60">
+            <ShieldCheck aria-hidden="true" />
             <AlertTitle>Latihan, bukan pemindaian perangkat</AlertTitle>
             <AlertDescription>
               Semua pesan, lampiran, dan alat di sini fiktif. Latihan tidak
@@ -661,6 +702,11 @@ export function Runner({
   if (ended) {
     const ending = active.type === "ending" ? active : defaultEnding;
     const emergency = Boolean(failure) || ending.variant === "compromised";
+    const safeSteps = decisions.filter((choice) => choice.verdict === "benar");
+    const riskySteps = decisions.filter((choice) => choice.verdict === "salah");
+    const proofItems = REPORT_ARTIFACTS.filter((item) =>
+      proof.includes(item.id),
+    );
     return (
       <>
         {resultNotice}
@@ -668,11 +714,15 @@ export function Runner({
           className="flex flex-col gap-5"
           data-outcome={failure ? "failure" : ending.variant}
         >
-          <header>
-            <div className="flex flex-wrap items-center gap-2">
+          <header className="relative overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 p-5 shadow-[var(--appnext-shadow-soft)] sm:p-6">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-brand-glow/20 blur-3xl"
+            />
+            <div className="relative flex flex-wrap items-center gap-2">
               <Badge
-                variant={failure ? "destructive" : "secondary"}
-                data-tone={failure ? "danger" : undefined}
+                variant="outline"
+                className="rounded-full border-brand-line bg-panel/80 px-2.5 py-1 font-bold text-[10.5px] text-brand-ink"
               >
                 {failure
                   ? persist
@@ -682,7 +732,18 @@ export function Runner({
                     ? "Misi selesai"
                     : "Latihan selesai"}
               </Badge>
-              <Badge variant="outline">
+              <span aria-hidden="true" className="text-brand-line">
+                ·
+              </span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "rounded-full border-0 px-2.5 py-1 font-bold text-[10.5px]",
+                  failure || emergency
+                    ? "bg-danger/10 text-danger"
+                    : "bg-brand-soft text-brand-chip-ink",
+                )}
+              >
                 {failure
                   ? "Jalur berhenti"
                   : ending.variant === "success"
@@ -695,62 +756,145 @@ export function Runner({
             <h1
               ref={endingRef}
               tabIndex={-1}
-              className="mt-2 font-bold text-2xl text-txt tracking-tight outline-none sm:text-[30px]"
+              className="relative mt-2.5 font-extrabold text-2xl text-txt leading-tight tracking-tight outline-none sm:text-[30px]"
             >
               {failure ? "Berhenti dan ambil langkah aman" : ending.title}
             </h1>
-            <p className="mt-1 max-w-2xl text-dim text-sm leading-relaxed">
+            <p className="relative mt-1.5 max-w-2xl text-dim text-sm leading-relaxed">
               {failure ?? ending.text}
             </p>
           </header>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-            <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
-              <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
-                <CardContent className="flex flex-col gap-6 pt-6">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+            <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
+              <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+                <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
                   {latest?.rationale && (
-                    <Alert
-                      role="status"
-                      data-tone={latest.verdict === "salah" ? "danger" : "safe"}
-                      variant={
-                        latest.verdict === "salah" ? "destructive" : "default"
-                      }
-                      className="border-line"
-                    >
-                      <AlertTitle>
-                        {failure
-                          ? "Penjelasan pilihan"
-                          : latestTactic
-                            ? `Pola terakhir: ${latestTactic.name}`
-                            : "Penjelasan pilihan terakhir"}
-                      </AlertTitle>
-                      <AlertDescription>{latest.rationale}</AlertDescription>
-                    </Alert>
+                    <div className="rounded-[14px] border border-brand-line bg-gradient-to-r from-brand-soft via-brand-tint to-brand-soft/60 px-3.5 py-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-panel text-brand-ink">
+                          <ShieldAlert aria-hidden="true" className="size-4" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-[12.5px] text-brand-ink">
+                            {failure
+                              ? "Penjelasan pilihan"
+                              : latestTactic
+                                ? `Pola terakhir: ${latestTactic.name}`
+                                : "Penjelasan pilihan terakhir"}
+                          </p>
+                          <p className="mt-1 text-[12.5px] text-ink-soft leading-relaxed">
+                            {latest.rationale}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   <section className="flex flex-col gap-2">
-                    <h2 className="font-bold text-[15px] text-txt">
+                    <h2 className="flex items-center gap-2 font-extrabold text-[15px] text-txt">
+                      <Lightbulb
+                        aria-hidden="true"
+                        className="size-4 text-brand"
+                      />
                       Empat hal untuk diingat
                     </h2>
-                    <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm leading-relaxed">
-                      {ending.debrief.map((line) => (
-                        <li key={line}>{line}</li>
+                    <ol className="mt-1 flex list-none flex-col gap-1.5 p-0">
+                      {ending.debrief.map((line, index) => (
+                        <li key={line} className="flex items-start gap-2">
+                          <span className="grid size-5 shrink-0 place-items-center rounded-md bg-brand-soft font-extrabold text-[10px] text-brand-ink">
+                            {index + 1}
+                          </span>
+                          <p className="flex-1 rounded-[10px] bg-gradient-to-r from-panel-2/80 to-brand-tint/60 px-2.5 py-1.5 text-[12.5px] text-txt leading-relaxed">
+                            {line}
+                          </p>
+                        </li>
                       ))}
                     </ol>
                   </section>
 
-                  <section className="flex flex-col gap-2 border-line border-t pt-5">
-                    <h2 className="font-bold text-[15px] text-txt">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="flex items-start gap-2.5 rounded-[14px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 px-3 py-2.5">
+                      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-panel text-brand-ink">
+                        <CheckCircle2 aria-hidden="true" className="size-4" />
+                      </span>
+                      <div>
+                        <p className="font-extrabold text-[11.5px] text-txt">
+                          Langkah aman
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-dim leading-relaxed">
+                          {safeSteps.length} dari {decisions.length} keputusan
+                          menjaga kendali akun.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5 rounded-[14px] border border-brand-line bg-gradient-to-br from-brand-soft/60 via-panel to-brand-tint/70 px-3 py-2.5">
+                      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-panel text-danger">
+                        <ShieldAlert aria-hidden="true" className="size-4" />
+                      </span>
+                      <div>
+                        <p className="font-extrabold text-[11.5px] text-txt">
+                          Langkah berisiko
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-dim leading-relaxed">
+                          {riskySteps.length} keputusan membuka celah. Pelajari
+                          ulang alasannya.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[14px] border border-brand-line bg-gradient-to-r from-panel to-brand-tint/60 px-3 py-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <Lightbulb
+                        aria-hidden="true"
+                        className="size-4 text-brand"
+                      />
+                      <p className="font-extrabold text-[11.5px] text-txt">
+                        Bukti latihan yang dipilih
+                      </p>
+                    </div>
+                    <div className="mt-1.5 flex flex-col gap-1 pl-5">
+                      {proofItems.length > 0 ? (
+                        proofItems.map((item) => (
+                          <span
+                            key={item.id}
+                            className="flex items-center gap-1.5 font-semibold text-[11.5px] text-ink-soft"
+                          >
+                            <CheckCircle2
+                              aria-hidden="true"
+                              className="size-3.5 fill-brand text-white"
+                            />
+                            {item.label}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[11.5px] text-dim">
+                          Belum ada bukti yang dipilih pada jalur ini.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <section className="flex flex-col gap-2 border-brand-line border-t pt-4">
+                    <h2 className="font-extrabold text-[15px] text-txt">
                       Jejak keputusan
                     </h2>
                     <div className="flex flex-col gap-2">
                       {decisions.map((choice, index) => (
                         <div
                           key={`${index}-${choice.label}`}
-                          className="rounded-xl bg-panel-2 p-3"
+                          className="rounded-[12px] border border-brand-line bg-gradient-to-r from-panel-2/60 to-brand-tint/40 p-3"
                         >
                           <p className="text-sm">
-                            <strong className="font-medium">
+                            <strong
+                              className={cn(
+                                "font-bold",
+                                choice.verdict === "benar"
+                                  ? "text-brand-ink"
+                                  : "text-danger",
+                              )}
+                            >
                               {choice.verdict === "benar"
                                 ? "Langkah aman"
                                 : "Langkah berisiko"}
@@ -768,37 +912,24 @@ export function Runner({
                       )}
                     </div>
                   </section>
-
-                  {proof.length > 0 && (
-                    <section className="flex flex-col gap-2 border-line border-t pt-5">
-                      <h2 className="font-bold text-[15px] text-txt">
-                        Bukti latihan yang dipilih
-                      </h2>
-                      <ul className="list-disc pl-5 text-sm leading-relaxed">
-                        {REPORT_ARTIFACTS.filter((item) =>
-                          proof.includes(item.id),
-                        ).map((item) => (
-                          <li key={item.id}>{item.label}</li>
-                        ))}
-                      </ul>
-                    </section>
-                  )}
                 </CardContent>
               </Card>
             </div>
 
             <aside
               aria-label="Ringkasan hasil misi"
-              className="order-first flex flex-col gap-5 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
+              className="order-first flex flex-col gap-4 lg:order-none lg:sticky lg:top-0 lg:col-start-2 lg:row-start-1"
             >
-              <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+              <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-bold text-sm text-txt">Ringkasan misi</h2>
-                  <span className="rounded-md bg-brand-soft px-2 py-0.5 font-semibold text-[10px] text-brand-ink">
-                    LEVEL {scenario.scenario.level}
+                  <h2 className="font-extrabold text-sm text-txt">
+                    Ringkasan Misi
+                  </h2>
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 font-bold text-[10px] text-brand-chip-ink">
+                    Level {scenario.scenario.level}
                   </span>
                 </div>
-                <dl className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-line bg-panel-2 p-2.5">
+                <dl className="mt-3 grid grid-cols-3 gap-1 rounded-[14px] border border-brand-line bg-gradient-to-b from-brand-tint/70 to-brand-soft/40 p-2.5">
                   {[
                     ["Keputusan", decisions.length],
                     ["Pola", tactics.length],
@@ -811,41 +942,59 @@ export function Runner({
                       <dt className="order-2 mt-0.5 text-[10px] text-dim leading-none">
                         {label}
                       </dt>
-                      <dd className="order-1 tabular font-bold text-sm text-txt">
+                      <dd className="order-1 tabular font-extrabold text-sm text-txt">
                         {value}
                       </dd>
                     </div>
                   ))}
                 </dl>
-                <p className="mt-3 text-dim text-[11px] leading-relaxed">
-                  {tactics.length > 0
-                    ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
-                    : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
-                </p>
+                <div className="mt-2 flex items-start gap-1.5 rounded-[10px] bg-brand-tint/70 p-2">
+                  <span className="mt-0.5 grid size-3.5 shrink-0 place-items-center rounded-full bg-brand font-bold text-[8px] text-white">
+                    i
+                  </span>
+                  <p className="text-[10.5px] text-dim leading-relaxed">
+                    {tactics.length > 0
+                      ? `Kamu menemukan ${tactics.length} pola dari jalur ini. Coba jalur lain untuk melengkapi koleksi.`
+                      : "Belum ada pola yang terkumpul. Coba jalur lain untuk menemukan pola yang bisa dipelajari."}
+                  </p>
+                </div>
               </Card>
 
-              <Card className="gap-0 rounded-card border border-line p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
-                <h2 className="font-bold text-sm text-txt">
+              <Card className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+                <h2 className="font-extrabold text-sm text-txt">
                   Langkah berikutnya
                 </h2>
                 <div className="mt-3 flex flex-col gap-2">
                   {emergency && (
-                    <Button asChild className="h-11 rounded-xl" data-pressable>
-                      <Link href="/komunitas">Diskusikan pola ini</Link>
+                    <Button
+                      asChild
+                      className="h-11 rounded-full bg-gradient-to-b from-brand-glow via-brand to-brand-strong font-bold text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105"
+                      data-pressable
+                    >
+                      <Link href="/komunitas">
+                        <MessageSquare aria-hidden="true" className="size-4" />
+                        Diskusikan pola ini
+                      </Link>
                     </Button>
                   )}
                   <Button
                     data-pressable
                     variant={emergency ? "outline" : "default"}
-                    className="h-11 rounded-xl"
+                    className={cn(
+                      "h-11 rounded-full font-bold",
+                      emergency
+                        ? "border-brand-line bg-panel text-txt hover:bg-brand-soft hover:text-brand-ink"
+                        : "bg-gradient-to-b from-brand-glow via-brand to-brand-strong text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105",
+                    )}
                     onClick={reset}
                   >
+                    <Shuffle aria-hidden="true" className="size-4" />
                     Coba jalur lain
                   </Button>
                   <Button
                     asChild
                     variant="outline"
-                    className="h-11 rounded-xl"
+                    className="h-11 rounded-full border-brand-line bg-panel font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
                     data-pressable
                   >
                     <Link
@@ -855,6 +1004,7 @@ export function Runner({
                           : "/belajar"
                       }
                     >
+                      <BookOpen aria-hidden="true" className="size-4" />
                       Pelajari pola ini
                     </Link>
                   </Button>
@@ -862,19 +1012,25 @@ export function Runner({
                     <Button
                       asChild
                       variant="outline"
-                      className="h-11 rounded-xl"
+                      className="h-11 rounded-full border-brand-line bg-panel font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
                       data-pressable
                     >
-                      <Link href="/komunitas">Diskusikan pola ini</Link>
+                      <Link href="/komunitas">
+                        <MessageSquare aria-hidden="true" className="size-4" />
+                        Diskusikan pola ini
+                      </Link>
                     </Button>
                   )}
                   <Button
                     asChild
                     variant="ghost"
-                    className="h-11 rounded-xl text-dim hover:text-txt"
+                    className="h-11 rounded-full text-dim hover:bg-brand-tint hover:text-txt"
                     data-pressable
                   >
-                    <Link href="/simulasi">Semua simulasi</Link>
+                    <Link href="/simulasi">
+                      <LayoutGrid aria-hidden="true" className="size-4" />
+                      Semua simulasi
+                    </Link>
                   </Button>
                 </div>
                 <p className="mt-2 text-dim text-[11px] leading-relaxed">
@@ -882,7 +1038,7 @@ export function Runner({
                   berlangsung, hubungi bank atau penyedia akun melalui kanal
                   resmi.
                 </p>
-                <div className="mt-3 border-line border-t pt-2">
+                <div className="mt-3 border-brand-line border-t pt-2">
                   {collection}
                 </div>
               </Card>
@@ -894,22 +1050,22 @@ export function Runner({
   }
   const task = active.type === "tool_task" ? active : null;
   const tool = task && (
-    <Card className="rounded-card ring-0 shadow-[var(--appnext-shadow-ambient)]">
+    <Card className="rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 ring-0 shadow-[var(--appnext-shadow-ambient)]">
       <CardHeader>
         <div className="flex items-center gap-2">
           {task.tool === "isolation" ? (
-            <WifiOff aria-hidden="true" className="size-4 text-dim" />
+            <WifiOff aria-hidden="true" className="size-4 text-brand" />
           ) : task.tool === "permissions" ? (
-            <KeyRound aria-hidden="true" className="size-4 text-dim" />
+            <KeyRound aria-hidden="true" className="size-4 text-brand" />
           ) : (
-            <FileWarning aria-hidden="true" className="size-4 text-dim" />
+            <FileWarning aria-hidden="true" className="size-4 text-brand" />
           )}
           <CardTitle
             ref={promptRef}
             tabIndex={-1}
             role="heading"
             aria-level={2}
-            className="text-lg outline-none"
+            className="font-extrabold text-lg text-txt outline-none"
           >
             {scenario.tools.find((item) => item.id === task.tool)?.name}
           </CardTitle>
@@ -1026,31 +1182,47 @@ export function Runner({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
         <aside
           aria-label="Status misi"
-          className="sticky top-0 z-20 -mx-5 border-line border-b bg-panel/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:sticky lg:top-0 lg:z-auto lg:col-start-2 lg:row-start-1 lg:mx-0 lg:flex lg:flex-col lg:gap-4 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none"
+          className="sticky top-0 z-20 -mx-5 border-brand-line border-b bg-panel/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:static lg:z-auto lg:col-start-2 lg:row-start-1 lg:mx-0 lg:flex lg:flex-col lg:gap-4 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none"
         >
-          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-card lg:bg-card lg:py-4 lg:shadow-[var(--appnext-shadow-ambient)]">
-            <CardContent className="flex flex-col gap-3 p-0 lg:gap-4 lg:p-4 xl:p-5">
+          <Card className="rounded-none bg-transparent py-0 ring-0 shadow-none lg:rounded-[22px] lg:border lg:border-brand-line lg:bg-gradient-to-b lg:from-panel lg:to-brand-tint/40 lg:py-4 lg:shadow-[var(--appnext-shadow-ambient)]">
+            <CardContent className="flex flex-col gap-3 p-0 lg:gap-4 lg:p-4">
+              <div className="flex items-center justify-between gap-2 border-brand-line border-b pb-2">
+                <span className="inline-flex items-center gap-1.5 font-extrabold text-[12px] text-txt">
+                  <Shield aria-hidden="true" className="size-3.5 text-brand" />
+                  Mode simulasi
+                </span>
+                <span className="rounded-full bg-brand-soft px-2 py-0.5 font-bold text-[10px] text-brand-chip-ink">
+                  {mode === "santai" ? "Santai" : "Tantangan"}
+                </span>
+              </div>
+
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="lg:hidden">
+                    <Badge
+                      variant="outline"
+                      className="rounded-full border-brand-line bg-brand-soft/60 text-brand-chip-ink lg:hidden"
+                    >
                       Fiktif
                     </Badge>
                     <Badge
-                      variant="secondary"
-                      className="hidden lg:inline-flex"
+                      variant="outline"
+                      className="hidden rounded-full border-brand-line bg-brand-soft/60 text-brand-chip-ink lg:inline-flex"
                     >
                       Mode {mode === "santai" ? "santai" : "tantangan"}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className={paused ? undefined : "hidden lg:inline-flex"}
+                      className={cn(
+                        "rounded-full border-brand-line bg-panel text-dim",
+                        paused ? undefined : "hidden lg:inline-flex",
+                      )}
                     >
                       {paused ? "Dijeda" : "Berlangsung"}
                     </Badge>
                   </div>
                   <p className="text-dim text-xs lg:text-sm">
-                    <span className="font-medium text-txt">
+                    <span className="font-semibold text-txt">
                       Babak {active.chapter ?? 1} dari {MISSION.chapters.length}
                     </span>
                     <span className="lg:hidden">
@@ -1067,7 +1239,7 @@ export function Runner({
                     <span className="hidden lg:inline">
                       {" "}
                       ·{" "}
-                      <span className="font-medium text-txt">
+                      <span className="font-semibold text-txt">
                         {MISSION.chapters[(active.chapter ?? 1) - 1]}
                       </span>
                     </span>
@@ -1077,7 +1249,7 @@ export function Runner({
                   <Button
                     data-pressable
                     variant="outline"
-                    className="h-11 w-11 shrink-0 lg:h-10 lg:w-auto"
+                    className="h-11 w-11 shrink-0 rounded-full border-brand-line bg-panel lg:h-10 lg:w-auto"
                     aria-label={paused ? "Lanjutkan misi" : "Jeda"}
                     onClick={() => {
                       pausedRef.current = !paused;
@@ -1096,7 +1268,7 @@ export function Runner({
                   <Button
                     data-pressable
                     variant="outline"
-                    className="h-11 w-11 shrink-0 lg:hidden"
+                    className="h-11 w-11 shrink-0 rounded-full border-brand-line bg-panel lg:hidden"
                     aria-label="Kurangi panik"
                     title="Tarik napas · kurangi panik 15"
                     disabled={paused || breathingUsed}
@@ -1147,37 +1319,61 @@ export function Runner({
                 />
               </div>
 
-              <div className="hidden flex-col gap-2 border-line border-t pt-3 lg:flex">
-                <p className="text-dim text-sm">
-                  {!compromised
-                    ? "Belum ada akses"
-                    : isolated
-                      ? "Terputus"
-                      : "Akses aplikasi terbuka"}{" "}
-                  {mode === "santai"
-                    ? "· tekanan waktu mati"
-                    : "· mode Tantangan"}
-                </p>
-                <Button
-                  data-pressable
-                  variant="outline"
-                  className="h-11 sm:h-10"
-                  disabled={paused || breathingUsed}
-                  onClick={() => {
-                    setBreathingAt(steps.length);
-                    setPanic(Math.max(0, panic - 15));
-                    setBreathingUsed(true);
-                  }}
-                >
-                  <Wind aria-hidden="true" />
-                  Tarik napas{" "}
-                  {breathingUsed ? "· sudah digunakan" : "· kurangi panik 15"}
-                </Button>
+              <p className="text-dim text-[11.5px] leading-relaxed">
+                {!compromised
+                  ? "Belum ada akses"
+                  : isolated
+                    ? "Terputus"
+                    : "Akses aplikasi terbuka"}{" "}
+                {mode === "santai"
+                  ? "· tekanan waktu mati"
+                  : "· mode Tantangan"}
+              </p>
+
+              <Button
+                data-pressable
+                variant="outline"
+                className="hidden h-11 rounded-full border-brand-line bg-gradient-to-b from-panel to-brand-tint/70 font-semibold text-ink-soft hover:bg-brand-soft lg:flex"
+                disabled={paused || breathingUsed}
+                onClick={() => {
+                  setBreathingAt(steps.length);
+                  setPanic(Math.max(0, panic - 15));
+                  setBreathingUsed(true);
+                }}
+              >
+                <Wind aria-hidden="true" />
+                Tarik napas{" "}
+                {breathingUsed ? "· sudah digunakan" : "· kurangi panik 15"}
+              </Button>
+
+              <div
+                className="hidden items-center justify-between gap-1 font-semibold text-[10px] text-dim lg:flex"
+                aria-hidden="true"
+              >
+                <span className="flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-brand" />
+                  Chat
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-brand-soft-2" />
+                  Aksi
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-danger" />
+                  Ancaman
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-ink-faint" />
+                  Risiko
+                </span>
               </div>
             </CardContent>
           </Card>
           {paused && (
-            <Alert role="status" className="mt-2 border-line lg:mt-0">
+            <Alert
+              role="status"
+              className="mt-2 rounded-2xl border-brand-line bg-brand-tint/60 lg:mt-0"
+            >
               <AlertTitle>Misi dijeda</AlertTitle>
               <AlertDescription>
                 Pesan dan tekanan berhenti hingga kamu melanjutkan.
@@ -1285,19 +1481,24 @@ export function Runner({
           </ChatSurface>
 
           {latest?.rationale && (
-            <Alert
-              role="status"
-              data-tone={latest.verdict === "salah" ? "danger" : "safe"}
-              variant={latest.verdict === "salah" ? "destructive" : "default"}
-              className="border-line"
+            <div
+              className={cn(
+                "rounded-[16px] border px-3.5 py-3",
+                latest.verdict === "salah"
+                  ? "border-danger/30 bg-danger/5"
+                  : "border-brand-line bg-brand-tint/60",
+              )}
             >
-              <AlertTitle>
+              <p className="flex items-center gap-1.5 font-extrabold text-[12px] text-brand-ink">
+                <ShieldAlert aria-hidden="true" className="size-4" />
                 {latestTactic
                   ? `Pelatih · Pola penipuan: ${latestTactic.name}`
                   : "Pelatih · penjelasan pilihan"}
-              </AlertTitle>
-              <AlertDescription>{latest.rationale}</AlertDescription>
-            </Alert>
+              </p>
+              <p className="mt-1 text-[12.5px] text-ink-soft leading-relaxed">
+                {latest.rationale}
+              </p>
+            </div>
           )}
 
           {tool}

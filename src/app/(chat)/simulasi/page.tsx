@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  Check,
   Clock,
   Lightbulb,
   ListChecks,
@@ -51,30 +50,33 @@ const PLANNED_COPY: Record<string, { title?: string; note: string }> = {
 
 function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <Card
         role="region"
         aria-labelledby="planned-heading"
-        className="gap-0 rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]"
+        className="gap-0 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]"
       >
         <div className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 id="planned-heading" className="font-bold text-[15px] text-txt">
+          <div className="flex items-center justify-between gap-2 border-brand-line border-b pb-2.5">
+            <h2
+              id="planned-heading"
+              className="font-extrabold text-[15px] text-txt"
+            >
               Level lain
             </h2>
-            <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-ink-soft">
+            <span className="inline-flex items-center gap-1 font-bold text-[11px] text-brand-ink">
               Lihat semua
               <ArrowRight aria-hidden className="size-3" />
             </span>
           </div>
-          <ul className="mt-2.5 divide-y divide-line">
+          <ul className="mt-1 list-none divide-y divide-brand-line/70 p-0">
             {PLANNED.map((modus) => {
               const copy = PLANNED_COPY[modus.id];
               const title = copy?.title ?? modus.nama;
               const note = copy?.note ?? modus.ciri[0];
               return (
                 <li key={modus.id} className="flex items-start gap-3 py-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand-ink ring-1 ring-brand-line">
                     <Lock aria-hidden strokeWidth={1.8} className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -85,7 +87,7 @@ function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
                       >
                         {title}
                       </p>
-                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 font-semibold text-[9.5px] text-brand-chip-ink">
+                      <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 font-bold text-[9.5px] text-brand-chip-ink">
                         Rencana
                       </span>
                     </div>
@@ -103,23 +105,21 @@ function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
         </div>
       </Card>
 
-      <Card className="relative gap-0 overflow-hidden rounded-card border border-brand-line/60 bg-gradient-to-br from-brand-tint via-brand-soft-2 to-brand-soft py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
+      <Card className="relative gap-0 overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-br from-brand-tint via-brand-soft/70 to-brand-soft-2 py-0 ring-0 shadow-[var(--appnext-shadow-ambient)]">
         <span
           aria-hidden
-          className="pointer-events-none absolute right-0 bottom-0 size-36 translate-x-8 translate-y-8 rounded-full bg-brand-glow/25 blur-2xl"
+          className="pointer-events-none absolute -top-10 -right-8 size-36 rounded-full bg-brand-glow/25 blur-2xl"
         />
         <div className="relative p-4">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="max-w-[11.25rem] font-bold text-[15px] text-txt leading-snug">
+            <h2 className="max-w-[11.25rem] font-extrabold text-[15px] text-txt leading-snug">
               Latihan, bukan pemindaian perangkat!
             </h2>
-            <ShieldCheck
-              aria-hidden
-              strokeWidth={1.6}
-              className="size-10 shrink-0 text-brand"
-            />
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-panel/80 text-brand ring-1 ring-brand-line">
+              <ShieldCheck aria-hidden strokeWidth={1.6} className="size-5" />
+            </span>
           </div>
-          <p className="mt-2 text-[11.5px] text-dim leading-relaxed">
+          <p className="mt-2 text-[11.5px] text-ink-soft leading-relaxed">
             Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif.
             Latihan ini tidak mengubah perangkatmu dan tidak mengirim laporan ke
             mana pun. Penilaian mengikuti aturan skenario, bukan skor model.
@@ -130,9 +130,10 @@ function SimulasiAside({ planned: PLANNED }: { planned: LearningSummary[] }) {
             <Link
               href="/komunitas"
               aria-label="Buka komunitas"
-              className="flex size-8 items-center justify-center rounded-full border border-brand-line bg-panel/80 text-brand shadow-sm transition-colors hover:bg-panel hover:text-brand-strong"
+              className="flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-b from-brand-glow via-brand to-brand-strong px-3.5 font-bold text-[11px] text-white shadow-[0_4px_12px_rgba(240,90,26,0.28)] transition hover:brightness-105"
             >
-              <ArrowRight aria-hidden className="size-4" />
+              Buka komunitas
+              <ArrowRight aria-hidden className="size-3.5" />
             </Link>
           </div>
         </div>
@@ -186,33 +187,38 @@ export async function SimulasiContent() {
       >
         <div className="flex w-full flex-col gap-6">
           <MissionStatusBar />
-          <section className="relative overflow-hidden rounded-card border border-brand-line shadow-[var(--appnext-shadow-soft)]">
+          <section className="relative overflow-hidden rounded-[22px] border border-brand-line bg-gradient-to-br from-brand-tint/80 via-panel to-brand-soft/50 shadow-[var(--appnext-shadow-soft)]">
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-brand-tint bg-[url('/simulasi/hero-gift.webp')] bg-cover bg-[position:72%_50%] bg-no-repeat [mask-image:linear-gradient(90deg,transparent_0%,black_40%)]"
+              className="absolute inset-0 bg-[url('/simulasi/hero-gift.webp')] bg-cover bg-[position:72%_50%] bg-no-repeat opacity-90 [mask-image:linear-gradient(90deg,transparent_0%,black_42%)]"
             />
             <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
               <ProfilePopup className="size-11" />
             </div>
             <div className="relative">
               <div className="min-w-0 max-w-xl p-6 sm:p-8">
-                <p className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-panel px-2.5 py-1 font-semibold text-[11px] text-brand-ink shadow-sm">
-                  <span className="flex size-4 items-center justify-center rounded-full bg-brand text-bg">
-                    <ShieldCheck aria-hidden className="size-2.5" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-panel/85 px-2.5 py-1 font-bold text-[11px] text-brand-ink shadow-sm">
+                    <span className="flex size-4 items-center justify-center rounded-full bg-brand text-white">
+                      <ShieldCheck aria-hidden className="size-2.5" />
+                    </span>
+                    Misi · Level {featured.scenario.scenario.level}
+                  </p>
+                  <span className="rounded-full bg-brand-soft px-2.5 py-1 font-bold text-[10.5px] text-brand-chip-ink">
+                    Fiktif
                   </span>
-                  Misi · Level {featured.scenario.scenario.level}
-                </p>
+                </div>
                 <h1
                   id="mission-title"
-                  className="mt-3 font-bold text-2xl text-txt leading-tight tracking-tight sm:text-[32px]"
+                  className="mt-3 font-extrabold text-2xl text-txt leading-tight tracking-tight sm:text-[34px]"
                 >
                   {TITLE_LEAD} <span className="text-brand">{TITLE_TAIL}</span>
                 </h1>
-                <p className="mt-3 max-w-xl text-sm text-txt leading-relaxed">
+                <p className="mt-3 max-w-xl text-ink-soft text-sm leading-relaxed">
                   {MISSION.context}
                 </p>
-                <p className="mt-3 max-w-xl rounded-xl border border-brand-line bg-panel/80 px-3 py-2 text-sm text-txt leading-relaxed">
-                  <span className="font-semibold">Tujuanmu: </span>
+                <p className="mt-3 max-w-xl rounded-[14px] border border-brand-line bg-panel/80 px-3.5 py-2.5 text-sm text-txt leading-relaxed">
+                  <span className="font-bold text-brand-ink">Tujuanmu: </span>
                   {MISSION.objective}
                 </p>
                 <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-dim">
@@ -227,7 +233,7 @@ export async function SimulasiContent() {
                 <div className="mt-5 flex flex-wrap items-center gap-3">
                   <Button
                     asChild
-                    className="min-h-11 rounded-xl bg-brand px-5 font-semibold text-bg text-xs shadow-lg hover:bg-brand-strong"
+                    className="min-h-11 rounded-full bg-gradient-to-b from-brand-glow via-brand to-brand-strong px-5 font-bold text-white shadow-[0_6px_16px_rgba(240,90,26,0.28)] hover:brightness-105"
                   >
                     <Link
                       href={`/simulasi/${featured.scenario.scenario.id}`}
@@ -240,7 +246,7 @@ export async function SimulasiContent() {
                   <Button
                     asChild
                     variant="outline"
-                    className="min-h-11 rounded-xl border-brand-line bg-panel px-4 font-semibold text-txt text-xs hover:bg-brand-soft hover:text-brand-ink"
+                    className="min-h-11 rounded-full border-brand-line bg-panel px-4 font-semibold text-txt hover:bg-brand-soft hover:text-brand-ink"
                   >
                     <Link
                       href={
@@ -281,7 +287,7 @@ export async function SimulasiContent() {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2
                 id="chapters-heading"
-                className="flex items-center gap-2 font-bold text-[18px] text-txt"
+                className="flex items-center gap-2 font-extrabold text-[18px] text-txt"
               >
                 <Route aria-hidden className="size-4 text-brand" />
                 Alur misi
@@ -294,18 +300,20 @@ export async function SimulasiContent() {
                 return (
                   <li
                     key={chapter}
-                    className="relative flex flex-col gap-3 rounded-card border border-line bg-panel p-4 shadow-[var(--appnext-shadow-ambient)]"
+                    className="relative flex flex-col gap-3 rounded-[22px] border border-brand-line bg-gradient-to-b from-panel to-brand-tint/40 p-4 shadow-[var(--appnext-shadow-ambient)]"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="flex size-10 items-center justify-center rounded-xl bg-brand-soft text-brand-ink ring-1 ring-brand-line">
+                      <span className="flex size-10 items-center justify-center rounded-[14px] bg-brand-soft text-brand-ink ring-1 ring-brand-line">
                         <Icon aria-hidden className="size-4" />
                       </span>
-                      <span className="tabular flex size-5 items-center justify-center rounded-full bg-brand font-bold text-[9px] text-bg">
+                      <span className="tabular flex size-6 items-center justify-center rounded-full bg-gradient-to-b from-brand-glow to-brand font-extrabold text-[10px] text-white">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-sm text-txt">{chapter}</p>
+                      <p className="font-extrabold text-sm text-txt">
+                        {chapter}
+                      </p>
                       <p className="mt-1 text-dim text-xs leading-relaxed">
                         {CHAPTER_NOTES[index]}
                       </p>
@@ -313,7 +321,7 @@ export async function SimulasiContent() {
                     {index < MISSION.chapters.length - 1 ? (
                       <span
                         aria-hidden
-                        className="absolute top-1/2 right-[-13px] z-10 hidden size-5 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-bg shadow md:flex"
+                        className="absolute top-1/2 right-[-13px] z-10 hidden size-5 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-white shadow md:flex"
                       >
                         <ArrowRight className="size-3" />
                       </span>
@@ -325,31 +333,31 @@ export async function SimulasiContent() {
           </section>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
+            <Card className="gap-0 overflow-hidden rounded-[22px] border border-brand-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
               <div
                 aria-hidden="true"
                 className="aspect-[2048/869] w-full bg-[url('/simulasi/card-laptop.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
               />
               <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:right-0 min-[1680px]:ml-auto min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="flex items-center gap-2 font-bold text-[15px] text-txt">
+                  <h2 className="flex items-center gap-2 font-extrabold text-[15px] text-txt">
                     <ListChecks aria-hidden className="size-4 text-brand" />
                     Ringkasan Misi
                   </h2>
                   <Link
                     href={`/simulasi/${featured.scenario.scenario.id}`}
-                    className="shrink-0 whitespace-nowrap font-semibold text-[11px] text-brand-strong hover:underline"
+                    className="shrink-0 whitespace-nowrap font-bold text-[11px] text-brand-ink hover:underline"
                   >
                     Lihat detail →
                   </Link>
                 </div>
-                <ul className="mt-3 list-none space-y-2.5 p-0">
-                  {SUMMARY_POINTS.map((point) => (
-                    <li key={point} className="flex gap-2.5">
-                      <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-brand text-bg">
-                        <Check aria-hidden className="size-2.5" />
+                <ul className="mt-3 flex list-none flex-col gap-1.5 p-0">
+                  {SUMMARY_POINTS.map((point, index) => (
+                    <li key={point} className="flex items-start gap-2">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-md bg-brand-soft font-extrabold text-[10px] text-brand-ink">
+                        {index + 1}
                       </span>
-                      <p className="text-ink-soft text-xs leading-relaxed">
+                      <p className="flex-1 rounded-[10px] bg-gradient-to-r from-panel-2/70 to-brand-tint/50 px-2.5 py-1.5 text-ink-soft text-xs leading-relaxed">
                         {point}
                       </p>
                     </li>
@@ -358,23 +366,23 @@ export async function SimulasiContent() {
               </div>
             </Card>
 
-            <Card className="gap-0 overflow-hidden rounded-card border border-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
+            <Card className="gap-0 overflow-hidden rounded-[22px] border border-brand-line py-0 ring-0 shadow-[var(--appnext-shadow-ambient)] min-[1680px]:relative min-[1680px]:aspect-[2048/869]">
               <div
                 aria-hidden="true"
                 className="aspect-[2048/869] w-full bg-[url('/simulasi/card-shield.webp')] bg-cover bg-center bg-no-repeat min-[1680px]:absolute min-[1680px]:inset-0 min-[1680px]:aspect-auto"
               />
               <div className="flex flex-col p-5 min-[1680px]:absolute min-[1680px]:inset-y-0 min-[1680px]:left-0 min-[1680px]:max-w-[58%] min-[1680px]:justify-center">
-                <h2 className="flex items-center gap-2 font-bold text-[15px] text-txt">
+                <h2 className="flex items-center gap-2 font-extrabold text-[15px] text-txt">
                   <Lightbulb aria-hidden className="size-4 text-brand" />
                   Tips Penting
                 </h2>
-                <ul className="mt-3 list-none space-y-2.5 p-0">
-                  {TIPS.map((tip) => (
-                    <li key={tip} className="flex gap-2.5">
-                      <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-brand text-bg">
-                        <Check aria-hidden className="size-2.5" />
+                <ul className="mt-3 flex list-none flex-col gap-1.5 p-0">
+                  {TIPS.map((tip, index) => (
+                    <li key={tip} className="flex items-start gap-2">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-md bg-brand-soft font-extrabold text-[10px] text-brand-ink">
+                        {index + 1}
                       </span>
-                      <p className="text-ink-soft text-xs leading-relaxed">
+                      <p className="flex-1 rounded-[10px] bg-gradient-to-r from-panel-2/70 to-brand-tint/50 px-2.5 py-1.5 text-ink-soft text-xs leading-relaxed">
                         {tip}
                       </p>
                     </li>
