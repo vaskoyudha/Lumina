@@ -2,11 +2,11 @@ import {
   type AgentStage,
   type AgentTrace,
   STAGE_LABEL,
-  type StageId,
 } from "@/lib/contracts/agent-run";
 import { riskFor, type ScoreResult, type Signal } from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
 import { conversationSignals } from "@/lib/scoring/conversation";
+import type { DetectorId } from "@/lib/scoring/detector-ids";
 import { identitySignals } from "@/lib/scoring/identity";
 import { jobSignals } from "@/lib/scoring/job";
 import { extractLinks, linkSignals } from "@/lib/scoring/link";
@@ -208,11 +208,6 @@ interface DetectorResult {
   note?: string;
 }
 
-type DetectorId = Exclude<
-  StageId,
-  "evidence" | "scoring" | "voice" | "job-search"
->;
-
 /** The pipeline, in evaluation order. Both public functions drive this list. */
 const DETECTORS: readonly {
   id: DetectorId;
@@ -254,6 +249,16 @@ const DETECTORS: readonly {
     run: ({ text }) => qrisSignals(text),
   },
 ];
+
+/**
+ * The order the engine actually ran in.
+ *
+ * `detector-ids.ts` declares the order for the UI; this is the engine's own
+ * answer, and a test compares the two so the two halves cannot drift.
+ */
+export const DETECTOR_RUN_ORDER: readonly DetectorId[] = DETECTORS.map(
+  (detector) => detector.id,
+);
 
 /**
  * The only scorer.
