@@ -1,9 +1,12 @@
+import { saveAgentRun } from "@/lib/agent/runs";
+import { getSession } from "@/lib/auth/server-session";
 import { OrchestratorRequestSchema } from "@/lib/contracts/orchestrator";
 import {
   isOrchestratorEnabled,
   orchestratorDeadlineMs,
 } from "@/lib/orchestrator/flag";
 import { runOrchestrator } from "@/lib/orchestrator/loop";
+import { summarizeRun } from "@/lib/orchestrator/summary";
 import { BodyTooLarge, limitAI, readJson } from "@/lib/server/request";
 
 /**
@@ -40,6 +43,8 @@ export async function POST(request: Request) {
   const limited = await limitAI(request, "text");
   if (limited) return limited;
 
+  const session = await getSession().catch(() => null);
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), orchestratorDeadlineMs());
   const onAbort = () => controller.abort();
@@ -54,10 +59,21 @@ export async function POST(request: Request) {
         );
       };
       void runOrchestrator(parsed.data, {
+        deadlineMs: orchestratorDeadlineMs(),
         signal: controller.signal,
         onEvent: send,
       })
-        .then(() => {
+        .then(async (result) => {
+          if (session) {
+            try {
+              await saveAgentRun(
+                session.id,
+                summarizeRun(result.trace, result.score),
+              );
+            } catch {
+              // Metadata only; a write failure must not fail the stream.
+            }
+          }
           controllerStream.enqueue(encoder.encode("data: [DONE]\n\n"));
         })
         .catch((error: unknown) => {

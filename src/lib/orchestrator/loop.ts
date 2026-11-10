@@ -9,12 +9,16 @@ import type {
 } from "@/lib/contracts/orchestrator";
 import { SPECIALIST_IDS } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
+import { MODUS_BY_ID } from "@/lib/modus";
 import {
   SPECIALISTS,
   type SpecialistSpec,
   specialistSystemPrompt,
 } from "@/lib/orchestrator/agents";
+import { orchestratorDeadlineMs } from "@/lib/orchestrator/flag";
 import {
+  COMMANDER_PROMPT,
+  commanderUserPrompt,
   PLANNER_PROMPT,
   plannerUserPrompt,
   SYNTHESIS_PROMPT,
@@ -43,7 +47,7 @@ import { extractLinks, parseLink } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { fetchChat } from "@/lib/server/llm";
 
-const MAX_AGENTS = 2;
+const MAX_AGENTS = 6;
 const MAX_PLANNER_TOKENS = 800;
 const MAX_SPECIALIST_TOKENS = 2400;
 const MAX_SYNTHESIS_TOKENS = 1400;
@@ -64,6 +68,95 @@ const PlannerOutputSchema = z
       .max(MAX_AGENTS),
   })
   .strict();
+
+const MAX_COMMANDER_TOKENS = 220;
+const SCORE_IN_TEXT = /\b\d{1,3}\s*\/\s*100\b|\bskor\s*\d{1,3}\b/i;
+const BAND_IN_TEXT = /\b(?:bersih|rendah|mencurigakan|tinggi)\b/i;
+
+const CommanderOutputSchema = z
+  .object({
+    announcement: z.string().min(1).max(400),
+    focus: z.string().max(120).default(""),
+  })
+  .strict();
+
+interface CommanderBrief {
+  text: string;
+  focus: string;
+  source: "model" | "fallback";
+  ms: number;
+}
+
+function fallbackCommander(baseline: ScoreResult): string {
+  const label = baseline.modus
+    ? MODUS_BY_ID.get(baseline.modus)?.nama.trim()
+    : undefined;
+  return label
+    ? `Saya melihat pola yang sering muncul pada ${label}. Saya akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.`
+    : "Saya sudah membaca pesan ini dan akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.";
+}
+
+async function makeCommander(
+  request: OrchestratorRequest,
+  baseline: ScoreResult,
+  chat: OrchestratorDeps["chat"],
+  signal: AbortSignal,
+): Promise<CommanderBrief> {
+  const started = performance.now();
+  const fallback = (): CommanderBrief => ({
+    text: fallbackCommander(baseline),
+    focus: baseline.modus ?? "",
+    source: "fallback",
+    ms: Math.round(performance.now() - started),
+  });
+  if (!chat) return fallback();
+  try {
+    const message = await chat(
+      {
+        messages: [
+          { role: "system", content: COMMANDER_PROMPT },
+          {
+            role: "user",
+            content: commanderUserPrompt({
+              question: request.question,
+              message: request.message,
+              modus: baseline.modus,
+              score: baseline.score,
+              risk: baseline.risk,
+              priorTurns: request.priorTurns,
+            }),
+          },
+        ],
+        maxTokens: MAX_COMMANDER_TOKENS,
+        temperature: 0.2,
+        responseFormat: "json",
+      },
+      signal,
+    );
+    const parsed = CommanderOutputSchema.safeParse(
+      safeJson(message.content ?? ""),
+    );
+    if (!parsed.success) throw new Error("invalid-commander");
+    const text = parsed.data.announcement.trim();
+    const focus = parsed.data.focus.trim();
+    if (
+      !text ||
+      SCORE_IN_TEXT.test(text) ||
+      BAND_IN_TEXT.test(text) ||
+      SCORE_IN_TEXT.test(focus) ||
+      BAND_IN_TEXT.test(focus)
+    )
+      throw new Error("commander-verdict");
+    return {
+      text,
+      focus,
+      source: "model",
+      ms: Math.round(performance.now() - started),
+    };
+  } catch {
+    return fallback();
+  }
+}
 
 interface ModelMessage {
   role: string;
@@ -91,6 +184,8 @@ export interface OrchestratorDeps {
   chat?: (options: ChatOptions, signal: AbortSignal) => Promise<ModelMessage>;
   score?: typeof scoreWithTrace;
   signal?: AbortSignal;
+  /** Test seam; the route passes the same value to its abort timer. */
+  deadlineMs?: number;
   /** Called for every event as it happens, so a route can stream live. */
   onEvent?: (event: OrchestratorEvent) => void;
 }
@@ -327,6 +422,49 @@ function dedupePlan(steps: PlanStep[]): PlanStep[] {
   return out.slice(0, MAX_AGENTS);
 }
 
+function requiredSpecialist(baseline: ScoreResult): SpecialistId | undefined {
+  return baseline.signals.find(
+    (signal) =>
+      signal.weight >= 0.7 &&
+      SPECIALIST_IDS.includes(signal.agent as SpecialistId),
+  )?.agent as SpecialistId | undefined;
+}
+
+function ensureEvidenceLast(
+  steps: PlanStep[],
+  baseline: ScoreResult,
+): PlanStep[] {
+  const withoutEvidence = steps.filter((step) => step.agent !== "evidence");
+  if (withoutEvidence.length === 0) return steps;
+  const existing = steps.find((step) => step.agent === "evidence");
+  const findingBearing = withoutEvidence.some(
+    (step) => step.agent !== "identity",
+  );
+  if (!existing && !findingBearing) return steps;
+  const evidence =
+    existing ??
+    ({
+      agent: "evidence",
+      task: "Audit kutipan dan deduplikasi temuan.",
+      skills: SPECIALISTS.evidence.skills,
+      tools: SPECIALISTS.evidence.tools,
+    } satisfies PlanStep);
+  const required = requiredSpecialist(baseline);
+  const kept = [...withoutEvidence];
+  while (kept.length > MAX_AGENTS - 1) {
+    let dropAt = -1;
+    for (let index = kept.length - 1; index >= 0; index -= 1) {
+      if (kept[index].agent !== required) {
+        dropAt = index;
+        break;
+      }
+    }
+    if (dropAt === -1) break;
+    kept.splice(dropAt, 1);
+  }
+  return [...kept, evidence];
+}
+
 /**
  * A supervisor may narrate the right scam type and still delegate to unrelated
  * specialists. When the deterministic scorer has a strong, owned signal, keep
@@ -338,11 +476,7 @@ function ensureBaselineSpecialist(
   baseline: ScoreResult,
   fallback: PlanStep[],
 ): PlanStep[] {
-  const required = baseline.signals.find(
-    (signal) =>
-      signal.weight >= 0.7 &&
-      SPECIALIST_IDS.includes(signal.agent as SpecialistId),
-  )?.agent as SpecialistId | undefined;
+  const required = requiredSpecialist(baseline);
   if (!required || steps.some((step) => step.agent === required)) return steps;
 
   const spec = SPECIALISTS[required];
@@ -386,7 +520,7 @@ async function makePlan(
   const fallback = defaultPlan(request);
   if (!chat) {
     return {
-      steps: fallback,
+      steps: ensureEvidenceLast(fallback, baseline),
       rationale: fallbackRationale(fallback),
       source: "fallback",
       ms: Math.round(performance.now() - started),
@@ -426,15 +560,19 @@ async function makePlan(
       })),
       fallback,
     );
+    const steps = ensureEvidenceLast(
+      ensureBaselineSpecialist(normalized, baseline, fallback),
+      baseline,
+    );
     return {
-      steps: ensureBaselineSpecialist(normalized, baseline, fallback),
+      steps,
       rationale: parsed.data.rationale || "Rencana disusun oleh koordinator.",
       source: "model",
       ms: Math.round(performance.now() - started),
     };
   } catch {
     return {
-      steps: fallback,
+      steps: ensureEvidenceLast(fallback, baseline),
       rationale: fallbackRationale(fallback),
       source: "fallback",
       ms: Math.round(performance.now() - started),
@@ -850,6 +988,7 @@ export async function runOrchestrator(
   const signal = deps.signal ?? new AbortController().signal;
   const chat = deps.chat ?? defaultChat;
   const score = deps.score ?? scoreWithTrace;
+  const deadlineMs = deps.deadlineMs ?? orchestratorDeadlineMs();
 
   emit({ type: "run_start", question: request.question });
 
@@ -858,6 +997,14 @@ export async function runOrchestrator(
     turns: request.priorTurns.map((text) => ({ text })),
   });
   const baseline = cached.result;
+  const commander = await makeCommander(request, baseline, chat, signal);
+  emit({
+    type: "commander_say",
+    text: commander.text,
+    focus: commander.focus,
+    source: commander.source,
+    ms: commander.ms,
+  });
   emit({
     type: "score",
     result: baseline,
@@ -912,6 +1059,14 @@ export async function runOrchestrator(
         ms: 0,
       };
       emit({
+        type: "agent_start",
+        agent: skipped.agent,
+        label: skipped.label,
+        task: step.task,
+        skills: step.skills,
+        tools: step.tools,
+      });
+      emit({
         type: "agent_result",
         agent: skipped.agent,
         label: skipped.label,
@@ -961,13 +1116,40 @@ export async function runOrchestrator(
     });
     return result;
   };
-  /*
-   * Two lanes, two specialists: separate egress IPs mean a parallel pair no
-   * longer trips the anonymous quota, and the route stays well under 60 s.
-   */
-  const batch = await Promise.all(plan.steps.map(runOne));
-  for (const result of batch) {
-    if (result) reports.push(result);
+  for (const step of plan.steps) {
+    if (performance.now() - started >= deadlineMs) {
+      const spec = SPECIALISTS[step.agent];
+      const skipped: SubagentResult = {
+        agent: spec.id,
+        label: spec.label,
+        status: "dilewati",
+        summary: "Dilewati karena batas waktu pemeriksaan tercapai.",
+        findings: [],
+        points: [],
+        ms: 0,
+      };
+      emit({
+        type: "agent_start",
+        agent: skipped.agent,
+        label: skipped.label,
+        task: step.task,
+        skills: step.skills,
+        tools: step.tools,
+      });
+      emit({
+        type: "agent_result",
+        agent: skipped.agent,
+        label: skipped.label,
+        status: skipped.status,
+        summary: skipped.summary,
+        findings: [],
+        points: [],
+        ms: 0,
+      });
+      reports.push(skipped);
+      continue;
+    }
+    reports.push(await runOne(step));
   }
 
   emit({ type: "synthesis_start", agent: "synthesizer" });
@@ -1020,6 +1202,11 @@ export async function runOrchestrator(
 
   const trace: OrchestrationTrace = {
     runId,
+    commander: {
+      text: commander.text,
+      source: commander.source,
+      ms: commander.ms,
+    },
     planner: {
       rationale: plan.rationale,
       agents: plan.steps,

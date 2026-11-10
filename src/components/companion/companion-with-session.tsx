@@ -1,4 +1,5 @@
 import { CompanionChat } from "@/components/companion/companion-chat";
+import { latestAgentRun } from "@/lib/agent/runs";
 import { getSession } from "@/lib/auth/server-session";
 import { getModule } from "@/lib/content/store";
 import { CORPUS_LIMIT, capCorpus } from "@/lib/loker/corpus";
@@ -22,15 +23,20 @@ const EMPTY_CORPUS: LokerCorpus = {
  */
 export async function CompanionWithSession({
   searchParams = Promise.resolve({}),
+  agentPanel = false,
 }: {
   searchParams?: Promise<{ panel?: string; modul?: string }>;
+  agentPanel?: boolean;
 } = {}) {
-  const [session, { panel, modul }, corpus] = await Promise.all([
-    getSession(),
+  const session = await getSession();
+  const [{ panel, modul }, corpus, latestRun] = await Promise.all([
     searchParams,
     loadCorpus(CORPUS_LIMIT)
       .then(({ postings, total }) => capCorpus(postings, total))
       .catch(() => EMPTY_CORPUS),
+    agentPanel && session
+      ? latestAgentRun(session.id).catch(() => null)
+      : Promise.resolve(null),
   ]);
   const module =
     modul && /^[1-9]\d?$/.test(modul)
@@ -40,7 +46,8 @@ export async function CompanionWithSession({
   return (
     <CompanionChat
       session={session ? { nama: session.nama, email: session.email } : null}
-      initialPanel={panel === "agen" ? "agen" : undefined}
+      initialPanel={agentPanel || panel === "agen" ? "agen" : undefined}
+      latestRun={latestRun}
       corpus={corpus}
       orchestrator={isOrchestratorEnabled()}
       initialModule={

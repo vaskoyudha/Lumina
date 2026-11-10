@@ -10,10 +10,27 @@ function event<T extends OrchestratorEvent["type"]>(
 
 const events: OrchestratorEvent[] = [
   event({
-    type: "plan",
+    type: "run_start",
+    runId: "run-1",
+    seq: 0,
+    at: 0,
+    question: "apakah ini penipuan?",
+  }),
+  event({
+    type: "commander_say",
     runId: "run-1",
     seq: 1,
     at: 1,
+    text: "Saya melihat pola permintaan OTP. Saya akan memanggil agen yang relevan.",
+    focus: "permintaan OTP",
+    source: "model",
+    ms: 8,
+  }),
+  event({
+    type: "plan",
+    runId: "run-1",
+    seq: 3,
+    at: 3,
     rationale: "Pesan meminta OTP, jadi periksa narasi dan jalur pembayaran.",
     agents: [
       {
@@ -35,8 +52,8 @@ const events: OrchestratorEvent[] = [
   event({
     type: "agent_start",
     runId: "run-1",
-    seq: 2,
-    at: 2,
+    seq: 4,
+    at: 4,
     agent: "message",
     label: "Message Agent",
     task: "Membaca narasi dan mekanisme rekayasa sosial",
@@ -46,8 +63,8 @@ const events: OrchestratorEvent[] = [
   event({
     type: "tool_call",
     runId: "run-1",
-    seq: 3,
-    at: 3,
+    seq: 5,
+    at: 5,
     agent: "message",
     callId: "call-1",
     tool: "score_message",
@@ -56,8 +73,8 @@ const events: OrchestratorEvent[] = [
   event({
     type: "tool_result",
     runId: "run-1",
-    seq: 4,
-    at: 4,
+    seq: 6,
+    at: 6,
     agent: "message",
     callId: "call-1",
     tool: "score_message",
@@ -68,16 +85,16 @@ const events: OrchestratorEvent[] = [
   event({
     type: "thought",
     runId: "run-1",
-    seq: 5,
-    at: 5,
+    seq: 7,
+    at: 7,
     agent: "message",
     text: "Permintaan OTP adalah indikator kredensial yang harus dilaporkan.",
   }),
   event({
     type: "agent_result",
     runId: "run-1",
-    seq: 6,
-    at: 6,
+    seq: 8,
+    at: 8,
     agent: "message",
     label: "Message Agent",
     status: "selesai",
@@ -98,8 +115,8 @@ const events: OrchestratorEvent[] = [
   event({
     type: "synthesis_end",
     runId: "run-1",
-    seq: 7,
-    at: 7,
+    seq: 9,
+    at: 9,
     agent: "synthesizer",
     text: "Pesan ini berisiko tinggi.",
     ms: 5,
@@ -111,7 +128,14 @@ describe("ProcessTrace", () => {
     render(<ProcessTrace events={events} />);
 
     expect(screen.getByText("Proses agen")).toBeInTheDocument();
-    expect(screen.getByText("Rencana koordinator")).toBeInTheDocument();
+    expect(
+      screen.getByText(/saya melihat pola permintaan otp/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Rencana agen")).toBeInTheDocument();
+    expect(screen.getByText("Alasan rencana")).toBeInTheDocument();
+    expect(
+      screen.getByText(/pesan meminta otp, jadi periksa narasi/i),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Mochi").length).toBeGreaterThan(0);
     expect(
       screen.getAllByText("Pesan & rekayasa sosial").length,
@@ -134,5 +158,23 @@ describe("ProcessTrace", () => {
     expect(process?.hasAttribute("open")).toBe(true);
     const thoughts = screen.getByText("Pemikiran agen").closest("details");
     expect(thoughts?.hasAttribute("open")).toBe(false);
+  });
+
+  it("paints Lumina before the plan arrives", () => {
+    render(
+      <ProcessTrace
+        events={[
+          {
+            type: "run_start",
+            runId: "run-2",
+            seq: 1,
+            at: 1,
+            question: "apakah ini penipuan?",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Lumina")).toBeInTheDocument();
+    expect(screen.getByText(/membaca pesan/i)).toBeInTheDocument();
   });
 });

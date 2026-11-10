@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function AgenPage() {
   return (
     <Suspense fallback={<CompanionChat initialPanel="agen" />}>
-      <CompanionWithSession />
+      <CompanionWithSession agentPanel />
     </Suspense>
   );
 }

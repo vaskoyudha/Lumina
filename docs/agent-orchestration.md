@@ -33,10 +33,26 @@ companion-chat appends:
 AgentRun  ── orchestrator card + one bubble per specialist + voice bubble
 ```
 
-The trace is the only contract between the engine and the UI. The two contracts
-this feature touches — `src/lib/contracts/score.ts` and
-`src/lib/contracts/agent-run.ts` — are frozen; changes there must stay additive
-and be announced to the other owners before a commit (AGENTS.md §5).
+The trace is the only contract between the engine and the UI. The three contracts
+this feature touches — `src/lib/contracts/score.ts`,
+`src/lib/contracts/agent-run.ts`, and `src/lib/contracts/orchestrator.ts` — are
+frozen; changes there must stay additive and be announced to the other owners
+before a commit (AGENTS.md §5). In `orchestrator.ts`, `commander_say` is additive
+while `trace.commander` is a required field added together with its producer.
+
+## Orchestrator pipeline
+
+The streaming orchestrator emits one ordered pipeline:
+
+```
+run_start → commander_say → score → plan → agent_start/agent_result (serial, ≤6) → synthesis_end → done
+```
+
+Specialists run one at a time under `LUMINA_ORCHESTRATOR_DEADLINE_MS` (default
+120000 for serial runs, maximum 180000); agents not started by the deadline are
+reported as `dilewati`. The commander sees the OCR'd message, prior turns, and
+the baseline score/modus/risk; it never states a score or band itself, and the
+band is revealed after synthesis.
 
 ## The crew
 
@@ -121,11 +137,13 @@ b. **Crew bubbles** — a left border in the agent's identity token, a portrait 
    is display-only.
 c. **Voice bubble** — rendered after the specialists, with no identity token.
 
-`AgentsView` (`src/components/companion/agents-view.tsx`) is the pre-run
-overview opened from the rail. It reads `AGENT_SEQUENCE` for its count, cards,
-and diagram. `AgentsDetailPanel` is its right-hand brief pane; selection is a
-highlight, not a filter, and the pane is a `role="region"` with
-`aria-current` on the selected brief.
+`AgentsView` (`src/components/companion/agents-view.tsx`) is the overview opened
+from the rail; when the signed-in account has a run, it also renders that
+latest-run summary (modus, band, per-agent status, durations) and never the
+message. It reads `AGENT_SEQUENCE` for its count, cards, and diagram.
+`AgentsDetailPanel` is its right-hand brief pane; selection is a highlight, not a
+filter, and the pane is a `role="region"` with `aria-current` on the selected
+brief.
 
 Announcements: `AgentRun` exports `runAnnouncement(trace)`. In the chat shell the
 transcript's `AgentRun` renders with `announce={false}` and the shell owns a
@@ -241,3 +259,20 @@ c. Heuristics are tuned for Indonesian message text; they are not a
    general-purpose classifier.
 d. The overview is explanatory; it is not a control surface and does not start
    runs by itself.
+
+## Measured 2026-11-12
+
+- Eval corpus (`npm test -- src/lib/scoring/eval.test.ts`, the `EVAL` line):
+  60 scam + 60 legitimate cases, `caught 60/60`, `legitNotRisky 60/60`,
+  `falsePositives 0`, modus classification 56/60, `slowestCpuMs 3.637`. The
+  suite already pins 60/60 catches and zero false positives; `slowestCpuMs` is
+  CPU time for the slowest single case, not wall clock.
+- Serial latency with a 40 ms stub specialist, from a single run
+  (`LUMINA_LATENCY=1 npm test -- src/lib/orchestrator/serial-latency.test.ts`):
+  the planner is asked for 2 agents, and `ensureEvidenceLast` appends `evidence`,
+  so 3 agents execute (`message, qris, evidence`); the planner is asked for 6
+  and 6 execute (the evidence rule replaces the last planner choice). Measured
+  `twoAgentMs 162` and `sixAgentMs 256` from the `LATENCY` line. The same run
+  confirms every `agent_start` is immediately followed by its own
+  `agent_result`, and that the start/result event count equals twice the trace's
+  agent count at both sizes, so the crew really runs one at a time.
