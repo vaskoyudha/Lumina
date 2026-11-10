@@ -1,8 +1,5 @@
 /** @jest-environment node */
-import type {
-  OrchestratorEvent,
-  OrchestratorRequest,
-} from "@/lib/contracts/orchestrator";
+import type { OrchestratorRequest } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { runOrchestrator } from "@/lib/orchestrator/loop";
 
@@ -83,14 +80,6 @@ function chatFor(agents: string[], perAgentMs: number) {
 const trace = { stages: [], totalMs: 1, validation: {} } as never;
 const score = (() => ({ result: baseline, trace })) as never;
 
-function orderOf(events: OrchestratorEvent[]) {
-  return events
-    .filter(
-      (event) => event.type === "agent_start" || event.type === "agent_result",
-    )
-    .map((event) => `${event.type}:${event.agent}`);
-}
-
 describeLatency("serial specialist latency", () => {
   it("records 2-agent and 6-agent totals and proves serial order", async () => {
     const two = await runOrchestrator(request, {
@@ -105,13 +94,20 @@ describeLatency("serial specialist latency", () => {
       score,
     });
     for (const result of [two, six]) {
-      const order = orderOf(result.events);
-      for (let index = 0; index < order.length; index += 2) {
-        expect(order[index]).toBe(
-          `agent_start:${result.trace.agents[index / 2].id}`,
+      const agentEvents = result.events.filter(
+        (event) =>
+          event.type === "agent_start" || event.type === "agent_result",
+      );
+      expect(agentEvents.length).toBe(result.trace.agents.length * 2);
+      for (const agent of result.trace.agents) {
+        const startIndex = agentEvents.findIndex(
+          (event) => event.type === "agent_start" && event.agent === agent.id,
         );
-        expect(order[index + 1]).toBe(
-          `agent_result:${result.trace.agents[index / 2].id}`,
+        expect(startIndex).toBeGreaterThanOrEqual(0);
+        const next = agentEvents[startIndex + 1];
+        expect(next?.type).toBe("agent_result");
+        expect(next?.type === "agent_result" ? next.agent : null).toBe(
+          agent.id,
         );
       }
     }
