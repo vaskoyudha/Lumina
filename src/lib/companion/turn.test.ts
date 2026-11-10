@@ -1,5 +1,6 @@
 import { explain } from "@/lib/companion/explain";
 import {
+  isContentQuestion,
   isQuestionAbout,
   PASTE_LENGTH,
   planTurn,
@@ -178,6 +179,24 @@ describe("planTurn · the recall invariant", () => {
 });
 
 describe("isQuestionAbout · narrow on purpose", () => {
+  it.each([
+    "itu isi kode nya apa",
+    "itu isinya apa?",
+    "tolong jelaskan kode ini",
+    "kenapa saldo bisa berkurang?",
+    "berapa beratnya?",
+  ])("guards the user's own question: %s", (text) => {
+    expect(isQuestionAbout(text)).toBe(true);
+  });
+
+  it("distinguishes explaining an attachment from checking its safety", () => {
+    expect(isContentQuestion("itu isi kode nya apa")).toBe(true);
+    expect(isContentQuestion("tolong ringkas dokumen ini")).toBe(true);
+    expect(isContentQuestion("apakah file ini aman?")).toBe(false);
+    expect(
+      isContentQuestion("ini isi pesan dari BCA. Kirim OTP sekarang."),
+    ).toBe(false);
+  });
   it("guards a question about a scam family", () => {
     expect(isQuestionAbout("apa itu pinjol?")).toBe(true);
     expect(isQuestionAbout("jelaskan apa itu phising")).toBe(true);
