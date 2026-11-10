@@ -426,6 +426,7 @@ export function SessionSidebar({
             alt=""
             fill
             sizes="204px"
+            loading="eager"
             className="pointer-events-none object-cover"
           />
           <div className="relative z-10 max-w-[115px] pt-7">

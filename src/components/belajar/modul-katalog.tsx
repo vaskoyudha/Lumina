@@ -118,9 +118,9 @@ export function ModulKatalog({
 
       {visible.length > 0 ? (
         <ul className="mt-4 grid list-none gap-3.5 p-0 md:grid-cols-2 xl:grid-cols-3 min-[1750px]:grid-cols-4">
-          {visible.map((m) => (
+          {visible.map((m, index) => (
             <li key={m.no} className="min-w-0">
-              <ModuleCard m={m} progress={progress} />
+              <ModuleCard m={m} progress={progress} priority={index === 0} />
             </li>
           ))}
         </ul>
@@ -209,9 +209,11 @@ export function LevelFilter({
 function ModuleCard({
   m,
   progress,
+  priority = false,
 }: {
   m: KatalogItem;
   progress: StoredProgress | null;
+  priority?: boolean;
 }) {
   const done = progress?.completedModules.includes(m.no) ?? false;
   const loading = progress === null;
@@ -242,6 +244,7 @@ function ModuleCard({
               width={1200}
               height={670}
               sizes="(min-width: 1750px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+              loading={priority ? "eager" : "lazy"}
               className="block h-auto w-full"
             />
           ) : (

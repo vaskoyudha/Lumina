@@ -7,9 +7,10 @@ import type { LokerCorpus, LokerView } from "@/lib/loker/types";
  * This suite renders the whole conversation client and runs the full
  * deterministic pipeline. The full run executes it beside ~60 other suites on
  * 12 cores, where Jest's 5 s default measures the scheduler rather than the
- * component; 15 s still fails a genuine hang.
+ * component; 30 s still fails a genuine hang, while the earlier 15 s budget
+ * was still too tight for the panel-link case on a loaded host.
  */
-jest.setTimeout(15_000);
+jest.setTimeout(30_000);
 
 /**
  * These render the real conversation component. The Evidence Agent is only
