@@ -540,6 +540,13 @@ async function runSpecialist(
   }
 
   const evidenceBlock = evidence.join("\n\n").slice(0, 6000);
+  const followUpNote = session?.messages.length
+    ? `
+
+<follow_up>
+Ini putaran lanjutan untuk kasus yang sama. Gunakan percakapan sebelumnya sebagai konteks, tetapi laporkan hanya poin yang didukung <tool_evidence> pada putaran ini. Jangan mengulang poin yang sudah dilaporkan; sebutkan temuan baru atau perubahan buktinya.
+</follow_up>`
+    : "";
   const childPrompt = `${specialistUserPrompt(spec, {
     question: request.question,
     message: request.message,
@@ -553,7 +560,7 @@ async function runSpecialist(
 ${evidenceBlock || "Tidak ada tool yang mengembalikan bukti."}
 </tool_evidence>
 
-Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submit_report dengan poin yang merujuk tepat pada label sinyal di atas. Jika tool menolak laporan, baca issues lalu perbaiki sekali.`;
+Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submit_report dengan poin yang merujuk tepat pada label sinyal di atas. Jika tool menolak laporan, baca issues lalu perbaiki sekali.${followUpNote}`;
   const messages: ModelMessage[] = session?.messages.length
     ? [...session.messages, { role: "user", content: childPrompt }]
     : [
@@ -664,6 +671,12 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
         report = checked.report;
         break;
       }
+      console.info(
+        `[subagent] report-rejected agent=${spec.id} issues=${checked.issues
+          .slice(0, 3)
+          .join(" | ")
+          .slice(0, 400)}`,
+      );
       invalidReports += 1;
       if (invalidReports >= 2) break;
       messages.push({
