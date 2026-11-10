@@ -1,11 +1,12 @@
 /** @jest-environment node */
 
-import { registerAccount } from "@/lib/auth/accounts";
+import { digest, registerAccount } from "@/lib/auth/accounts";
 import { authDatabase } from "@/lib/auth/database";
 import {
   createSession,
   listSessions,
   readSession,
+  revokeAllSessions,
   revokeOtherSessions,
   revokeUserSession,
 } from "@/lib/auth/session";
@@ -69,13 +70,75 @@ integration("session settings", () => {
 
     await readSession(token);
 
-    const row = (
-      await authDatabase().query<{ fresh: boolean }>(
-        "SELECT last_seen_at > now() - interval '1 minute' AS fresh FROM sessions WHERE user_id = $1",
+    const touched = (
+      await authDatabase().query<{ last_seen_at: Date; fresh: boolean }>(
+        "SELECT last_seen_at, last_seen_at > now() - interval '1 minute' AS fresh FROM sessions WHERE user_id = $1",
         [user.id],
       )
     ).rows[0];
-    expect(row.fresh).toBe(true);
+    expect(touched.fresh).toBe(true);
+
+    await readSession(token);
+
+    const untouched = (
+      await authDatabase().query<{ last_seen_at: Date }>(
+        "SELECT last_seen_at FROM sessions WHERE user_id = $1",
+        [user.id],
+      )
+    ).rows[0];
+    expect(new Date(untouched.last_seen_at).getTime()).toBe(
+      new Date(touched.last_seen_at).getTime(),
+    );
+  });
+
+  it("orders sessions by newest activity", async () => {
+    const user = await account("order");
+    const older = await createSession(user.id);
+    const newer = await createSession(user.id);
+    await authDatabase().query(
+      `UPDATE sessions SET last_seen_at =
+        CASE WHEN token_hash = $1 THEN now() - interval '2 minutes' ELSE now() - interval '1 minute' END
+       WHERE user_id = $2`,
+      [digest(older), user.id],
+    );
+
+    const rows = await listSessions(user.id, newer);
+    expect(rows.map((row) => row.id)).toEqual([digest(newer), digest(older)]);
+    expect(rows[0].current).toBe(true);
+    expect(rows[1].current).toBe(false);
+  });
+
+  it("excludes expired sessions", async () => {
+    const user = await account("expired");
+    const live = await createSession(user.id);
+    const expired = await createSession(user.id);
+    await authDatabase().query(
+      "UPDATE sessions SET expires_at = now() - interval '1 minute' WHERE token_hash = $1",
+      [digest(expired)],
+    );
+
+    const rows = await listSessions(user.id, live);
+    expect(rows.map((row) => row.id)).toEqual([digest(live)]);
+  });
+
+  it("caps the list at 50 sessions", async () => {
+    const user = await account("cap");
+    for (let index = 0; index < 51; index += 1)
+      await createSession(user.id, undefined, {
+        userAgent: `Device/${index}`,
+      });
+
+    expect(await listSessions(user.id)).toHaveLength(50);
+  }, 20000);
+
+  it("revokes every session for the account", async () => {
+    const user = await account("all");
+    const first = await createSession(user.id);
+    await createSession(user.id);
+
+    expect(await revokeAllSessions(user.id)).toBe(2);
+    expect(await listSessions(user.id)).toHaveLength(0);
+    expect(await readSession(first)).toBeNull();
   });
 
   it("revokes only the caller's sessions", async () => {
