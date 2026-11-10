@@ -20,6 +20,7 @@
     "db:cleanup": "node --env-file-if-exists=.env.local scripts/cleanup.mjs",
     "db:import-sqlite": "node --env-file-if-exists=.env.local scripts/import-sqlite.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "wip": "node scripts/wip-report.mjs",
     "db:seed": "node --env-file-if-exists=.env.local scripts/seed-content.mjs",
     "db:seed:community": "node --env-file-if-exists=.env.local scripts/seed-community.mjs"
   },

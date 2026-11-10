@@ -52,6 +52,11 @@ next-env.d.ts
 /ref-*.png
 /sim-*.png
 
+# Review screenshots at the repo root; keep git status readable
+/*.png
+/*.jpg
+/.opencode/*.yml
+
 # Local screenshots and verify logs used during review, never shipped
 /.cache/
 
