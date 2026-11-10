@@ -123,6 +123,18 @@ describe("runOrchestrator", () => {
     expect(result.trace.agents[0].points).toHaveLength(1);
     expect(result.trace.agents[0].points[0].pattern).toBe("credential-request");
     expect(
+      result.events
+        .filter((event) => event.type === "agent_start")
+        .map((event) => event.task),
+    ).toEqual(["Periksa narasi dan OTP.", "Periksa jalur pembayaran."]);
+    expect(
+      chat.mock.calls.some(([options]) =>
+        String(options.messages[1]?.content).includes(
+          "Tugas dari koordinator: Periksa narasi dan OTP.",
+        ),
+      ),
+    ).toBe(true);
+    expect(
       result.events.filter((event) => event.type === "agent_result"),
     ).toHaveLength(2);
     expect(
@@ -133,6 +145,58 @@ describe("runOrchestrator", () => {
           event.ok,
       ),
     ).toBe(true);
+  });
+
+  it("keeps the specialist that owns a strong detector signal", async () => {
+    const jobBaseline: ScoreResult = {
+      ...baseline,
+      score: 84,
+      modus: "lowongan-tugas-berbayar",
+      signals: [
+        {
+          label: "Tugas berbayar meminta pembayaran lanjutan",
+          weight: 0.82,
+          evidence: "tugas2 selanjutnya",
+          agent: "job",
+          mechanism: "payment-redirect",
+        },
+      ],
+    };
+    const jobRequest: OrchestratorRequest = {
+      ...request,
+      question: "apakah tugas berbayar ini penipuan?",
+      message:
+        "itu 420K masih ada bayar lagi tidak untuk tugas2 selanjutnya, dan apa bisa langsung di tarik?",
+    };
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban")) {
+          return { role: "assistant", content: "Skor resmi 84/100." };
+        }
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            reportCall("call-job", "Tugas berbayar", "tugas2 selanjutnya"),
+          ],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(jobRequest, {
+      chat: chat as never,
+      score: (() => ({ result: jobBaseline, trace: path })) as never,
+    });
+
+    const plan = result.events.find((event) => event.type === "plan");
+    expect(plan?.type).toBe("plan");
+    if (plan?.type === "plan") {
+      expect(plan.agents.map((step) => step.agent)).toContain("job");
+    }
   });
 
   it("returns a tool error and accepts a corrected report", async () => {

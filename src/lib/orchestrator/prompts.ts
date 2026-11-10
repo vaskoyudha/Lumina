@@ -52,10 +52,16 @@ export function specialistUserPrompt(
     message: string;
     baseline: ScoreResult;
     priorTurns: string[];
+    /** The supervisor's task for this run; falls back to the specialist's default. */
+    task?: string;
+    /** The supervisor's rationale, used as a hypothesis to verify, not a verdict. */
+    brief?: string;
   },
 ): string {
   return [
-    `Tugasmu: ${spec.task}`,
+    `Tugas dari koordinator: ${input.task ?? spec.task}`,
+    `Peranmu: ${spec.task}`,
+    input.brief ? `Hipotesis koordinator: ${input.brief}` : "",
     `Pertanyaan pengguna: ${input.question}`,
     `Baseline scorer: ${input.baseline.score}/100 (${input.baseline.risk}); modus: ${input.baseline.modus}.`,
     input.priorTurns.length

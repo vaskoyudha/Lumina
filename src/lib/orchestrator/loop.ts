@@ -319,6 +319,35 @@ function dedupePlan(steps: PlanStep[]): PlanStep[] {
   return out.slice(0, MAX_AGENTS);
 }
 
+/**
+ * A supervisor may narrate the right scam type and still delegate to unrelated
+ * specialists. When the deterministic scorer has a strong, owned signal, keep
+ * the specialist that owns it in the plan; the model's rationale is a hypothesis,
+ * not a replacement for the evidence already in hand.
+ */
+function ensureBaselineSpecialist(
+  steps: PlanStep[],
+  baseline: ScoreResult,
+  fallback: PlanStep[],
+): PlanStep[] {
+  const required = baseline.signals.find(
+    (signal) =>
+      signal.weight >= 0.7 &&
+      SPECIALIST_IDS.includes(signal.agent as SpecialistId),
+  )?.agent as SpecialistId | undefined;
+  if (!required || steps.some((step) => step.agent === required)) return steps;
+
+  const spec = SPECIALISTS[required];
+  const step: PlanStep = {
+    agent: required,
+    task: spec.task,
+    skills: spec.skills,
+    tools: spec.tools,
+  };
+  const out = steps.length < MAX_AGENTS ? [...steps, step] : [...steps.slice(0, -1), step];
+  return dedupePlan([...out, ...fallback]);
+}
+
 function normalizePlan(steps: PlanStep[], fallback: PlanStep[]): PlanStep[] {
   const merged = dedupePlan([...steps, ...fallback]);
   return merged;
@@ -378,15 +407,16 @@ async function makePlan(
       safeJson(message.content ?? ""),
     );
     if (!parsed.success) throw new Error("invalid-plan");
+    const normalized = normalizePlan(
+      parsed.data.agents.map((step) => ({
+        ...step,
+        skills: SPECIALISTS[step.agent].skills,
+        tools: SPECIALISTS[step.agent].tools,
+      })),
+      fallback,
+    );
     return {
-      steps: normalizePlan(
-        parsed.data.agents.map((step) => ({
-          ...step,
-          skills: SPECIALISTS[step.agent].skills,
-          tools: SPECIALISTS[step.agent].tools,
-        })),
-        fallback,
-      ),
+      steps: ensureBaselineSpecialist(normalized, baseline, fallback),
       rationale: parsed.data.rationale || "Rencana disusun oleh koordinator.",
       source: "model",
       ms: Math.round(performance.now() - started),
@@ -413,6 +443,8 @@ interface SpecialistResult {
 
 async function runSpecialist(
   spec: SpecialistSpec,
+  task: string,
+  brief: string,
   request: OrchestratorRequest,
   baseline: ScoreResult,
   score: () => ReturnType<typeof scoreWithTrace>,
@@ -432,7 +464,7 @@ async function runSpecialist(
     type: "agent_start",
     agent: spec.id,
     label: spec.label,
-    task: spec.task,
+    task,
     skills: spec.skills,
     tools: spec.tools,
   });
@@ -509,6 +541,8 @@ async function runSpecialist(
         message: request.message,
         baseline,
         priorTurns: request.priorTurns,
+        task,
+        brief,
       })}
 
 <tool_evidence>
@@ -814,6 +848,8 @@ export async function runOrchestrator(
     const spec = SPECIALISTS[step.agent];
     const result = await runSpecialist(
       spec,
+      step.task,
+      plan.rationale,
       request,
       baseline,
       () => cached,
