@@ -105,6 +105,7 @@ import {
   composeReply,
   suggestedActions,
 } from "@/lib/companion/reply";
+import { runSettled } from "@/lib/companion/run-state";
 import { requestToolSummary } from "@/lib/companion/tool-client";
 import {
   isContentQuestion,
@@ -713,15 +714,23 @@ export function CompanionChat({
         return {
           result: turn.result ?? null,
           trace: turn.trace,
+          orchestration: turn.orchestration,
         };
       }
     }
     return null;
   }, [turns]);
 
-  const panelResult = liveCheck?.result ?? latestResult;
+  const activeTurn = [...turns].reverse().find((turn) => turn.streaming);
+  const panelBandReady =
+    !activeTurn ||
+    (activeTurn.orchestration !== undefined &&
+      runSettled(activeTurn.orchestration));
+  const panelResult = panelBandReady
+    ? (liveCheck?.result ?? latestResult)
+    : null;
   const panelTrace = liveCheck?.trace ?? latestTrace;
-  const panelLink = panelResult ? null : latestLink;
+  const panelLink = panelBandReady ? (panelResult ? null : latestLink) : null;
   const panelLinkPending = panelResult || panelLink ? null : latestLinkPrompt;
   const running = liveCheck != null;
 
@@ -2159,8 +2168,8 @@ export function CompanionChat({
                     "size-1.5 shrink-0 rounded-full",
                     showAgents
                       ? "hidden"
-                      : latestResult
-                        ? RISK_DOT[latestResult.risk]
+                      : panelResult
+                        ? RISK_DOT[panelResult.risk]
                         : "bg-dim/50",
                   )}
                 />
@@ -2501,7 +2510,10 @@ export function CompanionChat({
                       className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
                     >
                       {turn.orchestration && turn.orchestration.length > 0 ? (
-                        <ProcessTrace events={turn.orchestration} />
+                        <ProcessTrace
+                          events={turn.orchestration}
+                          live={turn.streaming}
+                        />
                       ) : turn.trace ? (
                         <AgentRun
                           trace={turn.trace}
@@ -2750,7 +2762,9 @@ export function CompanionChat({
                         </div>
                       ) : null}
 
-                      {turn.result ? (
+                      {turn.result &&
+                      (turn.orchestration === undefined ||
+                        runSettled(turn.orchestration)) ? (
                         <>
                           {turn.ocrConfidence !== undefined && (
                             <p className="text-xs text-dim">

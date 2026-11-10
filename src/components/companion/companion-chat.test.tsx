@@ -265,6 +265,46 @@ describe("CompanionChat · real user intent regressions", () => {
     expect(screen.queryByText("Orkestrator")).not.toBeInTheDocument();
   });
 
+  it("hides the band until synthesis finishes", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockImplementationOnce(async (_request, options) => {
+      const event = {
+        type: "plan" as const,
+        runId: "run-band",
+        seq: 1,
+        at: 0,
+        rationale: "Memeriksa pesan.",
+        agents: [
+          {
+            agent: "message" as const,
+            task: "Baca pesan",
+            skills: [],
+            tools: [],
+          },
+        ],
+        planner: "model" as const,
+        ms: 1,
+      };
+      options.onEvent?.(event);
+      return {
+        outcome: "model" as const,
+        text: "Jawaban agen.",
+        events: [event],
+        trace: null,
+        score: null,
+      };
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+    await sendApk(user);
+
+    await waitFor(() =>
+      expect(screen.getByText("Jawaban agen.")).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("score-card")).not.toBeInTheDocument();
+  });
+
   it("excludes a checked message from later conversational history in every lane", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
