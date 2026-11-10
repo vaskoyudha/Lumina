@@ -767,21 +767,25 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
   }
 
   if (!report) {
+    const noSignal = reportSignals.length === 0 && !lastError;
     const failure =
       lastToolSummary ||
       (lastError instanceof Error
         ? `Agen gagal melaporkan hasil (${lastError.message.slice(0, 80)}).`
         : "Agen tidak memanggil submit_report setelah satu kesempatan perbaikan.");
+    const summary = noSignal
+      ? lastToolSummary || "Tidak ada sinyal yang menjadi tugas agen ini."
+      : failure;
     console.info(
-      `[subagent] failed agent=${spec.id} calls=${modelCalls} error=${
+      `[subagent] ${noSignal ? "skipped" : "failed"} agent=${spec.id} calls=${modelCalls} error=${
         lastError instanceof Error ? lastError.message.slice(0, 120) : "none"
-      } summary=${failure.slice(0, 160)}`,
+      } summary=${summary.slice(0, 160)}`,
     );
-    commitSession(failure);
+    commitSession(summary);
     return {
       ...baseResult,
-      status: "gagal",
-      summary: failure,
+      status: noSignal ? "dilewati" : "gagal",
+      summary,
       ms: Math.round(performance.now() - started),
     };
   }
