@@ -4,7 +4,12 @@ import {
   type AgentTrace,
   STAGE_LABEL,
 } from "@/lib/contracts/agent-run";
-import { riskFor, type AgentId, type ScoreResult, type Signal } from "@/lib/contracts/score";
+import {
+  type AgentId,
+  riskFor,
+  type ScoreResult,
+  type Signal,
+} from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
 import { conversationSignals } from "@/lib/scoring/conversation";
 import type { DetectorId } from "@/lib/scoring/detector-ids";

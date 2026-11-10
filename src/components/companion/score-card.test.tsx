@@ -116,4 +116,3 @@ describe("ScoreCard · consensus provenance", () => {
     ).toBeInTheDocument();
   });
 });
-
