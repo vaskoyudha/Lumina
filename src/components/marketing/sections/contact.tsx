@@ -69,7 +69,7 @@ export function Contact() {
             <h2 className="font-medium text-3xl tracking-tight sm:text-5xl">
               {contactCopy.headerTitle}
             </h2>
-            <p className="max-w-md text-amberwarm-100/80 text-xs leading-relaxed sm:text-sm">
+            <p className="max-w-md text-amberwarm-100/80 text-sm leading-relaxed">
               {contactCopy.headerBody}
             </p>
           </div>
@@ -108,12 +108,12 @@ export function Contact() {
               <h3 className="font-semibold text-3xl text-ls-ink leading-tight sm:text-4xl">
                 {contactCopy.formTitle}
               </h3>
-              <p className="mt-2.5 text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
+              <p className="mt-2.5 text-ls-ink-2 text-sm leading-relaxed">
                 {contactCopy.formBody}
               </p>
             </div>
 
-            <div className="divide-y divide-dashed divide-ls-line-strong pt-6 text-xs sm:pt-12 sm:text-sm">
+            <div className="divide-y divide-dashed divide-ls-line-strong pt-6 text-sm sm:pt-12">
               {contactCopy.info.map((row) => (
                 <div
                   key={row.label}
