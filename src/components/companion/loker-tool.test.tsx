@@ -139,7 +139,7 @@ describe("LokerTool", () => {
     expect(onToggleSave).toHaveBeenCalledWith(corpus.postings[0]);
   });
 
-  it("reports a failed refresh when the scan cannot start", async () => {
+  it("asks for a fresh login when the session is gone", async () => {
     const user = userEvent.setup();
     jest.mocked(triggerScan).mockResolvedValue("unauthorized");
     render(<LokerTool {...baseProps} canRefresh />);
@@ -147,10 +147,22 @@ describe("LokerTool", () => {
       screen.getByRole("button", { name: /pindai ulang lowongan/i }),
     );
     expect(
-      await screen.findByText(/pindai gagal dimulai/i),
+      await screen.findByText(/sesi berakhir\. masuk lagi untuk memindai/i),
     ).toBeInTheDocument();
     // The results already on screen were never removed.
     expect(screen.getByText("Frontend Engineer")).toBeInTheDocument();
+  });
+
+  it("explains the rate limit instead of calling it a failure", async () => {
+    const user = userEvent.setup();
+    jest.mocked(triggerScan).mockResolvedValue("rate-limited");
+    render(<LokerTool {...baseProps} canRefresh />);
+    await user.click(
+      screen.getByRole("button", { name: /pindai ulang lowongan/i }),
+    );
+    expect(
+      await screen.findByText(/batas pindai tercapai/i),
+    ).toBeInTheDocument();
   });
 
   it("clears the running state after a completed scan without hiding results", async () => {
@@ -176,5 +188,56 @@ describe("LokerTool", () => {
       await screen.findByRole("button", { name: /pindai ulang lowongan/i }),
     ).toHaveTextContent(/pindai ulang/i);
     expect(screen.getByText("Frontend Engineer")).toBeInTheDocument();
+  });
+
+  it("keeps the running state when polling times out mid-scan", async () => {
+    const user = userEvent.setup();
+    jest.mocked(triggerScan).mockResolvedValue("started");
+    jest.mocked(pollScan).mockImplementation(async (onTick) => {
+      onTick({
+        status: "running",
+        found: 0,
+        added: 0,
+        dropped: 0,
+        finishedAt: null,
+      });
+      return null;
+    });
+    render(<LokerTool {...baseProps} canRefresh />);
+    await user.click(
+      screen.getByRole("button", { name: /pindai ulang lowongan/i }),
+    );
+    expect(
+      await screen.findByText(/pindai berjalan di latar belakang/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/pindai gagal dimulai/i)).not.toBeInTheDocument();
+  });
+
+  it("does not claim a finished result while the scan is still running", async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      status: 200,
+      json: async () => ({
+        status: "running",
+        found: 0,
+        added: 0,
+        dropped: 0,
+        finishedAt: null,
+      }),
+    }) as unknown as typeof fetch;
+    jest.mocked(pollScan).mockImplementation(async (onTick) => {
+      onTick({
+        status: "running",
+        found: 0,
+        added: 0,
+        dropped: 0,
+        finishedAt: null,
+      });
+      return null;
+    });
+    render(<LokerTool {...baseProps} canRefresh />);
+    expect(
+      await screen.findByText(/pindai berjalan di latar belakang/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/pindai terakhir:/i)).not.toBeInTheDocument();
   });
 });

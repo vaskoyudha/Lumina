@@ -136,26 +136,30 @@ describe("ingestScan", () => {
     expect(JSON.stringify(saved[0])).not.toContain("kirim OTP kamu");
   });
 
-  it("drops a row whose domain age could not be resolved", async () => {
-    const out = await ingestScan(
-      [row()],
-      1,
-      deps({
-        domainAge: jest
-          .fn()
-          .mockResolvedValue({ status: "error", ageDays: null }),
-      }),
+  it("saves a row with an unresolved domain age as null", async () => {
+    const d = deps({
+      domainAge: jest
+        .fn()
+        .mockResolvedValue({ status: "error", ageDays: null }),
+    });
+    const out = await ingestScan([row()], 1, d);
+    expect(out).toEqual({ added: 1, dropped: 0 });
+    const saved = (d as IngestDeps & { saved: PostingRow[] }).saved;
+    expect(saved[0]?.domainAgeDays).toBeNull();
+    expect(d.audit).toHaveBeenCalledWith(
+      expect.objectContaining({ domain_age_days: null }),
     );
-    expect(out).toEqual({ added: 0, dropped: 1 });
   });
 
-  it("drops a row with no company email rather than inserting null", async () => {
-    const out = await ingestScan(
-      [row()],
-      1,
-      deps({ email: jest.fn().mockReturnValue(null) }),
+  it("saves a row with no company email instead of hiding the posting", async () => {
+    const d = deps({ email: jest.fn().mockReturnValue(null) });
+    const out = await ingestScan([row()], 1, d);
+    expect(out).toEqual({ added: 1, dropped: 0 });
+    const saved = (d as IngestDeps & { saved: PostingRow[] }).saved;
+    expect(saved[0]?.companyEmail).toBeNull();
+    expect(d.audit).toHaveBeenCalledWith(
+      expect.objectContaining({ company_email: null }),
     );
-    expect(out).toEqual({ added: 0, dropped: 1 });
   });
 
   it("caps the stored description", async () => {

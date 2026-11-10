@@ -20,8 +20,8 @@ export interface PostingRow {
   applyUrl: string | null;
   source: string;
   postedAt: string | null;
-  companyEmail: string;
-  domainAgeDays: number;
+  companyEmail: string | null;
+  domainAgeDays: number | null;
   employerKnown: boolean;
   sentinelStatus: LokerSentinelStatus;
   sentinelFlags: string[];
@@ -46,8 +46,8 @@ interface PostingDbRow {
   source: string;
   posted_at: string | null;
   fetched_at: Date;
-  company_email: string;
-  domain_age_days: number;
+  company_email: string | null;
+  domain_age_days: number | null;
   employer_known: boolean;
   sentinel_status: LokerSentinelStatus;
   sentinel_flags: string[];
@@ -129,6 +129,42 @@ export async function upsertPosting(row: PostingRow): Promise<void> {
   );
 }
 
+/** Every `url_key` already stored, so a refresh can find its backlog. */
+export async function readPostingKeys(): Promise<Set<string>> {
+  const result = await authDatabase().query<{ url_key: string }>(
+    "select url_key from loker_postings",
+  );
+  return new Set(result.rows.map((row) => row.url_key));
+}
+
+/** Format one rupiah bound without losing sub-million values. */
+function formatRupiah(value: number): string {
+  if (value >= 1_000_000) {
+    const juta = value / 1_000_000;
+    return `Rp${Number.isInteger(juta) ? juta : Number(juta.toFixed(1))} jt`;
+  }
+  if (value >= 1_000) {
+    const ribu = value / 1_000;
+    return `Rp${Number.isInteger(ribu) ? ribu : Number(ribu.toFixed(1))} rb`;
+  }
+  return `Rp${value}`;
+}
+
+/** Build a label from whichever bound exists; `null` only when both are absent. */
+function salaryLabel(min: number | null, max: number | null): string | null {
+  if (min !== null && max !== null) {
+    if (min === max) return formatRupiah(min);
+    const lo = min / 1_000_000;
+    const hi = max / 1_000_000;
+    if (min >= 1_000_000 && max >= 1_000_000) {
+      return `Rp${Number(lo.toFixed(1))}-${Number(hi.toFixed(1))} jt`;
+    }
+    return `${formatRupiah(min)}-${formatRupiah(max).replace(/^Rp/, "")}`;
+  }
+  const only = min ?? max;
+  return only === null ? null : formatRupiah(only);
+}
+
 /** The cumulative corpus, newest first, plus the honest total. */
 export async function loadCorpus(
   limit = 300,
@@ -161,12 +197,10 @@ export async function loadCorpus(
       location: r.location,
       salaryMin: r.salary_min === null ? null : Number(r.salary_min),
       salaryMax: r.salary_max === null ? null : Number(r.salary_max),
-      salaryText:
-        r.salary_min !== null && r.salary_max !== null
-          ? `Rp${Math.round(Number(r.salary_min) / 1_000_000)}-${Math.round(
-              Number(r.salary_max) / 1_000_000,
-            )} jt`
-          : null,
+      salaryText: salaryLabel(
+        r.salary_min === null ? null : Number(r.salary_min),
+        r.salary_max === null ? null : Number(r.salary_max),
+      ),
       tags: r.tags,
       description: r.description,
       applyUrl: r.apply_url,

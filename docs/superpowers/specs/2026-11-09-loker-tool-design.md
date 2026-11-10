@@ -651,3 +651,24 @@ c. Update AGENTS.md's layout, route, and stream tables for `scanner/`,
    `src/lib/loker/`, `src/components/companion/loker-*`, and
    `src/app/api/loker/*` when the code lands.
 d. Use `migrations/002_loker.sql` (001 is the only existing migration).
+
+---
+
+## 15. Amendment — 2026-11-10 (live corpus repair)
+
+Q26 ("require all audit fields") produced zero live rows: 764/764 pipeline rows
+were dropped because job boards publish no company email, and Breezy has no
+resolvable domain age. The rule is amended:
+
+a. `company_email` and `domain_age_days` are nullable in `loker_postings` (see
+   `migrations/005_loker_nullable_enrichment.sql`).
+b. Missing values are passed to the Sentinel audit as `null`; it already treats
+   them as "not checked". No value is synthesized.
+c. `runScanJob` also backfills up to 200 unimported `pipeline.md` rows per
+   refresh (newest `posted` first), so a fixed ingest can recover an existing
+   corpus without a rescan.
+d. A posting still requires a fetched, non-empty description; otherwise it is
+   `dropped` and counted.
+e. The local `demo-seed` rows (`https://demo.lumina.local/job/N`) are removed;
+   they were synthetic and their apply links pointed at a host that does not
+   exist.

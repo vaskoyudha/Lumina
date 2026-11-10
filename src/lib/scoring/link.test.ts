@@ -76,6 +76,20 @@ describe("link classification — the exact brand SLD on the wrong suffix", () =
   });
 });
 
+describe("link classification — brand matching respects label boundaries", () => {
+  it("does not read 'investasi-cepat' as an imitation of SiCepat", () => {
+    const f = classifyLink("https://investasi-cepat.xyz/register");
+    expect(f?.kind).not.toBe("typosquat");
+    expect(f?.imitates).toBeUndefined();
+  });
+
+  it("still catches a hyphen-separated SiCepat fake", () => {
+    const f = classifyLink("https://sicepat-verif.xyz/klaim");
+    expect(f?.kind).toBe("typosquat");
+    expect(f?.imitates).toBe("SiCepat");
+  });
+});
+
 describe("Link Agent — structural additions", () => {
   it("flags a punycode host", () => {
     // \u0441 is CYRILLIC SMALL LETTER ES, not Latin "c". The WHATWG URL parser

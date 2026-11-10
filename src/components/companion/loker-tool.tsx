@@ -29,7 +29,14 @@ import type {
 } from "@/lib/loker/types";
 import { cn } from "@/lib/utils";
 
-type ScanState = "idle" | "starting" | "running" | "done" | "failed";
+type ScanState =
+  | "idle"
+  | "starting"
+  | "running"
+  | "done"
+  | "unauthorized"
+  | "limited"
+  | "failed";
 
 function parseRupiah(value: string): number | undefined {
   const digits = value.replace(/[^\d]/g, "");
@@ -94,6 +101,33 @@ export function LokerTool({
   const [lastRun, setLastRun] = React.useState<ScanRunStatus | null>(null);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
 
+  const latestRun = React.useRef<ScanRunStatus | null>(null);
+
+  const waitForScan = React.useCallback(async () => {
+    latestRun.current = null;
+    const result = await pollScan(
+      (status) => {
+        latestRun.current = status;
+        setLastRun(status);
+      },
+      { intervalMs: 3000 },
+    );
+    if (result?.status === "ok") {
+      setScan("done");
+      router.refresh();
+      return;
+    }
+    if (result?.status === "failed") {
+      setScan("failed");
+      return;
+    }
+    // `null` means a timeout, a network error, or no run yet. A timeout while
+    // the run is still `running` is not a failure: keep polling on the next
+    // mount instead of claiming the scan failed and hiding its rows.
+    const last = latestRun.current as ScanRunStatus | null;
+    setScan(last?.status === "running" ? "running" : "failed");
+  }, [router]);
+
   React.useEffect(() => {
     if (!canRefresh) return;
     let cancelled = false;
@@ -104,13 +138,18 @@ export function LokerTool({
           : (response.json() as Promise<ScanRunStatus>),
       )
       .then((status) => {
-        if (!cancelled) setLastRun(status);
+        if (cancelled) return;
+        setLastRun(status);
+        if (status?.status === "running") {
+          setScan("running");
+          void waitForScan();
+        }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [canRefresh]);
+  }, [canRefresh, waitForScan]);
 
   const results = React.useMemo(
     () => filterPostings(corpus.postings, args),
@@ -125,6 +164,8 @@ export function LokerTool({
   const lastScan = lastRun?.finishedAt ?? corpus.postings[0]?.fetchedAt ?? null;
   const hasNotice =
     scan === "failed" ||
+    scan === "unauthorized" ||
+    scan === "limited" ||
     scan === "running" ||
     corpus.capped ||
     Boolean(lastRun) ||
@@ -134,20 +175,20 @@ export function LokerTool({
     if (!canRefresh || scanning) return;
     setScan("starting");
     const started = await triggerScan();
-    if (started === "unauthorized" || started === "failed") {
+    if (started === "unauthorized") {
+      setScan("unauthorized");
+      return;
+    }
+    if (started === "rate-limited") {
+      setScan("limited");
+      return;
+    }
+    if (started === "failed") {
       setScan("failed");
       return;
     }
     setScan("running");
-    const result = await pollScan((status) => setLastRun(status), {
-      intervalMs: 3000,
-    });
-    if (result?.status === "ok") {
-      setScan("done");
-      router.refresh();
-      return;
-    }
-    setScan("failed");
+    await waitForScan();
   };
 
   return (
@@ -342,6 +383,20 @@ export function LokerTool({
 
       {hasNotice ? (
         <div className="flex flex-col gap-1.5">
+          {scan === "unauthorized" ? (
+            <p className="flex items-start gap-1.5 rounded-[8px] bg-danger/5 px-2.5 py-2 text-[11px] text-danger leading-snug">
+              <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+              Sesi berakhir. Masuk lagi untuk memindai. Hasil lama tetap
+              ditampilkan.
+            </p>
+          ) : null}
+          {scan === "limited" ? (
+            <p className="flex items-start gap-1.5 rounded-[8px] bg-danger/5 px-2.5 py-2 text-[11px] text-danger leading-snug">
+              <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+              Batas pindai tercapai. Coba lagi beberapa menit lagi. Hasil lama
+              tetap ditampilkan.
+            </p>
+          ) : null}
           {scan === "failed" ? (
             <p className="flex items-start gap-1.5 rounded-[8px] bg-danger/5 px-2.5 py-2 text-[11px] text-danger leading-snug">
               <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
@@ -366,10 +421,10 @@ export function LokerTool({
               {corpus.total} hasil pindai.
             </p>
           ) : null}
-          {lastRun ? (
+          {lastRun && lastRun.status !== "running" && lastRun.finishedAt ? (
             <p className="tabular text-[11px] text-dim leading-snug">
               Pindai terakhir: {lastRun.added} ditambahkan, {lastRun.dropped}{" "}
-              dibuang karena data audit tidak lengkap.
+              dibuang karena detail lowongan tidak bisa diambil.
             </p>
           ) : null}
         </div>

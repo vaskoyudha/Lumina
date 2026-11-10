@@ -37,6 +37,40 @@ interface Rule {
  */
 const QR_ACTION = /\b(?:scan|pindai|bayar|bayarkan|stiker|kirim|setor)\b/i;
 
+/**
+ * Tokens that identify a secret the scammer wants the reader to hand over.
+ * `kode 6 digit` / `6 angka` are how real Indonesian messages phrase an OTP
+ * without ever saying "OTP".
+ */
+const OTP_TOKEN =
+  "(?:otp|kode\\s+otp(?:nya)?|kode\\s+verifikasi(?:nya)?|kode\\s+rahasia(?:nya)?|kode\\s+\\d{4,8}|kode\\s+(?:4|6|8)\\s*digit|\\d+\\s*angka|pin|password|kata\\s+sandi(?:nya)?)";
+
+/**
+ * Verbs that turn "there is a code" into "send me the code". `bacakan` and
+ * `beri tahu` are the natural "read it to me" phrasing and were the biggest
+ * miss before this list existed.
+ */
+const OTP_REQUEST_VERB =
+  "(?:berikan|bagikan|masukkan|share|sebutkan|tolong|mohon|kirim(?:kan)?|bacakan|dibacakan|beri\\s*tahu|beritahu|saya\\s+(?:butuh|perlu|terima))";
+
+/** A request in either order: "OTP … kirim" or "kirim … OTP". */
+const OTP_REQUEST_PATTERN = new RegExp(
+  `\\b${OTP_TOKEN}\\b[^.!]{0,70}?\\b${OTP_REQUEST_VERB}\\b|\\b${OTP_REQUEST_VERB}\\b[^.!]{0,40}?\\b${OTP_TOKEN}\\b`,
+  "i",
+);
+
+/**
+ * "Kode OTP … telah kami kirim" is the bank delivering a code, not asking for
+ * it. Without this veto the hard rule fired on the most common legitimate bank
+ * SMS and forced a 100/`tinggi` accusation.
+ */
+const OTP_DELIVERY =
+  /\b(?:kami|kita)\s+(?:telah\s+|sudah\s+)?(?:kirim|kirimkan)\b|\btelah\s+(?:kami\s+|kita\s+)?(?:kirim|kirimkan)\b/i;
+
+/** "… ? Jangan berikan kode OTP" inside the same match is a warning. */
+const OTP_WARNING_IN_MATCH =
+  /\bjangan\b[^.!]{0,40}\b(?:berikan|bagikan|share|kirim|sebutkan|bacakan)\b/i;
+
 export const MESSAGE_RULES: readonly Rule[] = [
   {
     // HARD: the killer signal is the *request* — "give me the code".
@@ -46,8 +80,9 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 1,
     label:
       "Meminta kode OTP/PIN/password — bank dan instansi tidak pernah memintanya",
-    pattern:
-      /\b(?:otp|kode\s+otp|kode\s+verifikasi|kode\s+rahasia|pin|password|kata\s+sandi)\b[^.!?]{0,70}?\b(?:berikan|bagikan|masukkan|share|sebutkan|tolong|kirim(?:kan)?|dibutuhkan|saya\s+(?:butuh|perlu|terima))\b|\b(?:berikan|bagikan|masukkan|share|sebutkan|tolong|kirim(?:kan)?|saya\s+(?:butuh|perlu|terima))\b[^.!?]{0,40}?\b(?:kode\s+otp|otp|kode\s+verifikasi|pin|password|kata\s+sandi)\b/i,
+    pattern: OTP_REQUEST_PATTERN,
+    gate: (_text, match) =>
+      !OTP_DELIVERY.test(match[0]) && !OTP_WARNING_IN_MATCH.test(match[0]),
   },
   {
     // SOFT: an OTP the recipient's own app/bank sent. Benign on its own;
