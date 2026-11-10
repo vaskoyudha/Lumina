@@ -167,6 +167,16 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
           : stageView(result).filter(
               (signal) => signal.agent === context.agent,
             );
+      const otherSignals = stageView(result)
+        .filter(
+          (signal) =>
+            signal.agent !== context.agent && (signal.weight ?? 0) > 0,
+        )
+        .map((signal) => ({
+          label: signal.label,
+          agent: signal.agent,
+          weight: signal.weight,
+        }));
       return {
         score: result.score,
         risk: result.risk,
@@ -174,6 +184,10 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
         relatedModule: result.relatedModule,
         advice: result.advice,
         signals: scoped,
+        otherSignals,
+        guidance: scoped.length
+          ? "Gunakan sinyal milik detektormu sebagai label laporan. Sinyal agen lain di otherSignals hanya konteks; jangan mengklaimnya sebagai temuan detektormu."
+          : "Detektormu tidak menemukan sinyal. Jangan mengarang label; jika ada pola yang terlihat langsung di pesan, gunakan observasi dengan kutipan persis, atau laporkan kosong.",
         stages: trace.stages.map((stage) => ({
           id: stage.id,
           label: stage.label,
