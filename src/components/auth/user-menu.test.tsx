@@ -15,8 +15,16 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: jest.fn() }),
+}));
+
 jest.mock("@/lib/auth/actions", () => ({
   logout: jest.fn(),
+  updateNama: jest.fn(),
+  changePasswordAction: jest.fn(),
+  revokeSessionAction: jest.fn(),
+  logoutEverywhere: jest.fn(),
 }));
 
 beforeAll(() => {
@@ -49,7 +57,7 @@ describe("UserMenu", () => {
     );
 
     const dialog = await screen.findByRole("dialog");
-    expect(dialog).toHaveAccessibleName(/profil saya/i);
+    expect(dialog).toHaveAccessibleName(/pengaturan/i);
     expect(
       within(dialog).getAllByText("siti@lumina.id").length,
     ).toBeGreaterThan(0);

@@ -11,6 +11,7 @@ import {
   SESSION_COOKIE,
   sessionCookieOptions,
 } from "@/lib/auth/session";
+import { requestMeta } from "@/lib/server/request";
 
 export async function GET(request: NextRequest) {
   let intent = "masuk";
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
     const token = await createSession(
       account.id,
       request.cookies.get(SESSION_COOKIE)?.value,
+      requestMeta(request.headers),
     );
     response = NextResponse.redirect(
       new URL("/companion", process.env.AUTH_URL || request.url),

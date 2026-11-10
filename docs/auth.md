@@ -8,6 +8,18 @@ Siapkan PostgreSQL dan database aplikasi, lalu isi `DATABASE_URL` di `.env.local
 
 Database menyimpan identitas akun, hash password scrypt, hash token sesi, state OAuth sementara dan penghitung limit. Password dan token sesi mentah tidak disimpan. Cookie sesi HttpOnly, SameSite=Lax, Secure di production, berlaku 24 jam. Login merotasi sesi lama secara atomik; logout mencabut sesi. Email dinormalisasi dan unik. Akun Google diikat ke `sub`; email yang sama tidak otomatis menggabungkan akun. Pemulihan password dan verifikasi email belum tersedia.
 
+Sesi disimpan sebagai hash token di PostgreSQL. Setiap baris juga menyimpan
+`user_agent`, `client_ip`, `created_at`, dan `last_seen_at`; IP hanya diisi bila
+`TRUST_PROXY=true` dan header `X-Lumina-Client-IP` valid. Cookie sesi HttpOnly
+berlaku 24 jam. Login merotasi sesi lama secara atomik; logout mencabut sesi.
+
+`GET /api/account` mengembalikan identitas, status password, dan daftar sesi
+aktif (maksimal 50) dengan label perangkat dari user-agent. Tidak ada geolokasi.
+Server action `updateNama`, `changePasswordAction`, `revokeSessionAction`, dan
+`logoutEverywhere` menangani perubahan; semua mutasi dibatasi `user_id` dari
+sesi, bukan dari body permintaan. Mengubah password mencabut semua sesi lain.
+Akun Google tanpa password tidak dapat mengubah password di dialog ini.
+
 ## Google OAuth
 
 Buat OAuth Client ID jenis Web application di Google Cloud, konfigurasi consent dan test users bila diperlukan, lalu daftarkan redirect URI `AUTH_URL/api/auth/google/callback`. Isi `AUTH_URL`, `GOOGLE_CLIENT_ID`, dan `GOOGLE_CLIENT_SECRET`. `AUTH_URL` adalah origin publik kanonik, HTTPS di production (contoh lokal `http://localhost:3000`). Alur menggunakan authorization code, state sekali pakai terikat cookie, PKCE S256, nonce, dan verifikasi signature/issuer/audience/expiry ID token. Email Google harus terverifikasi; token Google tidak disimpan.
@@ -27,3 +39,7 @@ Cutover membutuhkan jendela pemeliharaan: hentikan perubahan akun, buat backup S
 ## Tes
 
 Gunakan database PostgreSQL khusus bernama dengan akhiran `_test`, terpisah dari `DATABASE_URL` lain. Jalankan migrasi pada database tes kosong dengan `DATABASE_URL` diarahkan ke database tes, lalu jalankan suite dengan `TEST_DATABASE_URL` diarahkan ke database itu dan `DATABASE_URL` berbeda atau tidak disetel. Suite menghapus data tes. Jest menjalankan suite secara serial saat `TEST_DATABASE_URL` terisi agar reset data tidak bertabrakan. Tanpa variabel ini suite integrasi PostgreSQL dilewati. Jalankan `npm run verify`; uji Google nyata memerlukan kredensial proyek dan domain sendiri.
+
+Suite sesi dan pengaturan akun memakai `TEST_DATABASE_URL`. Jalankan migrasi
+sekali sebelum suite: `DATABASE_URL="$TEST_DATABASE_URL" npm run db:migrate`.
+Tanpa variabel itu suite dilewati.
