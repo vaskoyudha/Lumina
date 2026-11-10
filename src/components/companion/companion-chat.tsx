@@ -1424,7 +1424,7 @@ export function CompanionChat({
                     >
                       <div className="flex flex-col items-end gap-1.5">
                         {turn.text ? (
-                          <p className="max-w-[85%] whitespace-pre-wrap rounded-[14px] border border-brand-ink/45 bg-gradient-to-r from-brand-cta-from to-brand-cta-to px-4 py-2.5 font-normal text-[15px] text-txt leading-relaxed tracking-normal shadow-[inset_0_1px_0_0_var(--color-brand-edge),0_2px_0_0_var(--color-brand-ink)] sm:text-[14px]">
+                          <p className="max-w-[85%] whitespace-pre-wrap rounded-[14px] border border-brand bg-panel px-4 py-2.5 font-normal text-[15px] text-txt leading-relaxed tracking-normal shadow-rest sm:text-[14px]">
                             <EvidenceText
                               activeEvidence={activeEvidence}
                               onSelect={selectEvidence}
