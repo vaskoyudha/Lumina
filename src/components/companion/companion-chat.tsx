@@ -76,12 +76,23 @@ import {
   saveConversationHistory,
 } from "@/lib/companion/history";
 import {
+  conversationIntent,
+  learningModulesFor,
+  wantsJobSearch,
+} from "@/lib/companion/intent";
+import {
   composeAnswerFallback,
   composeReply,
   suggestedActions,
 } from "@/lib/companion/reply";
 import { requestToolSummary } from "@/lib/companion/tool-client";
-import { isQuestionAbout, type Lane, planTurn } from "@/lib/companion/turn";
+import {
+  isContentQuestion,
+  isFollowUpQuestion,
+  isQuestionAbout,
+  type Lane,
+  planTurn,
+} from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
 import {
   type AgentStage,
@@ -168,6 +179,8 @@ interface Turn {
   tool?: LokerTurnTool;
   /** The report card the model opened for the previous verdict. */
   report?: ReportTurnTool;
+  /** Public learning destinations, separate from a scored pattern. */
+  learningModules?: number[];
 }
 
 interface ReportTurnTool {
@@ -558,13 +571,20 @@ export function CompanionChat({
               : turn,
           );
 
-        /*
-         * An image is evidence, not a concept question, so a turn with one is a
-         * check even when the typed words look like a question. The lane is
-         * therefore known before the pixels are read, which lets the user's
-         * message appear immediately instead of after the transcription.
-         */
-        const hasImages = attachments.some(isImageAttachment);
+        // Decide from the user's request before adding filenames or OCR text.
+        // A request to explain a document must not become a safety check merely
+        // because a file was attached. No attachment content enters chat history.
+        const previousUser = (active?.turns ?? []).findLast(
+          (turn) => turn.role === "user",
+        );
+        const asksAboutAttachment =
+          !options.force &&
+          ((attachments.length > 0 &&
+            (isContentQuestion(text) || isQuestionAbout(text))) ||
+            ((previousUser?.attachments?.length ?? 0) > 0 &&
+              isContentQuestion(text)));
+        const hasImages =
+          !asksAboutAttachment && attachments.some(isImageAttachment);
 
         const userTurn: Turn = {
           id: id(),
@@ -602,7 +622,7 @@ export function CompanionChat({
          * a verdict.
          */
         const transcription = await transcribeImages(
-          attachments,
+          asksAboutAttachment ? [] : attachments,
           control.signal,
         );
 
@@ -660,11 +680,21 @@ export function CompanionChat({
          * message someone received, so the detectors never see it.
          */
         const asked =
-          options.force || attachments.length > 0
-            ? false
-            : isQuestionAbout(scored, {
-                hasPriorVerdict: latestResult !== null,
-              });
+          asksAboutAttachment ||
+          (!options.force &&
+            attachments.length === 0 &&
+            isQuestionAbout(text, {
+              hasPriorVerdict: latestResult !== null,
+            }));
+        const intent =
+          !options.force && attachments.length === 0
+            ? conversationIntent(text)
+            : null;
+        const followUp =
+          !options.force &&
+          attachments.length === 0 &&
+          latestResult !== null &&
+          isFollowUpQuestion(text);
 
         /*
          * Prior *checked* user turns go to the Conversation Agent so escalation
@@ -682,9 +712,10 @@ export function CompanionChat({
           )
           .map((turn) => ({ text: turn.source ?? "" }));
 
-        const { result, trace } = asked
-          ? { result: null, trace: null }
-          : scoreWithTrace({ text: scored, turns: priorTurns });
+        const { result, trace } =
+          asked || intent || followUp
+            ? { result: null, trace: null }
+            : scoreWithTrace({ text: scored, turns: priorTurns });
 
         const plan = planTurn({
           text: scored,
@@ -692,6 +723,7 @@ export function CompanionChat({
           lastResult: latestResult,
           lastExplanation: latestExplanation,
           asked,
+          intent,
           attachments: attachments.length,
         });
 
@@ -819,6 +851,19 @@ export function CompanionChat({
                       result: checked ? (result ?? undefined) : undefined,
                       source: checked ? scored : undefined,
                       explanation,
+                      learningModules:
+                        intent === "learning"
+                          ? learningModulesFor(
+                              text,
+                              (active?.turns ?? [])
+                                .filter(
+                                  (turn) =>
+                                    turn.role === "user" &&
+                                    turn.lane !== "periksa",
+                                )
+                                .map((turn) => turn.text),
+                            )
+                          : undefined,
                       trace: openTrace ?? undefined,
                     },
                   ],
@@ -954,7 +999,9 @@ export function CompanionChat({
             (turn) =>
               !privateIds.has(turn.id) &&
               turn.text.trim().length > 0 &&
-              (turn.lane === "tanya" || turn.lane === "obrolan"),
+              (turn.lane === "tanya" ||
+                turn.lane === "obrolan" ||
+                turn.lane === "lanjutan"),
           )
           .map((turn) => ({
             role: turn.role,
@@ -970,9 +1017,22 @@ export function CompanionChat({
         const controller = control;
         const abortTimer = setTimeout(() => controller.abort(), 23000);
         pendingTimers.current.add(abortTimer);
+        const fallbackContext = {
+          question: text,
+          history: chatHistory
+            .filter((turn) => turn.role === "user")
+            .map((turn) => turn.text),
+        };
 
         // Defensive: nothing below may leave `busy` stuck.
         try {
+          if (asksAboutAttachment) {
+            finish(
+              "Saya belum bisa menjelaskan isi lampiran ini. Pembacaan gambar saat ini hanya untuk pemeriksaan pesan; isi PDF, dokumen, dan berkas kode belum dapat saya baca. Salin bagian yang ingin dibahas dan tulis pertanyaanmu tentang bagian itu.",
+              "template",
+            );
+            return;
+          }
           if (lane !== "periksa" && text.length > 2000) {
             finish(
               "Pertanyaan maksimal 2.000 karakter. Ringkas pertanyaanmu lalu kirim lagi.",
@@ -1054,6 +1114,7 @@ export function CompanionChat({
             }
             finish(answer.text, "model");
             if (!call) return;
+            if (call.name === "job_search" && !wantsJobSearch(text)) return;
 
             if (call.name === "report_draft") {
               if (!latestResult || !latestExplanation) return;
@@ -1170,7 +1231,7 @@ export function CompanionChat({
           }
 
           finish(
-            composeAnswerFallback(lane),
+            composeAnswerFallback(lane, answer.outcome, fallbackContext),
             "template",
             answer.outcome as VoiceOutcome,
           );
@@ -1181,7 +1242,7 @@ export function CompanionChat({
                   first: false,
                   containsContent: checked,
                 })
-              : composeAnswerFallback(lane),
+              : composeAnswerFallback(lane, "failed", fallbackContext),
             "template",
             "failed",
           );
@@ -1817,6 +1878,30 @@ export function CompanionChat({
                         />
                       ) : null}
 
+                      {turn.learningModules ? (
+                        <div className="flex flex-wrap gap-2">
+                          {turn.learningModules.map((no) => (
+                            <Button
+                              key={no}
+                              asChild
+                              variant="outline"
+                              className="min-h-11 max-w-full whitespace-normal text-left"
+                            >
+                              <Link href={`/belajar/${no}`}>
+                                {modusFor(no)?.nama ?? `Modul ${no}`}
+                              </Link>
+                            </Button>
+                          ))}
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="min-h-11"
+                          >
+                            <Link href="/belajar">Semua materi Belajar</Link>
+                          </Button>
+                        </div>
+                      ) : null}
+
                       {turn.lane === "tanya" && turn.laneSource ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-dim text-[0.7rem]">
@@ -1827,10 +1912,15 @@ export function CompanionChat({
                             size="sm"
                             className="h-7 text-dim text-xs hover:text-txt"
                             onClick={() =>
-                              send(turn.laneSource ?? "", [], {
-                                force: "periksa",
-                                recheckOf: turn.id,
-                              })
+                              send(
+                                turn.laneSource ?? "",
+                                turns[turns.indexOf(turn) - 1]?.attachments ??
+                                  [],
+                                {
+                                  force: "periksa",
+                                  recheckOf: turn.id,
+                                },
+                              )
                             }
                           >
                             Periksa sebagai pesan

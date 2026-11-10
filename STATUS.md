@@ -1,5 +1,13 @@
 # Status — per 9 November 2026
 
+**10 November 2026 — perbaikan maksud percakapan Companion.** Cerita akun diretas
+atau uang hilang, pertanyaan, penjelasan lampiran, dan permintaan materi
+dipisahkan dari pemeriksaan sebelum scoring. Riwayat percakapan diteruskan
+lintas lane dengan giliran pemeriksaan tetap dikecualikan; course mendapat
+tautan Belajar dan tool lowongan dibatasi ke permintaan eksplisit. Kegagalan
+provider mendapat fallback yang sesuai konteks. Kontrak skor dan penyimpanan
+PostgreSQL tidak berubah. Batas kemampuan: `docs/companion-routing.md`.
+
 **10 November 2026 — port layout Twitter untuk Komunitas.** Branch
 `codex/community-social-ui` mengikuti layout MIT `ccrsxx/twitter-clone`, dengan
 sidebar/rail/navigasi bawah, timeline 576px, panel kanan, composer inline dan

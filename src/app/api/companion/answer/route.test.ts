@@ -77,7 +77,7 @@ describe("POST /api/companion/answer", () => {
     jest.restoreAllMocks();
   });
 
-  it("returns the model's text and sends only the question", async () => {
+  it("preserves conversational context without offering unrelated tools", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -91,7 +91,7 @@ describe("POST /api/companion/answer", () => {
         lane: "tanya",
         question: QUESTION,
         history: [
-          { role: "user", text: "Halo, ini dari BCA. Akun Anda diblokir." },
+          { role: "user", text: "Saya ingin belajar mengenali penipuan." },
         ],
       }),
     );
@@ -106,12 +106,14 @@ describe("POST /api/companion/answer", () => {
 
     const sent = String(fetchMock.mock.calls[0]?.[1]?.body);
     expect(sent).toContain("apa itu pinjol?");
-    // The tool must actually be offered to the model, not just declared.
-    expect(sent).toContain('"job_search"');
-    expect(sent).toContain('"tool_choice":"auto"');
-    // The digest route's rule, restated for this route: nothing but what the
-    // user typed.
-    expect(sent).not.toContain("diblokir");
+    const payload = JSON.parse(sent) as {
+      tools?: unknown;
+      messages: { content: string }[];
+    };
+    expect(payload.tools).toBeUndefined();
+    expect(JSON.parse(payload.messages[1]?.content ?? "{}").history).toEqual([
+      { role: "user", text: "Saya ingin belajar mengenali penipuan." },
+    ]);
   });
 
   it("rejects an unknown field instead of ignoring it", async () => {
@@ -367,9 +369,55 @@ describe("POST /api/companion/answer", () => {
       (fetchMock.mock.calls[0]?.[1] as RequestInit).body as string,
     ) as { tools: { function: { name: string } }[] };
     expect(sent.tools.map((tool) => tool.function.name)).toEqual([
-      "job_search",
       "report_draft",
     ]);
+  });
+
+  it("rejects a model's unsolicited job search on a course request", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Buka materi Belajar.",
+              tool_calls: [
+                {
+                  id: "unrelated",
+                  type: "function",
+                  function: {
+                    name: "job_search",
+                    arguments: JSON.stringify({ query: "React" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const response = await POST(
+      request({
+        lane: "tanya",
+        question: "kasih solusi yg jelas dong, ada course yg berguna ga",
+        history: [
+          { role: "user", text: "akun aku di hack dan uang aku hilang" },
+        ],
+      }),
+    );
+    expect(await response.json()).toMatchObject({
+      text: "Buka materi Belajar.",
+      toolCalls: [],
+    });
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      tools?: unknown;
+      messages: { content: string }[];
+    };
+    expect(sent.tools).toBeUndefined();
+    expect(
+      JSON.parse(sent.messages[1]?.content ?? "{}").history[0].text,
+    ).toContain("akun aku di hack");
   });
 
   it("drops a report_draft call that names an unknown channel", async () => {

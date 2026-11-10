@@ -1,3 +1,8 @@
+import {
+  isIncidentNarrative,
+  learningModulesFor,
+  wantsLearning,
+} from "@/lib/companion/intent";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { modusFor } from "@/lib/modus";
 
@@ -206,12 +211,30 @@ export function suggestedActions(result: ScoreResult | null) {
  */
 export function composeAnswerFallback(
   lane: "tanya" | "lanjutan" | "obrolan",
+  outcome: "unconfigured" | "timeout" | "failed" = "failed",
+  context: { question: string; history: string[] } = {
+    question: "",
+    history: [],
+  },
 ): string {
-  if (lane === "tanya") {
-    return "Saya belum bisa menjawab itu sekarang. Coba tanya lagi sebentar lagi, atau tempel pesan yang mencurigakan supaya saya periksa.";
+  const reason =
+    outcome === "unconfigured"
+      ? "Layanan AI percakapan belum dikonfigurasi."
+      : outcome === "timeout"
+        ? "Layanan AI terlalu lama menjawab. Coba kirim pertanyaanmu lagi."
+        : "Layanan AI sedang gagal menjawab. Coba kirim pertanyaanmu lagi.";
+  const incident = isIncidentNarrative(context.question);
+  const incidentBefore = context.history.some(isIncidentNarrative);
+  if (wantsLearning(context.question)) {
+    const modules = learningModulesFor(context.question, context.history)
+      .map((no) => modusFor(no)?.nama)
+      .filter(Boolean);
+    return `${reason} ${incidentBefore ? "Untuk kejadian yang kamu ceritakan, amankan akun dan laporkan transaksi yang tidak kamu lakukan terlebih dahulu. " : ""}Materi Lumina ada di Belajar${modules.length > 0 ? `; mulai dari ${modules.join(" dan ")}` : ""}. Materi ini membantu pencegahan, bukan memulihkan akun atau menjamin uang kembali.`;
   }
-  if (lane === "lanjutan") {
-    return "Penjelasan tadi ada di kartu di atas. Kalau ada bagian yang ingin dibahas lagi, sebutkan bagiannya.";
+  if (incident) {
+    return `${reason}\n\nKamu menceritakan dugaan peretasan atau kehilangan uang; itu tidak bisa dinyatakan aman dari skor sebuah pesan.\n1. Jika perangkat diduga terinfeksi, gunakan perangkat lain yang kamu percaya untuk mengamankan email dan akun terkait; ganti sandi/PIN dan keluar dari sesi yang tidak dikenal jika masih bisa masuk.\n2. Hubungi bantuan resmi penyedia akun dan bank/e-wallet melalui aplikasi atau situs resminya. Laporkan transaksi yang tidak kamu lakukan dan minta pengamanan akun; jika sudah kehilangan akses, gunakan pemulihan akun.\n3. Simpan bukti transaksi, waktu kejadian, dan nomor laporan. Untuk dugaan penipuan transaksi keuangan, laporkan ke IASC OJK. Pengembalian dana tidak dijamin.\n\nApakah kamu masih bisa masuk ke akun atau email pemulihannya? Jangan kirim sandi, PIN, atau OTP ke sini.`;
   }
-  return "Halo. Tempel pesan, tautan, atau ceritakan telepon yang kamu terima — saya periksa dan jelaskan polanya.";
+  return lane === "lanjutan"
+    ? `${reason} Hasil pemeriksaan sebelumnya tetap tersedia di kartu di atas.`
+    : reason;
 }

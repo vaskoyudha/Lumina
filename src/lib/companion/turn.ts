@@ -1,4 +1,5 @@
 import type { Explanation } from "@/lib/companion/explain";
+import type { ConversationIntent } from "@/lib/companion/intent";
 import { isGreeting } from "@/lib/companion/reply";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { extractLinks } from "@/lib/scoring/link";
@@ -55,14 +56,36 @@ const FOLLOW_UP =
  * is not enough to make something a concept question.
  */
 const CONCEPT_QUESTION: readonly RegExp[] = [
-  /^(apa|apakah)\s+(itu|sih|yang\s+dimaksud|arti|artinya|beda|bedanya|perbedaan)\b/i,
+  /^(apa|apakah)\s+(itu|sih|yang\s+dimaksud|arti|artinya|beda|bedanya|perbedaan|fungsi|kegunaan|tujuan|isi)\b/i,
   /^(jelaskan|maksudnya|artinya)\b/i,
   /^(bagaimana|gimana)\s+(cara\s+)?(mengenali|menghindari|menangani|melapor|memeriksa|kerja|bekerja|membedakan|bayar|membayar|pakai|memakai)\b/i,
-  /^(kenapa|mengapa|kok)\s+(bisa|bisakah|sih)\b/i,
+  /^(bagaimana|gimana)\b/i,
+  /^(apa|apakah)\s+(yang|saya|aku|kamu|bisa|boleh|perlu|harus)\b/i,
+  /^(bisa(?:kah)?|boleh(?:kah)?)\s+(?:(?:kamu|tolong)\s+)?(bantu|jelaskan|jelasin|tanya)\b/i,
+  /^(aku|saya)\s+(mau|ingin|boleh)\s+(tanya|bertanya)\b/i,
+  /^(kenapa|mengapa|kok)\b/i,
+  /^(berapa|kapan|di\s?mana)\b/i,
   /^(siapa|apa)\s+(kamu|ini|lumina)\b/i,
   /^(kamu|ini)\s+(siapa|apa|bisa)\b/i,
   /^(apa\s+saja|contoh|contohnya)\b/i,
 ];
+
+/** A request to explain content is different from a request to check safety. */
+export function isContentQuestion(text: string): boolean {
+  const t = normalized(text);
+  if (
+    /\b(cek|periksa|aman|berbahaya|penipuan|scam|phishing|virus|malware)\b/i.test(
+      t,
+    )
+  ) {
+    return false;
+  }
+  return [
+    /^(ini|itu)\s+(apa|isi(?:nya|\s+nya)?(?:\s+(?:kode|file|berkas|dokumen|gambar)(?:nya|\s+nya)?)?\s+apa|(?:kode|file|berkas|dokumen|gambar)(?:nya|\s+nya)?\s+apa)(?:\s+(?:ya|sih))?[?!.]*$/i,
+    /^(apa|gimana|bagaimana)\s+(isi|maksud|arti|fungsi)(?:nya)?\b/i,
+    /^(?:(?:tolong|coba|bisa(?:kah)?|boleh(?:kah)?)\s+)*(?:kamu\s+)?(jelaskan|jelasin|ringkas|rangkum|bacakan|baca)\b/i,
+  ].some((pattern) => pattern.test(t));
+}
 
 /** Things only a received message carries. Their presence blocks the guard. */
 const MESSAGE_ARTIFACT =
@@ -70,6 +93,16 @@ const MESSAGE_ARTIFACT =
 
 function normalized(text: string): string {
   return text.trim().toLowerCase();
+}
+
+/** Follow-up questions are not new evidence for the Conversation Agent. */
+export function isFollowUpQuestion(text: string): boolean {
+  const t = normalized(text);
+  return (
+    FOLLOW_UP.test(t) &&
+    !MESSAGE_ARTIFACT.test(t) &&
+    !/\b(cek|periksa)\b/i.test(t)
+  );
 }
 
 /** Question-shaped: ends in `?`, or opens like a concept question. */
@@ -98,7 +131,11 @@ export function isQuestionAbout(
   // "kenapa berbahaya?" belongs to the lane that already has the explanation.
   if (options.hasPriorVerdict && FOLLOW_UP.test(t)) return false;
 
-  if (!CONCEPT_QUESTION.some((pattern) => pattern.test(t))) return false;
+  if (
+    !CONCEPT_QUESTION.some((pattern) => pattern.test(t)) &&
+    !isContentQuestion(t)
+  )
+    return false;
 
   const sentences = t.split(/[.!?]+/).filter((part) => part.trim().length > 0);
   return sentences.length <= 2;
@@ -123,6 +160,7 @@ export function planTurn(input: {
    * inside the question (`"apa itu dana?"`) must not re-route it to a check.
    */
   asked?: boolean;
+  intent?: ConversationIntent | null;
   /**
    * How many files were attached. An attachment-only turn has no question text
    * to send, and its filename is what the engine reads, so it is a check.
@@ -130,6 +168,14 @@ export function planTurn(input: {
   attachments?: number;
 }): TurnPlan {
   const text = input.text.trim();
+
+  if (input.intent) {
+    return {
+      lane: input.intent === "learning" ? "tanya" : "obrolan",
+      hasFindings: false,
+      why: "Pengguna bercerita atau meminta bantuan, bukan menyerahkan pesan untuk diperiksa.",
+    };
+  }
 
   if (input.asked) {
     return {

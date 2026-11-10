@@ -2,6 +2,12 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
+import * as scoring from "@/lib/scoring/score";
+
+jest.mock("@/lib/scoring/score", () => {
+  const actual = jest.requireActual<typeof scoring>("@/lib/scoring/score");
+  return { ...actual, scoreWithTrace: jest.fn(actual.scoreWithTrace) };
+});
 
 jest.mock("@/lib/companion/history", () => ({
   listConversationHistory: jest.fn(async () => ({
@@ -64,6 +70,115 @@ async function sendApk(user: ReturnType<typeof userEvent.setup>) {
   await enterMessage(user, APK_MESSAGE);
   await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 }
+
+describe("CompanionChat · real user intent regressions", () => {
+  const originalFetch = global.fetch;
+  let fetchMock: jest.Mock;
+  beforeEach(() => {
+    jest.mocked(scoring.scoreWithTrace).mockClear();
+    fetchMock = jest.fn(async () => ({
+      ok: false,
+      status: 503,
+      body: null,
+      json: async () => ({ error: "not-configured" }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+  afterEach(() => {
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  async function sendText(
+    user: ReturnType<typeof userEvent.setup>,
+    text: string,
+  ) {
+    await enterMessage(user, text);
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+    await waitFor(() =>
+      expect(screen.queryByText("Menyusun jawaban")).not.toBeInTheDocument(),
+    );
+  }
+
+  it("answers the attached-code question without running detectors or sending the file", async () => {
+    const scoreSpy = jest.mocked(scoring.scoreWithTrace);
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    const fileInput =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!fileInput) throw new Error("file input missing");
+    await user.upload(
+      fileInput,
+      new File(["private file contents"], "Enkripsi_Dekripsi_Materi.pdf", {
+        type: "application/pdf",
+      }),
+    );
+    await sendText(user, "itu isi kode nya apa");
+    expect(
+      await screen.findByText(
+        /isi PDF, dokumen, dan berkas kode belum dapat saya baca/i,
+      ),
+    ).toBeInTheDocument();
+    expect(scoreSpy).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    const log = screen.getByRole("log", { name: /percakapan/i });
+    expect(within(log).queryByTestId("agent-message")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /periksa sebagai pesan/i }),
+    );
+    await waitFor(() => expect(scoreSpy).toHaveBeenCalled());
+    expect(scoreSpy.mock.calls[0]?.[0].text).toContain(
+      "Enkripsi_Dekripsi_Materi.pdf",
+    );
+  });
+
+  it("keeps an incident and a course request in context, with learning links and no score", async () => {
+    const scoreSpy = jest.mocked(scoring.scoreWithTrace);
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    const incident =
+      "pas aku doowload game bajakan akun tokopedia aku ke hack dan aku kehilangan duit karena gopay aku connect ke tokped";
+    await sendText(user, incident);
+    expect(
+      await screen.findByText(/dugaan peretasan atau kehilangan uang/i),
+    ).toBeInTheDocument();
+    await sendText(
+      user,
+      "kasih solusi yg jelas dong, ada course yg berguna ga",
+    );
+    expect(
+      await screen.findByRole("link", { name: "File APK via WhatsApp" }),
+    ).toHaveAttribute("href", "/belajar/10");
+    expect(
+      screen.getByRole("link", { name: /Phishing tautan/i }),
+    ).toHaveAttribute("href", "/belajar/7");
+    expect(scoreSpy).not.toHaveBeenCalled();
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    const bodies = calls
+      .filter(([url]) => url === "/api/companion/answer")
+      .map(([, init]) => JSON.parse(String(init.body)));
+    expect(bodies[0].lane).toBe("obrolan");
+    expect(bodies[1].lane).toBe("tanya");
+    expect(bodies[1].history).toContainEqual({ role: "user", text: incident });
+    expect(
+      screen.queryByText(/tidak ada pola penipuan yang jelas/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
+  });
+
+  it("excludes a checked message from later conversational history in every lane", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    await sendApk(user);
+    await screen.findAllByText("File APK via WhatsApp");
+    await sendText(user, "ada course yg berguna ga");
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    const body = calls.find(([url]) => url === "/api/companion/answer")?.[1]
+      .body;
+    expect(String(body)).not.toContain(APK_MESSAGE);
+    expect(String(body)).not.toContain("Undangan-Pernikahan.apk");
+  });
+});
 
 describe("CompanionChat · evidence panel", () => {
   it("shows the extracted artifact without faking a detector", async () => {
