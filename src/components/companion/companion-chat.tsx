@@ -1561,6 +1561,7 @@ export function CompanionChat({
                                 modusFor(turn.result.relatedModule)?.nama ??
                                 null
                               }
+                              result={turn.result}
                             />
                           ) : null}
                           <ActionRow result={turn.result} />
