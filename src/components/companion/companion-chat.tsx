@@ -40,6 +40,7 @@ import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
 import { LokerTool } from "@/components/companion/loker-tool";
 import { CompanionQuickCards } from "@/components/companion/quick-cards";
+import { ReportTemplate } from "@/components/companion/report-template";
 import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
@@ -63,6 +64,8 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
+import type { ReportChannelId } from "@/data/report-contacts";
+import type { ReportChannel } from "@/data/tactics";
 import {
   buildAnswerRequest,
   requestAnswer,
@@ -163,6 +166,17 @@ interface Turn {
   laneSource?: string;
   /** The job-search card for this turn, when the tool ran. */
   tool?: LokerTurnTool;
+  /** The report card the model opened for the previous verdict. */
+  report?: ReportTurnTool;
+}
+
+interface ReportTurnTool {
+  /** The institution the model asked for, when the user named one. */
+  channel: ReportChannelId | null;
+  /** The verdict the card is built from; never re-scored here. */
+  result: ScoreResult;
+  /** Channels of that verdict's explanation. */
+  channels: readonly ReportChannel[];
 }
 
 interface LokerTurnTool {
@@ -919,6 +933,27 @@ export function CompanionChat({
           const call = answer.toolCalls[0];
           if (!call) return;
 
+          /*
+           * The report tool carries intent, not content. The card is built from
+           * the last verdict on the device, so the model never sees the message
+           * and cannot author the text. Without a prior check there is nothing
+           * to report, so the call is ignored rather than inventing a verdict.
+           */
+          if (call.name === "report_draft") {
+            if (!latestResult || !latestExplanation) return;
+            const channels = latestExplanation.report;
+            const requested = call.arguments.channel ?? null;
+            const channel =
+              requested && channels.some((item) => item.id === requested)
+                ? requested
+                : null;
+            patchCompanion((turn) => ({
+              ...turn,
+              report: { channel, result: latestResult, channels },
+            }));
+            return;
+          }
+
           const toolStarted = performance.now();
           const matches = filterPostings(corpus.postings, call.arguments);
           const toolMs = performance.now() - toolStarted;
@@ -1639,6 +1674,15 @@ export function CompanionChat({
                           canRefresh={session !== null}
                           saved={saved}
                           onToggleSave={toggleSaved}
+                        />
+                      ) : null}
+
+                      {turn.report ? (
+                        <ReportTemplate
+                          result={turn.report.result}
+                          channels={turn.report.channels}
+                          defaultOpen
+                          initialChannel={turn.report.channel}
                         />
                       ) : null}
 

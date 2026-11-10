@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import type { ReportChannelId } from "@/data/report-contacts";
 import { REPORT_CONTACTS, type ReportContact } from "@/data/report-contacts";
 import type { ReportChannel } from "@/data/tactics";
 import { requestReportPolish } from "@/lib/companion/report-client";
@@ -33,13 +34,23 @@ import { cn } from "@/lib/utils";
 export function ReportTemplate({
   result,
   channels,
+  defaultOpen = false,
+  initialChannel = null,
 }: {
   result: ScoreResult;
   channels: readonly ReportChannel[];
+  /** Open the builder immediately, e.g. when the model opened it. */
+  defaultOpen?: boolean;
+  /** Preselect an institution the user asked for; ignored when not offered. */
+  initialChannel?: ReportChannelId | null;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(defaultOpen);
   const [inputs, setInputs] = React.useState<ReportInputs>({});
-  const [channelId, setChannelId] = React.useState(channels[0]?.id ?? "iasc");
+  const [channelId, setChannelId] = React.useState(
+    initialChannel && channels.some((item) => item.id === initialChannel)
+      ? initialChannel
+      : (channels[0]?.id ?? "iasc"),
+  );
   const [polished, setPolished] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
