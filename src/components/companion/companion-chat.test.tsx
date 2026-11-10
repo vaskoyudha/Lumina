@@ -220,7 +220,7 @@ describe("CompanionChat · real user intent regressions", () => {
           body: null,
           json: async () => ({
             ok: true,
-            text: "Lowongan kerja Admin Toko, gaji Rp4.500.000.",
+            text: "Lowongan kerja Admin Toko, gaji Rp4.500.000. Daftar di https://lowongan-palsu.example/daftar",
           }),
         };
       }
@@ -248,6 +248,8 @@ describe("CompanionChat · real user intent regressions", () => {
     expect(request?.lane).toBe("periksa");
     expect(request?.question).toBe("Periksa isi gambar ini.");
     expect(request?.message).toContain("Lowongan kerja Admin Toko");
+    expect(request?.message).toContain("[tautan tidak dipindai]");
+    expect(request?.message).not.toContain("lowongan-palsu.example");
     expect(
       await screen.findByText("Jawaban agen dari gambar."),
     ).toBeInTheDocument();
