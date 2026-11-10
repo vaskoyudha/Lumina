@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Mascot } from "@/components/brand/mascot";
 import { AgentRun, runAnnouncement } from "@/components/companion/agent-run";
@@ -265,6 +266,11 @@ export function CompanionChat({
   /** The capped cumulative scan snapshot; the client filters it locally. */
   corpus?: LokerCorpus;
 }) {
+  const router = useRouter();
+  // `null` outside a mounted router (and in tests); the agent route check below
+  // then reads false and the shell keeps its in-place behavior.
+  const pathname = usePathname();
+  const onAgentRoute = pathname === "/agen";
   const [sessions, setSessions] = React.useState<Session[]>(() => [
     newSession(),
   ]);
@@ -286,8 +292,13 @@ export function CompanionChat({
   );
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
-  /** The center column's second view; the turns stay in state while it is away. */
-  const [showAgents, setShowAgents] = React.useState(initialPanel === "agen");
+  /**
+   * The center column's second view. The address owns it: `/agen` is the
+   * overview, `/companion` is the conversation. Keeping it in state let a
+   * reused client instance carry the previous view across routes, which showed
+   * the chat under an `/agen` URL.
+   */
+  const showAgents = onAgentRoute || initialPanel === "agen";
   /** Seed for the empty-state composer: a nonce remounts it with new text. */
   const [composerSeed, setComposerSeed] = React.useState({
     text: "",
@@ -1287,8 +1298,16 @@ export function CompanionChat({
   }, [activeId, busy, corpus]);
 
   const startNew = () => {
+    /*
+     * `/agen` is the overview's own address. A blank conversation is a
+     * different surface, so leave the agent route instead of rendering the
+     * composer under an `/agen` URL.
+     */
+    if (onAgentRoute) {
+      router.push("/companion");
+      return;
+    }
     setShowSessions(false);
-    setShowAgents(false);
     setSelectedAgent(null);
 
     /*
@@ -1308,6 +1327,15 @@ export function CompanionChat({
     const session = newSession();
     setSessions((prev) => [session, ...prev]);
     setSelectedId(session.id);
+  };
+
+  /**
+   * "Agen" is its own address (`/agen`), so the sidebar row is a plain link.
+   * The empty-state card still has to navigate from the conversation.
+   */
+  const openAgents = () => {
+    setShowSessions(false);
+    router.push("/agen");
   };
 
   React.useEffect(() => {
@@ -1404,26 +1432,21 @@ export function CompanionChat({
           sessions={conversations}
           activeId={activeId}
           onSelect={(sessionId) => {
+            // A conversation belongs to `/companion`; `/agen` is the overview.
+            if (onAgentRoute) {
+              setSelectedId(sessionId);
+              setShowSessions(false);
+              router.push("/companion");
+              return;
+            }
             setSelectedId(sessionId);
             setShowSessions(false);
-            setShowAgents(false);
             setSelectedAgent(null);
           }}
           onNew={startNew}
           onClose={() => setShowSessions(false)}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-          agentsActive={showAgents}
-          onShowAgents={() => {
-            setShowAgents(true);
-            setSelectedAgent(AGENT_SEQUENCE[0]);
-            setShowSessions(false);
-            setAgentsAnnouncement("");
-          }}
-          onShowChat={() => {
-            setShowAgents(false);
-            setShowSessions(false);
-          }}
           auth={(iconsOnly) => (
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
@@ -1696,10 +1719,9 @@ export function CompanionChat({
                     name={session?.nama}
                     history={recentAgentRuns}
                     onFeature={prefillComposer}
-                    onOpenHistory={() => setShowAgents(true)}
+                    onOpenHistory={openAgents}
                     onResume={(sessionId) => {
                       setSelectedId(sessionId);
-                      setShowAgents(false);
                     }}
                   />
                 </div>

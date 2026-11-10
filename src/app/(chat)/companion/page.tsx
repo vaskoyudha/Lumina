@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { CompanionPanelFallback } from "@/components/companion/companion-panel-fallback";
 import { CompanionWithSession } from "@/components/companion/companion-with-session";
 
 export const metadata: Metadata = {
@@ -10,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * The panel-aware loading UI reads the URL, which is only known at request
- * time. That read suspends while the static shell is prerendered, so the outer
- * boundary holds a neutral frame for direct visits; client navigations resolve
- * the URL synchronously and go straight to the requested panel.
+ * The conversation streams `CompanionChat` behind a `<Suspense>` boundary
+ * because the session and the job corpus are request-time reads. A neutral
+ * spinner holds the frame for direct visits; client navigations swap the
+ * route's static shell immediately.
  */
 function CompanionBoot() {
   return (
@@ -27,16 +26,10 @@ function CompanionBoot() {
   );
 }
 
-export default function CompanionPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ panel?: string }>;
-}) {
+export default function CompanionPage() {
   return (
     <Suspense fallback={<CompanionBoot />}>
-      <Suspense fallback={<CompanionPanelFallback />}>
-        <CompanionWithSession searchParams={searchParams} />
-      </Suspense>
+      <CompanionWithSession />
     </Suspense>
   );
 }

@@ -39,10 +39,16 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+let mockPathname = "/companion";
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn() }),
-  usePathname: () => "/companion",
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => mockPathname,
 }));
+
+beforeEach(() => {
+  mockPathname = "/companion";
+});
 
 /**
  * Paste, not type. Every test here asserts what the engine and the panel do
@@ -344,13 +350,15 @@ describe("CompanionChat · verdict before voice", () => {
     );
 
     const user = userEvent.setup();
-    render(<CompanionChat />);
+    const { rerender } = render(<CompanionChat />);
 
     await sendApk(user);
     // The verdict is already on screen; the voice model is still pending.
     await screen.findAllByText("File APK via WhatsApp");
 
-    await user.click(screen.getByRole("button", { name: /^agen/i }));
+    // Following the /agen link swaps the address; the transcript unmounts.
+    mockPathname = "/agen";
+    rerender(<CompanionChat />);
     expect(
       screen.getByRole("heading", { name: "Agen pemeriksa" }),
     ).toBeInTheDocument();
