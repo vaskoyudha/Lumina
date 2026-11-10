@@ -45,6 +45,7 @@ function AboutPanel({
       <img
         alt=""
         className="absolute inset-0 h-full w-full scale-105 object-cover blur-[2px]"
+        loading="lazy"
         src={backdrop}
       />
       <div className="absolute inset-0 flex items-center justify-center p-[9.5%]">

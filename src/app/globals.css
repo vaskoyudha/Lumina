@@ -374,6 +374,36 @@
   }
 }
 
+/*
+  Hero entrance. The Framer print ships every hero block at `opacity: 0.001`
+  and lets the appear runtime reveal it after hydration, which held the
+  headline back until 2.2s on a cold visit. These keyframes run from the first
+  paint instead: the same fade and 24px rise, on the same stagger. Each block
+  carries its own `--hero-y`, `--hero-dur` and `--hero-delay` from `Hero.tsx`.
+*/
+@keyframes hero-enter {
+  from {
+    opacity: 0.001;
+    transform: translateY(var(--hero-y, 24px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-anim {
+  animation: hero-enter var(--hero-dur, 1s) cubic-bezier(0.33, 1, 0.68, 1)
+    var(--hero-delay, 0s) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-anim {
+    animation: none;
+  }
+}
+
 :root {
   /* --- Lumina palette: LIGHT mode, "Ink" ---
      Same token names, so no component needed rewriting.
