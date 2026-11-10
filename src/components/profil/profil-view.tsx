@@ -115,9 +115,10 @@ export function ProfilView({
               Akun dan privasi
             </h2>
             <p className="mt-1 text-dim text-sm">
-              Nama dan email tersimpan untuk akunmu. Percakapan tidak disimpan
-              dalam database akun. Progres belajar dan hasil simulasi tersimpan
-              per akun.
+              Nama dan email tersimpan untuk akunmu. Isi percakapan tidak
+              disimpan; hanya judul, waktu, dan skor terakhir yang tercatat di
+              riwayat akunmu. Progres belajar dan hasil simulasi tersimpan per
+              akun.
             </p>
           </div>
 

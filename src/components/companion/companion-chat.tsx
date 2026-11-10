@@ -69,6 +69,10 @@ import {
 } from "@/lib/companion/answer-client";
 import { type Explanation, explain } from "@/lib/companion/explain";
 import {
+  listConversationHistory,
+  saveConversationHistory,
+} from "@/lib/companion/history";
+import {
   composeAnswerFallback,
   composeReply,
   suggestedActions,
@@ -119,8 +123,10 @@ import { cn } from "@/lib/utils";
  * reference hex lives in `globals.css`, no component holds a literal colour.
  *
  * Three product decisions that override the reference:
- *   a. History is React state only. The privacy promise (§11.6) says closing
- *      the tab loses the conversation, so there is no storage call here.
+ *   a. The transcript stays on the device. An account can persist only the
+ *      thread's title, turn count, and risk band, so the sidebar can list its
+ *      own history after a reload without copying checked messages to the
+ *      server.
  *   b. The evidence panel is a real column on desktop, not a drawer, because
  *      the agent-by-agent evidence IS the argument the product makes.
  *   c. The sidebar second row is the manipulated risk band, not a timestamp —
@@ -170,6 +176,8 @@ interface LokerTurnTool {
 
 interface Session {
   id: number;
+  /** Account-scoped row id; present once the thread is saved for a signed-in reader. */
+  serverId?: string;
   title: string;
   turns: Turn[];
   /** Band of the last check in this conversation, for the sidebar's second row. */
@@ -289,6 +297,28 @@ export function CompanionChat({
   const activeId = active?.id;
   const turns = active?.turns ?? [];
 
+  /**
+   * Persists only the account-scoped metadata. The transcript and attachments
+   * stay in React state; this table never receives a message body.
+   */
+  const persistSession = React.useCallback(
+    (input: {
+      id: string;
+      title: string;
+      turns: number;
+      risk?: Session["risk"];
+    }) => {
+      if (!session) return;
+      void saveConversationHistory({
+        id: input.id,
+        title: input.title,
+        turns: input.turns,
+        risk: input.risk ?? null,
+      }).catch(() => {});
+    },
+    [session],
+  );
+
   const selectEvidence = React.useCallback((evidence: string) => {
     setShowEvidence(false);
     setActiveEvidence((current) => (current === evidence ? null : evidence));
@@ -339,7 +369,10 @@ export function CompanionChat({
    * message lands.
    */
   const conversations = React.useMemo(
-    () => sessions.filter((session) => session.turns.length > 0),
+    () =>
+      sessions.filter(
+        (session) => session.turns.length > 0 || !!session.serverId,
+      ),
     [sessions],
   );
 
@@ -644,16 +677,23 @@ export function CompanionChat({
           ? explain(result, scored)
           : undefined;
 
+      const conversationId = active?.serverId ?? crypto.randomUUID();
+      const nextTitle = active?.serverId
+        ? active.title
+        : (active?.turns.length ?? 0) <= 1
+          ? titleFor(text, attachments)
+          : (active?.title ?? titleFor(text, attachments));
+      const nextTurns = (active?.turns.length ?? 0) + (hasImages ? 1 : 2);
+      const nextRisk = checked ? (result?.risk ?? active?.risk) : active?.risk;
+
       setBusy(true);
       setSessions((prev) =>
         prev.map((session) =>
           session.id === target
             ? {
                 ...session,
-                title:
-                  session.turns.length <= 1
-                    ? titleFor(text, attachments)
-                    : session.title,
+                serverId: session.serverId ?? conversationId,
+                title: session.serverId ? session.title : nextTitle,
                 time: stamp.slice(11, 16),
                 updatedAt: new Date(stamp).getTime(),
                 risk: checked ? (result?.risk ?? session.risk) : session.risk,
@@ -677,6 +717,12 @@ export function CompanionChat({
             : session,
         ),
       );
+      persistSession({
+        id: conversationId,
+        title: nextTitle,
+        turns: nextTurns,
+        risk: nextRisk,
+      });
 
       const patchCompanion = (patch: (turn: Turn) => Turn) =>
         setSessions((prev) =>
@@ -985,7 +1031,18 @@ export function CompanionChat({
         clearTimeout(abortTimer);
       }
     },
-    [active?.turns, activeId, busy, corpus, latestExplanation, latestResult],
+    [
+      active?.risk,
+      active?.serverId,
+      active?.title,
+      active?.turns,
+      activeId,
+      busy,
+      corpus,
+      latestExplanation,
+      latestResult,
+      persistSession,
+    ],
   );
 
   /**
@@ -1063,7 +1120,9 @@ export function CompanionChat({
      * empty "Percakapan baru" into history. `sessions` is newest first, so the
      * nearest blank screen is the one the reader just left.
      */
-    const blank = sessions.find((session) => session.turns.length === 0);
+    const blank = sessions.find(
+      (session) => session.turns.length === 0 && !session.serverId,
+    );
     if (blank) {
       setSelectedId(blank.id);
       return;
@@ -1073,6 +1132,38 @@ export function CompanionChat({
     setSessions((prev) => [session, ...prev]);
     setSelectedId(session.id);
   };
+
+  React.useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    void listConversationHistory()
+      .then((result) => {
+        if (cancelled || !result.ok) return;
+        setSessions((prev) => {
+          const known = new Set(
+            prev.map((item) => item.serverId).filter(Boolean),
+          );
+          const loaded = result.conversations
+            .filter((item) => !known.has(item.id))
+            .map(
+              (item): Session => ({
+                id: id(),
+                serverId: item.id,
+                title: item.title,
+                turns: [],
+                risk: item.risk ?? undefined,
+                time: item.updatedAt.slice(11, 16),
+                updatedAt: new Date(item.updatedAt).getTime(),
+              }),
+            );
+          return loaded.length ? [...prev, ...loaded] : prev;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   /**
    * The header's "Ekspor percakapan" is the reference's Export chat, wired to
@@ -1268,7 +1359,7 @@ export function CompanionChat({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem disabled>
                       <History aria-hidden strokeWidth={1.7} />
-                      Riwayat hanya di tab ini
+                      Judul riwayat tersimpan di akun
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1398,6 +1489,14 @@ export function CompanionChat({
                 <h2 className="mt-0.5 text-center font-semibold text-[24px] leading-[1.22] tracking-[-0.025em] text-ink sm:text-[26px]">
                   kamu percaya.
                 </h2>
+
+                {active?.serverId ? (
+                  <p className="mt-3 max-w-[520px] text-center text-dim text-xs leading-relaxed">
+                    Riwayat ini tersimpan sebagai judul di akunmu. Isi
+                    percakapan tetap di perangkat tempat ia dibuat, jadi
+                    transkripnya tidak bisa dibuka di sini.
+                  </p>
+                ) : null}
 
                 <div className="mt-5 w-full max-w-[520px]">
                   <Composer
