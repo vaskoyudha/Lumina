@@ -7,8 +7,12 @@ import {
   Link2,
   Maximize2,
   Minus,
+  PanelRightOpen,
   Plus,
+  Sparkle,
   Sparkles,
+  Users,
+  Workflow,
 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import Image from "next/image";
@@ -82,28 +86,43 @@ export function AgentsView({
   onExport,
   onCopyLink,
   copied = false,
+  panelCollapsed = false,
+  onOpenPanel,
 }: {
   onSelect: (agent: DetectorAgent) => void;
   selected?: DetectorAgent | null;
   onExport: () => void;
   onCopyLink: () => void;
   copied?: boolean;
+  /** The detail pane collapsed to its rail, so reopening moves into this row. */
+  panelCollapsed?: boolean;
+  onOpenPanel?: () => void;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto rounded-[22px] bg-brand-tint shadow-lift ring-1 ring-brand-edge/60 lg:overflow-hidden">
-      <header className="sticky top-0 z-20 shrink-0 border-brand-edge/50 border-b bg-brand-tint px-5 py-3">
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-visible">
+      <header className="shrink-0 pb-4 sm:pb-5">
         <div className="w-full">
           <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
-            <div className="min-w-0">
-              <h1
-                id="agen-pemeriksa-title"
-                className="font-bold text-[22px] text-txt tracking-tight sm:text-2xl"
-              >
-                Agen pemeriksa
-              </h1>
-              <p className="mt-0.5 font-medium text-dim text-xs sm:text-[13px]">
-                {AGENT_SEQUENCE.length} agen, satu skor deterministik.
-              </p>
+            <div className="flex min-w-0 items-center gap-3.5">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[13px] bg-gradient-to-br from-brand-glow to-brand-strong text-panel shadow-[0_10px_22px_-12px_color-mix(in_oklab,var(--lumina-brand)_80%,transparent)]">
+                <Sparkle
+                  aria-hidden
+                  fill="currentColor"
+                  strokeWidth={0}
+                  className="size-[22px]"
+                />
+              </span>
+              <div className="min-w-0">
+                <h1
+                  id="agen-pemeriksa-title"
+                  className="font-bold text-[24px] text-txt leading-none tracking-[-0.035em] sm:text-[28px]"
+                >
+                  Agen pemeriksa
+                </h1>
+                <p className="mt-1.5 font-medium text-dim text-xs sm:text-[13px]">
+                  Bagan, satu skor deterministik.
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:gap-3">
@@ -113,7 +132,7 @@ export function AgentsView({
                 size="icon"
                 aria-label={copied ? "Tautan disalin" : "Salin tautan"}
                 onClick={onCopyLink}
-                className="size-10 shrink-0 rounded-xl border border-line bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt"
+                className="size-10 shrink-0 rounded-full border border-line bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt"
               >
                 {copied ? (
                   <Check aria-hidden strokeWidth={1.8} className="size-4" />
@@ -126,7 +145,7 @@ export function AgentsView({
                 variant="ghost"
                 size="sm"
                 onClick={onExport}
-                className="h-10 gap-1.5 rounded-xl border border-line bg-panel px-3 text-xs font-medium text-txt shadow-sm transition-colors hover:bg-panel-2"
+                className="h-10 gap-1.5 rounded-full border border-line bg-panel px-4 text-xs font-medium text-txt shadow-sm transition-colors hover:bg-panel-2"
               >
                 <Download aria-hidden strokeWidth={1.7} className="size-3.5" />
                 Ekspor percakapan
@@ -134,16 +153,36 @@ export function AgentsView({
               <Button
                 asChild
                 size="sm"
-                className="h-10 rounded-xl bg-ink px-3.5 text-xs font-medium text-bg hover:bg-ink-hover"
+                className="h-10 rounded-full bg-brand px-4 text-xs font-semibold text-panel shadow-[0_10px_22px_-14px_color-mix(in_oklab,var(--lumina-brand)_85%,transparent)] hover:bg-brand-strong"
               >
-                <Link href="/komunitas">Komunitas</Link>
+                <Link href="/komunitas">
+                  <Users aria-hidden strokeWidth={1.9} className="size-3.5" />
+                  Komunitas
+                </Link>
               </Button>
+              {panelCollapsed && onOpenPanel ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Buka panel detail"
+                  aria-expanded={false}
+                  onClick={onOpenPanel}
+                  className="hidden size-10 shrink-0 rounded-[10px] border border-hairline-strong bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt lg:grid"
+                >
+                  <PanelRightOpen
+                    aria-hidden
+                    strokeWidth={1.7}
+                    className="size-4"
+                  />
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 p-3 sm:p-4 lg:overflow-hidden">
+      <div className="min-h-0 flex-1">
         {/*
          * The diagram lives on its own pannable canvas — drag to move, wheel or
          * the controls to zoom. The field is present at every width so the
@@ -203,16 +242,15 @@ const MAX_SCALE = 2;
 /**
  * The pannable diagram surface.
  *
- * Modelled on the 9Router topology canvas: drag to pan, wheel to zoom, and a
- * compact + / − / fit control. The ground is warm paper with a technical grid,
- * a bloom behind the core, and a lift under the result. Below `lg` the chrome
- * disappears and the diagram renders in normal document flow, so the wrapped
- * grid stays readable and page scrolling is never trapped. Nothing here reads
- * live state.
+ * Modelled on the 9Router topology canvas: a white sheet with a faint technical
+ * grid, a slim "Alur Pekerjaan" header carrying the + / − / fit controls, and a
+ * lift under the result. Below `lg` the controls disappear and the diagram
+ * renders in normal document flow, so the wrapped grid stays readable and page
+ * scrolling is never trapped. Nothing here reads live state.
  */
 function DiagramCanvas({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion() ?? false;
-  const canvasRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     startX: number;
@@ -371,98 +409,88 @@ function DiagramCanvas({ children }: { children: ReactNode }) {
 
   return (
     <section
-      ref={canvasRef}
       aria-label="Kanvas diagram alur agen"
-      onClickCapture={onClickCapture}
-      onPointerDown={onPointerDown}
       className={cn(
-        "relative h-auto overflow-hidden rounded-[18px] p-4 sm:p-5 lg:h-full lg:p-0 lg:touch-none",
-        dragging ? "lg:cursor-grabbing lg:select-none" : "lg:cursor-grab",
+        "relative flex h-auto flex-col overflow-hidden rounded-[18px] bg-panel ring-1 ring-edge shadow-[0_1px_2px_color-mix(in_oklab,var(--lumina-txt)_6%,transparent),0_8px_20px_-10px_color-mix(in_oklab,var(--lumina-txt)_18%,transparent)] lg:h-full",
+        dragging && "lg:select-none",
       )}
     >
-      {/* A light warm wash keeps the sheet soft without flooding it orange. */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 62% 40% at 50% -8%, color-mix(in oklab, var(--lumina-brand-edge) 42%, transparent) 0%, transparent 68%), radial-gradient(ellipse 46% 24% at 50% 106%, color-mix(in oklab, var(--lumina-brand-soft) 44%, transparent) 0%, transparent 72%)",
-        }}
-      />
-      {/* Fine technical grid — the drawing surface, not a texture. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-55"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, var(--lumina-brand-edge) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-          maskImage:
-            "radial-gradient(ellipse 70% 70% at 50% 50%, black 45%, transparent 100%)",
-        }}
-      />
+        data-no-pan
+        className="relative z-20 flex shrink-0 items-center justify-between gap-3 border-edge border-b px-4 py-2.5"
+      >
+        <div className="relative flex min-w-0 items-center gap-2.5 self-stretch pr-4">
+          <span className="grid size-6 shrink-0 place-items-center rounded-[7px] bg-brand text-panel shadow-orb">
+            <Workflow aria-hidden strokeWidth={1.9} className="size-3.5" />
+          </span>
+          <span className="truncate font-semibold text-[13px] text-txt tracking-tight">
+            Alur Pekerjaan
+          </span>
+          <span
+            aria-hidden
+            className="absolute inset-x-0 -bottom-[11px] h-[2px] rounded-full bg-brand"
+          />
+        </div>
 
-      <div className="relative lg:flex lg:h-full lg:items-center lg:justify-center">
-        <div
-          ref={contentRef}
-          className={cn(
-            "mx-auto w-full max-w-[820px] lg:px-8 lg:pt-12 lg:pb-8",
-            !dragging &&
-              !reduced &&
-              "lg:transition-transform lg:duration-200 lg:ease-out",
-          )}
-          style={contentStyle}
-        >
-          {children}
+        <div className="hidden overflow-hidden rounded-[11px] border border-edge bg-panel/95 shadow-rest backdrop-blur-md lg:flex lg:items-stretch">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Perbesar diagram"
+            onClick={() => zoomBy(1.15)}
+            className="rounded-none text-ink-mute hover:bg-brand-soft hover:text-brand-ink"
+          >
+            <Plus aria-hidden strokeWidth={2} className="size-3.5" />
+          </Button>
+          <span aria-hidden className="w-px bg-edge" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Perkecil diagram"
+            onClick={() => zoomBy(1 / 1.15)}
+            className="rounded-none text-ink-mute hover:bg-brand-soft hover:text-brand-ink"
+          >
+            <Minus aria-hidden strokeWidth={2} className="size-3.5" />
+          </Button>
+          <span aria-hidden className="w-px bg-edge" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Pusatkan diagram"
+            onClick={reset}
+            className="rounded-none text-ink-mute hover:bg-brand-soft hover:text-brand-ink"
+          >
+            <Maximize2 aria-hidden strokeWidth={1.9} className="size-3.5" />
+          </Button>
         </div>
       </div>
 
       <div
-        className="absolute top-4 right-4 hidden overflow-hidden rounded-[11px] border border-edge bg-panel/95 shadow-rest backdrop-blur-md lg:flex lg:items-stretch"
-        data-no-pan
+        ref={canvasRef}
+        onClickCapture={onClickCapture}
+        onPointerDown={onPointerDown}
+        className={cn(
+          "cortex-dots relative min-h-0 flex-1 overflow-hidden p-4 sm:p-5 lg:p-0 lg:touch-none",
+          dragging ? "lg:cursor-grabbing" : "lg:cursor-grab",
+        )}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Perbesar diagram"
-          onClick={() => zoomBy(1.15)}
-          className="rounded-none text-ink-mute hover:bg-brand-soft hover:text-brand-ink"
-        >
-          <Plus aria-hidden strokeWidth={2} className="size-3.5" />
-        </Button>
-        <span aria-hidden className="w-px bg-edge" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Perkecil diagram"
-          onClick={() => zoomBy(1 / 1.15)}
-          className="rounded-none text-ink-mute hover:bg-brand-soft hover:text-brand-ink"
-        >
-          <Minus aria-hidden strokeWidth={2} className="size-3.5" />
-        </Button>
-        <span aria-hidden className="w-px bg-edge" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Pusatkan diagram"
-          onClick={reset}
-          className="rounded-none text-ink-mute hover:bg-brand-soft hover:text-brand-ink"
-        >
-          <Maximize2 aria-hidden strokeWidth={1.9} className="size-3.5" />
-        </Button>
-      </div>
-
-      <div className="pointer-events-none absolute top-4 left-4 hidden items-center gap-2.5 lg:flex">
-        <span className="grid size-5 place-items-center rounded-[5px] bg-brand font-mono text-[8px] font-bold text-panel shadow-orb">
-          01
-        </span>
-        <span className="font-mono text-[8.5px] text-ink-soft uppercase tracking-[0.18em]">
-          Alur pekerjaan
-        </span>
-        <span aria-hidden className="h-px w-8 bg-brand/30" />
+        <div className="relative flex h-full lg:items-center lg:justify-center">
+          <div
+            ref={contentRef}
+            className={cn(
+              "mx-auto w-full max-w-[820px] lg:px-8 lg:pt-12 lg:pb-8",
+              !dragging &&
+                !reduced &&
+                "lg:transition-transform lg:duration-200 lg:ease-out",
+            )}
+            style={contentStyle}
+          >
+            {children}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -827,21 +855,34 @@ function ScoreNode() {
 const LANES = [0, 1, 2, 3] as const;
 
 /**
+ * Column centres for the four-lane grid with its 1.5rem gutter. Using `calc`
+ * instead of a guessed percentage keeps every drop on the card's top dot at any
+ * container width. `LANE_EDGE` is the centre of the first and last column.
+ */
+const LANE_EDGE = "calc((100% - 4.5rem) / 8)";
+const LANE_EDGE_END = "calc(100% - (100% - 4.5rem) / 8)";
+const LANE_MID_1 = "calc(37.5% - 0.1875rem)";
+const LANE_MID_2 = "calc(62.5% + 0.1875rem)";
+
+/**
  * A solid rail segment. The diagram is a wiring map, so the connectors are drawn
  * once and stay still: every line visibly joins the node above to the node
  * below, with no marching dots and no broken gaps.
  */
 function Rail({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={cn("block w-px bg-brand/55", className)} />
+    <span aria-hidden className={cn("block w-0.5 bg-brand/60", className)} />
   );
 }
 
-/** The horizontal collector shared by the fan-out, the row link and the fan-in. */
+/** The horizontal collector shared by the row link. */
 function RailBus() {
   return (
-    <span aria-hidden className="relative block h-px">
-      <span className="absolute right-[11.7%] left-[11.7%] h-px bg-brand/55" />
+    <span aria-hidden className="relative block h-0.5">
+      <span
+        className="absolute h-0.5 bg-brand/60"
+        style={{ left: LANE_EDGE, right: LANE_EDGE }}
+      />
     </span>
   );
 }
@@ -860,8 +901,46 @@ function LaneDrops({ height }: { height: string }) {
 }
 
 /**
- * The orchestrator's fan-out: one stem leaves Lumina, a collector spreads it
- * across the four lanes, and four drops land on the detector dots.
+ * The shared collector drawn as an elbow bracket, so the outer lanes peel off
+ * the bus on a rounded corner instead of a hard right angle. `down` opens the
+ * bus at the top (fan-out); `up` opens it at the bottom (fan-in). The two inner
+ * lanes leave through straight drops that meet the bus in a clean tee.
+ */
+function FanBracket({ direction }: { direction: "down" | "up" }) {
+  return (
+    <div aria-hidden className="relative h-4">
+      <span
+        className={cn(
+          "absolute inset-y-0 border-brand/60 border-x-2",
+          direction === "down"
+            ? "rounded-t-[9px] border-t-2"
+            : "rounded-b-[9px] border-b-2",
+        )}
+        style={{ left: LANE_EDGE, right: LANE_EDGE }}
+      />
+      <span
+        className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-brand/60"
+        style={{ left: LANE_MID_1 }}
+      />
+      <span
+        className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-brand/60"
+        style={{ left: LANE_MID_2 }}
+      />
+      <span
+        className={cn(
+          "absolute left-1/2 size-1.5 -translate-x-1/2 rounded-full border-2 border-brand bg-panel",
+          direction === "down"
+            ? "top-0 -translate-y-1/2"
+            : "bottom-0 translate-y-1/2",
+        )}
+      />
+    </div>
+  );
+}
+
+/**
+ * The orchestrator's fan-out: one stem leaves Lumina, the rounded collector
+ * spreads it across the four lanes, and four drops land on the detector dots.
  */
 function FlowFanOut() {
   return (
@@ -873,31 +952,45 @@ function FlowFanOut() {
         <div className="flex justify-center">
           <Rail className="h-4" />
         </div>
-        <RailBus />
-        <LaneDrops height="h-4" />
+        <FanBracket direction="down" />
       </div>
     </>
+  );
+}
+
+/** A small connector node that rounds off a junction. */
+function JunctionNode({ left }: { left: string }) {
+  return (
+    <span
+      className="absolute top-1/2 z-10 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-brand bg-panel"
+      style={{ left }}
+    />
   );
 }
 
 /**
  * The horizontal collector between the two detector rows. Each lane drops out
  * of the first row, meets the shared bus, and drops again into the row below,
- * so the two rows read as one continuous tree.
+ * so the two rows read as one continuous tree. Nodes cap the junctions so the
+ * tee reads as a soft join rather than a bare right angle.
  */
 function RowLink() {
   return (
-    <div aria-hidden>
+    <div aria-hidden className="relative">
       <LaneDrops height="h-4" />
       <RailBus />
       <LaneDrops height="h-4" />
+      <JunctionNode left={LANE_EDGE} />
+      <JunctionNode left={LANE_MID_1} />
+      <JunctionNode left={LANE_MID_2} />
+      <JunctionNode left={LANE_EDGE_END} />
     </div>
   );
 }
 
 /**
- * The output side of the tree: the four lanes meet on one collector and a
- * single stem drops into the deterministic score.
+ * The output side of the tree: the four lanes meet on one rounded collector and
+ * a single stem drops into the deterministic score.
  */
 function FlowFanIn() {
   return (
@@ -906,8 +999,7 @@ function FlowFanIn() {
         <Rail className="h-8" />
       </div>
       <div aria-hidden className="hidden lg:block">
-        <LaneDrops height="h-4" />
-        <RailBus />
+        <FanBracket direction="up" />
         <div className="flex justify-center">
           <Rail className="h-4" />
         </div>

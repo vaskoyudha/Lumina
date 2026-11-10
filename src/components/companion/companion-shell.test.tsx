@@ -1,6 +1,5 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AGENT_SEQUENCE } from "@/components/companion/agents";
 import { CompanionChat } from "@/components/companion/companion-chat";
 
 /**
@@ -243,15 +242,11 @@ describe("CompanionChat · shell", () => {
       expect(viewScope.getByText(display)).toBeInTheDocument();
     }
     expect(viewScope.getByText("Orkestrator")).toBeInTheDocument();
-    // The subtitle must follow the registry, or it keeps claiming five
-    // agents after the sequence grows.
     expect(
-      viewScope.getByText(
-        `${AGENT_SEQUENCE.length} agen, satu skor deterministik.`,
-      ),
+      viewScope.getByText("Bagan, satu skor deterministik."),
     ).toBeInTheDocument();
 
-    await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
+    await user.click(screen.getAllByRole("link", { name: "AI Companion" })[0]);
     expect(
       screen.queryByRole("heading", { name: "Agen pemeriksa" }),
     ).not.toBeInTheDocument();
@@ -309,12 +304,58 @@ describe("CompanionChat · shell", () => {
       within(detail).queryByText(/membaca nada pesan/i),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getAllByRole("link", { name: "Companion" })[0]);
+    await user.click(screen.getAllByRole("link", { name: "AI Companion" })[0]);
 
     expect(screen.getByText("Panel bukti")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Detail agen" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("moves the detail reopen control into the header while the pane is collapsed", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat initialPanel="agen" />);
+
+    expect(
+      screen.queryByRole("button", { name: "Buka panel detail" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Ciutkan panel detail" }),
+    );
+
+    expect(
+      screen.queryByRole("region", { name: "Detail agen" }),
+    ).not.toBeInTheDocument();
+
+    const reopen = screen.getByRole("button", { name: "Buka panel detail" });
+    expect(reopen).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(reopen);
+
+    expect(
+      screen.getByRole("region", { name: "Detail agen" }),
+    ).toBeInTheDocument();
+  });
+
+  it("moves the evidence reopen control into the header while the panel is collapsed", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+
+    expect(screen.getByText("Panel bukti")).toBeInTheDocument();
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Ciutkan panel bukti" })[0],
+    );
+
+    expect(screen.queryByText("Panel bukti")).not.toBeInTheDocument();
+
+    const reopen = screen.getByRole("button", { name: "Buka panel bukti" });
+    expect(reopen).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(reopen);
+
+    expect(screen.getByText("Panel bukti")).toBeInTheDocument();
   });
 
   it("opens the mobile navigation from a named button, not the history icon", async () => {
