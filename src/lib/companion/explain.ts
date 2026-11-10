@@ -1,4 +1,6 @@
 import {
+  IASC,
+  KOMDIGI,
   MODUS_TACTICS,
   REPORT_CHANNELS,
   type ReportChannel,
@@ -204,8 +206,16 @@ export function explain(result: ScoreResult, text: string): Explanation {
     ? GENERIC_VERIFY
     : (VERIFY_STEPS[result.modus] ?? GENERIC_VERIFY);
 
+  /*
+   * An unrecognized message has no scheme-specific channel, but a high-risk
+   * verdict is still a fraud report: OTP theft must not lose its reporting
+   * block just because `classifyModus()` could not name the scheme. Low-risk
+   * unrecognized stays empty — there is nothing to report.
+   */
   const report: readonly ReportChannel[] = unrecognized
-    ? []
+    ? result.risk === "tinggi"
+      ? [IASC, KOMDIGI]
+      : []
     : (REPORT_CHANNELS[result.modus] ?? []);
 
   return { tactics, anatomy, verify, report, unrecognized };

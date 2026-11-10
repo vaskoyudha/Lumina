@@ -1,6 +1,9 @@
 import {
   JOB_SEARCH_TOOL,
   JobSearchArgsSchema,
+  REPORT_TOOL,
+  ReportDraftArgsSchema,
+  ToolCallSchema,
   ToolSummaryRequestSchema,
 } from "@/lib/contracts/tool";
 
@@ -75,5 +78,70 @@ describe("JOB_SEARCH_TOOL", () => {
     expect(JOB_SEARCH_TOOL.function.parameters.additionalProperties).toBe(
       false,
     );
+  });
+});
+
+describe("ReportDraftArgsSchema", () => {
+  it("accepts an empty call and a named channel", () => {
+    expect(ReportDraftArgsSchema.safeParse({}).success).toBe(true);
+    expect(
+      ReportDraftArgsSchema.safeParse({ channel: "komdigi" }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an unknown channel instead of ignoring it", () => {
+    expect(ReportDraftArgsSchema.safeParse({ channel: "bank" }).success).toBe(
+      false,
+    );
+  });
+
+  it("has no field for a message, a verdict, or a report body", () => {
+    expect(
+      ReportDraftArgsSchema.safeParse({ message: "Halo dari BCA" }).success,
+    ).toBe(false);
+    expect(
+      ReportDraftArgsSchema.safeParse({ body: "Nama: Sari" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("ToolCallSchema", () => {
+  it("discriminates the two tools", () => {
+    expect(
+      ToolCallSchema.safeParse({
+        id: "1",
+        name: "job_search",
+        arguments: { query: "React" },
+      }).success,
+    ).toBe(true);
+    expect(
+      ToolCallSchema.safeParse({
+        id: "2",
+        name: "report_draft",
+        arguments: { channel: "iasc" },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a report call carrying job-search arguments", () => {
+    expect(
+      ToolCallSchema.safeParse({
+        id: "3",
+        name: "report_draft",
+        arguments: { query: "React" },
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("REPORT_TOOL", () => {
+  it("requires no argument", () => {
+    expect(REPORT_TOOL.function.name).toBe("report_draft");
+    const parameters = REPORT_TOOL.function.parameters as {
+      required?: string[];
+      additionalProperties?: boolean;
+    };
+    expect(parameters.required).toBeUndefined();
+    expect(parameters.additionalProperties).toBe(false);
   });
 });

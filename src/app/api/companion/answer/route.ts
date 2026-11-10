@@ -6,6 +6,8 @@ import {
 import {
   JOB_SEARCH_TOOL,
   JobSearchArgsSchema,
+  REPORT_TOOL,
+  ReportDraftArgsSchema,
   type ToolCall,
 } from "@/lib/contracts/tool";
 import {
@@ -41,23 +43,24 @@ const SHARED = [
   "a. Bahasa Indonesia, tenang, tidak menghakimi. Jangan pernah menyalahkan korban.",
   "b. Maksimal tiga kalimat. Tanpa salam pembuka, tanpa markdown, tanpa daftar bernomor.",
   "c. Jangan mengarang temuan. Kamu bukan penilai risiko; angka sudah dihitung di perangkat pengguna.",
+  "d. Panggil `report_draft` hanya ketika pengguna meminta dibuatkan laporan atau template laporan. Jangan menulis isi laporan sendiri; template disusun di perangkat pengguna.",
 ];
 
 const SYSTEM: Record<AnswerLane, string> = {
   tanya: [
     ...SHARED,
-    "d. Jawab pertanyaannya, bukan pesannya. Pakai hanya fakta di `modules` dan `tactics`.",
-    "e. Kalau modul yang ditanyakan tidak ada di daftar, katakan terus terang bahwa modulnya belum ada.",
+    "e. Jawab pertanyaannya, bukan pesannya. Pakai hanya fakta di `modules` dan `tactics`.",
+    "f. Kalau modul yang ditanyakan tidak ada di daftar, katakan terus terang bahwa modulnya belum ada.",
   ].join("\n"),
   lanjutan: [
     ...SHARED,
-    "d. Ini lanjutan dari pemeriksaan sebelumnya. Jawab dari `digest` dan `tactics` saja.",
-    "e. Jangan mengulang seluruh hasil; jelaskan bagian yang ditanyakan.",
+    "e. Ini lanjutan dari pemeriksaan sebelumnya. Jawab dari `digest` dan `tactics` saja.",
+    "f. Jangan mengulang seluruh hasil; jelaskan bagian yang ditanyakan.",
   ].join("\n"),
   obrolan: [
     ...SHARED,
-    "d. Ini obrolan biasa. Jawab dengan hangat dan singkat.",
-    "e. Kalau pengguna menyebut pesan yang mencurigakan, ajak menempelkannya untuk diperiksa.",
+    "e. Ini obrolan biasa. Jawab dengan hangat dan singkat.",
+    "f. Kalau pengguna menyebut pesan yang mencurigakan, ajak menempelkannya untuk diperiksa.",
   ].join("\n"),
 };
 
@@ -129,7 +132,7 @@ export async function POST(request: Request) {
            */
           reasoning_effort: "none",
           max_tokens: MAX_TOKENS,
-          tools: [JOB_SEARCH_TOOL],
+          tools: [JOB_SEARCH_TOOL, REPORT_TOOL],
           tool_choice: "auto",
           messages: [
             { role: "system", content: SYSTEM[parsed.data.lane] },
@@ -162,18 +165,34 @@ export async function POST(request: Request) {
     const toolCalls: ToolCall[] = [];
     for (const call of message?.tool_calls ?? []) {
       if (call.type && call.type !== "function") continue;
-      if (call.function?.name !== "job_search") continue;
+      const name = call.function?.name;
+      if (name !== "job_search" && name !== "report_draft") continue;
       let raw: unknown;
       try {
-        raw = JSON.parse(call.function.arguments ?? "");
+        raw = JSON.parse(call.function?.arguments ?? "");
       } catch {
         continue;
       }
-      const parsedArgs = JobSearchArgsSchema.safeParse(raw);
+      /*
+       * Two tools, two schemas. Neither accepts a message, a verdict, or a
+       * report body, so a model that tries to smuggle the checked text gets the
+       * call dropped instead of forwarded.
+       */
+      if (name === "job_search") {
+        const parsedArgs = JobSearchArgsSchema.safeParse(raw);
+        if (!parsedArgs.success) continue;
+        toolCalls.push({
+          id: call.id ?? "",
+          name: "job_search",
+          arguments: parsedArgs.data,
+        });
+        continue;
+      }
+      const parsedArgs = ReportDraftArgsSchema.safeParse(raw);
       if (!parsedArgs.success) continue;
       toolCalls.push({
         id: call.id ?? "",
-        name: "job_search",
+        name: "report_draft",
         arguments: parsedArgs.data,
       });
     }

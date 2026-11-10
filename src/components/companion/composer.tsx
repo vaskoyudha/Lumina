@@ -400,8 +400,9 @@ export function Composer({
         Isi pesan lengkap yang diperiksa tidak dikirim: pemeriksaan berjalan di
         perangkat ini. Pertanyaan, riwayat obrolan yang tidak diperiksa, dan
         ringkasan temuan tanpa kutipan dapat dikirim ke layanan AI. Gambar
-        lampiran dikirim untuk disalin teksnya. Percakapan tidak disimpan di
-        server.
+        lampiran dikirim untuk disalin teksnya. Isi percakapan tidak disimpan di
+        server; akun hanya menyimpan label topik, waktu, jumlah giliran, dan
+        tingkat risiko terakhir.
       </p>
     </div>
   );
