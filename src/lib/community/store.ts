@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { authDatabase } from "@/lib/auth/database";
+import type { CommunityAgentId } from "@/lib/community/agents";
 import {
   type Category,
   type CommunityPost,
@@ -17,6 +18,9 @@ export class CommunityError extends Error {}
 type PostRow = {
   id: string;
   nama: string;
+  author_kind: "member" | "agent";
+  agent_id: CommunityAgentId | null;
+  verified_at: Date | null;
   category: Category;
   title: string;
   body: string;
@@ -44,6 +48,9 @@ function post(row: PostRow): CommunityPost {
   return {
     id: row.id,
     author: row.nama,
+    authorKind: row.author_kind,
+    agentId: row.agent_id,
+    verified: !!row.verified_at,
     category: row.category,
     title: row.title,
     body: row.body,
@@ -302,4 +309,53 @@ export async function reviewContent(target: Target, hide: boolean) {
   } finally {
     client.release();
   }
+}
+/**
+ * Admin approval of a post. `verified` is deliberately binary and reversible:
+ * the badge says an admin reviewed it, not that the claim was fact-checked.
+ */
+export async function setPostVerified(
+  postId: string,
+  verifierId: string,
+  value: boolean,
+) {
+  const r = await authDatabase().query(
+    `UPDATE community_posts
+     SET verified_at=CASE WHEN $3::boolean THEN now() ELSE NULL END,
+         verified_by=CASE WHEN $3::boolean THEN $2::uuid ELSE NULL END
+     WHERE id=$1 AND deleted_at IS NULL
+     RETURNING id`,
+    [postId, verifierId, value],
+  );
+  if (!r.rowCount) throw new CommunityError("Topik tidak tersedia.");
+}
+/** Visible posts for the admin verification screen, unverified first. */
+export async function listVerifiablePosts() {
+  const { rows } = await authDatabase().query<{
+    id: string;
+    nama: string;
+    category: Category;
+    title: string;
+    body: string;
+    author_kind: "member" | "agent";
+    agent_id: CommunityAgentId | null;
+    verified_at: Date | null;
+    created_at: Date;
+  }>(
+    `SELECT p.id,u.nama,p.category,p.title,p.body,p.author_kind,p.agent_id,p.verified_at,p.created_at
+     FROM community_posts p JOIN users u ON u.id=p.author_id
+     WHERE p.deleted_at IS NULL AND p.hidden_at IS NULL
+     ORDER BY (p.verified_at IS NULL) DESC,p.created_at DESC LIMIT 50`,
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    author: row.nama,
+    authorKind: row.author_kind,
+    agentId: row.agent_id,
+    category: row.category,
+    title: row.title,
+    body: row.body,
+    verified: !!row.verified_at,
+    createdAt: row.created_at.toISOString(),
+  }));
 }

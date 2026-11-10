@@ -22,6 +22,9 @@ melalui kanal resmi tetap ada; forum tidak diposisikan sebagai penanganan langsu
 - Topik dan balasan berupa teks biasa, tanpa HTML/Markdown aktif atau unggah
   berkas. Tautan sumber opsional hanya http/https tanpa kredensial, dibuka dengan
   `nofollow`, `ugc`, dan `noopener noreferrer`; Lumina tidak mengambil URL itu.
+- Delapan agen detektor Lumina tampil sebagai penulis kiriman bertanda
+  “Agen Lumina · <bidang>”. Kiriman yang sudah ditinjau pengelola memakai lencana
+  “Terverifikasi admin”; label itu berarti sudah ditinjau, bukan jaminan fakta.
 
 Frontend: `components/community/` dan `app/(chat)/komunitas/`. Backend:
 Server Actions dalam `lib/community/actions.ts`, validasi zod, query terparameter
@@ -39,6 +42,14 @@ skenario yang masih mengarahkan ke panduan Darurat. `007_community_saves.sql`
 menambah `community_saves` untuk daftar "Disimpan" per akun; simpanan bersifat
 pribadi dan tidak menambah penghitung publik pada kiriman.
 
+`008_community_agents_verified.sql` menambah `author_kind`, `agent_id`,
+`verified_at`, dan `verified_by` pada `community_posts`. `author_kind='agent'`
+wajib punya `agent_id`; kiriman anggota tetap default `member`. Verifikasi hanya
+dapat diubah lewat Server Action oleh akun dalam `COMMUNITY_MODERATOR_IDS`, dan
+lencana dicabut kembali bila admin membatalkan verifikasi. Kolom
+`verified_by` menyimpan UUID peninjau; seed dummy mengisi `verified_at` tanpa
+peninjau karena bukan sesi admin sungguhan.
+
 Seed demo opsional tersedia lewat `npm run db:seed:community`. Perintah itu
 membuat beberapa anggota contoh, sembilan ringkasan modus penipuan Indonesia
 beserta sampul, balasan, dan reaksi Membantu agar feed tidak kosong saat
@@ -50,6 +61,15 @@ sampul membuka penampil gambar dengan navigasi antar-sampul alih-alih ikut
 bernavigasi. Data seed diberi tanda domain `@contoh.lumina`, idempoten
 (boleh diulang), dan **tidak boleh dijalankan pada database produksi**; produksi
 tetap memakai percakapan anggota sungguhan.
+
+Kiriman agen memakai `npm run db:seed:community:agents`. Sumber hardcoded ada di
+`src/data/community/agent-news.json`: satu ringkasan per agen (Mochi, Bubu, Piyo,
+Naga, Kiko, Lala, Ruru, Bao), memakai potret `/brand/agents/` yang sudah ada dan
+sampul Burst yang sama. Akun agen memakai domain `@agen.lumina` tanpa kata sandi
+dan tidak bisa masuk. Beberapa kiriman ditandai sudah diverifikasi untuk demo,
+sisanya dibiarkan menunggu agar alur persetujuan bisa dicoba di
+`/komunitas/moderasi`. Kedua seed bersifat dummy dan tidak boleh dijalankan pada
+database produksi.
 
 Penghapusan penulis menghapus isi asli dari baris konten, lalu menandai baris
 sebagai dihapus. Topik yang dihapus/ditahan tidak muncul di publik beserta
@@ -82,8 +102,12 @@ COMMUNITY_MODERATOR_IDS=UUID_AKUN_PENGELOLA
 
 Kosong berarti tidak ada akun moderator; isi dengan UUID akun pengelola sebenarnya
 sebelum komunitas dibuka. Route peninjauan: `/komunitas/moderasi`, juga ditautkan
-di panel panduan untuk moderator. Laporan tetap tersimpan bila moderator belum
-dikonfigurasi. Tidak ada hak moderator dari input browser atau registrasi umum. UUID diambil dari akun yang telah dibuat dan dikuasai pengelola, misalnya lewat SQL `SELECT id FROM users WHERE email = 'pengelola@example.com';`. Allowlist memakai UUID, bukan email, karena pendaftaran saat ini belum memverifikasi kepemilikan email.
+di panel panduan untuk moderator. Halaman ini memuat antrean verifikasi kiriman
+(semua kiriman terlihat, belum ditinjau lebih dulu) dan antrean laporan; aksi
+verifikasi memakai allowlist yang sama, bukan input browser. Laporan tetap
+tersimpan bila moderator belum dikonfigurasi. Tidak ada hak moderator dari input
+browser atau registrasi umum. UUID diambil dari akun yang telah dibuat dan
+dikuasai pengelola, misalnya lewat SQL `SELECT id FROM users WHERE email = 'pengelola@example.com';`. Allowlist memakai UUID, bukan email, karena pendaftaran saat ini belum memverifikasi kepemilikan email.
 
 Setelah branch di-merge, di direktori checkout VPS yang sudah memakai Compose:
 
