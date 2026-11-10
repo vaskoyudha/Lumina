@@ -10,12 +10,12 @@ import { FourTickCrosshair } from "./measure-preview";
 const BACKDROP =
   "/sites/powder-framer-website-4824bd20/root-8a5edab2/etZjwiSv1K58xyJBSdYWMrMCY3c.jpg";
 
-const TICKET = ["Login loop on Safari", "Assigned to: Jane"];
+const TICKET = ["Hentikan komunikasi", "Hubungi bank lewat kanal resmi"];
 
 const ACTIONS = [
-  { label: "Send reply", Icon: Reply },
-  { label: "Update CRM", Icon: Upload },
-  { label: "Schedule", Icon: RefreshCw },
+  { label: "Simpan bukti transaksi", Icon: Reply },
+  { label: "Buka kanal resmi", Icon: Upload },
+  { label: "Baca modul", Icon: RefreshCw },
 ];
 
 function NextActions() {
@@ -51,10 +51,10 @@ function ActionPreviewRail() {
         />
         <span className="min-w-0">
           <span className="block truncate text-[11px] font-medium text-[var(--mp-ink-2)]">
-            Login loop on Safari
+            Hentikan komunikasi
           </span>
           <span className="mt-[2px] block truncate text-[10px] text-[var(--mp-muted)]">
-            Assigned to: Jane
+            Hubungi bank lewat kanal resmi
           </span>
         </span>
       </div>
@@ -68,18 +68,18 @@ function ActionPreviewRail() {
             strokeWidth={1.6}
           />
           <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-[var(--mp-ink-2)]">
-            Approval required
+            Langkah pertama
           </span>
         </div>
         <p className="mt-2 text-[10px] leading-[1.45] text-[var(--mp-muted)]">
-          Policy: Create tickets by default
+          Jangan kirim uang tambahan atau OTP.
         </p>
         <div className="mt-2.5 flex items-center gap-1.5">
           <span className="flex h-[26px] flex-1 items-center justify-center rounded-full bg-[var(--mp-ink)] text-[10.5px] font-medium text-[var(--mp-well)]">
-            Confirm
+            Mengerti
           </span>
           <span className="flex h-[26px] flex-1 items-center justify-center rounded-full border border-[var(--mp-line-2)] bg-[var(--mp-row)] text-[10.5px] font-medium text-[var(--mp-ink-3)]">
-            Cancel
+            Batal
           </span>
         </div>
       </div>
@@ -92,24 +92,24 @@ export function LangkahPreview() {
     <ChatPreview
       rootClassName="langkah-preview"
       backdropSrc={BACKDROP}
-      title="Execute"
+      title="Langkah"
       activeThread={2}
       aside={{
-        title: "Action preview",
-        footer: "Add action",
+        title: "Pratinjau langkah",
+        footer: "Lihat panduan",
         children: <ActionPreviewRail />,
       }}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-1">
         <div className="flex shrink-0 justify-end">
           <span className="max-w-[68%] rounded-[14px] rounded-br-[4px] border border-[var(--mp-bubble-line)] bg-[var(--mp-bubble)] px-4 py-2 text-[11.5px] text-[var(--mp-ink)]">
-            Create a bug ticket and notify the owner.
+            Saya sudah transfer ke rekening penjual. Apa langkah pertama?
           </span>
         </div>
 
         <div className="shrink-0 rounded-[10px] border border-[var(--mp-line)] bg-[var(--mp-card)] px-4 py-3">
           <span className="text-[12px] font-medium text-[var(--mp-ink-2)]">
-            Ticket Ready
+            Langkah tersusun
           </span>
           <ul className="mt-3 space-y-2">
             {TICKET.map((item) => (
@@ -126,7 +126,7 @@ export function LangkahPreview() {
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <NextActions />
           <span className="text-[10.5px] text-[var(--mp-faint)]">
-            Next Actions
+            Langkah berikutnya
           </span>
         </div>
       </div>

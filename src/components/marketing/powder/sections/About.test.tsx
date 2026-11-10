@@ -13,10 +13,11 @@ describe("About", () => {
 
     expect(container.querySelectorAll(".about-preview").length).toBe(3);
     expect(
-      screen.getAllByText("What's blocking the Acme renewal?").length,
+      screen.getAllByText("Pesan ini minta OTP, tapi pengirimnya bukan bank.")
+        .length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText("Taylor Smith").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Trends").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Pesan WhatsApp").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Progres").length).toBeGreaterThan(0);
 
     for (const file of RASTERS) {
       expect(container.querySelector(`img[src*="${file}"]`)).toBeNull();

@@ -34,14 +34,14 @@ type Thread = {
 };
 
 const THREADS: Thread[] = [
-  { title: "SSO for Pro plan?", time: "2 min ago", icon: "chat" },
-  { title: "Weekly support report", time: "1h ago", icon: "bars" },
-  { title: "Safari login loop issue", time: "3h ago", icon: "play" },
-  { title: "Refund policy update", time: "Yesterday", icon: "chat" },
-  { title: "Release notes v2.4", time: "2 days ago", icon: "doc", fade: 0.68 },
+  { title: "APK undangan pernikahan", time: "2 menit lalu", icon: "chat" },
+  { title: "Tugas like dan top-up", time: "1 jam lalu", icon: "bars" },
+  { title: "Akun diblokir 2 jam", time: "3 jam lalu", icon: "play" },
+  { title: "Investasi untung tetap", time: "Kemarin", icon: "chat" },
+  { title: "QRIS stiker palsu", time: "2 hari lalu", icon: "doc", fade: 0.68 },
   {
-    title: "Integrations overview",
-    time: "5 days ago",
+    title: "Kurir palsu minta OTP",
+    time: "5 hari lalu",
     icon: "search",
     fade: 0.36,
   },
@@ -77,7 +77,7 @@ function PreviewSidebar({ active }: { active: number }) {
 
         <div className="px-[12%] pb-1">
           <span className="flex h-[28px] w-full items-center justify-center rounded-full border border-[var(--mp-line-3)] bg-[var(--mp-control)] text-[11.5px] font-medium text-[var(--mp-ink)]">
-            New Chat
+            Percakapan baru
           </span>
         </div>
 
@@ -136,14 +136,14 @@ function PreviewSidebar({ active }: { active: number }) {
         <div className="mx-[8%] border-t border-[var(--mp-line)]" />
         <div className="flex items-center gap-2.5 px-[12%] py-3.5">
           <span className="grid size-[30px] shrink-0 place-items-center rounded-full border border-[var(--mp-line-2)] bg-[var(--mp-avatar)] text-[10.5px] font-medium text-[var(--mp-ink-2)]">
-            AK
+            AL
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[11.5px] font-medium leading-tight text-[var(--mp-ink)]">
-              Alex Carter
+              Akun Lumina
             </span>
             <span className="mt-[2px] block truncate text-[10.5px] leading-tight text-[var(--mp-faint)]">
-              Powder Pro
+              Sesi di perangkat ini
             </span>
           </span>
         </div>
@@ -158,7 +158,7 @@ export function PreviewComposer({ className = "" }: { className?: string }) {
       className={`shrink-0 rounded-[12px] border border-[var(--mp-line)] bg-[var(--mp-well)] px-4 py-3 ${className}`}
     >
       <span className="block text-[11.5px] text-[var(--mp-faint-2)]">
-        Ask anything. Type @ for mentions and / for shortcuts.
+        Tulis pesan atau tempel tautan. Enter mengirim, Shift+Enter baris baru.
       </span>
       <div className="mt-3 flex items-center justify-between">
         <span className="flex items-center gap-3 text-[var(--mp-faint-2)]">

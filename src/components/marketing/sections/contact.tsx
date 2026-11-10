@@ -186,7 +186,7 @@ export function Contact() {
                     name="email"
                     type="email"
                     required
-                    placeholder="emailkamu@gmail.com"
+                    placeholder="nama@email.com"
                     className={fieldClass}
                   />
                 </div>
@@ -203,7 +203,7 @@ export function Contact() {
                     name="message"
                     rows={4}
                     required
-                    placeholder="Tulis pertanyaanmu di sini.."
+                    placeholder="Tulis pertanyaanmu di sini."
                     className={`${fieldClass} min-h-24 py-2.5`}
                   />
                 </div>
@@ -214,15 +214,7 @@ export function Contact() {
                     htmlFor="contact-privacy"
                     className="block text-ls-ink-2 text-xs font-normal leading-snug"
                   >
-                    {contactCopy.consent.split("kebijakan privasi")[0]}
-                    <button
-                      type="button"
-                      onClick={() => showToast(contactCopy.privacyToast)}
-                      className="font-medium text-ls-ink underline"
-                    >
-                      kebijakan privasi
-                    </button>
-                    {contactCopy.consent.split("kebijakan privasi")[1]}
+                    {contactCopy.consent}
                   </Label>
                 </div>
 
