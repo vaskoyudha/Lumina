@@ -549,7 +549,7 @@ describe("CompanionChat · job search", () => {
     expect(
       await screen.findByText("Ada satu lowongan React."),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("agent-job-search")).toBeInTheDocument();
+    expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     // Privacy: the phase-2 summary carries postings, never the user's query.
@@ -576,6 +576,6 @@ describe("CompanionChat · job search", () => {
     expect(
       screen.queryByText(/ada satu lowongan react/i),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("agent-job-search")).toBeInTheDocument();
+    expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
   });
 });
