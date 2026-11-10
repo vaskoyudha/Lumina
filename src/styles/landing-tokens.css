@@ -202,6 +202,24 @@
   }
 
   /*
+    Paint the document canvas with the active landing ground. The `.landing`
+    div covers the viewport, but a browser-level bounce reveals the canvas
+    behind it; without this that gap is the default white. Keep in sync with
+    `--ls-surface` per theme above.
+  */
+  html:has(.landing) {
+    background-color: #f7f1e8;
+  }
+
+  html:has(.landing[data-theme="paper"]) {
+    background-color: #ffffff;
+  }
+
+  html:has(.landing[data-theme="black"]) {
+    background-color: #0f0f0f;
+  }
+
+  /*
     Marketing print of the companion (`CompanionPreview`). The live app is
     light-only, so the print keeps the app's class names but re-points the
     `--lumina-*` chrome at the active landing palette. Without this the

@@ -115,7 +115,7 @@ export function BelajarDashboard({
           src="/images/belajar/hero-akademi.jpg"
           alt=""
           fill
-          priority
+          loading="eager"
           sizes="(min-width: 1024px) 62vw, 100vw"
           className="object-cover object-[68%_center]"
         />

@@ -50,7 +50,7 @@ export function AgentsDetailPanel({
   /** Unique per surface: the chat renders this pane in a column and a sheet. */
   titleId?: string;
 }) {
-  const activeId = selected ?? AGENT_SEQUENCE[0];
+  const activeId = selected ?? "message";
   const profile = AGENT_REGISTRY[activeId];
   const index = AGENT_SEQUENCE.indexOf(activeId);
   const Icon = profile.icon;

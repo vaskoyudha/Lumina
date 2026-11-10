@@ -18,12 +18,12 @@ const BACKDROP =
   "/sites/powder-framer-website-4824bd20/root-8a5edab2/Wg0HPMEvwBAB4NYqAHbCXOgrijs.jpg";
 
 const ACTIONS: { label: string; Icon: LucideIcon }[] = [
-  { label: "Answer a question", Icon: CircleHelp },
-  { label: "Summarize this link", Icon: Link2 },
-  { label: "Write a draft email", Icon: Mail },
-  { label: "Create a report", Icon: BarChart3 },
-  { label: "Check a policy", Icon: FileCheck2 },
-  { label: "Find a contact", Icon: UserRoundPlus },
+  { label: "Periksa pesan", Icon: CircleHelp },
+  { label: "Periksa tautan", Icon: Link2 },
+  { label: "Baca tangkapan layar", Icon: Mail },
+  { label: "Kenali modus", Icon: BarChart3 },
+  { label: "Buka modul belajar", Icon: FileCheck2 },
+  { label: "Tanya komunitas", Icon: UserRoundPlus },
 ];
 
 export function AskPreview() {
@@ -31,7 +31,7 @@ export function AskPreview() {
     <ChatPreview
       rootClassName="ask-preview"
       backdropSrc={BACKDROP}
-      title="Ask"
+      title="Tanya"
       activeThread={1}
       composerWrapperClassName="mx-auto mt-4 w-full max-w-[440px]"
     >
@@ -39,10 +39,11 @@ export function AskPreview() {
         <div className="w-full max-w-[440px]">
           <div className="text-center">
             <h3 className="ap-title text-[22px] font-medium tracking-[-0.02em] text-[var(--mp-ink)]">
-              What do you want to do?
+              Mau periksa apa hari ini?
             </h3>
             <p className="ap-sub mt-2 text-[12px] text-[var(--mp-muted)]">
-              Ask anything and I&apos;ll handle the busywork.
+              Tempel pesan, tautan, atau tangkapan layar. Lumina akan menyebut
+              polanya.
             </p>
           </div>
 

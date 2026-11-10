@@ -7,7 +7,6 @@ import {
   Link2,
   Maximize2,
   Minus,
-  PanelRightOpen,
   Plus,
   Sparkle,
   Sparkles,
@@ -86,17 +85,12 @@ export function AgentsView({
   onExport,
   onCopyLink,
   copied = false,
-  panelCollapsed = false,
-  onOpenPanel,
 }: {
   onSelect: (agent: DetectorAgent) => void;
   selected?: DetectorAgent | null;
   onExport: () => void;
   onCopyLink: () => void;
   copied?: boolean;
-  /** The detail pane collapsed to its rail, so reopening moves into this row. */
-  panelCollapsed?: boolean;
-  onOpenPanel?: () => void;
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-visible">
@@ -160,23 +154,6 @@ export function AgentsView({
                   Komunitas
                 </Link>
               </Button>
-              {panelCollapsed && onOpenPanel ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Buka panel detail"
-                  aria-expanded={false}
-                  onClick={onOpenPanel}
-                  className="hidden size-10 shrink-0 rounded-[10px] border border-hairline-strong bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt lg:grid"
-                >
-                  <PanelRightOpen
-                    aria-hidden
-                    strokeWidth={1.7}
-                    className="size-4"
-                  />
-                </Button>
-              ) : null}
             </div>
           </div>
         </div>

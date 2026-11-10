@@ -13,7 +13,7 @@ export default function CTA() {
                   <h2 className="framer-text framer-styles-preset-fahce0" data-styles-preset="nZtZfLTSW" dir="auto" style={{"--framer-text-alignment": "left"}}>Periksa pesan, lihat alasannya</h2>
                 </div>
                 <div className="framer-moeaun" data-framer-component-type="RichTextContainer" style={{willChange: "transform", opacity: "0", transform: "translateY(24px)"}}>
-                  <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-alignment": "left"}}>Tempel pesan atau tautan yang meragukan. Lumina menandai polanya, menunjukkan bagian yang memicu, dan tidak mengirim isi pesan ke mana pun.</p>
+                  <p className="framer-text framer-styles-preset-prenqk" data-styles-preset="POYKcChXw" dir="auto" style={{"--framer-text-alignment": "left"}}>Tempel pesan atau tautan yang meragukan. Lumina menandai polanya dan menunjukkan bagian yang memicu. Teks yang diperiksa tetap di perangkatmu; pertanyaan lanjutan dan ringkasan temuan tanpa kutipan dikirim ke model bahasa untuk penjelasan.</p>
                 </div>
               </div>
               <div className="ssr-variant">

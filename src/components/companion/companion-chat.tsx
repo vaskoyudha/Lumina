@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Mascot } from "@/components/brand/mascot";
 import { AgentRun, runAnnouncement } from "@/components/companion/agent-run";
@@ -289,6 +290,11 @@ export function CompanionChat({
   initialModule?: { no: number; title: string };
 }) {
   const [tutorModule, setTutorModule] = React.useState(initialModule);
+  const router = useRouter();
+  // `null` outside a mounted router (and in tests); the agent route check below
+  // then reads false and the shell keeps its in-place behavior.
+  const pathname = usePathname();
+  const onAgentRoute = pathname === "/agen";
   const [sessions, setSessions] = React.useState<Session[]>(() => [
     newSession(),
   ]);
@@ -310,8 +316,13 @@ export function CompanionChat({
   );
   const [showEvidence, setShowEvidence] = React.useState(false);
   const [showSessions, setShowSessions] = React.useState(false);
-  /** The center column's second view; the turns stay in state while it is away. */
-  const [showAgents, setShowAgents] = React.useState(initialPanel === "agen");
+  /**
+   * The center column's second view. The address owns it: `/agen` is the
+   * overview, `/companion` is the conversation. Keeping it in state let a
+   * reused client instance carry the previous view across routes, which showed
+   * the chat under an `/agen` URL.
+   */
+  const showAgents = onAgentRoute || initialPanel === "agen";
   /** Seed for the empty-state composer: a nonce remounts it with new text. */
   const [composerSeed, setComposerSeed] = React.useState({
     text: "",
@@ -319,7 +330,7 @@ export function CompanionChat({
   });
   /** Which agent's brief the right pane shows while the overview is open. */
   const [selectedAgent, setSelectedAgent] =
-    React.useState<DetectorAgent | null>(AGENT_SEQUENCE[0]);
+    React.useState<DetectorAgent | null>("message");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -328,6 +339,20 @@ export function CompanionChat({
   );
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  /** Height of the floating composer, so the log can pad its tail above it. */
+  const [composerHeight, setComposerHeight] = React.useState(0);
+  const composerObserver = React.useRef<ResizeObserver | null>(null);
+  const setComposerNode = React.useCallback((node: HTMLDivElement | null) => {
+    composerObserver.current?.disconnect();
+    composerObserver.current = null;
+    if (!node) return;
+    const measure = () =>
+      setComposerHeight(node.getBoundingClientRect().height);
+    measure();
+    composerObserver.current = new ResizeObserver(measure);
+    composerObserver.current.observe(node);
+  }, []);
+  React.useEffect(() => () => composerObserver.current?.disconnect(), []);
   const { saved, toggle: toggleSaved } = useSavedLoker();
 
   /*
@@ -582,22 +607,19 @@ export function CompanionChat({
               : turn,
           );
 
-        // Decide from the user's request before adding filenames or OCR text.
-        // A request to explain a document must not become a safety check merely
-        // because a file was attached. No attachment content enters chat history.
-        const previousUser = (active?.turns ?? []).findLast(
-          (turn) => turn.role === "user",
-        );
+        /*
+         * An image is evidence, not a concept question, so a turn with one is a
+         * check even when the typed words look like a question. The lane is
+         * therefore known before the pixels are read, which lets the user's
+         * message appear immediately instead of after the transcription.
+         */
+        const hasImages = !tutorModule && attachments.some(isImageAttachment);
         const asksAboutAttachment =
           !options.force &&
-          ((attachments.length > 0 &&
-            (isContentQuestion(text) || isQuestionAbout(text))) ||
-            ((previousUser?.attachments?.length ?? 0) > 0 &&
-              isContentQuestion(text)));
-        const hasImages =
-          !asksAboutAttachment &&
           !tutorModule &&
-          attachments.some(isImageAttachment);
+          attachments.length > 0 &&
+          attachments.every((attachment) => !isImageAttachment(attachment)) &&
+          (isContentQuestion(text) || isQuestionAbout(text));
 
         const userTurn: Turn = {
           id: id(),
@@ -635,7 +657,7 @@ export function CompanionChat({
          * a verdict.
          */
         const transcription = await transcribeImages(
-          asksAboutAttachment || tutorModule ? [] : attachments,
+          tutorModule ? [] : attachments,
           control.signal,
         );
 
@@ -694,11 +716,11 @@ export function CompanionChat({
          */
         const asked =
           asksAboutAttachment ||
-          (!options.force &&
-            attachments.length === 0 &&
-            isQuestionAbout(text, {
-              hasPriorVerdict: latestResult !== null,
-            }));
+          (options.force || attachments.length > 0
+            ? false
+            : isQuestionAbout(scored, {
+                hasPriorVerdict: latestResult !== null,
+              }));
         const intent =
           !options.force && attachments.length === 0
             ? conversationIntent(text)
@@ -1413,8 +1435,16 @@ export function CompanionChat({
   }, [activeId, busy, corpus]);
 
   const startNew = () => {
+    /*
+     * `/agen` is the overview's own address. A blank conversation is a
+     * different surface, so leave the agent route instead of rendering the
+     * composer under an `/agen` URL.
+     */
+    if (onAgentRoute) {
+      router.push("/companion");
+      return;
+    }
     setShowSessions(false);
-    setShowAgents(false);
     setSelectedAgent(null);
 
     /*
@@ -1434,6 +1464,15 @@ export function CompanionChat({
     const session = newSession();
     setSessions((prev) => [session, ...prev]);
     setSelectedId(session.id);
+  };
+
+  /**
+   * "Agen" is its own address (`/agen`), so the sidebar row is a plain link.
+   * The empty-state card still has to navigate from the conversation.
+   */
+  const openAgents = () => {
+    setShowSessions(false);
+    router.push("/agen");
   };
 
   React.useEffect(() => {
@@ -1530,26 +1569,21 @@ export function CompanionChat({
           sessions={conversations}
           activeId={activeId}
           onSelect={(sessionId) => {
+            // A conversation belongs to `/companion`; `/agen` is the overview.
+            if (onAgentRoute) {
+              setSelectedId(sessionId);
+              setShowSessions(false);
+              router.push("/companion");
+              return;
+            }
             setSelectedId(sessionId);
             setShowSessions(false);
-            setShowAgents(false);
             setSelectedAgent(null);
           }}
           onNew={startNew}
           onClose={() => setShowSessions(false)}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-          agentsActive={showAgents}
-          onShowAgents={() => {
-            setShowAgents(true);
-            setSelectedAgent(AGENT_SEQUENCE[0]);
-            setShowSessions(false);
-            setAgentsAnnouncement("");
-          }}
-          onShowChat={() => {
-            setShowAgents(false);
-            setShowSessions(false);
-          }}
           auth={(iconsOnly) => (
             <CompanionAuth session={session} iconsOnly={iconsOnly} />
           )}
@@ -1781,13 +1815,17 @@ export function CompanionChat({
           {showAgents ? (
             <div className="min-h-0 flex-1 py-4 pr-2.5 pl-4 xl:py-5 xl:pr-3 xl:pl-5">
               <AgentsView
-                onSelect={setSelectedAgent}
+                onSelect={(agent) => {
+                  setSelectedAgent(agent);
+                  // Picking an agent is a request to read its explanation, so
+                  // reopen the detail column instead of leaving the user to
+                  // discover the separate top-right toggle.
+                  setEvidenceCollapsed(false);
+                }}
                 selected={selectedAgent}
                 onExport={exportThread}
                 onCopyLink={copyThreadLink}
                 copied={copiedThread}
-                panelCollapsed={evidenceCollapsed}
-                onOpenPanel={() => setEvidenceCollapsed(false)}
               />
             </div>
           ) : empty ? (
@@ -1834,21 +1872,21 @@ export function CompanionChat({
                     name={session?.nama}
                     history={recentAgentRuns}
                     onFeature={prefillComposer}
-                    onOpenHistory={() => setShowAgents(true)}
+                    onOpenHistory={openAgents}
                     onResume={(sessionId) => {
                       setSelectedId(sessionId);
-                      setShowAgents(false);
                     }}
                   />
                 </div>
               </div>
             </div>
           ) : (
-            <>
+            <div className="relative flex min-h-0 flex-1 flex-col">
               <div
                 key={active?.id ?? "new"}
                 ref={scrollRef}
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6"
+                style={{ paddingBottom: composerHeight + 8 }}
+                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6"
                 role="log"
                 aria-live="polite"
                 aria-label="Percakapan"
@@ -2154,8 +2192,22 @@ export function CompanionChat({
                 )}
               </div>
 
-              <div className="shrink-0 px-4 pt-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6">
-                <div className="mx-auto w-full max-w-[640px]">
+              {/*
+               * The composer floats over the transcript tail instead of sitting
+               * in the flow. As a hard sibling it ended the log on a straight
+               * edge, so scrolling looked like content being chopped by a box.
+               * The gradient lets the last rows slide under the field, and the
+               * measured height keeps the newest turn reachable above it.
+               */}
+              <div
+                ref={setComposerNode}
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6"
+              >
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-bg via-bg/90 to-transparent"
+                />
+                <div className="pointer-events-auto relative mx-auto w-full max-w-[640px]">
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
@@ -2164,7 +2216,7 @@ export function CompanionChat({
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
         </section>
 
