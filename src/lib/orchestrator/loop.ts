@@ -16,19 +16,22 @@ import {
   type SpecialistSpec,
   specialistSystemPrompt,
 } from "@/lib/orchestrator/agents";
-import { orchestratorDeadlineMs, isConsensusScoreEnabled } from "@/lib/orchestrator/flag";
+import { findConsensus } from "@/lib/orchestrator/consensus";
+import {
+  isConsensusScoreEnabled,
+  orchestratorDeadlineMs,
+} from "@/lib/orchestrator/flag";
 import {
   COMMANDER_PROMPT,
   commanderUserPrompt,
   PLANNER_PROMPT,
   plannerUserPrompt,
   SCORING_PROMPT,
-  scoringUserPrompt,
   SYNTHESIS_PROMPT,
+  scoringUserPrompt,
   specialistUserPrompt,
   synthesisUserPrompt,
 } from "@/lib/orchestrator/prompts";
-import { findConsensus } from "@/lib/orchestrator/consensus";
 import {
   type ReportPoint,
   type ReportSignal,
@@ -37,23 +40,23 @@ import {
   validateReport,
 } from "@/lib/orchestrator/report";
 import {
+  type ScoreDecision,
+  SUBMIT_SCORE_TOOL,
+  validateScoreDecision,
+} from "@/lib/orchestrator/score-decision";
+import {
   type SubagentMessage,
   type SubagentResult,
   SubagentRuntime,
   type SubagentSession,
 } from "@/lib/orchestrator/subagent-runtime";
 import {
-  SUBMIT_SCORE_TOOL,
-  type ScoreDecision,
-  validateScoreDecision,
-} from "@/lib/orchestrator/score-decision";
-import {
   openAITools,
   TOOL_DEFS,
   type ToolContext,
 } from "@/lib/orchestrator/tools";
 import { extractLinks, parseLink } from "@/lib/scoring/link";
-import { scoreWithTrace, authorScore } from "@/lib/scoring/score";
+import { authorScore, scoreWithTrace } from "@/lib/scoring/score";
 import { fetchChat } from "@/lib/server/llm";
 
 const MAX_AGENTS = 6;

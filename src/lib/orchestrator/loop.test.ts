@@ -894,7 +894,9 @@ describe("runOrchestrator", () => {
         return {
           role: "assistant",
           content: null,
-          tool_calls: [report(system.includes("Mochi") ? "marketplace" : "qris")],
+          tool_calls: [
+            report(system.includes("Mochi") ? "marketplace" : "qris"),
+          ],
         };
       },
     );

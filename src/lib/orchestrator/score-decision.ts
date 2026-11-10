@@ -5,10 +5,7 @@ export const ScoreDecisionSchema = z
   .object({
     score: z.number().int().min(0).max(100),
     rationale: z.string().trim().min(3).max(600),
-    pointSignals: z
-      .array(z.string().trim().min(2).max(160))
-      .min(1)
-      .max(5),
+    pointSignals: z.array(z.string().trim().min(2).max(160)).min(1).max(5),
   })
   .strict();
 
@@ -39,14 +36,15 @@ export function validateScoreDecision(
     return {
       ok: false,
       issues: parsed.error.issues.map(
-        (issue) =>
-          `${issue.path.join(".") || "score"}: ${issue.message}`,
+        (issue) => `${issue.path.join(".") || "score"}: ${issue.message}`,
       ),
     };
   }
 
   const known = new Set(group.points.map((point) => normalize(point.signal)));
-  if (!parsed.data.pointSignals.some((signal) => known.has(normalize(signal)))) {
+  if (
+    !parsed.data.pointSignals.some((signal) => known.has(normalize(signal)))
+  ) {
     return {
       ok: false,
       issues: ["pointSignals: tidak ada sinyal konsensus yang dikutip"],
