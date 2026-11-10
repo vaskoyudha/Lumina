@@ -48,13 +48,13 @@ describe("CompanionChat · shell", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/pesan/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /butuh apa lagi, tamu\?/i }),
+      screen.getByRole("heading", { name: /mau periksa apa, tamu\?/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /riwayat agen/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /analisis iklan lowongan/i }),
+      screen.getByRole("button", { name: /periksa pesan mencurigakan/i }),
     ).toBeInTheDocument();
   });
 
