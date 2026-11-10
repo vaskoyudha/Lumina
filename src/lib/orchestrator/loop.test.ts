@@ -829,4 +829,176 @@ describe("runOrchestrator", () => {
       expect(next?.type === "agent_result" ? next.agent : null).toBe(agent.id);
     }
   });
+
+  it("lets Lumina score a consensus the engine missed", async () => {
+    const zero: ScoreResult = {
+      ...baseline,
+      score: 0,
+      risk: "bersih",
+      signals: [],
+      modus: "tidak-dikenali",
+      advice: [],
+      relatedModule: null,
+      hardOverride: false,
+    };
+    const message =
+      "Kak, saya sudah transfer Rp1.500.000 untuk barang Rp1.000.000. Kelebihannya tolong kembalikan ke rekening saya, nanti saya transfer lagi.";
+    const report = (agent: "marketplace" | "qris") => ({
+      id: `call-${agent}`,
+      type: "function",
+      function: {
+        name: "submit_report",
+        arguments: JSON.stringify({
+          summary: "Ada klaim transfer berlebih.",
+          points: [
+            {
+              signal: "Kelebihan transfer",
+              point: "Pembeli mengaku mentransfer lebih dari harga.",
+              reason: "Pola overpayment.",
+              pattern: "overpayment-refund",
+              watchout: "Jangan mengembalikan dana sebelum dana masuk.",
+              quote: "transfer Rp1.500.000",
+            },
+          ],
+          watchouts: ["Jangan mengembalikan dana sebelum dana masuk."],
+          confidence: 0.8,
+        }),
+      },
+    });
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall("Aku melihat pola kelebihan bayar.");
+        if (system.includes("koordinator tim agen"))
+          return plannerCallWith([
+            { agent: "marketplace", task: "Periksa alur jual-beli." },
+            { agent: "qris", task: "Periksa refund QRIS." },
+          ]);
+        if (system.includes("penentu skor akhir"))
+          return {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              toolCall("score-1", "submit_score", {
+                score: 78,
+                rationale: "Dua agen menemukan klaim transfer berlebih.",
+                pointSignals: ["Kelebihan transfer"],
+              }),
+            ],
+          };
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 78/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [report(system.includes("Mochi") ? "marketplace" : "qris")],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(
+      { ...request, message },
+      {
+        chat: chat as never,
+        score: (() => ({ result: zero, trace: path })) as never,
+      },
+    );
+
+    expect(result.score.score).toBe(78);
+    expect(result.trace.baselineScore?.score).toBe(0);
+    expect(result.trace.finalScore?.score).toBe(78);
+    expect(result.trace.consensus?.[0].pattern).toBe("overpayment-refund");
+    expect(
+      result.events.find((event) => event.type === "score_decision"),
+    ).toMatchObject({ source: "model", result: { score: 78 } });
+    expect(result.text).toContain("78/100");
+  });
+
+  it("keeps the engine score when no consensus forms", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        const key = system.includes("Mochi")
+          ? "message"
+          : system.includes("Bao")
+            ? "evidence"
+            : "qris";
+        const pattern =
+          key === "message"
+            ? "credential-request"
+            : key === "qris"
+              ? "credential-request-other"
+              : "evidence-audit";
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            toolCall(`call-${key}`, "submit_report", {
+              summary: "Ada permintaan kode.",
+              points: [
+                {
+                  signal: `Sinyal ${key}`,
+                  point: "Pesan meminta kode.",
+                  reason: "Permintaan kredensial.",
+                  pattern,
+                  watchout: "Jangan kirim kode.",
+                  quote: "kirim kode OTP",
+                },
+              ],
+              watchouts: ["Jangan kirim kode."],
+              confidence: 0.7,
+            }),
+          ],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+
+    expect(result.score.score).toBe(72);
+    expect(result.events.some((event) => event.type === "score_decision")).toBe(
+      false,
+    );
+  });
+
+  it("keeps the engine score when Lumina submits no decision", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penentu skor akhir"))
+          return { role: "assistant", content: "Aku belum yakin." };
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+
+    expect(result.score.score).toBe(72);
+    expect(
+      result.events.find((event) => event.type === "score_decision"),
+    ).toMatchObject({ source: "fallback", result: { score: 72 } });
+  });
 });
