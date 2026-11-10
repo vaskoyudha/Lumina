@@ -64,6 +64,13 @@ export const OrchestratorEventSchema = z.discriminatedUnion("type", [
     question: z.string().min(1).max(2000),
   }).strict(),
   BaseEventSchema.extend({
+    type: z.literal("commander_say"),
+    text: z.string().min(1).max(400),
+    focus: z.string().max(120).default(""),
+    source: z.enum(["model", "fallback"]),
+    ms: z.number().int().min(0),
+  }).strict(),
+  BaseEventSchema.extend({
     type: z.literal("plan"),
     rationale: z.string().max(1200),
     agents: z.array(PlanStepSchema).min(1).max(6),
