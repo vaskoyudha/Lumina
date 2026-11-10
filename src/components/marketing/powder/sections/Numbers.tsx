@@ -43,26 +43,26 @@ export default function Numbers() {
                 <div className="framer-ab7g5e">
                   <div className="ssr-variant hidden-3job37 hidden-nzvz5l">
                     <div className="framer-hfok5d" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                      <h1 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                      <h2 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                         25{" "}
                         <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/29</span>
-                      </h1>
+                      </h2>
                     </div>
                   </div>
                   <div className="ssr-variant hidden-kj696b hidden-nzvz5l">
                     <div className="framer-hfok5d" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                      <h1 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                      <h2 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                         25{" "}
                         <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/29</span>
-                      </h1>
+                      </h2>
                     </div>
                   </div>
                   <div className="ssr-variant hidden-3job37 hidden-kj696b">
                     <div className="framer-hfok5d" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                      <h1 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                      <h2 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                         25{" "}
                         <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/29</span>
-                      </h1>
+                      </h2>
                     </div>
                   </div>
                 </div>
@@ -137,26 +137,26 @@ export default function Numbers() {
                   <div className="framer-7bgqob">
                     <div className="ssr-variant hidden-3job37 hidden-nzvz5l">
                       <div className="framer-1af25vf" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                        <h1 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        <h2 dir="auto" style={{"--framer-font-size": "144px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                           0
                           <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/28</span>
-                        </h1>
+                        </h2>
                       </div>
                     </div>
                     <div className="ssr-variant hidden-kj696b hidden-nzvz5l">
                       <div className="framer-1af25vf" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                        <h1 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        <h2 dir="auto" style={{"--framer-font-size": "120px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                           0
                           <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/28</span>
-                        </h1>
+                        </h2>
                       </div>
                     </div>
                     <div className="ssr-variant hidden-3job37 hidden-kj696b">
                       <div className="framer-1af25vf" data-framer-component-type="RichTextContainer" style={{transform: "translateY(-50%)"}}>
-                        <h1 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
+                        <h2 dir="auto" style={{"--framer-font-size": "80px", "--framer-letter-spacing": "-0.11em", "--framer-line-height": "1em", "--framer-text-alignment": "left", "--framer-text-color": "var(--token-090acfc6-f7ee-4bf4-9b69-0b15cf2cb187, rgb(255, 243, 240))"}} className="framer-text">
                           0
                           <span style={{"--font-selector": "SW50ZXItRXh0cmFMaWdodA==", "--framer-font-family": "\"Inter\", sans-serif", "--framer-font-weight": "200", "--framer-text-color": "var(--token-c6de8ea4-3684-4c2f-917e-fc3d1879d6b0, rgba(255, 255, 255, 0.65))"}} className="framer-text">/28</span>
-                        </h1>
+                        </h2>
                       </div>
                     </div>
                   </div>

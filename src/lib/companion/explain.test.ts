@@ -21,6 +21,16 @@ describe("explain", () => {
     expect(ids).toContain("uang"); // the "biaya administrasi"
   });
 
+  it("explains a job-task scam through the money tactic, not only links", () => {
+    const text =
+      "itu 420K masih ada bayar lagi tidak untuk tugas2 selanjutnya, dan apa bisa langsung di tarik? Hanya sekali pembayaran saja. 420 selesaikan tugas tidak ada lagi pembayaran dan bisa langsung penarikan.";
+    const result = scoreText({ text });
+    const { tactics } = explain(result, text);
+    const money = tactics.find((tactic) => tactic.id === "uang");
+    expect(money).toBeDefined();
+    expect(money?.evidence).toMatch(/tugas|pembayaran|penarikan/i);
+  });
+
   it("never invents a tactic the detectors did not find", () => {
     const result = scoreText({ text: BENIGN });
     const { tactics } = explain(result, BENIGN);
@@ -90,5 +100,26 @@ describe("explain", () => {
     const first = explain(scoreText({ text: APK }), APK);
     const second = explain(scoreText({ text: APK }), APK);
     expect(first).toEqual(second);
+  });
+});
+
+describe("report fallback for an unrecognized high-risk message", () => {
+  const OTP_ONLY =
+    "Kirim kode OTP 6 digit yang baru saja masuk ke nomor ini sekarang.";
+
+  it("still gives OTP theft a channel to report to", () => {
+    const result = scoreText({ text: OTP_ONLY });
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("tidak-dikenali");
+
+    const { report } = explain(result, OTP_ONLY);
+    expect(report.map((channel) => channel.id)).toEqual(["iasc", "komdigi"]);
+  });
+
+  it("does not invent a channel for a harmless unrecognized message", () => {
+    const text = "Halo, besok kita rapat jam sembilan pagi.";
+    const result = scoreText({ text });
+    expect(result.modus).toBe("tidak-dikenali");
+    expect(explain(result, text).report).toEqual([]);
   });
 });

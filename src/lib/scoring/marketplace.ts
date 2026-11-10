@@ -1,4 +1,7 @@
 import type { Signal } from "@/lib/contracts/score";
+import { isQuotedWarning } from "@/lib/scoring/context";
+import { annotateSignal } from "@/lib/scoring/mechanism";
+import { normalizeWithMap, originalSpan } from "@/lib/scoring/normalize";
 
 /**
  * Marketplace Agent — fake sellers and off-platform payment.
@@ -23,6 +26,20 @@ interface ShopRule {
 }
 
 const SHOP_RULES: readonly ShopRule[] = [
+  {
+    id: "mkt-account-change",
+    weight: 0.7,
+    label: "Mengganti rekening penjual lalu meminta pembayaran pribadi",
+    pattern:
+      /\brekening\s+(?:penjual|toko)\b[^.!?]{0,30}\b(?:berubah|diganti)\b[^.!?]{0,100}\b(?:transfer|bayar)\b[^.!?]{0,50}\bpribadi\b/i,
+  },
+  {
+    id: "mkt-overpayment",
+    weight: 0.7,
+    label: "Mengaku kelebihan bayar dan meminta refund ke rekening berbeda",
+    pattern:
+      /\bkelebihan\s+(?:bayar|transfer)\b[^.!?]{0,100}\b(?:refund|kembalikan|pengembalian)\b[^.!?]{0,70}\brekening\s+(?:lain|berbeda)\b/i,
+  },
   {
     id: "mkt-offplatform",
     weight: 0.7,
@@ -89,7 +106,9 @@ export interface MarketplaceResult {
   note?: string;
 }
 
-export function marketplaceSignals(text: string): MarketplaceResult {
+export function marketplaceSignals(input: string): MarketplaceResult {
+  const normalized = normalizeWithMap(input);
+  const text = normalized.text;
   if (!SHOP_CONTEXT.test(text)) {
     return { signals: [], note: "Bukan percakapan jual-beli." };
   }
@@ -101,6 +120,7 @@ export function marketplaceSignals(text: string): MarketplaceResult {
   for (const rule of SHOP_RULES) {
     const match = text.match(rule.pattern);
     if (!match) continue;
+    if (isQuotedWarning(text, match.index ?? 0, match[0].length)) continue;
     /*
      * A down-payment that the buyer says is already paid is not a demand.
      * Judged inside the matched words only, so a later "sudah dibayar" in the
@@ -128,12 +148,25 @@ export function marketplaceSignals(text: string): MarketplaceResult {
         continue;
       }
     }
-    signals.push({
-      label: rule.label,
-      weight: rule.weight,
-      evidence: match[0].trim(),
-      agent: "marketplace",
-    });
+    signals.push(
+      annotateSignal(
+        {
+          label: rule.label,
+          weight: rule.weight,
+          evidence: input
+            .slice(
+              ...originalSpan(
+                normalized,
+                match.index ?? 0,
+                (match.index ?? 0) + match[0].length,
+              ),
+            )
+            .trim(),
+          agent: "marketplace",
+        },
+        `marketplace.${rule.id}`,
+      ),
+    );
   }
   return { signals };
 }

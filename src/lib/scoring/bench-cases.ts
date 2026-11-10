@@ -17,6 +17,7 @@
  *   b. Every legit message is abbreviated from a real-world shape.
  */
 
+import { ADDITIONAL_LEGIT, ADDITIONAL_SCAMS } from "@/lib/scoring/bench-v2";
 export interface BenchCase {
   id: string;
   text: string;
@@ -26,6 +27,7 @@ export interface BenchCase {
 }
 
 export const SCAM_CASES: BenchCase[] = [
+  ...ADDITIONAL_SCAMS,
   {
     id: "s01",
     tag: "apk-whatsapp",
@@ -202,6 +204,7 @@ export const SCAM_CASES: BenchCase[] = [
 ];
 
 export const LEGIT_CASES: BenchCase[] = [
+  ...ADDITIONAL_LEGIT,
   {
     id: "l01",
     tag: "OTP notification (benar-benar aman)",

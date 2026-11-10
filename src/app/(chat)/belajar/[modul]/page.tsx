@@ -185,6 +185,12 @@ export async function ModulContent({
         </Card>
       </dl>
 
+      <p className="appnext-caption">
+        {entry.laporan !== null
+          ? "Sumber angka: IASC OJK, November 2024–Oktober 2025."
+          : "Modul ini tidak memakai angka laporan; rujukannya peringatan resmi dan kanal instansi."}
+      </p>
+
       {isi ? (
         <ModulBody modul={isi} />
       ) : (

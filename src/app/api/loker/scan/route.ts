@@ -1,10 +1,7 @@
 import { after } from "next/server";
-import type { PoolClient } from "pg";
 import { AuthError, consumeAttempt } from "@/lib/auth/accounts";
-import { authDatabase } from "@/lib/auth/database";
 import { getSession } from "@/lib/auth/server-session";
-import { runScanJob } from "@/lib/loker/run";
-import { startScanRun } from "@/lib/loker/store";
+import { acquireScanLease, runLeasedScan } from "@/lib/loker/start";
 import { clientKey } from "@/lib/server/request";
 
 /**
@@ -29,50 +26,18 @@ export async function POST(request: Request) {
     );
   }
 
-  let client: PoolClient;
-  try {
-    client = await authDatabase().connect();
-  } catch {
-    return Response.json({ ok: false, error: "unavailable" }, { status: 503 });
-  }
-
-  try {
-    const lock = await client.query<{ ok: boolean }>(
-      "select pg_try_advisory_lock(hashtext('loker_scan')) as ok",
+  const lease = await acquireScanLease(session.email);
+  if (!lease.ok) {
+    return Response.json(
+      {
+        ok: false,
+        error: lease.reason === "running" ? "scan-running" : "unavailable",
+      },
+      { status: lease.reason === "running" ? 409 : 503 },
     );
-    if (!lock.rows[0]?.ok) {
-      client.release();
-      return Response.json(
-        { ok: false, error: "scan-running" },
-        { status: 409 },
-      );
-    }
-  } catch {
-    client.release();
-    return Response.json({ ok: false, error: "unavailable" }, { status: 503 });
   }
 
-  let runId: number;
-  try {
-    runId = await startScanRun(session.email);
-  } catch {
-    await client
-      .query("select pg_advisory_unlock(hashtext('loker_scan'))")
-      .catch(() => {});
-    client.release();
-    return Response.json({ ok: false, error: "unavailable" }, { status: 503 });
-  }
+  after(() => runLeasedScan(lease.lease));
 
-  after(async () => {
-    try {
-      await runScanJob(runId);
-    } finally {
-      await client
-        .query("select pg_advisory_unlock(hashtext('loker_scan'))")
-        .catch(() => {});
-      client.release();
-    }
-  });
-
-  return Response.json({ ok: true, runId }, { status: 202 });
+  return Response.json({ ok: true, runId: lease.lease.runId }, { status: 202 });
 }

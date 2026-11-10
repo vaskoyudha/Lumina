@@ -1,4 +1,5 @@
 import { VisionRequestSchema } from "@/lib/contracts/vision";
+import { fetchChat } from "@/lib/server/llm";
 import {
   BodyTooLarge,
   limitAI,
@@ -18,8 +19,12 @@ import {
  * the filename-only check the app already performed.
  */
 
-/** 20 s, matching the voice lane. Measured 10.4 s on the fast account. */
-const TIMEOUT_MS = 20000;
+/**
+ * 45 s. A phone screenshot resized to 1600 px still takes 5–8 s; a text-heavy
+ * one can take 30 s or more, so the old 20 s cap aborted real images before the
+ * upstream answered. The client downscales, so this is headroom, not the norm.
+ */
+const TIMEOUT_MS = 45000;
 
 const MAX_TOKENS = 2000;
 
@@ -73,38 +78,31 @@ export async function POST(request: Request) {
   const upstreamControl = upstreamAbort(request, TIMEOUT_MS);
 
   try {
-    const upstream = await fetch(
-      `${base.replace(/\/+$/, "")}/chat/completions`,
-      {
-        method: "POST",
-        signal: upstreamControl.signal,
-        headers: {
-          "content-type": "application/json",
-          ...(process.env.LUMINA_LLM_KEY
-            ? { authorization: `Bearer ${process.env.LUMINA_LLM_KEY}` }
-            : {}),
-        },
-        body: JSON.stringify({
-          model,
-          stream: false,
-          temperature: 0.1,
-          max_tokens: MAX_TOKENS,
-          messages: [
-            { role: "system", content: SYSTEM },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: "Salin semua teks pada gambar ini." },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:${mediaType};base64,${data}` },
-                },
-              ],
-            },
-          ],
-        }),
+    const upstream = await fetchChat({
+      base,
+      apiKey: process.env.LUMINA_LLM_KEY,
+      model,
+      fallbackModel: process.env.LUMINA_LLM_FALLBACK_MODEL,
+      signal: upstreamControl.signal,
+      body: {
+        stream: false,
+        temperature: 0.1,
+        max_tokens: MAX_TOKENS,
+        messages: [
+          { role: "system", content: SYSTEM },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Salin semua teks pada gambar ini." },
+              {
+                type: "image_url",
+                image_url: { url: `data:${mediaType};base64,${data}` },
+              },
+            ],
+          },
+        ],
       },
-    );
+    });
 
     if (!upstream.ok) return fail(503, "upstream-failed");
 

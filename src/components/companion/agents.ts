@@ -9,6 +9,7 @@ import {
   Quote,
   Store,
 } from "lucide-react";
+import { CREW_IDS } from "@/lib/agents/identities";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
 import type { AgentId } from "@/lib/contracts/score";
 import { DETECTOR_IDS } from "@/lib/scoring/detector-ids";
@@ -33,6 +34,14 @@ export type DetectorAgent = Exclude<AgentId, "scoring">;
  */
 export const AGENT_SEQUENCE: DetectorAgent[] = [...DETECTOR_IDS, "evidence"];
 
+/**
+ * The eight identity agents shown on /agen and spawned by the Orchestrator.
+ *
+ * Keep `AGENT_SEQUENCE` at ten for the deterministic AgentRun/SignalPanel:
+ * injection and email are safety stages, not crew members.
+ */
+export const CREW_SEQUENCE: DetectorAgent[] = [...CREW_IDS];
+
 export interface AgentProfile {
   id: DetectorAgent;
   displayName: string;
@@ -49,6 +58,30 @@ export interface AgentProfile {
 }
 
 export const AGENT_REGISTRY: Record<DetectorAgent, AgentProfile> = {
+  email: {
+    id: "email",
+    displayName: "Email",
+    ...STAGE_LABEL.email,
+    mechanism: ["Autentikasi header", "Alamat balasan", "Nama tampilan"],
+    purpose: "Memeriksa header yang tersedia tanpa menebak dari isi email.",
+    flavor: "Memisahkan alamat pengirim dan alamat balasan.",
+    caveat:
+      "Header tempelan dapat dipalsukan; hasil ini bukan verifikasi penyedia penerima.",
+    icon: Fingerprint,
+    portrait: null,
+    identity: "--lumina-agent-email",
+  },
+  injection: {
+    id: "injection",
+    displayName: "Penjaga",
+    ...STAGE_LABEL.injection,
+    mechanism: ["Instruksi ke pemeriksa", "Penyamaran peran", "Klaim skor"],
+    purpose: "Mengenali upaya memerintah sistem untuk melewati pemeriksaan.",
+    flavor: "Isi pesan tidak dapat memerintah pemeriksa.",
+    icon: MessageSquare,
+    portrait: null,
+    identity: "--lumina-agent-injection",
+  },
   message: {
     id: "message",
     displayName: "Mochi",

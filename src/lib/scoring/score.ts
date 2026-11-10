@@ -1,3 +1,4 @@
+import type { ValidationSummary } from "@/lib/contracts/agent-run";
 import {
   type AgentStage,
   type AgentTrace,
@@ -7,16 +8,22 @@ import { riskFor, type ScoreResult, type Signal } from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
 import { conversationSignals } from "@/lib/scoring/conversation";
 import type { DetectorId } from "@/lib/scoring/detector-ids";
+import { emailSignals } from "@/lib/scoring/email";
+import { fingerprintSignals } from "@/lib/scoring/fingerprint";
 import { identitySignals } from "@/lib/scoring/identity";
+import { injectionSignals } from "@/lib/scoring/injection";
 import { jobSignals } from "@/lib/scoring/job";
 import { extractLinks, linkSignals } from "@/lib/scoring/link";
 import { marketplaceSignals } from "@/lib/scoring/marketplace";
+import { annotateSignal } from "@/lib/scoring/mechanism";
 import {
   detectMessage,
   HARD_RULES,
   messageSignals,
 } from "@/lib/scoring/message";
+import { normalizeWithMap } from "@/lib/scoring/normalize";
 import { qrisSignals } from "@/lib/scoring/qris";
+import { validateSignals } from "@/lib/scoring/validate";
 
 /**
  * Scoring Orchestrator — the ONLY place a score is produced (§11.1).
@@ -101,17 +108,44 @@ const MODUS_KEYWORDS: ReadonlyArray<{ modus: string; pattern: RegExp }> = [
 ];
 
 function classifyModus(text: string, signals: readonly Signal[]): string {
+  const ruleIds = signals.map((s) => s.ruleId ?? "");
+  if (ruleIds.some((id) => id.includes("investment-")))
+    return "investasi-bodong";
+  if (ruleIds.some((id) => id.includes("love-"))) return "love-scam";
+  if (
+    /\b(?:bansos|bantuan sosial|subsidi|program bantuan|kementerian|dinas)\b/i.test(
+      text,
+    ) &&
+    /biaya|bayar|transfer|rekening pribadi/i.test(text)
+  )
+    return "musiman-catut-institusi";
   const hasApk = signals.some((s) => s.label.includes("APK"));
   if (hasApk) return "apk-whatsapp";
+  if (/\b(?:teror\s+kontak|pinjaman\s+belum\s+cair)\b/i.test(text))
+    return "pinjol-fiktif";
+  if (
+    /\b(?:paket|pengiriman)\b[^.!?]{0,80}\b(?:tertahan|kurir|pelacakan)\b/i.test(
+      text,
+    )
+  )
+    return "jual-beli-palsu";
 
   const hasOtp = signals.some((s) => s.label.includes("OTP"));
   const hasAuthority = signals.some((s) => s.label.includes("Mengaku dari"));
+  if (hasOtp && /bca|bni|bri|mandiri|bank/i.test(text)) return "fake-call";
+  if (/komisi/i.test(text) && /top\s*up|tugas|like/i.test(text))
+    return "lowongan-tugas-berbayar";
+  if (/kepolisian|polres/i.test(text) && /tilang|denda/i.test(text))
+    return "social-engineering";
   if (hasOtp && hasAuthority) return "fake-call";
 
   for (const { modus, pattern } of MODUS_KEYWORDS) {
     if (pattern.test(text)) return modus;
   }
-  return UNRECOGNIZED_ID;
+  return signals.some((s) => s.agent === "link" && s.weight >= 0.5) ||
+    signals.some((s) => s.agent === "email" && s.weight >= 0.5)
+    ? "phishing-tautan"
+    : UNRECOGNIZED_ID;
 }
 
 const ADVICE: Record<string, string[]> = {
@@ -213,9 +247,13 @@ const DETECTORS: readonly {
   id: DetectorId;
   run: (ctx: DetectorContext) => DetectorResult;
 }[] = [
+  { id: "injection", run: ({ text }) => injectionSignals(text) },
+  { id: "email", run: ({ text }) => emailSignals(text) },
   {
     id: "message",
-    run: ({ text }) => ({ signals: messageSignals(text) }),
+    run: ({ text }) => ({
+      signals: [...messageSignals(text), ...fingerprintSignals(text)],
+    }),
   },
   {
     id: "link",
@@ -270,6 +308,7 @@ function finalize(
   text: string,
   detectorSignals: readonly Signal[],
   extraSignals: readonly Signal[],
+  validation?: ValidationSummary,
 ): ScoreResult {
   const trimmed = text.trim();
 
@@ -293,6 +332,7 @@ function finalize(
         ];
 
   let score = accumulate(sorted.map((s) => s.weight));
+  if (validation?.capped) score = Math.min(score, 39);
   // Hard indicator: a request for OTP/PIN/password forces the top band.
   if (hardHit) score = Math.max(score, 70);
 
@@ -302,7 +342,9 @@ function finalize(
    * modus and a module CTA directly under a 0/100 "Bersih" score.
    */
   const modus =
-    sorted.length > 0 ? classifyModus(trimmed, sorted) : UNRECOGNIZED_ID;
+    sorted.length > 0
+      ? classifyModus(normalizeWithMap(trimmed).text, sorted)
+      : UNRECOGNIZED_ID;
   const modusEntry = MODUS_BY_ID.get(modus);
   const relatedModule = modusEntry ? modusEntry.no : null;
 
@@ -339,7 +381,7 @@ export function scoreWithTrace(input: ScoreInput): TracedScore {
   for (const detector of DETECTORS) {
     const started = performance.now();
     const { signals, note } = detector.run(ctx);
-    collected.push(...signals);
+    collected.push(...signals.map((s) => annotateSignal(s)));
     stages.push({
       id: detector.id,
       ...STAGE_LABEL[detector.id],
@@ -350,8 +392,21 @@ export function scoreWithTrace(input: ScoreInput): TracedScore {
     });
   }
 
+  const validationStarted = performance.now();
+  const validated = validateSignals(
+    [...collected, ...(input.extraSignals ?? [])],
+    detectMessage(text).some((h) => HARD_RULES.has(h.rule.id)),
+  );
+  stages.push({
+    id: "validator",
+    ...STAGE_LABEL.validator,
+    status: "selesai",
+    findings: validated.summary.clusters,
+    ms: performance.now() - validationStarted,
+    note: validated.summary.note,
+  });
   const scoringStarted = performance.now();
-  const result = finalize(text, collected, input.extraSignals ?? []);
+  const result = finalize(text, validated.signals, [], validated.summary);
   stages.push({
     id: "scoring",
     ...STAGE_LABEL.scoring,
@@ -372,6 +427,7 @@ export function scoreWithTrace(input: ScoreInput): TracedScore {
    *    dishonesty `AGENTS.md` §a forbids.
    */
   for (const stage of stages) {
+    if (stage.id === "validator") continue;
     stage.findings = result.signals.filter(
       (signal) => signal.weight > 0 && (signal.agent ?? "scoring") === stage.id,
     ).length;
@@ -381,7 +437,11 @@ export function scoreWithTrace(input: ScoreInput): TracedScore {
 
   return {
     result,
-    trace: { stages, totalMs: performance.now() - startedAt },
+    trace: {
+      stages,
+      totalMs: performance.now() - startedAt,
+      validation: validated.summary,
+    },
   };
 }
 

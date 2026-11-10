@@ -13,6 +13,7 @@ import {
   reportContent,
   reviewContent,
   setHelpful,
+  setSaved,
   writePost,
   writeReply,
 } from "@/lib/community/store";
@@ -185,5 +186,75 @@ const input = (changes: Partial<PostInput> = {}): PostInput => ({
     await writePost(userA, input({ title: `${prefix} 100xYkhusus` }));
     const found = await listPosts(QuerySchema.parse({ q: marker }), null);
     expect(found.total).toBe(1);
+  });
+  it("keeps saved posts unique and account-scoped, and returns no private feed to guests", async () => {
+    const id = await writePost(userA, input());
+    await setSaved(userB, id, true);
+    await setSaved(userB, id, true);
+    const query = QuerySchema.parse({ q: prefix, saved: "1" });
+    expect((await listPosts(query, userB)).posts.some((p) => p.id === id)).toBe(
+      true,
+    );
+    expect((await listPosts(query, userA)).posts.some((p) => p.id === id)).toBe(
+      false,
+    );
+    expect(await listPosts(query, null)).toEqual({ posts: [], total: 0 });
+    expect(await listPosts(QuerySchema.parse({ mine: "1" }), null)).toEqual({
+      posts: [],
+      total: 0,
+    });
+    await setSaved(userB, id, false);
+    expect((await getPost(id, userB))?.hasSaved).toBe(false);
+  });
+  it("reopens reviewed reports only after the post or reply changes", async () => {
+    const id = await writePost(userA, input());
+    const reply = await writeReply(userA, {
+      postId: id,
+      body: "Balasan awal untuk ditinjau.",
+    });
+    for (const target of [
+      { id, kind: "post" as const },
+      { id: reply.replyId, kind: "reply" as const },
+    ]) {
+      await reportContent(userB, target, "spam");
+      await reviewContent(target, false);
+      await reportContent(userB, target, "spam");
+      expect((await moderationQueue()).some((r) => r.id === target.id)).toBe(
+        false,
+      );
+      if (target.kind === "post")
+        await writePost(
+          userA,
+          input({
+            id,
+            body: "Isi baru setelah peninjauan; konten berubah dan perlu ditinjau kembali.",
+          }),
+        );
+      else
+        await writeReply(userA, {
+          id: target.id,
+          postId: id,
+          body: "Balasan baru setelah ditinjau.",
+        });
+      await reportContent(userB, target, "data-pribadi");
+      await reportContent(userB, target, "data-pribadi");
+      expect(
+        (await moderationQueue()).find((r) => r.id === target.id),
+      ).toMatchObject({ reports: 1, reason: "data-pribadi" });
+      await reviewContent(target, false);
+    }
+  });
+  it("returns the exact page and anchor for a newly created reply", async () => {
+    const postId = await writePost(userA, input());
+    for (let i = 0; i < 20; i++)
+      await writeReply(userA, { postId, body: `Balasan ${i}` });
+    const reply = await writeReply(userB, {
+      postId,
+      body: "Balasan terakhir saya.",
+    });
+    expect(reply).toMatchObject({ postId, page: 2 });
+    expect((await listReplies(postId, userB, 2)).map((r) => r.id)).toContain(
+      reply.replyId,
+    );
   });
 });

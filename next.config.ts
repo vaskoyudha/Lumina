@@ -13,7 +13,14 @@ const nextConfig: NextConfig = {
     },
   },
   outputFileTracingExcludes: {
-    "*": ["scanner/**", "docs/**", ".superpowers/**"],
+    "*": [
+      "scanner/**",
+      "docs/**",
+      ".superpowers/**",
+      ".scan-data/**",
+      ".git/**",
+      "coverage/**",
+    ],
   },
 };
 

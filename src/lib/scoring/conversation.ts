@@ -1,4 +1,5 @@
 import type { Signal } from "@/lib/contracts/score";
+import { annotateSignal } from "@/lib/scoring/mechanism";
 import { detectMessage, type RuleHit } from "@/lib/scoring/message";
 
 /**
@@ -168,7 +169,7 @@ export function conversationSignals({
 
   if (turns.length === 0) {
     return {
-      signals,
+      signals: signals.map((s) => annotateSignal(s)),
       // Only a stage with nothing to report may explain why. A combo finding
       // is already the answer to "what do several vectors mean together".
       note:
@@ -199,5 +200,5 @@ export function conversationSignals({
     });
   }
 
-  return { signals };
+  return { signals: signals.map((s) => annotateSignal(s)) };
 }

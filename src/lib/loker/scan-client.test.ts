@@ -42,6 +42,7 @@ describe("pollScan", () => {
           added: 0,
           dropped: 0,
           finishedAt: null,
+          postings: 2,
         }),
       )
       .mockResolvedValueOnce(
@@ -51,6 +52,7 @@ describe("pollScan", () => {
           added: 26,
           dropped: 14,
           finishedAt: "2026-11-09T00:00:00.000Z",
+          postings: 30,
         }),
       );
     const seen: string[] = [];

@@ -5,6 +5,7 @@ import {
 } from "@/lib/loker/filters";
 import { teksLoker, uraiKueri } from "@/lib/loker/query";
 import type { LokerSearchArgs, LokerView } from "@/lib/loker/types";
+import { rekomendasiUntuk } from "@/lib/loker/verdict";
 
 /**
  * The client-side search pipeline.
@@ -57,13 +58,9 @@ export function filterPostings(
     if (!cocokGaji(salary)) return false;
 
     if (args.hideFlagged) {
-      if (posting.sentinelStatus !== "clean") return false;
-      if (
-        posting.luminaRisk === "mencurigakan" ||
-        posting.luminaRisk === "tinggi"
-      ) {
-        return false;
-      }
+      // The recommendation already encodes "caution wins", so the filter and
+      // the badge can never disagree.
+      if (rekomendasiUntuk(posting) !== "aman") return false;
     }
 
     return true;

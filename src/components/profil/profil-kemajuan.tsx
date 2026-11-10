@@ -2,6 +2,7 @@
 
 import { BookOpen, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ProgressRing,
   useStoredProgress,
@@ -19,12 +20,15 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LearningSummary } from "@/lib/content/schema";
+import { dueReviews } from "@/lib/learning/review";
 
 import { BADGE_LABEL } from "@/lib/progress";
 
 export function ProfilKemajuan({ modules }: { modules: LearningSummary[] }) {
   const MODUS_BY_NO = new Map(modules.map((m) => [m.no, m]));
   const progress = useStoredProgress();
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => setNow(new Date()), []);
 
   if (!progress) {
     return (
@@ -89,9 +93,29 @@ export function ProfilKemajuan({ modules }: { modules: LearningSummary[] }) {
           <span className="tabular font-medium text-txt">
             {progress.missedPatterns.length}
           </span>{" "}
-          pola kuis masih perlu ditinjau.
+          pola perlu ditinjau.{" "}
+          <Link
+            className="appnext-link inline-flex min-h-11 items-center"
+            href="/belajar/latihan"
+          >
+            Latih kembali
+          </Link>
         </p>
       ) : null}
+
+      <p className="text-sm text-dim">
+        <Link
+          className="appnext-link inline-flex min-h-11 items-center"
+          href="/belajar/latihan"
+        >
+          {now ? dueReviews(progress, now).length : "—"} ulangan jatuh tempo
+        </Link>
+        {now &&
+        !progress.missedPatterns.length &&
+        !dueReviews(progress, now).length
+          ? " · Tidak ada yang tertunda."
+          : ""}
+      </p>
 
       {done > 0 ? (
         <ul className="flex flex-col">

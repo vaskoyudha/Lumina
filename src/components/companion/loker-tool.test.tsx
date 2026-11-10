@@ -1,5 +1,5 @@
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn() }),
+  useRouter: () => ({ refresh: mockRefresh }),
 }));
 
 jest.mock("@/lib/loker/scan-client", () => ({
@@ -7,11 +7,13 @@ jest.mock("@/lib/loker/scan-client", () => ({
   pollScan: jest.fn(),
 }));
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LokerTool } from "@/components/companion/loker-tool";
 import { pollScan, triggerScan } from "@/lib/loker/scan-client";
-import type { LokerCorpus, LokerView, ScanRunStatus } from "@/lib/loker/types";
+import type { LokerCorpus, LokerView, ScanStatus } from "@/lib/loker/types";
+
+const mockRefresh = jest.fn();
 
 function posting(over: Partial<LokerView> = {}): LokerView {
   return {
@@ -178,7 +180,8 @@ describe("LokerTool", () => {
       dropped: 0,
       exitCode: 0,
       providerErrors: [],
-    } as ScanRunStatus);
+      postings: 2,
+    } as ScanStatus);
     render(<LokerTool {...baseProps} canRefresh />);
     await user.click(
       screen.getByRole("button", { name: /pindai ulang lowongan/i }),
@@ -200,6 +203,7 @@ describe("LokerTool", () => {
         added: 0,
         dropped: 0,
         finishedAt: null,
+        postings: 2,
       });
       return null;
     });
@@ -222,6 +226,7 @@ describe("LokerTool", () => {
         added: 0,
         dropped: 0,
         finishedAt: null,
+        postings: 2,
       }),
     }) as unknown as typeof fetch;
     jest.mocked(pollScan).mockImplementation(async (onTick) => {
@@ -231,6 +236,7 @@ describe("LokerTool", () => {
         added: 0,
         dropped: 0,
         finishedAt: null,
+        postings: 2,
       });
       return null;
     });
@@ -239,5 +245,55 @@ describe("LokerTool", () => {
       await screen.findByText(/pindai berjalan di latar belakang/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/pindai terakhir:/i)).not.toBeInTheDocument();
+  });
+
+  it("refreshes the snapshot while postings land mid-scan", async () => {
+    const user = userEvent.setup();
+    jest.mocked(triggerScan).mockResolvedValue("started");
+    jest.mocked(pollScan).mockImplementation(async (onTick) => {
+      onTick({
+        status: "running",
+        found: 0,
+        added: 0,
+        dropped: 0,
+        finishedAt: null,
+        postings: 5,
+      });
+      return null;
+    });
+    render(<LokerTool {...baseProps} canRefresh />);
+    await user.click(
+      screen.getByRole("button", { name: /pindai ulang lowongan/i }),
+    );
+    // The scan is still running, but rows are already in the corpus, so the
+    // card pulls a fresh RSC snapshot instead of waiting for the final status.
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
+    expect(
+      screen.getByText(/pindai berjalan di latar belakang/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not refresh while the corpus size is unchanged", async () => {
+    const user = userEvent.setup();
+    jest.mocked(triggerScan).mockResolvedValue("started");
+    jest.mocked(pollScan).mockImplementation(async (onTick) => {
+      onTick({
+        status: "running",
+        found: 0,
+        added: 0,
+        dropped: 0,
+        finishedAt: null,
+        postings: 2,
+      });
+      return null;
+    });
+    render(<LokerTool {...baseProps} canRefresh />);
+    await user.click(
+      screen.getByRole("button", { name: /pindai ulang lowongan/i }),
+    );
+    expect(
+      await screen.findByText(/pindai berjalan di latar belakang/i),
+    ).toBeInTheDocument();
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

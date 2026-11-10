@@ -3,6 +3,7 @@
 import { PanelLeftOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { AccountProgressProvider } from "@/components/belajar/belajar-progress";
 import {
   CompanionAuth,
   type CompanionSession,
@@ -10,6 +11,7 @@ import {
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { ProfilePopup } from "@/components/profil/profile-popup";
 import { Button } from "@/components/ui/button";
+import type { LearningSummary } from "@/lib/content/schema";
 import { cn } from "@/lib/utils";
 
 /**
@@ -32,6 +34,7 @@ export function WorkspaceFrame({
   session = null,
   className,
   label = "Belajar",
+  progressModules,
 }: {
   children: ReactNode;
   aside?: ReactNode;
@@ -39,19 +42,19 @@ export function WorkspaceFrame({
   className?: string;
   /** Mobile drawer header; the sidebar itself is the shared navigation. */
   label?: string;
+  /**
+   * Learning surfaces pass their catalog here so the account-progress provider
+   * sits inside the streamed workspace instead of above its Suspense boundary.
+   * That keeps the first client render identical to the server HTML.
+   */
+  progressModules?: LearningSummary[];
 }) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  return (
-    <div
-      data-workspace
-      className={cn(
-        "relative flex h-full min-h-0 overflow-hidden bg-bg text-txt",
-        className,
-      )}
-    >
+  const content = (
+    <>
       <a
         href="#workspace-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-panel focus:px-3 focus:py-2 focus:font-medium focus:text-sm focus:text-txt focus:shadow-lg"
@@ -65,7 +68,6 @@ export function WorkspaceFrame({
         onClose={() => setMobileOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((open) => !open)}
-        onShowAgents={() => router.push("/companion?panel=agen")}
         auth={(iconsOnly) => (
           <CompanionAuth session={session} iconsOnly={iconsOnly} />
         )}
@@ -115,6 +117,24 @@ export function WorkspaceFrame({
           ) : null}
         </div>
       </main>
+    </>
+  );
+
+  return (
+    <div
+      data-workspace
+      className={cn(
+        "relative flex h-full min-h-0 overflow-hidden bg-bg text-txt",
+        className,
+      )}
+    >
+      {progressModules ? (
+        <AccountProgressProvider modules={progressModules}>
+          {content}
+        </AccountProgressProvider>
+      ) : (
+        content
+      )}
     </div>
   );
 }

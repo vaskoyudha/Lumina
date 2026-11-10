@@ -4,10 +4,12 @@ jest.mock("@/lib/learning/actions", () => ({
   getAccountProgress: jest.fn(),
   submitQuiz: jest.fn(),
   submitSimulation: jest.fn(),
+  startSimulationIntrusion: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Runner } from "@/app/(chat)/simulasi/[id]/Runner";
+import { startSimulationIntrusion } from "@/lib/learning/actions";
 import {
   L1_KURIR_APK,
   PERMISSIONS,
@@ -59,6 +61,16 @@ function expectEmergencyLinks() {
 }
 
 describe("Runner misi Paket sebelum pulang", () => {
+  it("registers the intrusion timer when a challenge device becomes compromised", () => {
+    jest.mocked(startSimulationIntrusion).mockClear();
+    render(<Runner content={SIMULATION_FIXTURE} />);
+    reachFirstDecision("tantangan");
+    click(/pasang berkas agar paket/i);
+    expect(startSimulationIntrusion).toHaveBeenCalledWith({
+      attemptId: expect.any(String),
+      scenarioId: SIMULATION_FIXTURE.scenario.scenario.id,
+    });
+  });
   afterEach(() => {
     jest.useRealTimers();
     Object.defineProperty(document, "hidden", {

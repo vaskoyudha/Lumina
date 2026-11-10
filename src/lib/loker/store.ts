@@ -261,6 +261,30 @@ export async function finishScanRun(
   );
 }
 
+/** The cumulative corpus size, used by the scan status feed. */
+export async function countPostings(): Promise<number> {
+  const result = await authDatabase().query<{ total: string }>(
+    "select count(*)::text as total from loker_postings",
+  );
+  return Number(result.rows[0]?.total ?? 0);
+}
+
+/**
+ * When the last successful scan finished, or null when none ever did.
+ *
+ * The scan window is derived from this, so a running or failed run does not
+ * shrink the next window and silently skip postings.
+ */
+export async function lastSuccessfulScanFinishedAt(): Promise<string | null> {
+  const result = await authDatabase().query<{ finished_at: Date | null }>(
+    `select finished_at from loker_scan_runs
+      where status = 'ok' and finished_at is not null
+      order by id desc limit 1`,
+  );
+  const at = result.rows[0]?.finished_at;
+  return at ? at.toISOString() : null;
+}
+
 export async function latestScanRun(): Promise<ScanRunStatus | null> {
   const result = await authDatabase().query<{
     status: ScanRunStatus["status"];

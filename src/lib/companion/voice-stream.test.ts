@@ -61,4 +61,39 @@ describe("streamChatText", () => {
     );
     expect(await drain(streamChatText(upstream))).toBe("Selesai");
   });
+  it("streams CRLF events before the upstream connection closes", async () => {
+    const state: { controller?: ReadableStreamDefaultController<Uint8Array> } =
+      {};
+    const upstream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        state.controller = controller;
+      },
+    });
+    const reader = streamChatText(upstream).getReader();
+    const upstreamController = state.controller;
+    if (!upstreamController) throw new Error("Missing stream controller");
+    upstreamController.enqueue(
+      encoder.encode('data: {"choices":[{"delta":{"content":"Halo."}}]}\r\n\r'),
+    );
+    upstreamController.enqueue(encoder.encode("\n"));
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe("Halo.");
+    await reader.cancel();
+  });
+  it("closes at DONE and cancels an upstream that stays connected", async () => {
+    const cleanup = jest.fn(),
+      cancel = jest.fn();
+    const upstream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            'data: {"choices":[{"delta":{"content":"Selesai."}}]}\n\ndata: [DONE]\n\n',
+          ),
+        );
+      },
+      cancel,
+    });
+    expect(await drain(streamChatText(upstream, cleanup))).toBe("Selesai.");
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
 });

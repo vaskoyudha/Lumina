@@ -1,4 +1,5 @@
 import type { Explanation } from "@/lib/companion/explain";
+import type { ConversationIntent } from "@/lib/companion/intent";
 import { isGreeting } from "@/lib/companion/reply";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { extractLinks } from "@/lib/scoring/link";
@@ -12,7 +13,7 @@ import { extractLinks } from "@/lib/scoring/link";
  * in about a millisecond before this function was called.
  */
 
-export type Lane = "periksa" | "tanya" | "lanjutan" | "obrolan";
+export type Lane = "periksa" | "tanya" | "lanjutan" | "obrolan" | "belajar";
 
 export interface TurnPlan {
   lane: Lane;
@@ -34,8 +35,8 @@ export interface TurnPlan {
  */
 export const PASTE_LENGTH = 160;
 
-/** Shortest scam in the bench corpus (84). `turn.test.ts` pins it. */
-export const SHORTEST_SCAM = 84;
+/** Shortest scam in the bench corpus (24). `turn.test.ts` pins it. */
+export const SHORTEST_SCAM = 24;
 
 const MONEY =
   /(transfer|rekening|bayar|pembayaran|top\s?up|dana|ovo|gopay|shopeepay|pulsa|qris|nominal|saldo)/i;
@@ -55,14 +56,72 @@ const FOLLOW_UP =
  * is not enough to make something a concept question.
  */
 const CONCEPT_QUESTION: readonly RegExp[] = [
-  /^(apa|apakah)\s+(itu|sih|yang\s+dimaksud|arti|artinya|beda|bedanya|perbedaan)\b/i,
+  /^(apa|apakah)\s+(itu|sih|yang\s+dimaksud|arti|artinya|beda|bedanya|perbedaan|fungsi|kegunaan|tujuan|isi)\b/i,
   /^(jelaskan|maksudnya|artinya)\b/i,
   /^(bagaimana|gimana)\s+(cara\s+)?(mengenali|menghindari|menangani|melapor|memeriksa|kerja|bekerja|membedakan|bayar|membayar|pakai|memakai)\b/i,
-  /^(kenapa|mengapa|kok)\s+(bisa|bisakah|sih)\b/i,
+  /^(bagaimana|gimana)\b/i,
+  /^(apa|apakah)\s+(yang|saya|aku|kamu|bisa|boleh|perlu|harus)\b/i,
+  /^(bisa(?:kah)?|boleh(?:kah)?)\s+(?:(?:kamu|tolong)\s+)?(bantu|jelaskan|jelasin|tanya)\b/i,
+  /^(aku|saya)\s+(mau|ingin|boleh)\s+(tanya|bertanya)\b/i,
+  /^(kenapa|mengapa|kok)\b/i,
+  /^(berapa|kapan|di\s?mana)\b/i,
   /^(siapa|apa)\s+(kamu|ini|lumina)\b/i,
   /^(kamu|ini)\s+(siapa|apa|bisa)\b/i,
   /^(apa\s+saja|contoh|contohnya)\b/i,
 ];
+
+/** A request to explain content is different from a request to check safety. */
+export function isContentQuestion(text: string): boolean {
+  const t = normalized(text);
+  if (
+    /\b(cek|periksa|aman|berbahaya|penipuan|scam|phishing|virus|malware)\b/i.test(
+      t,
+    )
+  ) {
+    return false;
+  }
+  return [
+    /^(ini|itu)\s+(apa|isi(?:nya|\s+nya)?(?:\s+(?:kode|file|berkas|dokumen|gambar)(?:nya|\s+nya)?)?\s+apa|(?:kode|file|berkas|dokumen|gambar)(?:nya|\s+nya)?\s+apa)(?:\s+(?:ya|sih))?[?!.]*$/i,
+    /^(apa|gimana|bagaimana)\s+(isi|maksud|arti|fungsi)(?:nya)?\b/i,
+    /^(?:(?:tolong|coba|bisa(?:kah)?|boleh(?:kah)?)\s+)*(?:kamu\s+)?(jelaskan|jelasin|ringkas|rangkum|bacakan|baca)\b/i,
+    /^(?:apa|apa\s+isi|isi|maksud|arti)(?:nya)?\s+(?:dari\s+)?(?:gambar|foto|ss|screenshot|berkas|file|dokumen|lampiran|tautan|link)\b/i,
+    /^(?:gambar|foto|ss|screenshot|berkas|file|dokumen|lampiran|tautan|link)\s+(?:ini|itu)\s+(?:apa|isinya|maksudnya|berisi)\b/i,
+    /^(?:baca(?:kan)?|jelaskan|rangkum|ringkas|terjemahkan)\b.{0,50}\b(?:gambar|foto|berkas|file|dokumen|lampiran|tautan|link)\b/i,
+  ].some((pattern) => pattern.test(t));
+}
+
+/**
+ * A report *request*, not a question about reports.
+ *
+ * The old regex was `buat|bikin|susun … laporan`, which offered the tool for
+ * "bagaimana cara buat laporan?" and "jangan buat laporan dulu". The guard is
+ * intentionally narrow: an explicit request verb, a report noun, and no
+ * negation, learning, or how-to framing.
+ */
+export function wantsReportDraft(text: string): boolean {
+  const t = normalized(text);
+  if (
+    /\b(jangan|bukan|nggak|gak|ga|tidak|belum)\b.{0,35}\b(laporan|template)\b/i.test(
+      t,
+    )
+  ) {
+    return false;
+  }
+  if (/\b(belajar|cara|tutorial|panduan|contoh)\b/i.test(t)) return false;
+  if (isQuestionAbout(t)) return false;
+  return /\b(?:buat(?:kan)?|bikin(?:kan)?|susun(?:kan)?|membuat|menyusun)\b.{0,50}\b(laporan|template)\b/i.test(
+    t,
+  );
+}
+
+/** Explicit safety-check wording, used to separate a check from a content ask. */
+export function wantsSafetyCheck(text: string): boolean {
+  const t = normalized(text);
+  return (
+    /\b(?:cek|periksa|analisis|analisa)\b/i.test(t) ||
+    /\b(?:aman|berbahaya|penipuan|scam|phishing|virus|malware)\b/i.test(t)
+  );
+}
 
 /** Things only a received message carries. Their presence blocks the guard. */
 const MESSAGE_ARTIFACT =
@@ -72,11 +131,42 @@ function normalized(text: string): string {
   return text.trim().toLowerCase();
 }
 
+/** Follow-up questions are not new evidence for the Conversation Agent. */
+export function isFollowUpQuestion(text: string): boolean {
+  const t = normalized(text);
+  return (
+    FOLLOW_UP.test(t) &&
+    !MESSAGE_ARTIFACT.test(t) &&
+    !/\b(cek|periksa)\b/i.test(t)
+  );
+}
+
 /** Question-shaped: ends in `?`, or opens like a concept question. */
 export function isQuestionShape(text: string): boolean {
   const t = normalized(text);
   if (t.length === 0) return false;
   return t.endsWith("?") || CONCEPT_QUESTION.some((pattern) => pattern.test(t));
+}
+
+/**
+ * A request to look something up on the web.
+ *
+ * Lumina has no browsing tool, so this is routed to the chat lane and answered
+ * honestly instead of being scored as a received message. The guard rejects
+ * anything that carries a message artifact, because a pasted scam can mention
+ * "berita terbaru" too.
+ */
+export function isWebLookupQuestion(text: string): boolean {
+  const t = normalized(text);
+  if (t.length === 0 || MESSAGE_ARTIFACT.test(t)) return false;
+  return (
+    /\b(?:cari|carikan|search|telusuri|googling|browsing)\b.{0,40}\b(?:di|ke|lewat|pakai|pada)?\s*(?:web|internet|google|berita|sumber|online)\b/i.test(
+      t,
+    ) ||
+    /\b(?:berita|informasi|kabar)\b.{0,30}\b(?:terbaru|terkini|hari ini)\b/i.test(
+      t,
+    )
+  );
 }
 
 /**
@@ -98,7 +188,11 @@ export function isQuestionAbout(
   // "kenapa berbahaya?" belongs to the lane that already has the explanation.
   if (options.hasPriorVerdict && FOLLOW_UP.test(t)) return false;
 
-  if (!CONCEPT_QUESTION.some((pattern) => pattern.test(t))) return false;
+  if (
+    !CONCEPT_QUESTION.some((pattern) => pattern.test(t)) &&
+    !isContentQuestion(t)
+  )
+    return false;
 
   const sentences = t.split(/[.!?]+/).filter((part) => part.trim().length > 0);
   return sentences.length <= 2;
@@ -123,6 +217,7 @@ export function planTurn(input: {
    * inside the question (`"apa itu dana?"`) must not re-route it to a check.
    */
   asked?: boolean;
+  intent?: ConversationIntent | null;
   /**
    * How many files were attached. An attachment-only turn has no question text
    * to send, and its filename is what the engine reads, so it is a check.
@@ -130,6 +225,14 @@ export function planTurn(input: {
   attachments?: number;
 }): TurnPlan {
   const text = input.text.trim();
+
+  if (input.intent) {
+    return {
+      lane: input.intent === "learning" ? "tanya" : "obrolan",
+      hasFindings: false,
+      why: "Pengguna bercerita atau meminta bantuan, bukan menyerahkan pesan untuk diperiksa.",
+    };
+  }
 
   if (input.asked) {
     return {
@@ -166,7 +269,7 @@ export function planTurn(input: {
     };
   }
 
-  if (input.lastResult && input.lastExplanation && FOLLOW_UP.test(text)) {
+  if (input.lastResult && FOLLOW_UP.test(text)) {
     return {
       lane: "lanjutan",
       hasFindings,

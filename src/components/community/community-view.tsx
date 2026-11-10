@@ -696,6 +696,7 @@ export function CommunityThread({
             {replies.map((reply) => (
               <article
                 key={reply.id}
+                id={`balasan-${reply.id}`}
                 aria-label={`Balasan dari ${reply.author}`}
                 className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-6"
               >

@@ -77,6 +77,17 @@ loker tables arrive through `npm run db:migrate` (`002_loker.sql`), like every
 other migration. A scan is triggered from the signed-in companion and runs in
 the background; no extra service or volume is required.
 
+The app also prewarms the corpus: `src/instrumentation.ts` starts a scheduler
+that scans shortly after boot and then every `LOKER_PREWARM_INTERVAL_MS`
+(default six hours; a failed run retries after thirty minutes). This is what
+lets the card open with rows instead of a cold "belum dipindai" state — the
+first visitor after a fresh deploy would otherwise wait for the whole crawl.
+The advisory lock makes the scheduler and a user-triggered scan mutually
+exclusive, so a user tap returns 409 rather than crawling twice. Set
+`LOKER_PREWARM_INTERVAL_MS=0` on any environment that must not crawl on its own
+(a shared CI database, for example); the manual "Pindai ulang" button keeps
+working.
+
 ## Backups and restore drill
 
 Take a daily logical backup, retain at least seven recent copies, and copy one off VPS. A volume or live directory copy is not a logical backup. Protect backup files like credentials; they contain account identities and password hashes.

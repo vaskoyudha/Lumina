@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { BelajarLencana } from "@/components/belajar/belajar-lencana";
 import { useStoredProgress } from "@/components/belajar/belajar-progress";
+import { LearningPath } from "@/components/belajar/learning-path";
 import {
   type KatalogItem,
   LevelFilter,
@@ -35,10 +36,12 @@ export function BelajarDashboard({
   items,
   featured,
   total,
+  playable = [],
 }: {
   items: KatalogItem[];
   featured: FeaturedModule | null;
   total: number;
+  playable?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState<number | null>(null);
@@ -112,7 +115,7 @@ export function BelajarDashboard({
           src="/images/belajar/hero-akademi.jpg"
           alt=""
           fill
-          priority
+          loading="eager"
           sizes="(min-width: 1024px) 62vw, 100vw"
           className="object-cover object-[68%_center]"
         />
@@ -171,6 +174,7 @@ export function BelajarDashboard({
         </div>
       </section>
 
+      <LearningPath playable={playable} />
       <section aria-labelledby="semua-modul" className="space-y-3.5">
         <h2
           id="semua-modul"

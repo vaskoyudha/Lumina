@@ -1,7 +1,11 @@
 import type { Explanation } from "@/lib/companion/explain";
 import type { VoiceDigest } from "@/lib/contracts/agent-run";
-import type { AnswerLane, AnswerRequest } from "@/lib/contracts/answer";
-import type { ToolCall } from "@/lib/contracts/tool";
+import type {
+  AnswerAttachment,
+  AnswerLane,
+  AnswerRequest,
+} from "@/lib/contracts/answer";
+import { type ToolCall, ToolCallSchema } from "@/lib/contracts/tool";
 import { MODUS } from "@/lib/modus";
 
 /**
@@ -49,18 +53,36 @@ export function buildAnswerRequest(
     history: { role: "user" | "companion"; text: string }[];
     digest: VoiceDigest | null;
     explanation: Explanation | null;
+    contentQuestion?: boolean;
+    attachmentContext?: AnswerAttachment[];
+    hasVerdict?: boolean;
+    /** Set only when the reader tapped the link confirmation card. */
+    linkApproved?: string;
+    /** Signed-in display name; the only profile field the model sees. */
+    userName?: string;
   },
 ): AnswerRequest {
+  const contentQuestion = lane !== "belajar" && state.contentQuestion === true;
   return {
     lane,
     question,
-    history: lane === "obrolan" ? state.history.slice(-10) : [],
+    history: lane === "belajar" ? [] : state.history.slice(-10),
     digest: lane === "lanjutan" ? state.digest : null,
-    modules: lane === "tanya" ? MODULE_FACTS : [],
+    modules: lane === "belajar" ? [] : MODULE_FACTS,
     tactics:
       lane === "tanya" || lane === "lanjutan"
         ? tacticFacts(state.explanation)
         : [],
+    contentQuestion,
+    attachmentContext:
+      contentQuestion && state.attachmentContext
+        ? state.attachmentContext.slice(0, 3)
+        : [],
+    hasVerdict: state.hasVerdict === true,
+    linkApproved: lane === "tanya" ? state.linkApproved : undefined,
+    userName: state.userName?.trim() || undefined,
+    observations: [],
+    final: false,
   };
 }
 
@@ -94,10 +116,15 @@ export async function requestAnswer(
 
     const body = (await response.json()) as {
       text?: string;
-      toolCalls?: ToolCall[];
+      toolCalls?: unknown;
     };
     const text = body.text?.trim() ?? "";
-    const toolCalls = body.toolCalls ?? [];
+    const toolCalls = Array.isArray(body.toolCalls)
+      ? body.toolCalls.flatMap((raw) => {
+          const parsed = ToolCallSchema.safeParse(raw);
+          return parsed.success ? [parsed.data] : [];
+        })
+      : [];
     if (text.length === 0 && toolCalls.length === 0) {
       return { outcome: "failed", text: "", toolCalls: [] };
     }

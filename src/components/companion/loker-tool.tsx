@@ -25,8 +25,9 @@ import type {
   LokerSearchArgs,
   LokerView,
   SavedLoker,
-  ScanRunStatus,
+  ScanStatus,
 } from "@/lib/loker/types";
+import { ringkasRekomendasi } from "@/lib/loker/verdict";
 import { cn } from "@/lib/utils";
 
 type ScanState =
@@ -98,10 +99,33 @@ export function LokerTool({
   const router = useRouter();
   const [args, setArgs] = React.useState<LokerSearchArgs>(initialArgs);
   const [scan, setScan] = React.useState<ScanState>("idle");
-  const [lastRun, setLastRun] = React.useState<ScanRunStatus | null>(null);
+  const [lastRun, setLastRun] = React.useState<ScanStatus | null>(null);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
 
-  const latestRun = React.useRef<ScanRunStatus | null>(null);
+  const latestRun = React.useRef<ScanStatus | null>(null);
+
+  /** The corpus size the current RSC snapshot was built from. */
+  const baselinePostings = React.useRef(corpus.total);
+  const lastRefreshAt = React.useRef(0);
+
+  /**
+   * Pull a fresh snapshot while the scan is still writing rows.
+   *
+   * The payload is capped near 500 KB, so this is throttled: progress shows up
+   * within about one interval, not on every inserted row, and a settled run
+   * always refreshes unconditionally.
+   */
+  const refreshIfGrown = React.useCallback(
+    (status: ScanStatus) => {
+      if (status.postings <= baselinePostings.current) return;
+      const now = Date.now();
+      if (now - lastRefreshAt.current < 8_000) return;
+      baselinePostings.current = status.postings;
+      lastRefreshAt.current = now;
+      router.refresh();
+    },
+    [router],
+  );
 
   const waitForScan = React.useCallback(async () => {
     latestRun.current = null;
@@ -109,11 +133,13 @@ export function LokerTool({
       (status) => {
         latestRun.current = status;
         setLastRun(status);
+        refreshIfGrown(status);
       },
       { intervalMs: 3000 },
     );
     if (result?.status === "ok") {
       setScan("done");
+      baselinePostings.current = result.postings;
       router.refresh();
       return;
     }
@@ -124,9 +150,9 @@ export function LokerTool({
     // `null` means a timeout, a network error, or no run yet. A timeout while
     // the run is still `running` is not a failure: keep polling on the next
     // mount instead of claiming the scan failed and hiding its rows.
-    const last = latestRun.current as ScanRunStatus | null;
+    const last = latestRun.current as ScanStatus | null;
     setScan(last?.status === "running" ? "running" : "failed");
-  }, [router]);
+  }, [router, refreshIfGrown]);
 
   React.useEffect(() => {
     if (!canRefresh) return;
@@ -135,10 +161,11 @@ export function LokerTool({
       .then((response) =>
         response.status === 204
           ? null
-          : (response.json() as Promise<ScanRunStatus>),
+          : (response.json() as Promise<ScanStatus>),
       )
       .then((status) => {
         if (cancelled) return;
+        if (status) refreshIfGrown(status);
         setLastRun(status);
         if (status?.status === "running") {
           setScan("running");
@@ -149,12 +176,13 @@ export function LokerTool({
     return () => {
       cancelled = true;
     };
-  }, [canRefresh, waitForScan]);
+  }, [canRefresh, waitForScan, refreshIfGrown]);
 
   const results = React.useMemo(
     () => filterPostings(corpus.postings, args),
     [corpus.postings, args],
   );
+  const ringkasan = React.useMemo(() => ringkasRekomendasi(results), [results]);
   const savedIds = React.useMemo(
     () => new Set(saved.map((item) => item.id)),
     [saved],
@@ -219,6 +247,13 @@ export function LokerTool({
                 ? ` · dipindai ${lastScan.slice(0, 10)}`
                 : " · belum dipindai"}
             </p>
+            {results.length > 0 ? (
+              <p className="mt-1.5 inline-flex w-fit items-center rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-ink">
+                {ringkasan.waspada + ringkasan.hindari === 0
+                  ? `${ringkasan.aman} aman dilamar`
+                  : `${ringkasan.aman} aman · ${ringkasan.waspada + ringkasan.hindari} perlu diperiksa`}
+              </p>
+            ) : null}
           </div>
         </div>
 

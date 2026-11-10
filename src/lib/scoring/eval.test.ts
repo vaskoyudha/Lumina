@@ -12,12 +12,12 @@ describe("scoring eval — the numbers the pitch may quote", () => {
   const report = runEval();
 
   it("catches every scam in the corpus", () => {
-    expect(report.scamTotal).toBe(29);
+    expect(report.scamTotal).toBe(60);
     expect(report.caught).toBe(report.scamTotal);
   });
 
   it("never calls a legitimate message risky", () => {
-    expect(report.legitTotal).toBe(28);
+    expect(report.legitTotal).toBe(60);
     expect(report.legitNotRisky).toBe(report.legitTotal);
     expect(report.falsePositives).toBe(0);
   });
@@ -27,7 +27,9 @@ describe("scoring eval — the numbers the pitch may quote", () => {
     expect(report.byModus.reduce((sum, group) => sum + group.caught, 0)).toBe(
       report.classification,
     );
-    expect(report.classification).toBeGreaterThanOrEqual(15);
+    expect(
+      report.classification / SCAM_CASES.filter((c) => c.wantModus).length,
+    ).toBeGreaterThanOrEqual(0.85);
     for (const group of report.byModus) {
       expect(group.total).toBeGreaterThan(0);
       expect(group.caught).toBeGreaterThanOrEqual(0);
@@ -36,10 +38,31 @@ describe("scoring eval — the numbers the pitch may quote", () => {
   });
 
   it("stays inside the instant-verdict CPU budget per case", () => {
+    console.log("EVAL", JSON.stringify(report));
     // CPU time, not wall clock: this suite runs beside 60+ others, so wall
     // clock here measures the machine's load. The engine is synchronous, so
     // its CPU cost is what the reader actually pays.
     expect(report.slowestCpuMs).toBeLessThan(50);
+  });
+  it("covers each family and every requested channel without network", () => {
+    expect(report.byModus).toHaveLength(12);
+    for (const group of report.byModus)
+      expect(group.total).toBeGreaterThanOrEqual(4);
+    expect(report.byStratum.reduce((n, g) => n + g.total, 0)).toBe(120);
+    expect(report.missedCases).toEqual([]);
+    expect(report.falsePositiveCases).toEqual([]);
+    const fetchSpy = jest.fn(() => {
+      throw new Error("scoring must stay offline");
+    });
+    const original = global.fetch;
+    global.fetch = fetchSpy as unknown as typeof fetch;
+    try {
+      for (const c of [...SCAM_CASES, ...LEGIT_CASES])
+        scoreText({ text: c.text });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = original;
+    }
   });
 
   it("never lets two agents quote the same evidence", () => {

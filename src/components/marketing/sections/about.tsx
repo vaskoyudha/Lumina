@@ -16,6 +16,8 @@ import { aboutCopy, aboutStats } from "@/lib/site";
  * second list to maintain. Alt text names the agent and the surface it reads.
  */
 const CREW_ROLE: Record<DetectorAgent, string> = {
+  email: "agen pemeriksa header email",
+  injection: "agen pemeriksa instruksi tersisip",
   message: "agen pemeriksa pesan",
   link: "agen pemeriksa tautan",
   identity: "agen pemeriksa identitas pengirim",
@@ -189,7 +191,7 @@ export function About() {
               {aboutCopy.title.join(" ")}
             </h2>
 
-            <p className="mx-auto mt-4 max-w-md text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
+            <p className="mx-auto mt-4 max-w-md text-ls-ink-2 text-sm leading-relaxed">
               {aboutCopy.body}
             </p>
 

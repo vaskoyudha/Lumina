@@ -44,9 +44,9 @@ import { cn } from "@/lib/utils";
  *      lock glyph for the tab-only history promise (§11.6) that the expanded
  *      footer used to spell out.
  *   c. The `⌘K` chip is wired: it focuses the search field, it is not a decal.
- *   d. The "Agen" option in `NavRail` opens the detector overview in the center
- *      column, read straight from `AGENT_SEQUENCE` + `STAGE_LABEL` so that view
- *      and the evidence panel can never disagree about who checks what.
+ *   d. The "Agen" destination in `NavRail` is a real `/agen` route; the
+ *      overview and the evidence panel read `AGENT_SEQUENCE` + `STAGE_LABEL`, so
+ *      they can never disagree about who checks what.
  */
 
 export interface SessionSummary {
@@ -170,9 +170,6 @@ export function SessionSidebar({
   onClose,
   collapsed = false,
   onToggleCollapse,
-  agentsActive = false,
-  onShowAgents,
-  onShowChat,
   auth,
 }: {
   sessions: readonly SessionSummary[];
@@ -184,11 +181,6 @@ export function SessionSidebar({
   /** Desktop icon rail. Ignored below `md`, where the drawer is always full. */
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  /** True while the center column shows the detector overview. */
-  agentsActive?: boolean;
-  onShowAgents?: () => void;
-  /** Companion row: return the center column to the conversation. */
-  onShowChat?: () => void;
   /** Account slot; the flag is true when the sidebar is the 60px rail. */
   auth?: (iconsOnly: boolean) => React.ReactNode;
 }) {
@@ -395,11 +387,7 @@ export function SessionSidebar({
 
             <div>
               <SectionLabel>Ruang kerja</SectionLabel>
-              <NavRail
-                agentsActive={agentsActive}
-                onShowAgents={onShowAgents}
-                onShowChat={onShowChat}
-              />
+              <NavRail />
             </div>
 
             <Collapsible
@@ -426,13 +414,14 @@ export function SessionSidebar({
             alt=""
             fill
             sizes="204px"
+            loading="eager"
             className="pointer-events-none object-cover"
           />
           <div className="relative z-10 max-w-[115px] pt-7">
             <p className="font-bold text-[12px] text-txt leading-[1.25]">
               Saling jaga, bersama.
             </p>
-            <p className="mt-1 mb-2.5 text-[9.5px] text-dim leading-[1.35]">
+            <p className="mt-1 mb-2.5 text-[11.5px] text-dim leading-[1.35]">
               Bagikan pola baru dan belajar dari pengalaman anggota.
             </p>
             <Button
@@ -491,12 +480,7 @@ export function SessionSidebar({
 
       <div className="my-1 w-8 border-t border-txt/[0.06]" />
 
-      <NavRail
-        iconsOnly
-        agentsActive={agentsActive}
-        onShowAgents={onShowAgents}
-        onShowChat={onShowChat}
-      />
+      <NavRail iconsOnly />
 
       <div className="my-1 w-8 border-t border-txt/[0.06]" />
 

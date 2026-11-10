@@ -2,6 +2,28 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
+import * as orchestratorClient from "@/lib/orchestrator/client";
+import * as scoring from "@/lib/scoring/score";
+
+jest.mock("@/lib/orchestrator/client", () => {
+  const actual = jest.requireActual<typeof orchestratorClient>(
+    "@/lib/orchestrator/client",
+  );
+  return { ...actual, streamOrchestrator: jest.fn(actual.streamOrchestrator) };
+});
+
+jest.mock("@/lib/scoring/score", () => {
+  const actual = jest.requireActual<typeof scoring>("@/lib/scoring/score");
+  return { ...actual, scoreWithTrace: jest.fn(actual.scoreWithTrace) };
+});
+
+jest.mock("@/lib/companion/history", () => ({
+  listConversationHistory: jest.fn(async () => ({
+    ok: true,
+    conversations: [],
+  })),
+  saveConversationHistory: jest.fn(async () => ({ ok: true })),
+}));
 
 jest.mock("@/lib/companion/history", () => ({
   listConversationHistory: jest.fn(async () => ({
@@ -15,9 +37,10 @@ jest.mock("@/lib/companion/history", () => ({
  * This suite renders the whole conversation client and runs the full
  * deterministic pipeline. The full run executes it beside ~60 other suites on
  * 12 cores, where Jest's 5 s default measures the scheduler rather than the
- * component; 15 s still fails a genuine hang.
+ * component; 30 s still fails a genuine hang, while the earlier 15 s budget
+ * was still too tight for the panel-link case on a loaded host.
  */
-jest.setTimeout(15_000);
+jest.setTimeout(30_000);
 
 /**
  * These render the real conversation component. The Evidence Agent is only
@@ -38,10 +61,16 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+let mockPathname = "/companion";
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn() }),
-  usePathname: () => "/companion",
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => mockPathname,
 }));
+
+beforeEach(() => {
+  mockPathname = "/companion";
+});
 
 /**
  * Paste, not type. Every test here asserts what the engine and the panel do
@@ -64,6 +93,191 @@ async function sendApk(user: ReturnType<typeof userEvent.setup>) {
   await enterMessage(user, APK_MESSAGE);
   await user.click(screen.getByRole("button", { name: /^kirim$/i }));
 }
+
+describe("CompanionChat · real user intent regressions", () => {
+  const originalFetch = global.fetch;
+  let fetchMock: jest.Mock;
+  beforeEach(() => {
+    jest.mocked(scoring.scoreWithTrace).mockClear();
+    fetchMock = jest.fn(async () => ({
+      ok: false,
+      status: 503,
+      body: null,
+      json: async () => ({ error: "not-configured" }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+  afterEach(() => {
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  async function sendText(
+    user: ReturnType<typeof userEvent.setup>,
+    text: string,
+  ) {
+    await enterMessage(user, text);
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+    await waitFor(() =>
+      expect(screen.queryByText("Menyusun jawaban")).not.toBeInTheDocument(),
+    );
+  }
+
+  it("answers the attached-code question without running detectors or sending the file", async () => {
+    const scoreSpy = jest.mocked(scoring.scoreWithTrace);
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    const fileInput =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!fileInput) throw new Error("file input missing");
+    await user.upload(
+      fileInput,
+      new File(["private file contents"], "Enkripsi_Dekripsi_Materi.pdf", {
+        type: "application/pdf",
+      }),
+    );
+    await sendText(user, "itu isi kode nya apa");
+    expect(
+      (
+        await screen.findAllByText(
+          /Teks PDF belum bisa dibaca di perangkat ini/i,
+        )
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(scoreSpy).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    const log = screen.getByRole("log", { name: /percakapan/i });
+    expect(within(log).queryByTestId("agent-message")).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: /periksa sebagai pesan/i }),
+    );
+    await waitFor(() => expect(scoreSpy).toHaveBeenCalled());
+    expect(scoreSpy.mock.calls[0]?.[0].text).toContain(
+      "Enkripsi_Dekripsi_Materi.pdf",
+    );
+  });
+
+  it("keeps an incident and a course request in context, with learning links and no score", async () => {
+    const scoreSpy = jest.mocked(scoring.scoreWithTrace);
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    const incident =
+      "pas aku doowload game bajakan akun tokopedia aku ke hack dan aku kehilangan duit karena gopay aku connect ke tokped";
+    await sendText(user, incident);
+    expect(
+      await screen.findByText(/dugaan peretasan atau kehilangan uang/i),
+    ).toBeInTheDocument();
+    await sendText(
+      user,
+      "kasih solusi yg jelas dong, ada course yg berguna ga",
+    );
+    expect(
+      await screen.findByRole("link", { name: "File APK via WhatsApp" }),
+    ).toHaveAttribute("href", "/belajar/10");
+    expect(
+      screen.getByRole("link", { name: /Phishing tautan/i }),
+    ).toHaveAttribute("href", "/belajar/7");
+    expect(scoreSpy).not.toHaveBeenCalled();
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    const bodies = calls
+      .filter(([url]) => url === "/api/companion/answer")
+      .map(([, init]) => JSON.parse(String(init.body)));
+    expect(bodies[0].lane).toBe("obrolan");
+    expect(bodies[1].lane).toBe("tanya");
+    expect(bodies[1].history).toContainEqual({ role: "user", text: incident });
+    expect(
+      screen.queryByText(/tidak ada pola penipuan yang jelas/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
+  });
+
+  it("routes an image check through the agent orchestrator", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockImplementationOnce(async (_request, options) => {
+      const event = {
+        type: "plan" as const,
+        runId: "run-image",
+        seq: 1,
+        at: 0,
+        rationale: "Memeriksa lampiran.",
+        agents: [
+          {
+            agent: "message" as const,
+            task: "Baca pesan pada gambar",
+            skills: [],
+            tools: [],
+          },
+        ],
+        planner: "model" as const,
+        ms: 1,
+      };
+      options.onEvent?.(event);
+      return {
+        outcome: "model" as const,
+        text: "Jawaban agen dari gambar.",
+        events: [event],
+        trace: null,
+        score: null,
+      };
+    });
+    fetchMock.mockImplementation(async (input) => {
+      if (String(input).includes("/api/companion/vision")) {
+        return {
+          ok: true,
+          status: 200,
+          body: null,
+          json: async () => ({
+            ok: true,
+            text: "Lowongan kerja Admin Toko, gaji Rp4.500.000. Daftar di https://lowongan-palsu.example/daftar",
+          }),
+        };
+      }
+      return {
+        ok: false,
+        status: 503,
+        body: null,
+        json: async () => ({ error: "not-configured" }),
+      };
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+    const fileInput =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!fileInput) throw new Error("file input missing");
+    await user.upload(
+      fileInput,
+      new File(["image-bytes"], "lowongan.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    await waitFor(() => expect(orchestrate).toHaveBeenCalledTimes(1));
+    const request = orchestrate.mock.calls[0]?.[0];
+    expect(request?.lane).toBe("periksa");
+    expect(request?.question).toBe("Periksa isi gambar ini.");
+    expect(request?.message).toContain("Lowongan kerja Admin Toko");
+    expect(request?.message).toContain("[tautan tidak dipindai]");
+    expect(request?.message).not.toContain("lowongan-palsu.example");
+    expect(
+      await screen.findByText("Jawaban agen dari gambar."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Proses agen")).toBeInTheDocument();
+    expect(screen.queryByText("Orkestrator")).not.toBeInTheDocument();
+  });
+
+  it("excludes a checked message from later conversational history in every lane", async () => {
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    await sendApk(user);
+    await screen.findAllByText("File APK via WhatsApp");
+    await sendText(user, "ada course yg berguna ga");
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    const body = calls.find(([url]) => url === "/api/companion/answer")?.[1]
+      .body;
+    expect(String(body)).not.toContain(APK_MESSAGE);
+    expect(String(body)).not.toContain("Undangan-Pernikahan.apk");
+  });
+});
 
 describe("CompanionChat · evidence panel", () => {
   it("shows the extracted artifact without faking a detector", async () => {
@@ -343,13 +557,15 @@ describe("CompanionChat · verdict before voice", () => {
     );
 
     const user = userEvent.setup();
-    render(<CompanionChat />);
+    const { rerender } = render(<CompanionChat />);
 
     await sendApk(user);
     // The verdict is already on screen; the voice model is still pending.
     await screen.findAllByText("File APK via WhatsApp");
 
-    await user.click(screen.getByRole("button", { name: /^agen/i }));
+    // Following the /agen link swaps the address; the transcript unmounts.
+    mockPathname = "/agen";
+    rerender(<CompanionChat />);
     expect(
       screen.getByRole("heading", { name: "Agen pemeriksa" }),
     ).toBeInTheDocument();
@@ -371,11 +587,11 @@ describe("CompanionChat · verdict before voice", () => {
 });
 
 describe("CompanionChat · privacy copy matches the wire", () => {
-  it("says the full checked message stays on the device", () => {
+  it("discloses that agent processing can read the text the user sends", () => {
     render(<CompanionChat />);
 
     expect(
-      screen.getByText(/isi pesan lengkap tidak dikirim/i),
+      screen.getByText(/teks yang kamu kirim.*dapat diproses/i),
     ).toBeInTheDocument();
   });
 });
@@ -514,23 +730,28 @@ describe("CompanionChat · job search", () => {
   };
 
   it("renders the card and the summary when the model calls job_search", async () => {
+    let answerCalls = 0;
     const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/api/companion/answer")) {
+        answerCalls += 1;
         return {
           ok: true,
           status: 200,
-          json: async () => ({
-            ok: true,
-            text: "",
-            toolCalls: [
-              {
-                id: "call-1",
-                name: "job_search",
-                arguments: { query: "React" },
-              },
-            ],
-          }),
+          json: async () =>
+            answerCalls === 1
+              ? {
+                  ok: true,
+                  text: "",
+                  toolCalls: [
+                    {
+                      id: "call-1",
+                      name: "job_search",
+                      arguments: { query: "React" },
+                    },
+                  ],
+                }
+              : { ok: true, text: "Berikut lowongan React.", toolCalls: [] },
         } as unknown as Response;
       }
       if (url.includes("/api/companion/tools/summary")) {
@@ -558,10 +779,36 @@ describe("CompanionChat · job search", () => {
       await screen.findByText("Ada satu lowongan React."),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    const [, firstAnswer] = fetchMock.mock.calls[0] as unknown as [
+      unknown,
+      { body?: string },
+    ];
+    const firstBody = JSON.parse(String(firstAnswer.body)) as {
+      observations: unknown[];
+      final: boolean;
+    };
+    expect(firstBody.observations).toEqual([]);
+    expect(firstBody.final).toBe(false);
+
+    const [, secondAnswer] = fetchMock.mock.calls[1] as unknown as [
+      unknown,
+      { body?: string },
+    ];
+    const secondBody = JSON.parse(String(secondAnswer.body)) as {
+      observations: {
+        name: string;
+        result: { postings: { title: string }[] };
+      }[];
+    };
+    expect(secondBody.observations[0]?.name).toBe("job_search");
+    expect(secondBody.observations[0]?.result.postings[0]?.title).toBe(
+      "Frontend Engineer",
+    );
 
     // Privacy: the phase-2 summary carries postings, never the user's query.
-    const [, summaryInit] = fetchMock.mock.calls[1] as unknown as [
+    const [, summaryInit] = fetchMock.mock.calls[2] as unknown as [
       unknown,
       { body?: string },
     ];
