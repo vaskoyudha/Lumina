@@ -181,4 +181,91 @@ describe("ProcessTrace", () => {
     expect(screen.getByText("Lumina")).toBeInTheDocument();
     expect(screen.getByText(/membaca pesan/i)).toBeInTheDocument();
   });
+
+  it("shows the consensus and the final score", () => {
+    const score = {
+      score: 78,
+      risk: "tinggi" as const,
+      signals: [
+        {
+          label: "Kelebihan transfer",
+          weight: 0.5,
+          evidence: "transfer berlebih",
+          agent: "marketplace" as const,
+          source: "consensus" as const,
+        },
+      ],
+      modus: "jual-beli-palsu",
+      advice: ["Jangan mengembalikan dana sebelum dana masuk."],
+      relatedModule: 1,
+      hardOverride: false,
+      source: "consensus" as const,
+      baselineScore: 0,
+    };
+
+    render(
+      <ProcessTrace
+        events={[
+          event({
+            type: "run_start",
+            runId: "run-3",
+            seq: 1,
+            at: 1,
+            question: "apakah ini penipuan?",
+          }),
+          event({
+            type: "commander_say",
+            runId: "run-3",
+            seq: 2,
+            at: 2,
+            text: "Aku melihat pola kelebihan bayar.",
+            focus: "overpayment",
+            source: "model",
+            ms: 5,
+          }),
+          event({
+            type: "consensus",
+            runId: "run-3",
+            seq: 3,
+            at: 3,
+            groups: [
+              {
+                pattern: "overpayment-refund",
+                agents: ["marketplace", "qris"],
+                points: [
+                  {
+                    agent: "marketplace",
+                    signal: "Kelebihan transfer",
+                    point: "Transfer berlebih.",
+                    pattern: "overpayment-refund",
+                    quote: "transfer berlebih",
+                  },
+                  {
+                    agent: "qris",
+                    signal: "Refund QRIS",
+                    point: "Minta refund.",
+                    pattern: "overpayment-refund",
+                    quote: "refund",
+                  },
+                ],
+              },
+            ],
+          }),
+          event({
+            type: "score_decision",
+            runId: "run-3",
+            seq: 4,
+            at: 4,
+            result: score,
+            baseline: { ...score, score: 0, risk: "bersih", signals: [] },
+            rationale: "Dua agen sepakat.",
+            source: "model",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/2 agen sepakat/)).toBeInTheDocument();
+    expect(screen.getByText(/Skor akhir 78\/100/)).toBeInTheDocument();
+  });
 });

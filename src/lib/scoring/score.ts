@@ -4,7 +4,12 @@ import {
   type AgentTrace,
   STAGE_LABEL,
 } from "@/lib/contracts/agent-run";
-import { riskFor, type ScoreResult, type Signal } from "@/lib/contracts/score";
+import {
+  type AgentId,
+  riskFor,
+  type ScoreResult,
+  type Signal,
+} from "@/lib/contracts/score";
 import { MODUS_BY_ID, MODUS_BY_NO, UNRECOGNIZED_ID } from "@/lib/modus";
 import { conversationSignals } from "@/lib/scoring/conversation";
 import type { DetectorId } from "@/lib/scoring/detector-ids";
@@ -28,8 +33,10 @@ import { validateSignals } from "@/lib/scoring/validate";
 /**
  * Scoring Orchestrator — the ONLY place a score is produced (§11.1).
  *
- * The LLM is the voice, not the judge (plan §3). Nothing in `companion/`
- * may compute or adjust `score`, `risk`, or `signals`.
+ * The LLM is the voice, not the judge — except after two distinct agents ground
+ * the same pattern. Then `authorScore()` may adopt Lumina's number from that
+ * consensus (docs/superpowers/specs/2026-11-12-consensus-score-design.md).
+ * Nothing in `companion/` may compute or adjust `score`, `risk`, or `signals`.
  *
  * Structure: one ordered detector list drives both public functions, so the
  * verdict and the trace cannot drift. `scoreWithTrace` measures; `finalize`
@@ -359,11 +366,82 @@ function finalize(
   };
 }
 
+export interface ScoreEvidence {
+  pattern: string;
+  agents: AgentId[];
+  points: {
+    agent: AgentId;
+    signal: string;
+    point: string;
+    quote?: string;
+    pattern: string;
+  }[];
+}
+
+/** Patterns the consensus layer knows how to turn into a module. */
+const PATTERN_MODUS: Record<string, string> = {
+  "overpayment-refund": "jual-beli-palsu",
+};
+
+/**
+ * Adopt Lumina's score from a grounded consensus group. This is the only path
+ * that accepts a model-authored number; the OTP/PIN/password floor still wins.
+ */
+export function authorScore(
+  baseline: ScoreResult,
+  decision: { score: number; rationale: string; pointSignals: string[] },
+  group: ScoreEvidence,
+): ScoreResult {
+  const seen = new Set<string>();
+  const consensusSignals: Signal[] = [];
+  for (const point of group.points) {
+    const key = point.signal.toLowerCase().replace(/\s+/g, " ").trim();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    consensusSignals.push({
+      label: point.signal,
+      weight: 0.5,
+      evidence: point.quote ?? point.point,
+      agent: point.agent,
+      source: "consensus",
+    });
+  }
+
+  const engineSignals = baseline.signals.filter((signal) => signal.weight > 0);
+  const signals = consensusSignals.length
+    ? dedupe([...engineSignals, ...consensusSignals]).sort(
+        (a, b) => b.weight - a.weight,
+      )
+    : baseline.signals;
+
+  const score = baseline.hardOverride
+    ? Math.max(decision.score, 70)
+    : decision.score;
+  const modus = PATTERN_MODUS[group.pattern] ?? baseline.modus;
+  const modusEntry = MODUS_BY_ID.get(modus);
+
+  return {
+    score,
+    risk: riskFor(score),
+    signals,
+    modus,
+    advice: ADVICE[modus] ?? baseline.advice,
+    relatedModule: modusEntry ? modusEntry.no : baseline.relatedModule,
+    hardOverride: baseline.hardOverride,
+    source: "consensus",
+    baselineScore: baseline.score,
+    consensus: {
+      pattern: group.pattern,
+      agents: group.agents,
+      pointSignals: decision.pointSignals,
+    },
+  };
+}
+
 export interface TracedScore {
   result: ScoreResult;
   trace: AgentTrace;
 }
-
 /**
  * Run the pipeline and record what it did.
  *

@@ -1290,6 +1290,7 @@ export function CompanionChat({
           finalText: string,
           voice: "model" | "template",
           reason?: VoiceOutcome,
+          finalResult?: ScoreResult,
         ) => {
           if (sealed) return;
           sealed = true;
@@ -1301,7 +1302,9 @@ export function CompanionChat({
             voiceStartedAt: undefined,
             lane,
             laneSource: lane === "tanya" ? text : undefined,
-            result: checked ? (result ?? undefined) : undefined,
+            result: checked
+              ? (finalResult ?? result ?? undefined)
+              : (finalResult ?? undefined),
             source: checked ? scored : undefined,
             explanation,
             trace: turn.trace
@@ -1494,6 +1497,9 @@ export function CompanionChat({
                     patchCompanion((turn) => ({
                       ...turn,
                       orchestration: [...(turn.orchestration ?? []), event],
+                      ...(event.type === "score_decision" && event.result
+                        ? { result: event.result as ScoreResult }
+                        : {}),
                     }));
                   },
                 },
@@ -1502,7 +1508,12 @@ export function CompanionChat({
                 orchestrated.outcome === "model" &&
                 orchestrated.text.trim().length > 0
               ) {
-                finish(orchestrated.text, "model");
+                finish(
+                  orchestrated.text,
+                  "model",
+                  undefined,
+                  orchestrated.score ?? undefined,
+                );
                 return;
               }
             }

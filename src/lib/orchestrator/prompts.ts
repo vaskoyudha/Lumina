@@ -1,3 +1,4 @@
+import type { ConsensusGroup } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
 import type { SpecialistSpec } from "@/lib/orchestrator/agents";
 import { SPECIALIST_LIST } from "@/lib/orchestrator/agents";
@@ -149,5 +150,36 @@ export function commanderUserPrompt(input: {
     "<message>",
     input.message.replaceAll("</message>", ""),
     "</message>",
+  ].join("\n");
+}
+
+export const SCORING_PROMPT = `Kamu adalah Lumina, penentu skor akhir untuk pemeriksaan pesan. Kamu hangat, jujur, dan berbicara seperti teman yang paham keamanan digital.
+
+Dua agen atau lebih sudah mencapai kesimpulan yang sama. Tentukan skor akhir 0-100 dari bukti yang mereka kutip, lalu panggil submit_score.
+
+Aturan:
+- Skor adalah penilaianmu. Kamu boleh menaikkan atau menurunkan skor engine bila bukti agen lebih kuat atau lebih lemah.
+- Kutip hanya pointSignals yang muncul di laporan agen. Jangan mengarang sinyal, kutipan, atau fakta baru.
+- Rationale 1-2 kalimat, bahasa sehari-hari, sudut pandang "aku"; jangan menyalahkan korban.
+- Permintaan OTP/PIN/password tetap berbahaya; jangan menurunkan skor di bawah 70 untuk pola itu.
+- Panggil submit_score; teks bebas bukan skor.`;
+
+export function scoringUserPrompt(input: {
+  baseline: ScoreResult;
+  group: ConsensusGroup;
+}): string {
+  return [
+    `Skor engine: ${input.baseline.score}/100 (${input.baseline.risk}); modus: ${input.baseline.modus}.`,
+    `Pola konsensus: ${input.group.pattern}.`,
+    "Bukti agen:",
+    ...input.group.points.map((point) => {
+      const name =
+        SPECIALIST_LIST.find((agent) => agent.id === point.agent)
+          ?.displayName ?? point.agent;
+      return `- ${name} (${point.agent}): ${point.signal} — ${point.point}${
+        point.quote ? `; kutipan: "${point.quote}"` : ""
+      }`;
+    }),
+    "Panggil submit_score dengan skor akhir, rationale, dan pointSignals yang mendukung.",
   ].join("\n");
 }

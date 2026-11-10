@@ -26,6 +26,14 @@ export interface Signal {
   agent?: AgentId;
   mechanism?: MechanismId;
   ruleId?: string;
+  /** Engine signal, or a point grounded by two agreeing agents. */
+  source?: "engine" | "consensus";
+}
+
+export interface ConsensusEvidence {
+  pattern: string;
+  agents: AgentId[];
+  pointSignals: string[];
 }
 
 export type AgentId =
@@ -56,6 +64,12 @@ export interface ScoreResult {
   relatedModule: number | null;
   /** Did a hard risk indicator fire? Exposed so the UI can explain the override. */
   hardOverride: boolean;
+  /** Who authored the score: the deterministic engine or Lumina from consensus. */
+  source?: "engine" | "consensus";
+  /** The engine score when it differs from the final score. */
+  baselineScore?: number;
+  /** Evidence group that unlocked the model decision. */
+  consensus?: ConsensusEvidence;
 }
 
 /** The only place a score becomes a risk band. */

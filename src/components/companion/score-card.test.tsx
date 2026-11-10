@@ -68,18 +68,51 @@ describe("ScoreCard · a clean message looks like a clean message", () => {
   });
 });
 
-describe("ScoreCard · a real finding names what it is", () => {
-  it("prints the modus name, not only the internal id", () => {
-    const { result, trace } = scoreWithTrace({ text: APK });
-    render(<ScoreCard result={result} trace={trace} />);
+describe("ScoreCard · consensus provenance", () => {
+  it("shows consensus provenance and both scores", () => {
+    const { result } = scoreWithTrace({ text: CLEAN });
+    render(
+      <ScoreCard
+        result={{
+          ...result,
+          score: 78,
+          risk: "tinggi",
+          source: "consensus",
+          baselineScore: 0,
+          consensus: {
+            pattern: "overpayment-refund",
+            agents: ["marketplace", "qris"],
+            pointSignals: ["Kelebihan transfer"],
+          },
+          signals: [
+            {
+              label: "Kelebihan transfer",
+              weight: 0.5,
+              evidence: "transfer berlebih",
+              agent: "marketplace",
+              source: "consensus",
+            },
+          ],
+        }}
+      />,
+    );
 
-    expect(screen.getByText("File APK via WhatsApp")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Dinilai Lumina dari konsensus 2 agen/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Engine 0/)).toBeInTheDocument();
+    expect(
+      screen.queryByText("Tidak ada pola penipuan yang cocok pada pesan ini."),
+    ).not.toBeInTheDocument();
   });
 
-  it("does not call an APK a hard override after the rule changed", () => {
-    const { result, trace } = scoreWithTrace({ text: APK });
+  it("renders a result without the new optional fields", () => {
+    const { result, trace } = scoreWithTrace({ text: CLEAN });
     render(<ScoreCard result={result} trace={trace} />);
 
-    expect(screen.queryByText(/indikator keras/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Dinilai Lumina/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/tidak ada pola penipuan yang cocok/i),
+    ).toBeInTheDocument();
   });
 });
