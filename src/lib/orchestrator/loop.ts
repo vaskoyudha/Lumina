@@ -15,6 +15,7 @@ import {
   type SpecialistSpec,
   specialistSystemPrompt,
 } from "@/lib/orchestrator/agents";
+import { orchestratorDeadlineMs } from "@/lib/orchestrator/flag";
 import {
   COMMANDER_PROMPT,
   commanderUserPrompt,
@@ -46,7 +47,7 @@ import { extractLinks, parseLink } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { fetchChat } from "@/lib/server/llm";
 
-const MAX_AGENTS = 2;
+const MAX_AGENTS = 6;
 const MAX_PLANNER_TOKENS = 800;
 const MAX_SPECIALIST_TOKENS = 2400;
 const MAX_SYNTHESIS_TOKENS = 1400;
@@ -183,6 +184,8 @@ export interface OrchestratorDeps {
   chat?: (options: ChatOptions, signal: AbortSignal) => Promise<ModelMessage>;
   score?: typeof scoreWithTrace;
   signal?: AbortSignal;
+  /** Test seam; the route passes the same value to its abort timer. */
+  deadlineMs?: number;
   /** Called for every event as it happens, so a route can stream live. */
   onEvent?: (event: OrchestratorEvent) => void;
 }
@@ -419,6 +422,25 @@ function dedupePlan(steps: PlanStep[]): PlanStep[] {
   return out.slice(0, MAX_AGENTS);
 }
 
+function ensureEvidenceLast(steps: PlanStep[]): PlanStep[] {
+  const withoutEvidence = steps.filter((step) => step.agent !== "evidence");
+  if (withoutEvidence.length === 0) return steps;
+  const existing = steps.find((step) => step.agent === "evidence");
+  const findingBearing = withoutEvidence.some(
+    (step) => step.agent !== "identity",
+  );
+  if (!existing && !findingBearing) return steps;
+  const evidence =
+    existing ??
+    ({
+      agent: "evidence",
+      task: "Audit kutipan dan deduplikasi temuan.",
+      skills: SPECIALISTS.evidence.skills,
+      tools: SPECIALISTS.evidence.tools,
+    } satisfies PlanStep);
+  return [...withoutEvidence.slice(0, MAX_AGENTS - 1), evidence];
+}
+
 /**
  * A supervisor may narrate the right scam type and still delegate to unrelated
  * specialists. When the deterministic scorer has a strong, owned signal, keep
@@ -478,7 +500,7 @@ async function makePlan(
   const fallback = defaultPlan(request);
   if (!chat) {
     return {
-      steps: fallback,
+      steps: ensureEvidenceLast(fallback),
       rationale: fallbackRationale(fallback),
       source: "fallback",
       ms: Math.round(performance.now() - started),
@@ -518,15 +540,18 @@ async function makePlan(
       })),
       fallback,
     );
+    const steps = ensureEvidenceLast(
+      ensureBaselineSpecialist(normalized, baseline, fallback),
+    );
     return {
-      steps: ensureBaselineSpecialist(normalized, baseline, fallback),
+      steps,
       rationale: parsed.data.rationale || "Rencana disusun oleh koordinator.",
       source: "model",
       ms: Math.round(performance.now() - started),
     };
   } catch {
     return {
-      steps: fallback,
+      steps: ensureEvidenceLast(fallback),
       rationale: fallbackRationale(fallback),
       source: "fallback",
       ms: Math.round(performance.now() - started),
@@ -942,6 +967,7 @@ export async function runOrchestrator(
   const signal = deps.signal ?? new AbortController().signal;
   const chat = deps.chat ?? defaultChat;
   const score = deps.score ?? scoreWithTrace;
+  const deadlineMs = deps.deadlineMs ?? orchestratorDeadlineMs();
 
   emit({ type: "run_start", question: request.question });
 
@@ -1061,13 +1087,41 @@ export async function runOrchestrator(
     });
     return result;
   };
-  /*
-   * Two lanes, two specialists: separate egress IPs mean a parallel pair no
-   * longer trips the anonymous quota, and the route stays well under 60 s.
-   */
-  const batch = await Promise.all(plan.steps.map(runOne));
-  for (const result of batch) {
-    if (result) reports.push(result);
+  const crewStarted = performance.now();
+  for (const step of plan.steps) {
+    if (performance.now() - crewStarted >= deadlineMs) {
+      const spec = SPECIALISTS[step.agent];
+      const skipped: SubagentResult = {
+        agent: spec.id,
+        label: spec.label,
+        status: "dilewati",
+        summary: "Dilewati karena batas waktu pemeriksaan tercapai.",
+        findings: [],
+        points: [],
+        ms: 0,
+      };
+      emit({
+        type: "agent_start",
+        agent: skipped.agent,
+        label: skipped.label,
+        task: step.task,
+        skills: step.skills,
+        tools: step.tools,
+      });
+      emit({
+        type: "agent_result",
+        agent: skipped.agent,
+        label: skipped.label,
+        status: skipped.status,
+        summary: skipped.summary,
+        findings: [],
+        points: [],
+        ms: 0,
+      });
+      reports.push(skipped);
+      continue;
+    }
+    reports.push(await runOne(step));
   }
 
   emit({ type: "synthesis_start", agent: "synthesizer" });
