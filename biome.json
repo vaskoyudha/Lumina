@@ -18,7 +18,8 @@
       "!src/styles/powder-fonts.css",
       "!src/data/powder",
       "!scanner",
-      "!.scan-data"
+      "!.scan-data",
+      "!cyber_course_dashboard(1).tsx"
     ]
   },
   "formatter": {
@@ -51,7 +52,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/app/globals.css"],
+      "includes": ["src/app/globals.css", "src/styles/powder-theme.css"],
       "linter": {
         "rules": {
           "complexity": {

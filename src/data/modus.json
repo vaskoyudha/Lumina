@@ -31,8 +31,8 @@
     ],
     "level": 2,
     "modulStatus": "lengkap",
-    "scenarioId": null,
-    "scenarioPlanned": "L4",
+    "scenarioId": "L4-fake-call",
+    "scenarioPlanned": null,
     "detectors": ["message", "identity", "conversation"]
   },
   {
@@ -63,8 +63,8 @@
     "ciri": ["Tugas like/subscribe", "Dibayar kecil dulu", "Top-up membesar"],
     "level": 3,
     "modulStatus": "lengkap",
-    "scenarioId": null,
-    "scenarioPlanned": "L3",
+    "scenarioId": "L3-lowongan-berbayar",
+    "scenarioPlanned": null,
     "detectors": ["message", "link"]
   },
   {
@@ -105,8 +105,8 @@
     "ciri": ["Tautan tiruan login bank/e-wallet", "Domain mirip merek resmi"],
     "level": 2,
     "modulStatus": "lengkap",
-    "scenarioId": null,
-    "scenarioPlanned": "L2",
+    "scenarioId": "L2-phishing-tautan",
+    "scenarioPlanned": null,
     "detectors": ["message", "link"]
   },
   {
@@ -133,8 +133,8 @@
     "ciri": ["Pinjaman cepat", "Biaya di muka", "Ancaman sebar data"],
     "level": 3,
     "modulStatus": "lengkap",
-    "scenarioId": null,
-    "scenarioPlanned": "L3",
+    "scenarioId": "L3-pinjol-fiktif",
+    "scenarioPlanned": null,
     "detectors": ["message", "link"]
   },
   {
