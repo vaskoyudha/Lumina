@@ -189,7 +189,7 @@ export function About() {
               {aboutCopy.title.join(" ")}
             </h2>
 
-            <p className="mx-auto mt-4 max-w-md text-ls-ink-2 text-xs leading-relaxed sm:text-sm">
+            <p className="mx-auto mt-4 max-w-md text-ls-ink-2 text-sm leading-relaxed">
               {aboutCopy.body}
             </p>
 

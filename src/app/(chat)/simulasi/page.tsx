@@ -119,7 +119,7 @@ function SimulasiAside({
                     </span>
                   </div>
                   <p
-                    className="mt-0.5 text-[9.6px] text-[#8a8077] leading-snug"
+                    className="mt-0.5 text-[11.5px] text-[#8a8077] leading-snug"
                     title={note}
                   >
                     {note}
@@ -145,7 +145,7 @@ function SimulasiAside({
               <ShieldCheck aria-hidden strokeWidth={1.6} className="size-4" />
             </span>
           </div>
-          <p className="mt-1.5 text-[#4a3728] text-[9.6px] leading-relaxed">
+          <p className="mt-1.5 text-[#4a3728] text-[11.5px] leading-relaxed">
             Semua pesan, lampiran, meter, dan alat di simulasi ini fiktif.
             Latihan ini tidak mengubah perangkatmu dan tidak mengirim laporan ke
             mana pun. Penilaian mengikuti aturan skenario, bukan skor model.
@@ -272,7 +272,7 @@ export async function SimulasiContent() {
                   <span className="font-bold text-[#c8430e]">Tujuanmu: </span>
                   {MISSION.objective}
                 </p>
-                <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#7c726a] text-[10.5px]">
+                <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[#7c726a] text-[11.5px]">
                   <Clock aria-hidden className="size-3.5 text-[#f2600c]" />
                   <span>Perkiraan {MISSION.duration}</span>
                   <span aria-hidden>·</span>
@@ -371,7 +371,7 @@ export async function SimulasiContent() {
                       <p className="font-extrabold text-[12.2px] text-[#1a1817]">
                         {chapter}
                       </p>
-                      <p className="mt-1 text-[#7c726a] text-[11px] leading-relaxed">
+                      <p className="mt-1 text-[#7c726a] text-[13px] leading-relaxed">
                         {CHAPTER_NOTES[index]}
                       </p>
                     </div>
@@ -426,7 +426,7 @@ export async function SimulasiContent() {
                       </span>
                       <p
                         className={cn(
-                          "flex-1 px-2.5 py-[5px] text-[#24211f] text-[11px] leading-[1.35]",
+                          "flex-1 px-2.5 py-[5px] text-[#24211f] text-[13px] leading-[1.35]",
                           SURFACE_ROW,
                         )}
                       >
@@ -466,7 +466,7 @@ export async function SimulasiContent() {
                       </span>
                       <p
                         className={cn(
-                          "flex-1 px-2.5 py-[5px] text-[#24211f] text-[11px] leading-[1.35]",
+                          "flex-1 px-2.5 py-[5px] text-[#24211f] text-[13px] leading-[1.35]",
                           SURFACE_ROW,
                         )}
                       >
