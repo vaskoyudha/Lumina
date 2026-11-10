@@ -278,6 +278,11 @@
  * float, a breathing brand halo, and a blurred bloom that picks up the
  * mascot's own orange/cream. All three stop under reduced motion; the halo and
  * bloom stay visible as static glow.
+ *
+ * The halo and bloom are larger than the mascot box by design, so they must not
+ * be clipped by a scroll container that frames the empty state. A single
+ * padded resolution rule keeps the glow whole at every breakpoint; the fit
+ * effect measures against its inner spacer, not the frame.
  */
 @keyframes mascot-float {
   0%,
@@ -293,11 +298,11 @@
   0%,
   100% {
     opacity: 0.5;
-    transform: translate(-50%, -50%) scale(0.94);
+    transform: scale(0.94);
   }
   50% {
     opacity: 0.9;
-    transform: translate(-50%, -50%) scale(1.05);
+    transform: scale(1.05);
   }
 }
 
