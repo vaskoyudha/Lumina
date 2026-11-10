@@ -31,9 +31,13 @@ di `lib/community/store.ts`, dan pool PostgreSQL yang sama dengan akun.
 
 Migrasi `004_community.sql` menambah `community_posts`, `community_replies`,
 `community_helpful`, dan `community_reports`. Migrasi `005_community_images.sql`
-menambah kolom `image_url` yang dibatasi ke awalan `/images/community/`. Akun dan
+menambah kolom `image_url` yang dibatasi ke awalan `/images/community/`, dan
+`006_community_gallery.sql` menambah `image_urls` (maksimal 8) agar satu kiriman
+bisa memuat beberapa sampul; baris lama diisi ulang dari `image_url`. Akun dan
 progres yang ada tidak dihapus. Migrasi 004 juga mengganti hanya kalimat bawaan
-skenario yang masih mengarahkan ke panduan Darurat.
+skenario yang masih mengarahkan ke panduan Darurat. `007_community_saves.sql`
+menambah `community_saves` untuk daftar "Disimpan" per akun; simpanan bersifat
+pribadi dan tidak menambah penghitung publik pada kiriman.
 
 Seed demo opsional tersedia lewat `npm run db:seed:community`. Perintah itu
 membuat beberapa anggota contoh, sembilan ringkasan modus penipuan Indonesia
@@ -41,7 +45,9 @@ beserta sampul, balasan, dan reaksi Membantu agar feed tidak kosong saat
 presentasi lokal. Ringkasan itu fiktif, tidak mengutip korban atau media nyata,
 dan setiap `source_url` tetap null. Sampul hanya aset seed di
 `public/images/community/` (sumber dan lisensi dicatat di folder itu), bukan
-unggahan anggota. Data seed diberi tanda domain `@contoh.lumina`, idempoten
+unggahan anggota. Di feed, seluruh kartu kiriman membuka halaman diskusinya, dan
+sampul membuka penampil gambar dengan navigasi antar-sampul alih-alih ikut
+bernavigasi. Data seed diberi tanda domain `@contoh.lumina`, idempoten
 (boleh diulang), dan **tidak boleh dijalankan pada database produksi**; produksi
 tetap memakai percakapan anggota sungguhan.
 

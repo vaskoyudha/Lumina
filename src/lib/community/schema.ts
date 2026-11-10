@@ -63,6 +63,16 @@ export const QuerySchema = z.object({
   category: CategorySchema.optional().catch(undefined),
   sort: z.enum(["terbaru", "ramai", "belum-dibalas"]).catch("terbaru"),
   page: z.coerce.number().int().min(1).max(10000).catch(1),
+  mine: z
+    .string()
+    .optional()
+    .transform((value) => value === "1" || value === "true")
+    .catch(false),
+  saved: z
+    .string()
+    .optional()
+    .transform((value) => value === "1" || value === "true")
+    .catch(false),
 });
 export type CommunityQuery = z.infer<typeof QuerySchema>;
 export type PostInput = z.infer<typeof PostInputSchema>;
@@ -75,13 +85,14 @@ export type CommunityPost = {
   title: string;
   body: string;
   sourceUrl: string | null;
-  /** Seed/demo cover under /images/community; never user-supplied. */
-  imageUrl: string | null;
+  /** Seed/demo covers under /images/community; never user-supplied. */
+  imageUrls: string[];
   createdAt: string;
   updatedAt: string;
   replies: number;
   helpful: number;
   hasHelped: boolean;
+  hasSaved: boolean;
   isOwner: boolean;
   hidden: boolean;
 };

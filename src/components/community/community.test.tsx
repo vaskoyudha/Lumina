@@ -39,12 +39,13 @@ const post: CommunityPost = {
   title: "Pesan kurir meminta APK baru",
   body: "Pesan mengaku kurir meminta memasang aplikasi. Bagaimana cara memeriksanya?",
   sourceUrl: null,
-  imageUrl: null,
+  imageUrls: [],
   createdAt: "2026-11-09T06:00:00Z",
   updatedAt: "2026-11-09T06:00:00Z",
   replies: 0,
   helpful: 0,
   hasHelped: false,
+  hasSaved: false,
   isOwner: false,
   hidden: false,
 };
@@ -92,7 +93,7 @@ it("links real posts and renders user text as text rather than HTML", () => {
 it("renders a seed cover on the timeline and the thread", () => {
   const covered = {
     ...post,
-    imageUrl: "/images/community/qris-palsu.jpg",
+    imageUrls: ["/images/community/qris-palsu.jpg"],
   };
   const feed = render(
     <CommunityFeed
@@ -115,6 +116,71 @@ it("renders a seed cover on the timeline and the thread", () => {
       .querySelector("img")
       ?.getAttribute("src"),
   ).toContain("qris-palsu");
+});
+it("offers a saved-posts nav entry and gates it for guests", () => {
+  const { unmount } = render(
+    <CommunityFeed
+      posts={[post]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite
+    />,
+  );
+  expect(screen.getByRole("link", { name: "Disimpan" })).toHaveAttribute(
+    "href",
+    "/komunitas?saved=1",
+  );
+  expect(
+    screen.getByRole("button", { name: "Simpan diskusi ini" }),
+  ).toBeInTheDocument();
+  unmount();
+  render(
+    <CommunityFeed
+      posts={[post]}
+      total={1}
+      query={QuerySchema.parse({ saved: "1" })}
+      canWrite={false}
+    />,
+  );
+  expect(
+    screen.getByText("Masuk untuk melihat simpananmu"),
+  ).toBeInTheDocument();
+});
+it("opens a multi-image preview and walks the gallery", async () => {
+  const user = userEvent.setup();
+  const gallery = {
+    ...post,
+    imageUrls: [
+      "/images/community/qris-palsu.jpg",
+      "/images/community/tagihan-listrik.jpg",
+      "/images/community/telepon-otp.jpg",
+    ],
+  };
+  render(
+    <CommunityFeed
+      posts={[gallery]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite
+    />,
+  );
+  await user.click(
+    screen.getByRole("button", {
+      name: /buka pratinjau gambar 1 dari 3/i,
+    }),
+  );
+  const dialog = await screen.findByRole("dialog");
+  expect(within(dialog).getByText("1 / 3")).toBeInTheDocument();
+  await user.click(
+    within(dialog).getByRole("button", { name: "Gambar berikutnya" }),
+  );
+  expect(within(dialog).getByText("2 / 3")).toBeInTheDocument();
+  await user.click(
+    within(dialog).getByRole("button", { name: "Tutup pratinjau" }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
 });
 it("renders no cover for a post without one", () => {
   render(
@@ -488,10 +554,9 @@ it("renders the X-style community rail with news, trends, and the moderator entr
   expect(
     screen.getByRole("link", { name: "Tinjau laporan komunitas" }),
   ).toHaveAttribute("href", "/komunitas/moderasi");
-  expect(screen.getByRole("link", { name: "Belajar" })).toHaveAttribute(
-    "href",
-    "/belajar",
-  );
+  expect(
+    screen.queryByRole("link", { name: "Tentang Lumina" }),
+  ).not.toBeInTheDocument();
 });
 
 it("dismisses the news card and gates the moderator entry for guests", async () => {

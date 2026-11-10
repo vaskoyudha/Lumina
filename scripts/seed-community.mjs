@@ -9,8 +9,10 @@ import pg from "pg";
  * password (display-only), and the script is idempotent: running it twice
  * updates the seeded rows instead of duplicating them.
  *
- * Requires migrations through `005_community_images.sql`; cover files live in
+ * Requires migrations through `006_community_gallery.sql`; cover files live in
  * `public/images/community/` and are seed-only, never accepted from the editor.
+ * `imageUrls` is the gallery the feed renders; `imageUrl` stays the first cover
+ * so older reads keep working.
  *
  * Do NOT run this against production. Use `--reset` to remove only the seeded
  * accounts (their posts, replies, and reactions cascade) before re-inserting.
@@ -60,6 +62,10 @@ const POSTS = [
     title: "Kurir palsu kirim APK berkedok resi paket",
     body: "Modus ini muncul lagi di grup jual-beli. Pengirim mengaku kurir dan mengirim file APK bernama resi-paket.apk lewat chat. Setelah dipasang, aplikasi meminta izin membaca SMS dan aksesibilitas, lalu mengambil kode OTP. Tanda paling jelas: ekspedisi resmi tidak pernah mengirim aplikasi lewat chat. Cek nomor resi hanya di aplikasi atau situs ekspedisi yang kamu buka sendiri.",
     imageUrl: "/images/community/apk-kurir.jpg",
+    imageUrls: [
+      "/images/community/apk-kurir.jpg",
+      "/images/community/telepon-otp.jpg",
+    ],
     sourceUrl: null,
     hoursAgo: 2,
   },
@@ -70,6 +76,10 @@ const POSTS = [
     title: "Telepon suara AI mengaku petugas bank",
     body: "Pelaku memakai suara hasil kloning untuk mengaku sebagai petugas bank. Ia menyebut ada transaksi mencurigakan dan meminta kode OTP untuk membatalkan transaksi itu. Suara yang mirip bukan bukti identitas. Tutup telepon, lalu hubungi nomor di belakang kartu bank dari perangkat lain yang aman.",
     imageUrl: "/images/community/telepon-otp.jpg",
+    imageUrls: [
+      "/images/community/telepon-otp.jpg",
+      "/images/community/apk-kurir.jpg",
+    ],
     sourceUrl: null,
     hoursAgo: 5,
   },
@@ -80,6 +90,10 @@ const POSTS = [
     title: "Stiker QRIS di lapak diganti diam-diam",
     body: "Beberapa pembeli melaporkan stiker QRIS di meja pedagang ditimpa stiker lain. Saat dipindai, nama penerima di aplikasi bukan nama toko. Selalu periksa nama merchant di layar sebelum menekan bayar, dan minta pedagang memastikan stikernya masih asli.",
     imageUrl: "/images/community/qris-palsu.jpg",
+    imageUrls: [
+      "/images/community/qris-palsu.jpg",
+      "/images/community/tagihan-listrik.jpg",
+    ],
     sourceUrl: null,
     hoursAgo: 8,
   },
@@ -90,6 +104,10 @@ const POSTS = [
     title: "Pinjol ilegal meneror kontak saat tagihan membengkak",
     body: "Pinjaman kecil berubah menjadi tagihan berkali-kali lipat dalam hitungan hari. Saat menolak membayar, pelaku menyebar data kontak dan foto ke keluarga. Pinjol legal tidak meneror dan tidak meminta akses seluruh kontak. Cek izin OJK sebelum meminjam, dan simpan bukti teror untuk laporan.",
     imageUrl: "/images/community/pinjol-teror.jpg",
+    imageUrls: [
+      "/images/community/pinjol-teror.jpg",
+      "/images/community/lowongan-like.jpg",
+    ],
     sourceUrl: null,
     hoursAgo: 12,
   },
@@ -110,6 +128,11 @@ const POSTS = [
     title: "Tagihan listrik palsu lewat tautan pembayaran",
     body: "Pesan mengaku dari PLN dan menyebut tagihan akan diputus malam ini. Tautannya membuka halaman pembayaran yang meminta nomor meter, data kartu, atau kode OTP. PLN tidak menagih lewat tautan chat. Buka aplikasi resmi atau laman PLN yang kamu ketik sendiri, lalu cek tagihan di sana.",
     imageUrl: "/images/community/tagihan-listrik.jpg",
+    imageUrls: [
+      "/images/community/tagihan-listrik.jpg",
+      "/images/community/qris-palsu.jpg",
+      "/images/community/telepon-otp.jpg",
+    ],
     sourceUrl: null,
     hoursAgo: 26,
   },
@@ -130,6 +153,10 @@ const POSTS = [
     title: "Robot trading menjanjikan profit pasti dari grup WhatsApp",
     body: "Grup investasi menampilkan tangkapan layar keuntungan dan mendesak anggota menambah setoran. Tidak ada robot trading legal yang menjamin profit, apalagi meminta transfer ke rekening pribadi. Cek legalitas di OJK dan Bappebti sebelum menyetor uang.",
     imageUrl: "/images/community/robot-trading.jpg",
+    imageUrls: [
+      "/images/community/robot-trading.jpg",
+      "/images/community/pinjol-teror.jpg",
+    ],
     sourceUrl: null,
     hoursAgo: 45,
   },
@@ -273,10 +300,11 @@ try {
     for (const post of POSTS) {
       const authorId = ids.get(post.author);
       if (!authorId) throw new Error(`Missing seed author ${post.author}`);
+      const gallery = post.imageUrls ?? (post.imageUrl ? [post.imageUrl] : []);
       await client.query(
         `INSERT INTO community_posts
-           (id, author_id, category, title, body, source_url, image_url, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, now() - $8 * interval '1 hour', now() - $8 * interval '1 hour')
+           (id, author_id, category, title, body, source_url, image_url, image_urls, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now() - $9 * interval '1 hour', now() - $9 * interval '1 hour')
          ON CONFLICT (id) DO UPDATE SET
            author_id=EXCLUDED.author_id,
            category=EXCLUDED.category,
@@ -284,6 +312,7 @@ try {
            body=EXCLUDED.body,
            source_url=EXCLUDED.source_url,
            image_url=EXCLUDED.image_url,
+           image_urls=EXCLUDED.image_urls,
            created_at=EXCLUDED.created_at,
            updated_at=EXCLUDED.updated_at`,
         [
@@ -293,7 +322,8 @@ try {
           post.title,
           post.body,
           post.sourceUrl,
-          post.imageUrl,
+          gallery[0] ?? null,
+          gallery,
           post.hoursAgo,
         ],
       );
