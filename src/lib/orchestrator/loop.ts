@@ -39,7 +39,7 @@ import {
   TOOL_DEFS,
   type ToolContext,
 } from "@/lib/orchestrator/tools";
-import { extractLinks } from "@/lib/scoring/link";
+import { extractLinks, parseLink } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { fetchChat } from "@/lib/server/llm";
 
@@ -497,6 +497,11 @@ async function runSpecialist(
   if (toolNames.includes("verify_link")) {
     const link = extractLinks(request.message)[0];
     if (link) calls.push({ name: "verify_link", args: { url: link } });
+  }
+  if (toolNames.includes("domain_lookup")) {
+    const link = extractLinks(request.message)[0];
+    const host = link ? parseLink(link)?.host : null;
+    if (host) calls.push({ name: "domain_lookup", args: { domain: host } });
   }
 
   const evidence: string[] = [];
