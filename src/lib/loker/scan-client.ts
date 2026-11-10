@@ -1,6 +1,11 @@
 import type { ScanRunStatus } from "@/lib/loker/types";
 
-export type TriggerResult = "started" | "running" | "unauthorized" | "failed";
+export type TriggerResult =
+  | "started"
+  | "running"
+  | "unauthorized"
+  | "rate-limited"
+  | "failed";
 
 /** Ask the server to start a scan. Never throws. */
 export async function triggerScan(
@@ -13,6 +18,7 @@ export async function triggerScan(
     if (response.status === 401 || response.status === 403) {
       return "unauthorized";
     }
+    if (response.status === 429) return "rate-limited";
     return "failed";
   } catch {
     return "failed";

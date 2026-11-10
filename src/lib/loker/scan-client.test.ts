@@ -18,9 +18,12 @@ describe("triggerScan", () => {
     );
   });
 
-  it("maps 401 to unauthorized and a network failure to failed", async () => {
+  it("maps 401 to unauthorized, 429 to rate-limited, and a network failure to failed", async () => {
     expect(await triggerScan(jest.fn().mockResolvedValue(response(401)))).toBe(
       "unauthorized",
+    );
+    expect(await triggerScan(jest.fn().mockResolvedValue(response(429)))).toBe(
+      "rate-limited",
     );
     expect(
       await triggerScan(jest.fn().mockRejectedValue(new Error("offline"))),

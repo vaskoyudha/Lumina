@@ -37,6 +37,7 @@ function deps(over: Partial<RunDeps> = {}) {
   return {
     scan: jest.fn().mockResolvedValue(RECEIPT),
     readPipeline: jest.fn().mockResolvedValue(PIPELINE),
+    keys: jest.fn().mockResolvedValue(new Set<string>()),
     ingest: jest.fn().mockResolvedValue({ added: 2, dropped: 0 }),
     finish: jest.fn().mockResolvedValue(undefined),
     ...over,
@@ -44,7 +45,7 @@ function deps(over: Partial<RunDeps> = {}) {
 }
 
 describe("runScanJob", () => {
-  it("ingests only the rows this run added, then records an ok run", async () => {
+  it("ingests this run's rows plus the unimported backlog, then records an ok run", async () => {
     const d = deps();
     await runScanJob(9, d);
 
@@ -53,10 +54,11 @@ describe("runScanJob", () => {
     }[];
     // The receipt URL carries `?utm_source=x`; normalisasiKunciUrl makes it
     // match pipeline row 2 (`.../job/2`). The raw pipeline URLs are what get
-    // ingested.
+    // ingested; row 3 is the backlog because `keys` is empty.
     expect(rows.map((r) => r.url)).toEqual([
       "https://id.jobstreet.com/job/1",
       "https://id.jobstreet.com/job/2",
+      "https://id.jobstreet.com/job/3",
     ]);
     expect(d.finish).toHaveBeenCalledWith(9, {
       status: "ok",
@@ -66,6 +68,22 @@ describe("runScanJob", () => {
       exitCode: 2,
       providerErrors: [{ company: "Glints", error: "403" }],
     });
+  });
+
+  it("does not re-ingest rows already stored", async () => {
+    const d = deps({
+      keys: jest
+        .fn()
+        .mockResolvedValue(new Set(["https://id.jobstreet.com/job/3"])),
+    });
+    await runScanJob(9, d);
+    const rows = ((d.ingest as jest.Mock).mock.calls[0] as unknown[])[0] as {
+      url: string;
+    }[];
+    expect(rows.map((r) => r.url)).toEqual([
+      "https://id.jobstreet.com/job/1",
+      "https://id.jobstreet.com/job/2",
+    ]);
   });
 
   it("records a failed run when the scanner is fatal", async () => {
@@ -100,13 +118,33 @@ describe("runScanJob", () => {
   it("treats a missing pipeline file as zero rows, not a crash", async () => {
     const d = deps({
       readPipeline: jest.fn().mockRejectedValue(new Error("ENOENT")),
+      ingest: jest.fn().mockResolvedValue({ added: 0, dropped: 0 }),
     });
     await runScanJob(9, d);
     expect(d.ingest).toHaveBeenCalledWith([], 9, expect.anything());
     expect(d.finish).toHaveBeenCalledWith(
       9,
-      expect.objectContaining({ status: "ok", added: 2 }),
+      expect.objectContaining({ status: "ok", added: 0 }),
     );
+  });
+
+  it("skips processed and placeholder rows in the backlog", async () => {
+    const pipeline = `- [ ] https://id.jobstreet.com/job/1 | PT Maju | Frontend Engineer
+- [x] https://id.jobstreet.com/job/9 | PT Lama | Old Role
+- [ ] N/A | PT Placeholder | Ghost Role
+`;
+    const d = deps({
+      scan: jest.fn().mockResolvedValue({
+        ...RECEIPT,
+        receipt: { ...RECEIPT.receipt, added: 0, added_urls: [] },
+      }),
+      readPipeline: jest.fn().mockResolvedValue(pipeline),
+    });
+    await runScanJob(9, d);
+    const rows = ((d.ingest as jest.Mock).mock.calls[0] as unknown[])[0] as {
+      url: string;
+    }[];
+    expect(rows.map((r) => r.url)).toEqual(["https://id.jobstreet.com/job/1"]);
   });
 
   it("never throws and never misreports when recording the run fails", async () => {

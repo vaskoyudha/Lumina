@@ -1,11 +1,12 @@
 import "server-only";
 
 /**
- * Enrichment the audit requires.
+ * Enrichment the audit wants, not demands.
  *
- * `company_email` and `domain_age_days` are `not null` in the schema, so a row
- * that cannot fill them is dropped and counted — never inserted with a null
- * that would silently weaken the audit.
+ * `company_email` and `domain_age_days` are nullable in the schema: job boards
+ * publish neither, so a missing value is stored as `null` and the audit treats
+ * it as "not checked". The one hard requirement is a fetched description — a
+ * row without one is dropped rather than inserted with invented material.
  */
 
 const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;

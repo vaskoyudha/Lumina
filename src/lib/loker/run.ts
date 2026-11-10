@@ -18,6 +18,7 @@ import { runScan } from "@/lib/loker/scan";
 import {
   finishScanRun,
   readDomainCache,
+  readPostingKeys,
   type ScanRunResult,
   upsertPosting,
   writeDomainCache,
@@ -26,25 +27,48 @@ import { scoreText } from "@/lib/scoring/score";
 
 const CACHE_TTL_MS = 30 * 86_400_000;
 
+/** A failed RDAP lookup is retried after an hour, not on every scan. */
+const ERROR_TTL_MS = 60 * 60_000;
+
+/** Rows a single refresh may backfill, so a 764-row pipeline stays bounded. */
+const BACKFILL_LIMIT = 200;
+
+/** Concurrent rows for one domain share a single RDAP request. */
+const inFlightDomainAge = new Map<string, Promise<DomainAge>>();
+
 /**
  * Domain age, cached in Postgres.
  *
  * RDAP is the only network call enrichment makes besides the board detail
  * fetch. The cache is keyed by registrable domain, so 12 Jobstreet postings on
- * one host cost one lookup.
+ * one host cost one lookup. Concurrent rows for the same domain share the
+ * in-flight promise, and an `error` entry is honoured for `ERROR_TTL_MS`
+ * instead of being re-queried by every row and every scan.
  */
 async function cachedDomainAge(url: string): Promise<DomainAge> {
   const domain = registrableDomain(hostDari(url));
   if (!domain) return { status: "unknown", ageDays: null };
 
   const cached = await readDomainCache(domain);
-  if (cached && cached.status !== "error") {
-    const fresh = Date.now() - Date.parse(cached.checkedAt) < CACHE_TTL_MS;
+  if (cached) {
+    const ttl = cached.status === "error" ? ERROR_TTL_MS : CACHE_TTL_MS;
+    const fresh = Date.now() - Date.parse(cached.checkedAt) < ttl;
     if (fresh) return { status: cached.status, ageDays: cached.ageDays };
   }
 
-  const next = await lookupDomainAge(domain, ioDefault);
-  await writeDomainCache(domain, next.ageDays, next.status);
+  const pending = inFlightDomainAge.get(domain);
+  if (pending) return pending;
+
+  const next = (async (): Promise<DomainAge> => {
+    try {
+      const result = await lookupDomainAge(domain, ioDefault);
+      await writeDomainCache(domain, result.ageDays, result.status);
+      return result;
+    } finally {
+      inFlightDomainAge.delete(domain);
+    }
+  })();
+  inFlightDomainAge.set(domain, next);
   return next;
 }
 
@@ -75,6 +99,7 @@ export function realIngestDeps(): IngestDeps {
 export interface RunDeps {
   scan?: typeof runScan;
   readPipeline?: (root: string) => Promise<string>;
+  keys?: () => Promise<ReadonlySet<string>>;
   ingest?: typeof ingestScan;
   finish?: typeof finishScanRun;
 }
@@ -95,6 +120,7 @@ export async function runScanJob(
 ): Promise<void> {
   const scan = deps.scan ?? runScan;
   const readPipeline = deps.readPipeline ?? defaultReadPipeline;
+  const keys = deps.keys ?? readPostingKeys;
   const ingest = deps.ingest ?? ingestScan;
   const finish = deps.finish ?? finishScanRun;
 
@@ -119,16 +145,32 @@ export async function runScanJob(
         markdown = "";
       }
 
-      // Only this run's rows: `pipeline.md` is cumulative, and re-enriching the
-      // whole history on every refresh would hammer the boards for nothing.
+      // This run's new rows, then the newest unimported rows already in the
+      // cumulative pipeline. Without the backlog, fixing ingest would never
+      // surface the rows a failed earlier run left behind.
       const wanted = new Set(
         outcome.receipt.added_urls
           .map((url) => normalisasiKunciUrl(url))
           .filter(Boolean),
       );
-      const rows = parseInbox(markdown).filter((row) =>
-        wanted.has(normalisasiKunciUrl(row.url)),
-      );
+      const inbox = parseInbox(markdown);
+      const existing = await keys();
+      const fromThisRun = inbox.filter((row) => {
+        if (row.done) return false;
+        return wanted.has(normalisasiKunciUrl(row.url));
+      });
+      const backlog = inbox
+        .filter((row) => {
+          if (row.done) return false;
+          const key = normalisasiKunciUrl(row.url);
+          // A placeholder URL has no key; retrying it every scan would burn a
+          // backlog slot forever.
+          if (!key) return false;
+          return !existing.has(key) && !wanted.has(key);
+        })
+        .sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""))
+        .slice(0, BACKFILL_LIMIT);
+      const rows = [...fromThisRun, ...backlog];
 
       const { added, dropped } = await ingest(rows, runId, realIngestDeps());
 

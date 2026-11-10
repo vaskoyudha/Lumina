@@ -96,3 +96,56 @@ describe("hard indicators name only what really forces the top band", () => {
     expect(HARD_RULES.has("apk")).toBe(false);
   });
 });
+
+describe("Message Agent — OTP notifications vs OTP requests", () => {
+  it("does not call a bank's own OTP delivery a request", () => {
+    const text =
+      "Kode OTP 719204 telah kami kirim. Jangan bagikan kode ini kepada siapa pun.";
+    const result = scoreText({ text });
+
+    expect(ruleIds(text)).not.toContain("otp-request");
+    expect(result.risk).not.toBe("tinggi");
+  });
+
+  it("does not call a verification-code delivery a request", () => {
+    const text =
+      "Kode verifikasi 9081 kami kirim untuk login ke aplikasi. Berlaku 5 menit.";
+    const result = scoreText({ text });
+
+    expect(ruleIds(text)).not.toContain("otp-request");
+    expect(result.risk).not.toBe("tinggi");
+  });
+
+  it("catches the natural 'read it to me' request", () => {
+    const text = "Kode OTP sudah masuk? Mohon dibacakan ya, Pak.";
+    const result = scoreText({ text });
+
+    expect(ruleIds(text)).toContain("otp-request");
+    expect(result.hardOverride).toBe(true);
+    expect(result.risk).toBe("tinggi");
+  });
+
+  it("catches 'beri tahu 6 angka' as a request", () => {
+    const text = "Tolong beri tahu 6 angka yang baru masuk ke HP Anda.";
+    const result = scoreText({ text });
+
+    expect(ruleIds(text)).toContain("otp-request");
+    expect(result.risk).toBe("tinggi");
+  });
+
+  it("catches 'bacakan kode verifikasi' as a request", () => {
+    const text = "Bacakan kode verifikasinya ya, supaya bisa saya proses.";
+    const result = scoreText({ text });
+
+    expect(ruleIds(text)).toContain("otp-request");
+    expect(result.risk).toBe("tinggi");
+  });
+
+  it("keeps catching an explicit 'kirim kode verifikasi' request", () => {
+    const text = "Kirim kode verifikasi ke nomor ini sekarang.";
+    const result = scoreText({ text });
+
+    expect(ruleIds(text)).toContain("otp-request");
+    expect(result.risk).toBe("tinggi");
+  });
+});
