@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type {
   AgentStatus,
+  ConsensusGroup,
   OrchestrationTrace,
   OrchestratorEvent,
   OrchestratorRequest,
@@ -15,16 +16,19 @@ import {
   type SpecialistSpec,
   specialistSystemPrompt,
 } from "@/lib/orchestrator/agents";
-import { orchestratorDeadlineMs } from "@/lib/orchestrator/flag";
+import { orchestratorDeadlineMs, isConsensusScoreEnabled } from "@/lib/orchestrator/flag";
 import {
   COMMANDER_PROMPT,
   commanderUserPrompt,
   PLANNER_PROMPT,
   plannerUserPrompt,
+  SCORING_PROMPT,
+  scoringUserPrompt,
   SYNTHESIS_PROMPT,
   specialistUserPrompt,
   synthesisUserPrompt,
 } from "@/lib/orchestrator/prompts";
+import { findConsensus } from "@/lib/orchestrator/consensus";
 import {
   type ReportPoint,
   type ReportSignal,
@@ -39,18 +43,24 @@ import {
   type SubagentSession,
 } from "@/lib/orchestrator/subagent-runtime";
 import {
+  SUBMIT_SCORE_TOOL,
+  type ScoreDecision,
+  validateScoreDecision,
+} from "@/lib/orchestrator/score-decision";
+import {
   openAITools,
   TOOL_DEFS,
   type ToolContext,
 } from "@/lib/orchestrator/tools";
 import { extractLinks, parseLink } from "@/lib/scoring/link";
-import { scoreWithTrace } from "@/lib/scoring/score";
+import { scoreWithTrace, authorScore } from "@/lib/scoring/score";
 import { fetchChat } from "@/lib/server/llm";
 
 const MAX_AGENTS = 6;
 const MAX_PLANNER_TOKENS = 800;
 const MAX_SPECIALIST_TOKENS = 2400;
 const MAX_SYNTHESIS_TOKENS = 1400;
+const MAX_SCORE_TOKENS = 700;
 
 const PlannerOutputSchema = z
   .object({
@@ -951,6 +961,62 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
   };
 }
 
+async function makeScoreDecision(
+  baseline: ScoreResult,
+  group: ConsensusGroup,
+  chat: OrchestratorDeps["chat"],
+  signal: AbortSignal,
+): Promise<{ decision: ScoreDecision; ms: number } | null> {
+  const started = performance.now();
+  if (!chat) return null;
+  const messages: ModelMessage[] = [
+    { role: "system", content: SCORING_PROMPT },
+    { role: "user", content: scoringUserPrompt({ baseline, group }) },
+  ];
+  let invalid = 0;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let message: ModelMessage;
+    try {
+      message = await chat(
+        {
+          messages,
+          tools: [SUBMIT_SCORE_TOOL],
+          maxTokens: MAX_SCORE_TOKENS,
+          temperature: 0,
+        },
+        signal,
+      );
+    } catch {
+      return null;
+    }
+    const call = message.tool_calls?.[0];
+    if (!call || call.function.name !== "submit_score") return null;
+    const checked = validateScoreDecision(
+      safeJson(call.function.arguments),
+      group,
+    );
+    if (checked.ok) {
+      return {
+        decision: checked.decision,
+        ms: Math.round(performance.now() - started),
+      };
+    }
+    invalid += 1;
+    if (invalid >= 2) break;
+    messages.push({
+      role: "assistant",
+      content: message.content ?? "",
+      tool_calls: [call],
+    });
+    messages.push({
+      role: "tool",
+      tool_call_id: call.id ?? "submit-score",
+      content: JSON.stringify(checked),
+    });
+  }
+  return null;
+}
+
 function fallbackSynthesis(baseline: ScoreResult): string {
   const top = baseline.signals
     .filter((signal) => signal.weight > 0)
@@ -1152,6 +1218,43 @@ export async function runOrchestrator(
     reports.push(await runOne(step));
   }
 
+  const consensus = findConsensus(
+    reports.map((report) => ({
+      agent: report.agent,
+      status: report.status,
+      points: report.points,
+    })),
+  );
+  emit({ type: "consensus", groups: consensus });
+
+  let finalScore = baseline;
+  let scoreDecision: { decision: ScoreDecision; ms: number } | null = null;
+  if (
+    consensus.length > 0 &&
+    isConsensusScoreEnabled() &&
+    chat &&
+    !signal.aborted
+  ) {
+    scoreDecision = await makeScoreDecision(
+      baseline,
+      consensus[0],
+      chat,
+      signal,
+    );
+    if (scoreDecision) {
+      finalScore = authorScore(baseline, scoreDecision.decision, consensus[0]);
+    }
+    emit({
+      type: "score_decision",
+      result: finalScore,
+      baseline,
+      rationale:
+        scoreDecision?.decision.rationale ??
+        "Lumina tidak mengirim keputusan skor; skor engine dipertahankan.",
+      source: scoreDecision ? "model" : "fallback",
+    });
+  }
+
   emit({ type: "synthesis_start", agent: "synthesizer" });
   let text = "";
   const synthStarted = performance.now();
@@ -1165,7 +1268,7 @@ export async function runOrchestrator(
             content: synthesisUserPrompt({
               question: request.question,
               message: request.message,
-              baseline,
+              baseline: finalScore,
               reports: reports.map((report) => ({
                 agent: report.agent,
                 label: report.label,
@@ -1187,10 +1290,10 @@ export async function runOrchestrator(
   } catch {
     text = "";
   }
-  if (!text) text = fallbackSynthesis(baseline);
-  text = text.replace(/\b\d{1,3}\s*\/\s*100\b/g, `${baseline.score}/100`);
-  if (!text.includes(`${baseline.score}/100`)) {
-    text = `${fallbackSynthesis(baseline)} ${text}`.trim();
+  if (!text) text = fallbackSynthesis(finalScore);
+  text = text.replace(/\b\d{1,3}\s*\/\s*100\b/g, `${finalScore.score}/100`);
+  if (!text.includes(`${finalScore.score}/100`)) {
+    text = `${fallbackSynthesis(finalScore)} ${text}`.trim();
   }
   emit({ type: "synthesis_delta", agent: "synthesizer", text });
   emit({
@@ -1227,6 +1330,9 @@ export async function runOrchestrator(
     synthesis: text,
     totalMs: Math.round(performance.now() - started),
     degraded: reports.some((report) => report.status !== "selesai"),
+    baselineScore: baseline,
+    finalScore,
+    consensus,
   };
   emit({ type: "trace", trace });
   emit({
@@ -1239,7 +1345,7 @@ export async function runOrchestrator(
     events,
     trace,
     text,
-    score: baseline,
+    score: finalScore,
     degraded: trace.degraded,
   };
 }

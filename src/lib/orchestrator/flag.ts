@@ -9,3 +9,8 @@ export function orchestratorDeadlineMs(): number {
     ? value
     : 120_000;
 }
+
+export function isConsensusScoreEnabled(): boolean {
+  const value = process.env.LUMINA_CONSENSUS_SCORE?.trim();
+  return !/^(0|false|off|no)$/i.test(value ?? "");
+}
