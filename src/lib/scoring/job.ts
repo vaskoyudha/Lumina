@@ -1,4 +1,7 @@
 import type { Signal } from "@/lib/contracts/score";
+import { isQuotedWarning } from "@/lib/scoring/context";
+import { annotateSignal } from "@/lib/scoring/mechanism";
+import { normalizeWithMap, originalSpan } from "@/lib/scoring/normalize";
 
 /**
  * Lowongan Agent — fake job ads and pay-to-earn tasks.
@@ -100,6 +103,20 @@ interface JobRule {
 
 const JOB_RULES: readonly JobRule[] = [
   {
+    id: "job-admin-deposit",
+    weight: 0.75,
+    label: "Meminta deposit administrasi untuk proses rekrutmen",
+    pattern:
+      /\b(?:biaya administrasi|deposit)\b[^.!?]{0,60}\b(?:pendaftaran|penempatan|rekrutmen|kandidat)\b/i,
+  },
+  {
+    id: "job-withdrawal",
+    weight: 0.85,
+    label: "Saldo tugas harus ditebus dengan pembayaran tambahan",
+    pattern:
+      /\b(?:saldo tugas|penarikan komisi|penarikan saldo)\b[^.!?]{0,80}\b(?:top\s*up|deposit|bayar|setor)\b/i,
+  },
+  {
     id: "job-fee",
     weight: 0.75,
     label:
@@ -172,12 +189,15 @@ const NOISY: readonly JobRule[] = [
 ];
 
 function toSignal(rule: JobRule, match: RegExpMatchArray): Signal {
-  return {
-    label: rule.label,
-    weight: rule.weight,
-    evidence: match[0].trim(),
-    agent: "job",
-  };
+  return annotateSignal(
+    {
+      label: rule.label,
+      weight: rule.weight,
+      evidence: match[0].trim(),
+      agent: "job",
+    },
+    `job.${rule.id}`,
+  );
 }
 
 /** A declined span may still contain a later, independently demanded fee. */
@@ -236,7 +256,9 @@ export interface JobResult {
   note?: string;
 }
 
-export function jobSignals(text: string): JobResult {
+export function jobSignals(input: string): JobResult {
+  const normalized = normalizeWithMap(input);
+  const text = normalized.text;
   if (!JOB_CONTEXT.test(text)) {
     return { signals: [], note: "Bukan tawaran kerja." };
   }
@@ -245,7 +267,10 @@ export function jobSignals(text: string): JobResult {
   const noisy: Signal[] = [];
 
   for (const rule of JOB_RULES) {
-    const feeRule = rule.id === "job-fee" || rule.id === "job-overseas-fee";
+    const feeRule =
+      rule.id === "job-fee" ||
+      rule.id === "job-overseas-fee" ||
+      rule.id === "job-admin-deposit";
     const signal = matchRule(text, rule, feeRule);
     if (signal) strong.push(signal);
   }
@@ -262,5 +287,21 @@ export function jobSignals(text: string): JobResult {
     }
   }
 
-  return { signals: [...strong, ...noisy] };
+  return {
+    signals: [...strong, ...noisy]
+      .filter(
+        (s) =>
+          !isQuotedWarning(text, text.indexOf(s.evidence), s.evidence.length),
+      )
+      .map((s) => ({
+        ...s,
+        evidence: input.slice(
+          ...originalSpan(
+            normalized,
+            text.indexOf(s.evidence),
+            text.indexOf(s.evidence) + s.evidence.length,
+          ),
+        ),
+      })),
+  };
 }
