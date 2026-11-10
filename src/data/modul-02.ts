@@ -163,5 +163,5 @@ export const MODUL_02 = {
     "Ubah PIN dan password akun yang mungkin sudah disebutkan atau dikirim lewat OTP.",
     "Laporkan nomor dan kronologi ke IASC (iasc.ojk.go.id) serta polisi setempat.",
   ],
-  scenarioId: null,
+  scenarioId: "L4-fake-call",
 } satisfies ModuleContent;
