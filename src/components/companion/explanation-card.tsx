@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ChevronDown, Circle, ExternalLink } from "lucide-react";
+import { ReportTemplate } from "@/components/companion/report-template";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -9,6 +10,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type { Explanation, TacticExplained } from "@/lib/companion/explain";
+import type { ScoreResult } from "@/lib/contracts/score";
 import { cn } from "@/lib/utils";
 
 /**
@@ -109,11 +111,14 @@ function TacticRow({ tactic }: { tactic: TacticExplained }) {
 export function ExplanationCard({
   explanation,
   schemeName,
+  result,
   className,
 }: {
   explanation: Explanation;
   /** Human name of the matched scheme, e.g. "Phishing tautan & akun". */
   schemeName: string | null;
+  /** The verdict this explanation was built from; the report tool needs it. */
+  result: ScoreResult;
   className?: string;
 }) {
   const { tactics, anatomy, verify, report, unrecognized } = explanation;
@@ -252,14 +257,21 @@ export function ExplanationCard({
                 </li>
               ))}
             </ul>
+            <ReportTemplate result={result} channels={report} />
           </CardContent>
         </Card>
       ) : null}
 
-      {unrecognized && verify.length > 0 ? (
+      {unrecognized && report.length === 0 && verify.length > 0 ? (
         <p className="px-1 text-dim text-xs leading-snug">
           Polanya belum cocok dengan salah satu skema yang dikenal, jadi belum
           ada kanal laporan khusus. Langkah pemeriksaan di atas tetap berlaku.
+        </p>
+      ) : null}
+      {unrecognized && report.length > 0 ? (
+        <p className="px-1 text-dim text-xs leading-snug">
+          Polanya belum cocok dengan skema yang dikenal, tetapi kanal di atas
+          tetap menerima laporan penipuan. Langkah pemeriksaan juga berlaku.
         </p>
       ) : null}
     </div>
