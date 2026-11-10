@@ -3,15 +3,15 @@
 import { Check } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
+import { ActivityOrb } from "@/components/companion/activity-orb";
 import { SHIMMER_TEXT_CLASS } from "@/components/companion/thinking-row";
-import { AGENT_IDENTITIES } from "@/lib/agents/identities";
-import type { PlanStep } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
 
 export type CommanderPhase =
   | "reading"
   | "recognising"
   | "preparing"
+  | "delegating"
   | "done"
   | "stopped";
 
@@ -19,24 +19,17 @@ const STATUS: Record<CommanderPhase, string> = {
   reading: "Membaca pesan dan lampiran…",
   recognising: "Mengenali pola",
   preparing: "Menyiapkan agen",
+  delegating: "Menjalankan agen",
   done: "Selesai",
   stopped: "Berhenti sebelum selesai",
 };
 
-const nameList = new Intl.ListFormat("id", {
-  type: "conjunction",
-  style: "long",
-});
-
-function statusLabel(phase: CommanderPhase, names?: string): string {
+function statusLabel(phase: CommanderPhase): string {
   if (phase === "done") {
-    return names ? `Selesai · ${names} melapor` : "Selesai";
+    return "Selesai";
   }
   if (phase === "stopped") {
-    return names ? `Mendelegasikan ke ${names}` : "Ringkasan tidak tersedia";
-  }
-  if (phase === "preparing" && names) {
-    return `Mendelegasikan ke ${names}`;
+    return "Berhenti sebelum ringkasan";
   }
   return STATUS[phase];
 }
@@ -44,25 +37,17 @@ function statusLabel(phase: CommanderPhase, names?: string): string {
 export function CommanderCard({
   phase,
   announcement,
-  agents = [],
   source,
   startedAt,
 }: {
   phase: CommanderPhase;
   announcement?: string;
-  agents?: PlanStep[];
   source?: "model" | "fallback";
   /** Epoch ms when the run left the client; null hides the counter. */
   startedAt?: number;
 }) {
   const settled = phase === "done" || phase === "stopped";
   const waiting = !settled && phase !== "preparing";
-  const names =
-    agents.length > 0
-      ? nameList.format(
-          agents.map((step) => AGENT_IDENTITIES[step.agent].displayName),
-        )
-      : undefined;
   const [elapsed, setElapsed] = React.useState(0);
 
   React.useEffect(() => {
@@ -78,7 +63,7 @@ export function CommanderCard({
   }, [waiting, startedAt]);
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5 motion-safe:animate-[trace-enter_220ms_ease-out]">
       <div className="rounded-lg border border-line bg-panel px-2.5 py-2">
         <div className="flex items-start gap-2">
           <Image
@@ -90,8 +75,8 @@ export function CommanderCard({
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-semibold text-[12px] text-txt">Lumina</span>
-              <span className="rounded-full border border-line bg-panel-2 px-1.5 py-0.5 font-normal text-[9.5px] text-dim">
+              <span className="font-semibold text-[16px] text-txt">Lumina</span>
+              <span className="nav-active-tint rounded-full px-2.5 py-0.5 font-bold text-[11.5px] text-nav-active-ink">
                 Komandan
               </span>
             </div>
@@ -111,20 +96,17 @@ export function CommanderCard({
       <output className="flex min-h-8 items-center gap-2 px-1">
         {phase === "done" ? (
           <Check aria-hidden className="size-4 text-dim" />
-        ) : null}
+        ) : settled ? null : (
+          <ActivityOrb className="size-4" />
+        )}
         <span
           className={cn(
             "font-semibold text-[15px] leading-5",
             settled ? "text-dim" : SHIMMER_TEXT_CLASS,
           )}
         >
-          {statusLabel(phase, names)}
+          {statusLabel(phase)}
         </span>
-        {phase === "stopped" && names ? (
-          <span className="text-[11px] text-dim">
-            · ringkasan tidak tersedia
-          </span>
-        ) : null}
         {waiting && startedAt !== undefined ? (
           <span className="tabular min-w-[3.5rem] text-[11px] text-dim">
             {(elapsed / 1000).toFixed(1)} detik

@@ -1,21 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { CommanderCard } from "@/components/companion/commander-card";
 
-const agents = [
-  {
-    agent: "message" as const,
-    task: "Periksa narasi.",
-    skills: [],
-    tools: [],
-  },
-  {
-    agent: "qris" as const,
-    task: "Periksa pembayaran.",
-    skills: [],
-    tools: [],
-  },
-];
-
 describe("CommanderCard", () => {
   it("shows Lumina reading before any announcement", () => {
     render(<CommanderCard phase="reading" />);
@@ -24,29 +9,35 @@ describe("CommanderCard", () => {
     expect(screen.getByText(/membaca pesan/i)).toBeInTheDocument();
   });
 
-  it("names the agents Lumina delegates to", () => {
+  it("announces the pattern without naming uncalled agents", () => {
     render(
       <CommanderCard
         phase="preparing"
         announcement="Saya melihat pola permintaan OTP. Saya akan memanggil agen yang relevan."
-        agents={agents}
         source="model"
       />,
     );
     expect(
       screen.getByText(/saya melihat pola permintaan otp/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/mendelegasikan ke mochi dan ruru/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Menyiapkan agen")).toBeInTheDocument();
+    expect(screen.queryByText(/mochi/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/mendelegasikan ke/i)).not.toBeInTheDocument();
   });
 
-  it("keeps the delegation visible when the run stops short", () => {
-    render(<CommanderCard phase="stopped" agents={agents} />);
+  it("shows agents working once delegation starts", () => {
+    render(<CommanderCard phase="delegating" startedAt={Date.now() - 1500} />);
+    expect(screen.getByText("Menjalankan agen")).toBeInTheDocument();
+    expect(screen.getByText(/detik/)).toBeInTheDocument();
+  });
+
+  it("explains a run that stopped before synthesizing", () => {
+    render(<CommanderCard phase="stopped" />);
+    expect(screen.getByText(/berhenti sebelum ringkasan/i)).toBeInTheDocument();
+    expect(screen.queryByText(/mendelegasikan/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/mendelegasikan ke mochi dan ruru/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/ringkasan tidak tersedia/i)).toBeInTheDocument();
+      screen.queryByText(/ringkasan tidak tersedia/i),
+    ).not.toBeInTheDocument();
   });
 
   it("counts elapsed time while it is still reading", () => {

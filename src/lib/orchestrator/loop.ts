@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { streamChatText } from "@/lib/companion/voice-stream";
 import type {
-  AgentStatus,
   ConsensusGroup,
   OrchestrationTrace,
   OrchestratorEvent,
@@ -191,6 +191,8 @@ interface ChatOptions {
   responseFormat?: "json";
   /** Per-child model override; falls back to LUMINA_LLM_MODEL. */
   model?: string;
+  /** Receives incremental content when the provider honors `stream: true`. */
+  onDelta?: (chunk: string) => void;
 }
 
 export interface OrchestratorDeps {
@@ -304,6 +306,7 @@ async function defaultChat(
   );
   laneCursor = (laneCursor + 1) % total;
   let lastStatus = 0;
+  const onDelta = options.onDelta;
 
   for (const target of ordered) {
     const response = await fetchChat({
@@ -313,7 +316,7 @@ async function defaultChat(
       fallbackModel: env.fallbackModel,
       signal,
       body: {
-        stream: false,
+        stream: Boolean(onDelta),
         temperature: options.temperature ?? 0.2,
         max_tokens: options.maxTokens,
         messages: options.messages,
@@ -326,12 +329,33 @@ async function defaultChat(
       },
     });
     if (response.ok) {
-      const payload = (await response.json().catch(() => null)) as {
-        choices?: { message?: ModelMessage }[];
-      } | null;
-      const message = payload?.choices?.[0]?.message;
-      if (!message) throw new Error("upstream-empty");
-      return message;
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!onDelta || contentType.includes("application/json")) {
+        const payload = (await response.json().catch(() => null)) as {
+          choices?: { message?: ModelMessage }[];
+        } | null;
+        const message = payload?.choices?.[0]?.message;
+        if (!message) throw new Error("upstream-empty");
+        return message;
+      }
+      if (!response.body) throw new Error("upstream-empty");
+      const reader = streamChatText(response.body).getReader();
+      const decoder = new TextDecoder();
+      let content = "";
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          if (chunk.length === 0) continue;
+          content += chunk;
+          onDelta(chunk);
+        }
+        content += decoder.decode();
+      } finally {
+        reader.releaseLock();
+      }
+      return { role: "assistant", content };
     }
     lastStatus = response.status;
     await response.body?.cancel();
@@ -1034,6 +1058,37 @@ function fallbackSynthesis(baseline: ScoreResult): string {
     .join(" ");
 }
 
+const SCORE_TAIL = 16;
+const SCORE_PATTERN = /\b\d{1,3}\s*\/\s*100\b/g;
+
+function emitScoreSafe(
+  chunk: string,
+  state: { tail: string },
+  score: number,
+  emit: (text: string) => void,
+): void {
+  const buffer = state.tail + chunk;
+  if (buffer.length <= SCORE_TAIL) {
+    state.tail = buffer;
+    return;
+  }
+  const cut = buffer.length - SCORE_TAIL;
+  const safe = buffer.slice(0, cut).replace(SCORE_PATTERN, `${score}/100`);
+  state.tail = buffer.slice(cut);
+  if (safe) emit(safe);
+}
+
+function flushScoreSafe(
+  state: { tail: string },
+  score: number,
+  emit: (text: string) => void,
+): void {
+  if (!state.tail) return;
+  const safe = state.tail.replace(SCORE_PATTERN, `${score}/100`);
+  state.tail = "";
+  if (safe) emit(safe);
+}
+
 export async function runOrchestrator(
   request: OrchestratorRequest,
   deps: OrchestratorDeps = {},
@@ -1186,7 +1241,12 @@ export async function runOrchestrator(
     return result;
   };
   for (const step of plan.steps) {
-    if (performance.now() - started >= deadlineMs) {
+    // Leave the tail of the budget for synthesis. Without this reserve the
+    // loop skips the last agents exactly at the route's abort timer, so
+    // synthesis never gets to emit and the turn ends "stopped" with no answer.
+    const synthesisReserveMs = Math.min(30_000, Math.floor(deadlineMs * 0.25));
+    const agentDeadline = Math.max(0, deadlineMs - synthesisReserveMs);
+    if (performance.now() - started >= agentDeadline) {
       const spec = SPECIALISTS[step.agent];
       const skipped: SubagentResult = {
         agent: spec.id,
@@ -1261,6 +1321,7 @@ export async function runOrchestrator(
   emit({ type: "synthesis_start", agent: "synthesizer" });
   let text = "";
   const synthStarted = performance.now();
+  const deltaState = { tail: "" };
   try {
     const message = await chat(
       {
@@ -1284,12 +1345,19 @@ export async function runOrchestrator(
         ],
         maxTokens: MAX_SYNTHESIS_TOKENS,
         temperature: 0.2,
+        onDelta: (chunk) =>
+          emitScoreSafe(chunk, deltaState, finalScore.score, (safe) =>
+            emit({ type: "synthesis_delta", agent: "synthesizer", text: safe }),
+          ),
       },
       signal,
     );
     text =
       (message.content ?? "").trim() ||
       (message.reasoning_content ?? "").trim();
+    flushScoreSafe(deltaState, finalScore.score, (safe) =>
+      emit({ type: "synthesis_delta", agent: "synthesizer", text: safe }),
+    );
   } catch {
     text = "";
   }
@@ -1298,7 +1366,6 @@ export async function runOrchestrator(
   if (!text.includes(`${finalScore.score}/100`)) {
     text = `${fallbackSynthesis(finalScore)} ${text}`.trim();
   }
-  emit({ type: "synthesis_delta", agent: "synthesizer", text });
   emit({
     type: "synthesis_end",
     agent: "synthesizer",

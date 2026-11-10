@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowDown,
   Check,
   ChevronDown,
   Download,
@@ -57,6 +58,7 @@ import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { ThinkingRow } from "@/components/companion/thinking-row";
+import { useStickyScroll } from "@/components/companion/use-sticky-scroll";
 import { VerificationControls } from "@/components/companion/verification-controls";
 import {
   requestReply,
@@ -606,6 +608,13 @@ export function CompanionChat({
     at: number;
   } | null>(null);
   const inFlight = React.useRef<symbol | null>(null);
+  const activeControlRef = React.useRef<AbortController | null>(null);
+  const stoppedRef = React.useRef(false);
+  const streamedRef = React.useRef("");
+  const stop = React.useCallback(() => {
+    stoppedRef.current = true;
+    activeControlRef.current?.abort();
+  }, []);
   const attachmentUrls = React.useRef(new Set<string>());
   const pendingControllers = React.useRef(new Set<AbortController>());
   const pendingTimers = React.useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -641,7 +650,6 @@ export function CompanionChat({
   const [activeHighlight, setActiveHighlight] =
     React.useState<ActiveHighlight | null>(null);
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
-  const scrollRef = React.useRef<HTMLDivElement>(null);
   /** Height of the floating composer, so the log can pad its tail above it. */
   const [composerHeight, setComposerHeight] = React.useState(0);
   const composerObserver = React.useRef<ResizeObserver | null>(null);
@@ -675,6 +683,7 @@ export function CompanionChat({
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
+  const sticky = useStickyScroll<HTMLDivElement>(active?.id);
   const highlightsByUserTurn = React.useMemo(() => {
     const map = new Map<number, ReturnType<typeof highlightsForUserTurn>>();
     turns.forEach((turn, index) => {
@@ -968,16 +977,17 @@ export function CompanionChat({
     [latestCheck],
   );
 
-  React.useEffect(() => {
-    // `turns` is the trigger: this runs after every appended turn so the newest
-    // one is anchored to the top of the log.
+  React.useLayoutEffect(() => {
     if (turns.length === 0) return;
-    const log = scrollRef.current;
-    if (!log) return;
-    const nodes = log.querySelectorAll<HTMLElement>("[data-turn]");
-    const last = nodes[nodes.length - 1];
-    if (last) log.scrollTop = last.offsetTop - log.offsetTop - 8;
-  }, [turns]);
+    sticky.pinIfFollowing();
+  }, [turns, sticky.pinIfFollowing]);
+
+  const lastComposerHeight = React.useRef(composerHeight);
+  React.useLayoutEffect(() => {
+    if (lastComposerHeight.current === composerHeight) return;
+    lastComposerHeight.current = composerHeight;
+    sticky.pinIfFollowing();
+  }, [composerHeight, sticky.pinIfFollowing]);
 
   const send = React.useCallback(
     async (
@@ -1002,7 +1012,10 @@ export function CompanionChat({
       if (target === undefined) return;
       const operation = Symbol();
       inFlight.current = operation;
+      stoppedRef.current = false;
+      streamedRef.current = "";
       setBusy(true);
+      sticky.arm();
       const release = () => {
         if (inFlight.current !== operation) return;
         inFlight.current = null;
@@ -1010,6 +1023,7 @@ export function CompanionChat({
         setReadingAt(null);
       };
       const control = new AbortController();
+      activeControlRef.current = control;
       pendingControllers.current.add(control);
       try {
         // The composer owns its draft URLs and revokes them after submit. The
@@ -1463,10 +1477,12 @@ export function CompanionChat({
          * arrives late from a slow socket has nowhere to land. Without it, a
          * timed-out turn could regain text after the template was shown.
          */
-        const appendText = (chunk: string) =>
+        const appendText = (chunk: string) => {
+          if (chunk) streamedRef.current += chunk;
           patchCompanion((turn) =>
             turn.streaming ? { ...turn, text: turn.text + chunk } : turn,
           );
+        };
 
         /**
          * Why the words came from a template, in the reader's language.
@@ -1493,6 +1509,7 @@ export function CompanionChat({
           voice: "model" | "template",
           reason?: VoiceOutcome,
           finalResult?: ScoreResult,
+          note?: string,
         ) => {
           if (sealed) return;
           sealed = true;
@@ -1521,10 +1538,12 @@ export function CompanionChat({
                           ms: voiceMs,
                           note:
                             voice === "model"
-                              ? reason === "truncated"
-                                ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
-                                : undefined
-                              : templateNote(reason ?? "unconfigured"),
+                              ? (note ??
+                                (reason === "truncated"
+                                  ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
+                                  : undefined))
+                              : (note ??
+                                templateNote(reason ?? "unconfigured")),
                         }
                       : stage,
                   ),
@@ -1673,6 +1692,23 @@ export function CompanionChat({
                     scored,
                   )
                 : scored;
+              let pendingDelta = "";
+              let flushTimer: number | null = null;
+              const flushDelta = () => {
+                if (flushTimer !== null) {
+                  clearTimeout(flushTimer);
+                  flushTimer = null;
+                }
+                if (!pendingDelta) return;
+                const chunk = pendingDelta;
+                pendingDelta = "";
+                appendText(chunk);
+              };
+              const queueDelta = (chunk: string) => {
+                pendingDelta += chunk;
+                if (flushTimer === null)
+                  flushTimer = window.setTimeout(flushDelta, 50);
+              };
               const orchestrated = await streamOrchestrator(
                 {
                   lane: "periksa",
@@ -1703,9 +1739,23 @@ export function CompanionChat({
                         ? { result: event.result as ScoreResult }
                         : {}),
                     }));
+                    if (event.type === "synthesis_delta")
+                      queueDelta(event.text);
                   },
                 },
               );
+              if (stoppedRef.current) {
+                flushDelta();
+                finish(
+                  orchestrated.text.trim() || "Dihentikan.",
+                  "model",
+                  undefined,
+                  orchestrated.score ?? undefined,
+                  "Dihentikan pengguna.",
+                );
+                return;
+              }
+              flushDelta();
               if (
                 orchestrated.outcome === "model" &&
                 orchestrated.text.trim().length > 0
@@ -1720,11 +1770,32 @@ export function CompanionChat({
               }
             }
 
+            if (stoppedRef.current) {
+              finish(
+                "Dihentikan.",
+                "template",
+                undefined,
+                undefined,
+                "Dihentikan pengguna.",
+              );
+              return;
+            }
+
             const voice = await requestReply(
               digest,
               appendText,
               controller.signal,
             );
+            if (stoppedRef.current) {
+              finish(
+                voice.text.trim() || "Dihentikan.",
+                voice.text.trim() ? "model" : "template",
+                undefined,
+                undefined,
+                "Dihentikan pengguna.",
+              );
+              return;
+            }
 
             /*
              * A reply that was cut but had already said something is kept.
@@ -2001,6 +2072,17 @@ export function CompanionChat({
             }
           }
 
+          if (stoppedRef.current) {
+            finish(
+              streamedRef.current.trim() || "Dihentikan.",
+              "model",
+              undefined,
+              undefined,
+              "Dihentikan pengguna.",
+            );
+            return;
+          }
+
           if (loop.outcome === "model") {
             finish(loop.text, "model");
             const jobTool = jobToolRef.current;
@@ -2075,6 +2157,16 @@ export function CompanionChat({
             loop.outcome as VoiceOutcome,
           );
         } catch {
+          if (stoppedRef.current) {
+            finish(
+              streamedRef.current.trim() || "Dihentikan.",
+              "model",
+              undefined,
+              undefined,
+              "Dihentikan pengguna.",
+            );
+            return;
+          }
           finish(
             lane === "periksa"
               ? composeReply(text || attachments[0]?.name || "", result, {
@@ -2090,6 +2182,8 @@ export function CompanionChat({
           pendingTimers.current.delete(abortTimer);
         }
       } finally {
+        if (activeControlRef.current === control)
+          activeControlRef.current = null;
         pendingControllers.current.delete(control);
         release();
       }
@@ -2108,6 +2202,7 @@ export function CompanionChat({
       persistSession,
       session?.nama,
       orchestrator,
+      sticky.arm,
     ],
   );
 
@@ -2662,6 +2757,7 @@ export function CompanionChat({
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
                     onSearchJobs={openJobSearch}
+                    onStop={stop}
                     autoFocus
                     placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
                   />
@@ -2684,10 +2780,11 @@ export function CompanionChat({
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div
                 key={active?.id ?? "new"}
-                ref={scrollRef}
+                ref={sticky.ref}
+                onScroll={sticky.onScroll}
                 style={{ paddingBottom: composerHeight + 8 }}
                 className={cn(
-                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
+                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 [scrollbar-gutter:stable] motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
                   contentTop,
                 )}
                 role="log"
@@ -3191,6 +3288,17 @@ export function CompanionChat({
                 )}
               </div>
 
+              {!sticky.following ? (
+                <button
+                  type="button"
+                  onClick={sticky.pin}
+                  style={{ bottom: composerHeight + 12 }}
+                  className="absolute left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-2 text-[11px] font-medium text-txt shadow-rest hover:bg-panel-2"
+                >
+                  <ArrowDown aria-hidden className="size-3.5" /> Pesan baru
+                </button>
+              ) : null}
+
               {/*
                * The composer floats over the transcript tail instead of sitting
                * in the flow. As a hard sibling it ended the log on a straight
@@ -3206,6 +3314,7 @@ export function CompanionChat({
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
                     onSearchJobs={openJobSearch}
+                    onStop={stop}
                     placeholder="Tempel pesan berikutnya…"
                   />
                 </div>

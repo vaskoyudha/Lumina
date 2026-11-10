@@ -355,6 +355,84 @@ describe("CompanionChat · real user intent regressions", () => {
     expect(screen.getByTestId("score-card")).toBeInTheDocument();
   });
 
+  it("streams the answer before the run settles", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockClear();
+    const gate = Promise.withResolvers<void>();
+    orchestrate.mockImplementationOnce(async (_request, options) => {
+      options.onEvent?.({
+        type: "synthesis_delta",
+        runId: "run-stream",
+        seq: 1,
+        at: 0,
+        agent: "synthesizer",
+        text: "Bagian satu. ",
+      });
+      await gate.promise;
+      return {
+        outcome: "model" as const,
+        text: "Bagian satu. Bagian dua.",
+        events: [],
+        trace: null,
+        score: null,
+      };
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+    await sendApk(user);
+
+    expect(await screen.findByText(/bagian satu/i)).toBeInTheDocument();
+    await act(async () => {
+      gate.resolve();
+    });
+    expect(await screen.findByText(/bagian dua/i)).toBeInTheDocument();
+  });
+
+  it("stop keeps the partial answer", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockClear();
+    orchestrate.mockImplementationOnce((_request, options) => {
+      const { promise, resolve } =
+        Promise.withResolvers<orchestratorClient.OrchestratorStreamResult>();
+      options.onEvent?.({
+        type: "synthesis_delta",
+        runId: "run-stop",
+        seq: 1,
+        at: 0,
+        agent: "synthesizer",
+        text: "Bagian satu.",
+      });
+      const settle = () => {
+        clearTimeout(timer);
+        resolve({
+          outcome: "timeout",
+          text: "Bagian satu.",
+          events: [],
+          trace: null,
+          score: null,
+        });
+      };
+      const timer = setTimeout(settle, 1000);
+      options.signal?.addEventListener("abort", settle, { once: true });
+      return promise;
+    });
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+    await sendApk(user);
+    await screen.findByText(/bagian satu/i);
+
+    await user.click(screen.getByRole("button", { name: "Hentikan" }));
+
+    expect(screen.getByText(/bagian satu/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Hentikan" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it("excludes a checked message from later conversational history in every lane", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
