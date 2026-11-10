@@ -1006,16 +1006,13 @@ export function CompanionChat({
         }
 
         /*
-         * Attachment reading is its own agent step. Images come from the OCR
-         * result; text-like files are read on the device. Unsupported files are
-         * named as unsupported rather than silently scored from a filename.
+         * Attachment reading is local, not an agent stage. Images come from the
+         * OCR result; text-like files are read on the device. Unsupported files
+         * are named as unsupported rather than silently scored from a filename.
          */
-        const readStarted = performance.now();
         const readResult = contentQuestion
           ? await readAttachments(attachments, transcription, control.signal)
           : null;
-        const readMs = performance.now() - readStarted;
-        const links = hasLinks ? extractLinks(text) : [];
         const modelAttachments = recalledText
           ? [{ kind: "image" as const, text: recalledText.slice(0, 6000) }]
           : readResult
@@ -1149,53 +1146,13 @@ export function CompanionChat({
               }
             : null;
 
-        /*
-         * A content question has its own first step: reading the attachment.
-         * The stage id is reused, but the label names what actually happened, so
-         * the trace cannot imply a report was being prepared.
-         */
-        const readerStage: AgentStage | null =
-          contentQuestion && recalledText
-            ? {
-                id: "evidence",
-                label: "Pembaca Lampiran",
-                task: "Memakai teks lampiran yang dikirim sebelumnya",
-                status: "selesai",
-                findings: 0,
-                ms: 0,
-                note: "Teks dari lampiran sebelumnya dipakai.",
-              }
-            : contentQuestion && readResult
-              ? {
-                  id: "evidence",
-                  label: "Pembaca Lampiran",
-                  task: "Membaca teks dari lampiran yang ditanyakan",
-                  status:
-                    readResult.readable > 0 || hasLinks
-                      ? "selesai"
-                      : "dilewati",
-                  findings: 0,
-                  ms: readMs,
-                  note:
-                    readResult.readable > 0
-                      ? `${readResult.readable} lampiran terbaca`
-                      : hasLinks
-                        ? `${links.length} tautan dibaca dari pertanyaan`
-                        : (readResult.reads.find((read) => read.note)?.note ??
-                          "Tidak ada teks yang bisa dibaca."),
-                }
-              : null;
-
         const stages: AgentStage[] = checked
           ? [
               ...(trace?.stages ?? []),
               ...(evidenceStage ? [evidenceStage] : []),
             ]
-          : readerStage
-            ? [readerStage]
-            : [];
-        const detectorMs =
-          (trace?.totalMs ?? 0) + (checked ? evidenceMs : readMs);
+          : [];
+        const detectorMs = (trace?.totalMs ?? 0) + (checked ? evidenceMs : 0);
 
         const companionId = id();
         const voiceStartedAt = Date.now();
@@ -1206,22 +1163,21 @@ export function CompanionChat({
          * would let the header show a finished checkmark over work still in
          * flight — the one dishonest state this card could produce.
          */
-        const openTrace: AgentTrace | null =
-          checked || contentQuestion
-            ? {
-                stages: [
-                  ...stages,
-                  {
-                    id: "voice",
-                    ...STAGE_LABEL.voice,
-                    status: "berjalan",
-                    findings: 0,
-                    ms: 0,
-                  },
-                ],
-                totalMs: detectorMs,
-              }
-            : null;
+        const openTrace: AgentTrace | null = checked
+          ? {
+              stages: [
+                ...stages,
+                {
+                  id: "voice",
+                  ...STAGE_LABEL.voice,
+                  status: "berjalan",
+                  findings: 0,
+                  ms: 0,
+                },
+              ],
+              totalMs: detectorMs,
+            }
+          : null;
 
         /*
          * The teaching layer is a pure function of the verdict, so it is computed
@@ -2644,7 +2600,6 @@ export function CompanionChat({
                           result={turn.result}
                           live={turn.streaming === true}
                           announce={false}
-                          mode={turn.contentQuestion ? "reader" : "detector"}
                         />
                       ) : null}
 
@@ -3032,17 +2987,12 @@ export function CompanionChat({
                * The composer floats over the transcript tail instead of sitting
                * in the flow. As a hard sibling it ended the log on a straight
                * edge, so scrolling looked like content being chopped by a box.
-               * The gradient lets the last rows slide under the field, and the
-               * measured height keeps the newest turn reachable above it.
+               * The measured height keeps the newest turn reachable above it.
                */}
               <div
                 ref={setComposerNode}
                 className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6"
               >
-                <div
-                  aria-hidden
-                  className="absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-bg via-bg/90 to-transparent"
-                />
                 <div className="pointer-events-auto relative mx-auto w-full max-w-[640px]">
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}

@@ -259,7 +259,7 @@ describe("CompanionChat · images are read, then scored locally", () => {
     expect(
       await screen.findByText(/Dari teks lampiran tadi/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Pembaca lampiran")).toBeInTheDocument();
+    expect(screen.queryByText("Pembaca lampiran")).not.toBeInTheDocument();
     expect(screen.getAllByText("Orkestrator")).toHaveLength(1);
 
     const answerCall = fetchMock.mock.calls.find(
