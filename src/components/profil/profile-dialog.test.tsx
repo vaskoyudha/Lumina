@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfileDialog } from "@/components/profil/profile-dialog";
 
@@ -176,5 +176,64 @@ describe("ProfileDialog settings shell", () => {
     expect(
       (await screen.findAllByText(/password saat ini salah/i)).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("lists active sessions and revokes another device", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        account: session,
+        hasPassword: true,
+        sessions: [
+          {
+            id: "a".repeat(64),
+            device: "Firefox · Linux",
+            ip: "103.28.1.2",
+            signedIn: "2026-11-10T04:30:00.000Z",
+            lastActive: "2026-11-10T04:30:00.000Z",
+            current: true,
+          },
+          {
+            id: "b".repeat(64),
+            device: "Chrome · Windows",
+            ip: null,
+            signedIn: "2026-10-13T15:23:00.000Z",
+            lastActive: "2026-10-13T15:23:00.000Z",
+            current: false,
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+    const { revokeSessionAction } = jest.requireMock("@/lib/auth/actions");
+    revokeSessionAction.mockResolvedValue({ ok: true });
+
+    const user = userEvent.setup();
+    render(
+      <ProfileDialog
+        session={session}
+        section="privasi"
+        onOpenChange={jest.fn()}
+      />,
+    );
+
+    expect(
+      (await screen.findAllByText(/firefox · linux/i)).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/chrome · windows/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/sesi ini/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ip tidak tercatat/i).length).toBeGreaterThan(0);
+
+    await user.click(
+      screen.getByRole("button", { name: /keluarkan chrome · windows/i }),
+    );
+
+    expect(revokeSessionAction).toHaveBeenCalledWith("b".repeat(64));
+    await waitFor(() =>
+      expect(screen.queryByText(/chrome · windows/i)).toBeNull(),
+    );
+    expect(
+      screen.getByRole("button", { name: /keluar dari semua perangkat/i }),
+    ).toBeInTheDocument();
   });
 });
