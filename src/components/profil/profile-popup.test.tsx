@@ -15,8 +15,16 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: jest.fn() }),
+}));
+
 jest.mock("@/lib/auth/actions", () => ({
   logout: jest.fn(),
+  updateNama: jest.fn(),
+  changePasswordAction: jest.fn(),
+  revokeSessionAction: jest.fn(),
+  logoutEverywhere: jest.fn(),
 }));
 
 jest.mock("@/lib/learning/actions", () => ({
@@ -102,7 +110,7 @@ describe("ProfilePopup", () => {
     );
 
     const dialog = await screen.findByRole("dialog", {
-      name: /profil saya/i,
+      name: /pengaturan/i,
     });
     expect(
       within(dialog).getAllByText("siti@lumina.id").length,
