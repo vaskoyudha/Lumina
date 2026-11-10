@@ -352,7 +352,10 @@ function ensureBaselineSpecialist(
     skills: spec.skills,
     tools: spec.tools,
   };
-  const out = steps.length < MAX_AGENTS ? [...steps, step] : [...steps.slice(0, -1), step];
+  const out =
+    steps.length < MAX_AGENTS
+      ? [...steps, step]
+      : [...steps.slice(0, -1), step];
   return dedupePlan([...out, ...fallback]);
 }
 

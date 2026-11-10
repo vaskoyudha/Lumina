@@ -25,6 +25,14 @@ jest.mock("@/lib/companion/history", () => ({
   saveConversationHistory: jest.fn(async () => ({ ok: true })),
 }));
 
+jest.mock("@/lib/companion/history", () => ({
+  listConversationHistory: jest.fn(async () => ({
+    ok: true,
+    conversations: [],
+  })),
+  saveConversationHistory: jest.fn(async () => ({ ok: true })),
+}));
+
 /**
  * This suite renders the whole conversation client and runs the full
  * deterministic pipeline. The full run executes it beside ~60 other suites on

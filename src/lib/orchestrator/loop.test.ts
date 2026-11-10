@@ -1,7 +1,7 @@
 import type { OrchestratorRequest } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
-import { clearSubagentSessions } from "@/lib/orchestrator/subagent-runtime";
 import { runOrchestrator } from "@/lib/orchestrator/loop";
+import { clearSubagentSessions } from "@/lib/orchestrator/subagent-runtime";
 
 const baseline: ScoreResult = {
   score: 72,
@@ -473,8 +473,7 @@ describe("runOrchestrator", () => {
     }
     expect(
       reports.some(
-        (report) =>
-          report.type === "agent_result" && report.status === "gagal",
+        (report) => report.type === "agent_result" && report.status === "gagal",
       ),
     ).toBe(true);
   });

@@ -38,7 +38,10 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
-import { ExplanationCard, type AgentFinding } from "@/components/companion/explanation-card";
+import {
+  type AgentFinding,
+  ExplanationCard,
+} from "@/components/companion/explanation-card";
 import {
   DetectionText,
   HighlightExplanation,
@@ -2770,7 +2773,9 @@ export function CompanionChat({
                                 null
                               }
                               result={turn.result}
-                              agentFindings={agentFindingsFrom(turn.orchestration)}
+                              agentFindings={agentFindingsFrom(
+                                turn.orchestration,
+                              )}
                               hideReport={Boolean(turn.report)}
                             />
                           ) : null}

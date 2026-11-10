@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ScoreResult, Signal } from "@/lib/contracts/score";
 import type { SpecialistId } from "@/lib/contracts/orchestrator";
+import type { ScoreResult, Signal } from "@/lib/contracts/score";
 import { verifyLink } from "@/lib/link-verify/urlvet";
 import { DETECTOR_IDS, type DetectorId } from "@/lib/scoring/detector-ids";
 import { extractEntities } from "@/lib/scoring/extract";

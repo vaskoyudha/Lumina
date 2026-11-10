@@ -1,6 +1,5 @@
-import type { SpecialistId } from "@/lib/contracts/orchestrator";
+import type { AgentStatus, SpecialistId } from "@/lib/contracts/orchestrator";
 import type { ReportPoint } from "@/lib/orchestrator/report";
-import type { AgentStatus } from "@/lib/contracts/orchestrator";
 
 /**
  * In-process subagent runtime.

@@ -16,9 +16,7 @@ function result(agent: "message" | "job"): SubagentResult {
   };
 }
 
-function envelope(
-  overrides: Partial<SubagentEnvelope> = {},
-): SubagentEnvelope {
+function envelope(overrides: Partial<SubagentEnvelope> = {}): SubagentEnvelope {
   return {
     caseId: "case-1",
     agent: "message",
@@ -55,9 +53,7 @@ describe("SubagentRuntime", () => {
     const runtime = new SubagentRuntime(run, { store: new Map() });
 
     const first = await runtime.spawn(envelope());
-    const second = await runtime.send(
-      envelope({ task: "follow-up question" }),
-    );
+    const second = await runtime.send(envelope({ task: "follow-up question" }));
 
     expect(second.session.id).toBe(first.session.id);
     expect(second.session.messages.map((message) => message.content)).toEqual([
