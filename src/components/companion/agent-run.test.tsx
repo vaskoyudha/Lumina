@@ -432,7 +432,7 @@ describe("AgentRun", () => {
     expect(within(body as HTMLElement).getByText(note)).toBeInTheDocument();
   });
 
-  it("renders job-search as a non-detector row", () => {
+  it("keeps job-search out of the agent rows", () => {
     const withSearch: AgentTrace = {
       ...trace,
       stages: [
@@ -449,12 +449,8 @@ describe("AgentRun", () => {
       totalMs: 15,
     };
     render(<AgentRun trace={withSearch} />);
-    const row = screen.getByTestId("agent-job-search");
-    expect(within(row).getByText("Pencari Lowongan")).toBeInTheDocument();
-    // It searches the scan, it does not inspect the message: no "0 temuan".
-    expect(within(row).queryByText(/0 temuan/)).not.toBeInTheDocument();
-    expect(within(row).getByText("Selesai")).toBeInTheDocument();
-    expect(within(row).getByText("2 lowongan cocok")).toBeInTheDocument();
+    // The lowongan card owns this surface; the run strip does not duplicate it.
+    expect(screen.queryByTestId("agent-job-search")).not.toBeInTheDocument();
   });
 
   it("subtracts voice and job-search from the engine time", () => {

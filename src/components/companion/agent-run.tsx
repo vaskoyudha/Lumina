@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Briefcase,
   Check,
   ChevronRight,
   Circle,
@@ -9,6 +8,7 @@ import {
   Loader2,
   MinusCircle,
   PenLine,
+  Workflow,
   XCircle,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
@@ -234,7 +234,7 @@ function Chip({
   return (
     <span
       className={cn(
-        "rounded-md border border-line px-1.5 py-0.5 text-[10px] leading-none text-txt/70",
+        "rounded-md border border-brand-line bg-panel px-1.5 py-0.5 text-[10px] leading-none text-txt/70",
         tone === "danger" && "border-danger/30 text-danger",
         tone === "warn" && "border-warn/30 text-warn",
       )}
@@ -272,17 +272,10 @@ function AgentBubble({
 }) {
   const [open, setOpen] = React.useState(false);
   const profile = isDetector(stage.id) ? AGENT_REGISTRY[stage.id] : null;
-  const isSearch = stage.id === "job-search";
-  const identity = isSearch
-    ? "var(--lumina-agent-job)"
-    : profile
-      ? `var(${profile.identity})`
-      : "var(--lumina-brand)";
-  const soft = isSearch
-    ? "var(--lumina-agent-job-soft)"
-    : profile
-      ? `var(${profile.identity}-soft)`
-      : "var(--lumina-brand-soft)";
+  const identity = profile ? `var(${profile.identity})` : "var(--lumina-brand)";
+  const soft = profile
+    ? `var(${profile.identity}-soft)`
+    : "var(--lumina-brand-soft)";
   const signals = profile ? signalsFor(result, profile.id) : [];
   const explain = stage.status === "dilewati" || stage.status === "gagal";
   const note = stage.note ?? (explain ? "Tidak ada alasan tercatat." : null);
@@ -320,8 +313,6 @@ function AgentBubble({
                 />
               ) : profile ? (
                 <profile.icon className="size-3.5" />
-              ) : isSearch ? (
-                <Briefcase className="size-3.5" />
               ) : (
                 <PenLine className="size-3.5" />
               )}
@@ -538,22 +529,35 @@ export function AgentRun({
     >
       <motion.div
         data-testid="agent-summary"
-        className="rounded-card border border-line bg-panel p-3.5"
+        className="rounded-card border-2 border-brand/50 bg-panel p-3.5 shadow-[var(--appnext-shadow-soft)]"
         initial={animated ? { opacity: 0, y: 4 } : false}
         animate={animated ? { opacity: 1, y: 0 } : false}
         transition={{ duration: 0.12, ease: "easeOut" }}
       >
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="font-medium text-[12px] text-txt">Orkestrator</span>
-          <span className="text-[11px] text-dim">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <span className="flex items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft">
+              <span className="flex size-6 items-center justify-center rounded-full bg-brand">
+                <Workflow
+                  aria-hidden
+                  strokeWidth={2}
+                  className="size-3.5 text-white"
+                />
+              </span>
+            </span>
+            <span className="font-bold text-[15px] text-txt leading-snug">
+              Orkestrator
+            </span>
+          </span>
+          <span className="text-[11.5px] text-dim">
             {AGENT_SEQUENCE.length} agen{idle ? " siap" : ""}
           </span>
           {idle ? (
-            <span className="text-[11px] text-dim/80">
+            <span className="text-[11.5px] text-dim/80">
               Belum ada pemeriksaan
             </span>
           ) : state === "berjalan" ? (
-            <span className="text-[11px] text-brand-ink">
+            <span className="text-[11.5px] text-brand-ink">
               {completed} agen selesai ·{" "}
               {voiceLive ? "menyusun jawaban…" : "berjalan…"}
             </span>
@@ -673,20 +677,6 @@ export function AgentRun({
             />
           </motion.li>
         ))}
-        {jobSearch ? (
-          <motion.li
-            key={jobSearch.id}
-            variants={agentVariants}
-            className="min-w-0"
-          >
-            <AgentBubble
-              stage={jobSearch}
-              result={result}
-              live={live && jobSearch.status === "berjalan"}
-              reduced={reduce ?? false}
-            />
-          </motion.li>
-        ) : null}
         {voice ? (
           <motion.li
             key={voice.id}
