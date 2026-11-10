@@ -30,15 +30,18 @@ async function ModerationContent() {
     return <CommunityUnavailable />;
   }
   return (
-    <div className="flex w-full min-w-0 flex-col gap-5 px-4 py-5">
-      <h1 className="text-2xl font-medium">Laporan komunitas</h1>
+    <div className="flex w-full min-w-0 flex-col gap-4 pb-8">
+      <h1 className="text-2xl font-semibold">Laporan komunitas</h1>
       <p className="text-sm text-dim">
         Tinjau isi sebelum mengambil tindakan. Identitas pelapor tidak
         ditampilkan.
       </p>
       {reports.length ? (
         reports.map((r) => (
-          <Card key={`${r.kind}-${r.id}`}>
+          <Card
+            key={`${r.kind}-${r.id}`}
+            className="rounded-card border border-line shadow-[var(--appnext-shadow-ambient)]"
+          >
             <CardHeader>
               <CardTitle className="break-words [overflow-wrap:anywhere]">
                 {r.title}
