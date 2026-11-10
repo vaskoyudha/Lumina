@@ -54,14 +54,14 @@ export function CommanderCard({
   }, [waiting, startedAt]);
 
   return (
-    <div className="rounded-lg border border-brand-edge bg-brand-soft/40 px-3 py-2">
+    <div className="rounded-lg border border-line bg-panel px-2.5 py-2">
       <div className="flex items-start gap-2">
         <Image
-          src="/images/companion-orb.png"
+          src="/brand/agents/lumina.jpg"
           alt=""
           width={32}
           height={32}
-          className="size-8 shrink-0 rounded-full border border-brand-edge object-cover"
+          className="size-8 shrink-0 rounded-full border border-line object-cover"
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
