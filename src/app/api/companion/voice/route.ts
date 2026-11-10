@@ -1,5 +1,6 @@
 import { streamChatText } from "@/lib/companion/voice-stream";
 import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
+import { fetchChat } from "@/lib/server/llm";
 import {
   BodyTooLarge,
   limitAI,
@@ -78,45 +79,22 @@ export async function POST(request: Request) {
   const upstreamControl = upstreamAbort(request, TIMEOUT_MS);
 
   try {
-    const upstream = await fetch(
-      `${base.replace(/\/+$/, "")}/chat/completions`,
-      {
-        method: "POST",
-        signal: upstreamControl.signal,
-        headers: {
-          "content-type": "application/json",
-          ...(process.env.LUMINA_LLM_KEY
-            ? { authorization: `Bearer ${process.env.LUMINA_LLM_KEY}` }
-            : {}),
-        },
-        body: JSON.stringify({
-          model,
-          stream: true,
-          temperature: 0.3,
-          /*
-           * Maps to the model's minimum thinking level. It cannot be turned
-           * off for Gemini 3.8 Flash: `reasoning_tokens` stay at 600-950
-           * whether this field is present or not, which is why the timeout,
-           * not the prompt, is what keeps a demo turn inside the deadline.
-           */
-          reasoning_effort: "none",
-          /*
-           * 800, measured. This model is a reasoning model and
-           * `reasoning_tokens` are billed inside `completion_tokens`, so a 220
-           * cap is 220 minus 54-206 tokens of thinking. Measured: 40 -> 0
-           * visible characters, 80 -> 85 cut mid-word, 220 -> sometimes cut,
-           * 800 -> 359 characters with `finish_reason: "stop"`. 1600 was
-           * proposed and rejected: it buys more thinking on the critical path,
-           * not a longer answer.
-           */
-          max_tokens: 800,
-          messages: [
-            { role: "system", content: SYSTEM },
-            { role: "user", content: JSON.stringify(parsed.data) },
-          ],
-        }),
+    const upstream = await fetchChat({
+      base,
+      apiKey: process.env.LUMINA_LLM_KEY,
+      model,
+      fallbackModel: process.env.LUMINA_LLM_FALLBACK_MODEL,
+      signal: upstreamControl.signal,
+      body: {
+        stream: true,
+        temperature: 0.3,
+        max_tokens: 800,
+        messages: [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: JSON.stringify(parsed.data) },
+        ],
       },
-    );
+    });
 
     if (!upstream.ok || !upstream.body) {
       upstreamControl.cleanup();

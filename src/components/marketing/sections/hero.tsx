@@ -59,11 +59,11 @@ export function Hero() {
               <span>{brand.heroBadge}</span>
             </div>
 
-            <h1 className="max-w-xl font-medium text-4xl text-white leading-[1.08] tracking-tight sm:text-5xl lg:text-[58px]">
+            <h2 className="max-w-xl font-medium text-4xl text-white leading-[1.08] tracking-tight sm:text-5xl lg:text-[58px]">
               {brand.heroTitle[0]}
               <br />
               {brand.heroTitle[1]}
-            </h1>
+            </h2>
 
             <p className="max-w-md font-normal text-amberwarm-100/85 text-sm leading-relaxed sm:text-base">
               {brand.heroBody}
@@ -138,7 +138,7 @@ export function Hero() {
           <div className="flex lg:col-span-5 lg:justify-end">
             <div className="glass-card w-full max-w-sm rounded-2xl p-4 shadow-2xl sm:p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="font-medium text-amberwarm-50 text-xs sm:text-sm">
+                <span className="font-medium text-amberwarm-50 text-sm">
                   Bagaimana perasaanmu?
                 </span>
                 <span

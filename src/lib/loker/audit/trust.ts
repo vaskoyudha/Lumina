@@ -125,7 +125,7 @@ export function cocokDaftarDomain(
   daftar: readonly string[],
 ): boolean {
   for (const domain of daftar) {
-    if (hostname === domain || hostname.endsWith("." + domain)) return true;
+    if (hostname === domain || hostname.endsWith(`.${domain}`)) return true;
   }
   return false;
 }

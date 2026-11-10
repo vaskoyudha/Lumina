@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
+import { MAX_OBSERVATIONS, ToolObservationSchema } from "@/lib/contracts/loop";
 
 /**
  * The payload for the conversational lanes.
@@ -14,7 +15,12 @@ import { VoiceDigestSchema } from "@/lib/contracts/agent-run";
  * never leaves the device" testable.
  */
 
-export const AnswerLaneSchema = z.enum(["tanya", "lanjutan", "obrolan"]);
+export const AnswerLaneSchema = z.enum([
+  "tanya",
+  "lanjutan",
+  "obrolan",
+  "belajar",
+]);
 export type AnswerLane = z.infer<typeof AnswerLaneSchema>;
 
 export const AnswerHistoryEntrySchema = z
@@ -41,9 +47,28 @@ export const AnswerTacticSchema = z
   })
   .strict();
 
+/**
+ * Extracted attachment text for a turn where the user explicitly asked about
+ * the attachment's content.
+ *
+ * This is the one deliberate exception to the old "no attachment content"
+ * posture. It is only populated for a content question (never a safety check),
+ * carries no filename or URL, and is capped. The scoring path still runs
+ * entirely on the device; a checked message never enters this field.
+ */
+export const AnswerAttachmentSchema = z
+  .object({
+    kind: z.enum(["image", "text", "pdf", "link", "other"]),
+    text: z.string().min(1).max(6000),
+  })
+  .strict();
+
+export type AnswerAttachment = z.infer<typeof AnswerAttachmentSchema>;
+
 export const AnswerRequestSchema = z
   .object({
     lane: AnswerLaneSchema,
+    moduleNo: z.number().int().min(1).max(99).optional(),
     /** What the user typed. Never a message they received. */
     question: z.string().min(1).max(2000),
     /** Chat-lane turns only. The client filters checked turns out. */
@@ -54,6 +79,30 @@ export const AnswerRequestSchema = z
     modules: z.array(AnswerModuleSchema).max(12).default([]),
     /** Public tactic facts, with no `evidence` field to leak a quote. */
     tactics: z.array(AnswerTacticSchema).max(6).default([]),
+    /** True when the question is about what an attachment says, not its safety. */
+    contentQuestion: z.boolean().default(false),
+    /** Extracted text for an explicit content question. No filenames or URLs. */
+    attachmentContext: z.array(AnswerAttachmentSchema).max(3).default([]),
+    /** Whether the client holds a verdict the report tool may use. */
+    hasVerdict: z.boolean().default(false),
+    /**
+     * The signed-in user's display name, for a natural address. This is the
+     * user's own profile field, never a message they received.
+     */
+    userName: z.string().min(1).max(80).optional(),
+    /**
+     * The URL the reader just approved in the confirmation card. It must be
+     * present verbatim in `question`; the route offers `check_link` only then.
+     * Omitted on every ordinary turn.
+     */
+    linkApproved: z.string().min(1).max(2048).optional(),
+    /** Tool results from earlier loop steps, in order. */
+    observations: z
+      .array(ToolObservationSchema)
+      .max(MAX_OBSERVATIONS)
+      .default([]),
+    /** Last step: the route withholds tools so the loop cannot run away. */
+    final: z.boolean().default(false),
   })
   .strict();
 

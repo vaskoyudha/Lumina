@@ -7,7 +7,6 @@ import {
   Link2,
   Maximize2,
   Minus,
-  PanelRightOpen,
   Plus,
   Sparkle,
   Sparkles,
@@ -33,7 +32,7 @@ import {
   AGENT_DISPLAY_NAME,
   AGENT_MECHANISM,
   AGENT_REGISTRY,
-  AGENT_SEQUENCE,
+  CREW_SEQUENCE,
   type DetectorAgent,
   LUMINA_STEPS,
 } from "@/components/companion/agents";
@@ -86,17 +85,12 @@ export function AgentsView({
   onExport,
   onCopyLink,
   copied = false,
-  panelCollapsed = false,
-  onOpenPanel,
 }: {
   onSelect: (agent: DetectorAgent) => void;
   selected?: DetectorAgent | null;
   onExport: () => void;
   onCopyLink: () => void;
   copied?: boolean;
-  /** The detail pane collapsed to its rail, so reopening moves into this row. */
-  panelCollapsed?: boolean;
-  onOpenPanel?: () => void;
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-visible">
@@ -160,23 +154,6 @@ export function AgentsView({
                   Komunitas
                 </Link>
               </Button>
-              {panelCollapsed && onOpenPanel ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Buka panel detail"
-                  aria-expanded={false}
-                  onClick={onOpenPanel}
-                  className="hidden size-10 shrink-0 rounded-[10px] border border-hairline-strong bg-panel text-ink-soft shadow-sm transition-colors hover:bg-panel-2 hover:text-txt lg:grid"
-                >
-                  <PanelRightOpen
-                    aria-hidden
-                    strokeWidth={1.7}
-                    className="size-4"
-                  />
-                </Button>
-              ) : null}
             </div>
           </div>
         </div>
@@ -204,7 +181,7 @@ export function AgentsView({
            * score. Every mark is solid: a wiring map, not a live flow.
            */}
           <ul className="mt-1 grid list-none grid-cols-1 gap-x-4 sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-4 lg:gap-x-6">
-            {AGENT_SEQUENCE.map((agent, index) => (
+            {CREW_SEQUENCE.map((agent, index) => (
               <Fragment key={agent}>
                 <li className="flex min-w-0 flex-col">
                   <AgentLane
@@ -214,7 +191,7 @@ export function AgentsView({
                     selected={selected === agent}
                   />
                   <div className="flex justify-center lg:hidden">
-                    {index < AGENT_SEQUENCE.length - 1 ? (
+                    {index < CREW_SEQUENCE.length - 1 ? (
                       <Rail className="h-9" />
                     ) : null}
                   </div>
@@ -558,7 +535,7 @@ function LuminaCard() {
           </div>
           <div className="hidden shrink-0 flex-col items-end gap-1 pr-1 sm:flex">
             <div className="flex -space-x-2">
-              {AGENT_SEQUENCE.map((agent) => (
+              {CREW_SEQUENCE.map((agent) => (
                 <span
                   key={agent}
                   className="flex size-6 items-center justify-center overflow-hidden rounded-full bg-panel ring-2 ring-brand-strong"
@@ -568,7 +545,7 @@ function LuminaCard() {
               ))}
             </div>
             <span className="font-mono text-[7px] text-panel/70 uppercase tracking-[0.16em] leading-none">
-              {String(AGENT_SEQUENCE.length).padStart(2, "0")} agen
+              {String(CREW_SEQUENCE.length).padStart(2, "0")} agen
             </span>
           </div>
         </CardHeader>
@@ -823,7 +800,7 @@ function ScoreNode() {
           <div className="relative flex items-center justify-between border-panel/10 border-t px-4 py-2">
             <div className="flex items-center gap-2">
               <div className="flex -space-x-1.5">
-                {AGENT_SEQUENCE.map((agent) => (
+                {CREW_SEQUENCE.map((agent) => (
                   <span
                     key={agent}
                     className="flex size-4 items-center justify-center overflow-hidden rounded-full ring-1 ring-panel/30"
@@ -842,7 +819,7 @@ function ScoreNode() {
               </span>
             </div>
             <span className="font-mono text-[7px] text-panel/35 uppercase tracking-[0.12em]">
-              {AGENT_SEQUENCE.length} agen · 3 langkah
+              {CREW_SEQUENCE.length} agen · 3 langkah
             </span>
           </div>
         </div>

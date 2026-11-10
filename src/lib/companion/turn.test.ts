@@ -1,9 +1,13 @@
 import { explain } from "@/lib/companion/explain";
 import {
+  isContentQuestion,
   isQuestionAbout,
+  isWebLookupQuestion,
   PASTE_LENGTH,
   planTurn,
   SHORTEST_SCAM,
+  wantsReportDraft,
+  wantsSafetyCheck,
 } from "@/lib/companion/turn";
 import { LEGIT_CASES, SCAM_CASES } from "@/lib/scoring/bench-cases";
 import { scoreText } from "@/lib/scoring/score";
@@ -178,6 +182,24 @@ describe("planTurn · the recall invariant", () => {
 });
 
 describe("isQuestionAbout · narrow on purpose", () => {
+  it.each([
+    "itu isi kode nya apa",
+    "itu isinya apa?",
+    "tolong jelaskan kode ini",
+    "kenapa saldo bisa berkurang?",
+    "berapa beratnya?",
+  ])("guards the user's own question: %s", (text) => {
+    expect(isQuestionAbout(text)).toBe(true);
+  });
+
+  it("distinguishes explaining an attachment from checking its safety", () => {
+    expect(isContentQuestion("itu isi kode nya apa")).toBe(true);
+    expect(isContentQuestion("tolong ringkas dokumen ini")).toBe(true);
+    expect(isContentQuestion("apakah file ini aman?")).toBe(false);
+    expect(
+      isContentQuestion("ini isi pesan dari BCA. Kirim OTP sekarang."),
+    ).toBe(false);
+  });
   it("guards a question about a scam family", () => {
     expect(isQuestionAbout("apa itu pinjol?")).toBe(true);
     expect(isQuestionAbout("jelaskan apa itu phising")).toBe(true);
@@ -227,6 +249,64 @@ describe("isQuestionAbout · payment words do not turn a question into a check",
         lastExplanation: null,
       }).lane,
     ).toBe("periksa");
+  });
+});
+
+describe("wantsReportDraft · a request is not a question about reports", () => {
+  it("rejects how-to, negation, and learning questions", () => {
+    expect(wantsReportDraft("apa itu laporan penipuan?")).toBe(false);
+    expect(wantsReportDraft("bagaimana cara buat laporan?")).toBe(false);
+    expect(wantsReportDraft("apakah saya harus buat laporan?")).toBe(false);
+    expect(wantsReportDraft("jangan buat laporan dulu")).toBe(false);
+    expect(wantsReportDraft("aku mau belajar bikin laporan")).toBe(false);
+  });
+
+  it("accepts an explicit request", () => {
+    expect(wantsReportDraft("tolong buatkan laporan")).toBe(true);
+    expect(wantsReportDraft("buatkan template laporan ke OJK")).toBe(true);
+    expect(wantsReportDraft("saya mau membuat laporan")).toBe(true);
+  });
+
+  it("separates a safety check from a content question", () => {
+    expect(wantsSafetyCheck("apa isi gambar ini?")).toBe(false);
+    expect(wantsSafetyCheck("apakah ini penipuan?")).toBe(true);
+    expect(wantsSafetyCheck("periksa gambar ini")).toBe(true);
+  });
+});
+
+describe("isWebLookupQuestion · lookup requests are chat, not evidence", () => {
+  it("recognises an explicit web lookup", () => {
+    expect(
+      isWebLookupQuestion(
+        "cari di web berita terbaru hari ini tentang penipuan QRIS, lalu beri tahu sumbernya",
+      ),
+    ).toBe(true);
+    expect(isWebLookupQuestion("carikan berita terbaru soal QRIS")).toBe(true);
+    expect(isWebLookupQuestion("tolong search di internet soal pinjol")).toBe(
+      true,
+    );
+  });
+
+  it("does not let a pasted message claim the chat lane", () => {
+    expect(
+      isWebLookupQuestion(
+        "Halo, ini dari BCA. Cek berita terbaru di https://bca-verif.xyz",
+      ),
+    ).toBe(false);
+    expect(isWebLookupQuestion("apa itu QRIS?")).toBe(false);
+  });
+
+  it("routes the lookup to tanya when the guard claims it", () => {
+    const text = "cari di web berita terbaru hari ini tentang penipuan QRIS";
+    expect(
+      planTurn({
+        text,
+        result: scoreText({ text }),
+        lastResult: null,
+        lastExplanation: null,
+        asked: isWebLookupQuestion(text),
+      }).lane,
+    ).toBe("tanya");
   });
 });
 

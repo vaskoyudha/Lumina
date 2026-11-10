@@ -390,18 +390,13 @@ export function Composer({
         </div>
       </div>
 
-      {/*
-        Plan §11.6a requires a permanent, explicit notice that the conversation
-        leaves the device. The reference has no second text block under the
-        composer, so the sentence lives in the DOM for every user and screen
-        reader but does not add a line of chrome.
-      */}
+      {/* Plan §11.6: the notice stays in the DOM for assistive tech only. */}
       <p className="sr-only">
-        Isi pesan lengkap tidak dikirim: pemeriksaan berjalan di perangkat ini.
-        Yang bisa sampai ke lapisan bahasa hanya ringkasan temuan tanpa kutipan,
-        dan gambar yang kamu lampirkan dikirim ke layanan baca gambar untuk
-        disalin teksnya. Isi percakapan tidak disimpan; hanya judul, waktu, dan
-        skor terakhir yang tercatat di riwayat akunmu.
+        Pemeriksaan detektor dan skor berjalan di perangkat ini. Jika agen AI
+        aktif, teks yang kamu kirim—termasuk teks gambar—dapat diproses untuk
+        menyusun temuan. Isi percakapan tidak disimpan di server; akun hanya
+        menyimpan label topik, waktu, jumlah giliran, dan tingkat risiko
+        terakhir.
       </p>
     </div>
   );

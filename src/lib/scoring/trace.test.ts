@@ -12,6 +12,8 @@ describe("scoreWithTrace", () => {
     const ids = trace.stages.map((stage) => stage.id);
 
     expect(ids).toEqual([
+      "injection",
+      "email",
       "message",
       "link",
       "identity",
@@ -19,6 +21,7 @@ describe("scoreWithTrace", () => {
       "job",
       "marketplace",
       "qris",
+      "validator",
       "scoring",
     ]);
     for (const stage of trace.stages) {
@@ -30,10 +33,11 @@ describe("scoreWithTrace", () => {
 
   it("attributes each surviving signal to exactly one stage", () => {
     const { result, trace } = scoreWithTrace({ text: SCAM });
-    const counted = trace.stages.reduce(
-      (sum, stage) => sum + stage.findings,
-      0,
-    );
+    const counted = trace.stages
+      // The validator reports clusters, not signals; it owns no signal of its
+      // own, so it is excluded from the per-signal attribution check.
+      .filter((stage) => stage.id !== "validator")
+      .reduce((sum, stage) => sum + stage.findings, 0);
     // The orchestrator produces no findings of its own; only detectors do.
     expect(counted).toBe(result.signals.length);
   });

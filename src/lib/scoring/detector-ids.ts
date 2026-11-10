@@ -8,6 +8,8 @@
  * bundle.
  */
 export const DETECTOR_IDS = [
+  "injection",
+  "email",
   "message",
   "link",
   "identity",

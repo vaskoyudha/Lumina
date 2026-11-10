@@ -1,5 +1,5 @@
 /* Section extracted verbatim from the published Framer site: Hero */
-import { CompanionPreview } from "@/components/marketing/companion-preview";
+import { CompanionPreviewDemo } from "@/components/marketing/companion-preview-demo";
 import { PowderPrimaryCta } from "@/components/marketing/powder/primary-cta";
 
 export default function Hero() {
@@ -76,7 +76,7 @@ export default function Hero() {
           </div>
         </div>
         <div className="framer-dqdt72" data-border="true" style={{willChange: "transform", opacity: "1", transform: "none"}}>
-          <CompanionPreview />
+          <CompanionPreviewDemo />
         </div>
       </div>
       <div className="ssr-variant">

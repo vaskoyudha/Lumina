@@ -1,3 +1,5 @@
+import type { ReportChannelId } from "@/data/report-contacts";
+
 /**
  * Six tactics, not twelve scripts.
  *
@@ -275,31 +277,37 @@ export const VERIFY_STEPS: Readonly<
  * cannot verify offline, no addresses.
  */
 export interface ReportChannel {
+  /** Stable id into `REPORT_CONTACTS`; how to reach this institution. */
+  id: ReportChannelId;
   label: string;
   href: string;
   /** What reporting this actually achieves. Never "report it" alone. */
   note: string;
 }
 
-const IASC: ReportChannel = {
+export const IASC: ReportChannel = {
+  id: "iasc",
   label: "IASC OJK",
   href: "https://iasc.ojk.go.id",
   note: "Rekening dan nomor pelaku bisa diblokir untuk calon korban berikutnya.",
 };
 
 const CEKREKENING: ReportChannel = {
+  id: "cekrekening",
   label: "CekRekening.id",
   href: "https://cekrekening.id",
   note: "Rekening yang dilaporkan ditandai saat orang lain memeriksanya.",
 };
 
-const KOMDIGI: ReportChannel = {
+export const KOMDIGI: ReportChannel = {
+  id: "komdigi",
   label: "Komdigi",
   href: "https://aduannomor.id",
   note: "Nomor dan akun pelaku bisa ditindak agar berhenti menghubungi orang lain.",
 };
 
 const POLISI: ReportChannel = {
+  id: "patrolisiber",
   label: "Patroli Siber",
   href: "https://patrolisiber.id",
   note: "Laporan resmi untuk kasus dengan kerugian uang.",

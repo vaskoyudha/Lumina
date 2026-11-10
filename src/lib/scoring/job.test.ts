@@ -16,6 +16,12 @@ describe("jobSignals", () => {
     expect(has(text, /tugas berbayar|top.?up|deposit/i)).toBe(true);
   });
 
+  it("catches a conversational task scam without the word lowongan", () => {
+    const text =
+      "itu 420K masih ada bayar lagi tidak untuk tugas2 selanjutnya, dan apa bisa langsung di tarik? Hanya sekali pembayaran saja. 420 selesaikan tugas tidak ada lagi pembayaran dan bisa langsung penarikan.";
+    expect(has(text, /tugas lanjutan|pembayaran tambahan/i)).toBe(true);
+  });
+
   it("catches a personal e-wallet rail", () => {
     const text =
       "Lowongan kerja freelance. Pembayaran biaya pelatihan via DANA ke nomor 0812xxxx.";

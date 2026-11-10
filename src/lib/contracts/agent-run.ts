@@ -21,7 +21,22 @@ export type StageStatus =
   | "gagal";
 
 /** `voice` and `job-search` are not detectors, so they do not belong in `AgentId`. */
-export type StageId = AgentId | "voice" | "job-search";
+export type StageId =
+  | AgentId
+  | "voice"
+  | "job-search"
+  | "validator"
+  | "verify"
+  | "verify-plan";
+export interface ValidationSummary {
+  verdict: "cukup" | "tipis" | "bertentangan";
+  clusters: number;
+  topWeight: number;
+  capped: boolean;
+  note: string;
+  rawFindings?: number;
+  contradictions?: string[];
+}
 
 export interface AgentStage {
   id: StageId;
@@ -41,9 +56,30 @@ export interface AgentStage {
 export interface AgentTrace {
   stages: AgentStage[];
   totalMs: number;
+  validation?: ValidationSummary;
 }
 
 export const STAGE_LABEL: Record<StageId, { label: string; task: string }> = {
+  injection: {
+    label: "Injection Agent",
+    task: "Instruksi yang mencoba mengubah pemeriksaan",
+  },
+  email: {
+    label: "Email Agent",
+    task: "Header autentikasi, identitas dan alamat balasan",
+  },
+  validator: {
+    label: "Validator",
+    task: "Menggabungkan bukti sejenis dan memeriksa kecukupan",
+  },
+  verify: {
+    label: "Verifikasi lanjutan",
+    task: "Memeriksa fakta publik secara opsional",
+  },
+  "verify-plan": {
+    label: "Rencana verifikasi",
+    task: "Memilih target opsional dan batas waktu",
+  },
   message: {
     label: "Message Agent",
     task: "Urgensi palsu, otoritas, iming-iming, permintaan OTP",
@@ -74,7 +110,7 @@ export const STAGE_LABEL: Record<StageId, { label: string; task: string }> = {
   },
   evidence: {
     label: "Evidence Agent",
-    task: "Menyusun kutipan, nominal, dan kontak untuk laporan",
+    task: "Menyusun kutipan dan bukti dari pesan yang diperiksa",
   },
   scoring: {
     label: "Scoring Orchestrator",

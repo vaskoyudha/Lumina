@@ -5,9 +5,11 @@ import { Pool } from "pg";
 import { testDatabaseUrl } from "@/lib/auth/test-database";
 import { CONTENT_FIXTURE, SIMULATION_FIXTURE } from "@/lib/content/fixtures";
 import { getModule } from "@/lib/content/store";
+import { patternForQuestion } from "@/lib/learning/pattern-map";
 import {
   readAccountProgress,
   readSimulationResults,
+  recordSimulationIntrusion,
   saveQuiz,
   saveSimulation,
 } from "@/lib/learning/store";
@@ -108,9 +110,16 @@ suite("account learning PostgreSQL", () => {
     expect((await readAccountProgress(userA)).completedModules).toEqual([10]);
     await saveQuiz(userA, 10, wrong, false);
     expect((await readAccountProgress(userA)).completedModules).toEqual([10]);
-    expect((await readAccountProgress(userA)).missedPatterns).toHaveLength(
-      questions.length,
+    // Missed questions are stored as patterns, so four wrong questions that map
+    // to two tactics leave two entries, not four.
+    const expectedPatterns = new Set(
+      questions
+        .map((q) => patternForQuestion(q.id))
+        .filter((id): id is NonNullable<typeof id> => id !== null),
     );
+    const missed = (await readAccountProgress(userA)).missedPatterns;
+    expect(missed).toHaveLength(expectedPatterns.size);
+    expect(new Set(missed)).toEqual(expectedPatterns);
   });
   function success(): SimulationSubmission {
     const scenario = SIMULATION_FIXTURE.scenario;
@@ -153,5 +162,37 @@ suite("account learning PostgreSQL", () => {
     expect(await readSimulationResults(userA)).toHaveLength(1);
     expect(await readSimulationResults(userB)).toHaveLength(0);
     await expect(saveSimulation(userB, run)).rejects.toThrow(/tidak cocok/);
+  });
+  it("rejects premature timer failures and accepts only an elapsed account-owned receipt", async () => {
+    const submission: SimulationSubmission = {
+      attemptId: randomUUID(),
+      scenarioId: SIMULATION_FIXTURE.scenario.scenario.id,
+      mode: "tantangan",
+      outcome: "failed",
+      steps: [{ nodeId: "decision", choiceIndex: 2 }],
+    };
+    await expect(saveSimulation(userA, submission)).rejects.toThrow(
+      /belum selesai/,
+    );
+    await recordSimulationIntrusion(userA, submission);
+    await expect(saveSimulation(userA, submission)).rejects.toThrow(
+      /belum selesai/,
+    );
+    await pool.query(
+      "UPDATE simulation_intrusion_timers SET started_at=now()-interval '60 seconds' WHERE attempt_id=$1",
+      [submission.attemptId],
+    );
+    await recordSimulationIntrusion(userA, submission); // retry must not reset the clock
+    await expect(recordSimulationIntrusion(userB, submission)).rejects.toThrow(
+      /tidak cocok/,
+    );
+    await expect(saveSimulation(userB, submission)).rejects.toThrow();
+    await saveSimulation(userA, submission);
+    await saveSimulation(userA, submission);
+    expect(
+      (await readSimulationResults(userA)).filter(
+        (r) => r.outcome === "failed",
+      ),
+    ).toHaveLength(1);
   });
 });

@@ -1,5 +1,6 @@
 import type { Signal } from "@/lib/contracts/score";
 import { OFFICIAL } from "@/lib/scoring/link";
+import { annotateSignal } from "@/lib/scoring/mechanism";
 
 /**
  * Identity Agent — the sender, not the message.
@@ -110,7 +111,7 @@ export function identitySignals(text: string): IdentityResult {
 
   const inspected = mobile.length + foreign.length + (shortcode ? 1 : 0);
   return {
-    signals,
+    signals: signals.map((s) => annotateSignal(s)),
     // A stage that found something cannot also explain why it inspected
     // nothing. The note is the reason a stage is `dilewati`; emitting it
     // beside a finding contradicts the finding.

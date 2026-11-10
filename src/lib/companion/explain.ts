@@ -1,4 +1,6 @@
 import {
+  IASC,
+  KOMDIGI,
   MODUS_TACTICS,
   REPORT_CHANNELS,
   type ReportChannel,
@@ -111,6 +113,26 @@ const GENERIC_VERIFY: readonly VerifyStep[] = [
 ];
 
 /**
+ * The tactic a non-message detector's signal teaches.
+ *
+ * Message rules are mapped separately in `TACTIC_BY_RULE`. Job, marketplace,
+ * and QRIS signals all describe a money demand; without this mapping a high
+ * job-scam score could still render an explanation about links only.
+ */
+function tacticForSignal(signal: Signal): TacticId | null {
+  if (signal.agent === "link") return "tautan";
+  if (signal.agent === "identity") return "otoritas";
+  if (
+    signal.agent === "job" ||
+    signal.agent === "marketplace" ||
+    signal.agent === "qris"
+  ) {
+    return "uang";
+  }
+  return null;
+}
+
+/**
  * The quote that best represents a tactic.
  *
  * Message rules are consulted first because they carry the exact substring that
@@ -130,18 +152,12 @@ function evidenceFor(
   }
   if (bestHit) return bestHit.evidence;
 
-  // Link and identity agents do not go through `detectMessage`, so their
-  // strongest surviving signal supplies the quote instead.
+  // Link, identity, and money detectors do not go through `detectMessage`,
+  // so their strongest surviving signal supplies the quote instead.
   let best: Signal | null = null;
   for (const signal of signals) {
     if (signal.weight <= 0) continue;
-    const mapped =
-      signal.agent === "link"
-        ? "tautan"
-        : signal.agent === "identity"
-          ? "otoritas"
-          : null;
-    if (mapped !== tactic) continue;
+    if (tacticForSignal(signal) !== tactic) continue;
     if (!best || signal.weight > best.weight) best = signal;
   }
   return best?.evidence ?? null;
@@ -156,12 +172,12 @@ export function explain(result: ScoreResult, text: string): Explanation {
     const tactic = TACTIC_BY_RULE[hit.rule.id];
     if (tactic) present.add(tactic);
   }
-  // A surviving link signal is itself a tactic; the same for an identity claim.
-  if (result.signals.some((s) => s.agent === "link" && s.weight > 0)) {
-    present.add("tautan");
-  }
-  if (result.signals.some((s) => s.agent === "identity" && s.weight > 0)) {
-    present.add("otoritas");
+  // A surviving non-message signal is itself a tactic: link, identity, or a
+  // money-demand signal from job/marketplace/QRIS.
+  for (const signal of result.signals) {
+    if (signal.weight <= 0) continue;
+    const tactic = tacticForSignal(signal);
+    if (tactic) present.add(tactic);
   }
 
   const sequence = MODUS_TACTICS[result.modus] ?? GENERIC_TACTICS;
@@ -204,8 +220,16 @@ export function explain(result: ScoreResult, text: string): Explanation {
     ? GENERIC_VERIFY
     : (VERIFY_STEPS[result.modus] ?? GENERIC_VERIFY);
 
+  /*
+   * An unrecognized message has no scheme-specific channel, but a high-risk
+   * verdict is still a fraud report: OTP theft must not lose its reporting
+   * block just because `classifyModus()` could not name the scheme. Low-risk
+   * unrecognized stays empty — there is nothing to report.
+   */
   const report: readonly ReportChannel[] = unrecognized
-    ? []
+    ? result.risk === "tinggi"
+      ? [IASC, KOMDIGI]
+      : []
     : (REPORT_CHANNELS[result.modus] ?? []);
 
   return { tactics, anatomy, verify, report, unrecognized };

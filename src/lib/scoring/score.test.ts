@@ -17,15 +17,19 @@ describe("modus.json (§11.2 — single source of truth for A and B)", () => {
     expect(MODUS_BY_ID.size).toBe(MODUS.length);
   });
 
-  it("wires only module 10 to the one playable scenario", () => {
+  it("wires the five written modules to their playable scenarios", () => {
     const playable = MODUS.filter((m) => m.scenarioId !== null);
-    expect(playable).toHaveLength(1);
-    expect(playable[0]?.no).toBe(10);
-    expect(playable[0]?.scenarioId).toBe("L1-kurir-apk");
+    expect(playable.map((m) => [m.no, m.scenarioId])).toEqual([
+      [2, "L4-fake-call"],
+      [4, "L3-lowongan-berbayar"],
+      [7, "L2-phishing-tautan"],
+      [9, "L3-pinjol-fiktif"],
+      [10, "L1-kurir-apk"],
+    ]);
   });
 
-  it("keeps at least one unwritten module marked 'segera'", () => {
-    expect(MODUS.some((m) => m.modulStatus === "segera")).toBe(true);
+  it("marks every module as 'lengkap' once all 12 are written", () => {
+    expect(MODUS.every((m) => m.modulStatus === "lengkap")).toBe(true);
   });
 });
 
@@ -50,6 +54,19 @@ describe("riskFor (§4 bands)", () => {
 });
 
 describe("scoreText contract invariants", () => {
+  it("escalates a conversational task scam even without the word lowongan", () => {
+    const result = scoreText({
+      text: [
+        "itu 420K masih ada bayar lagi tidak untuk tugas2 selanjutnya, dan apa bisa langsung di tarik?",
+        "Hanya sekali pembayaran saja",
+        "aku carikan dana nya dlu ya ka...ini bner ya 420 sudah bisa penarikan",
+        "makesure lagi ka..420 selesaikan tugas tidak ada lagi pembayaran dan bisa lngsung penarikan",
+      ].join("\n"),
+    });
+    expect(result.signals.some((signal) => signal.agent === "job")).toBe(true);
+    expect(result.risk).not.toBe("bersih");
+  });
+
   it("never returns an empty signals array", () => {
     const result = scoreText({ text: "besok kita makan siang bareng ya" });
     expect(result.signals.length).toBeGreaterThanOrEqual(1);

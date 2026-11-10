@@ -1,28 +1,51 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 /**
  * Inter, matching the reference chat UI's `$font-ui` stack
- * (`'Inter', system-ui, -apple-system, sans-serif`). Loaded through
- * `next/font` so it is self-hosted and needs no network at runtime — the same
- * file the browser would get from the system stack, just guaranteed.
+ * (`'Inter', system-ui, -apple-system, sans-serif`). The variable font is
+ * committed under `app/fonts` instead of fetched from Google at build/dev time:
+ * an offline demo must not spend 20+ seconds timing out before first paint.
+ * The workspace's `--font-jakarta` falls back to this family.
  */
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "./fonts/inter-variable.woff2",
   variable: "--font-sans",
+  weight: "100 900",
   display: "swap",
 });
 
 /**
- * The supplied dashboard reference sets
- * `fontFamily: "'Plus Jakarta Sans', 'Inter', ..."` on its whole surface.
- * Load it as a separate variable so only the workspace (sidebar + dashboard)
- * adopts it, while the rest of the product keeps Inter.
+ * DeepTutor typography, scoped to Companion only.
+ *
+ * DeepTutor uses Geist for the workspace chrome and user bubbles, and Lora for
+ * assistant prose, the chat title, and the empty-state greeting. Both are
+ * vendored here (OFL, latin subset) so the offline demo never waits on Google
+ * Fonts. The `companion-font` class in globals.css remaps --font-sans/--font-serif
+ * inside the Companion shell; the rest of Lumina keeps Inter.
  */
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-jakarta",
+const geist = localFont({
+  src: "./fonts/geist-variable.woff2",
+  variable: "--font-geist",
+  weight: "100 900",
+  display: "swap",
+});
+
+const lora = localFont({
+  src: [
+    {
+      path: "./fonts/lora-variable.woff2",
+      weight: "400 700",
+      style: "normal",
+    },
+    {
+      path: "./fonts/lora-italic-variable.woff2",
+      weight: "400 700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-lora",
   display: "swap",
 });
 
@@ -55,9 +78,12 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`font-sans ${inter.variable} ${jakarta.variable}`}
+      className={`font-sans ${inter.variable} ${geist.variable} ${lora.variable}`}
     >
-      <body className="appnext min-h-dvh bg-bg text-txt antialiased">
+      <body
+        className="appnext min-h-dvh bg-bg text-txt antialiased"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

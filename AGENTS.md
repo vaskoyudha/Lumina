@@ -98,6 +98,10 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 - `LUMINA_AI_GLOBAL_LIMIT` — batas AI global per menit (template Compose 100; kode jatuh ke 200 bila kosong).
 - `LOKER_SCAN_DATA_DIR` — akar data pemindai lowongan (default `<cwd>/.scan-data`;
   di container `/app/.scan-data`). Harus bisa ditulis proses aplikasi.
+- `LOKER_PREWARM_INTERVAL_MS` — jeda pemanasan korpus lowongan di latar belakang
+  (default 21600000 = 6 jam; `0` mematikan). Pemanasan dimulai
+  `src/instrumentation.ts` dan memakai kunci advisory yang sama dengan tombol
+  "Pindai ulang", jadi keduanya tidak pernah memindai bersamaan.
 - `TRUST_PROXY` — hanya `true` di belakang Caddy yang menimpa `X-Lumina-Client-IP`; tanpa itu semua pengguna anonim berbagi satu kunci limit.
 - `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
   OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan

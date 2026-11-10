@@ -202,6 +202,24 @@
   }
 
   /*
+    Paint the document canvas with the active landing ground. The `.landing`
+    div covers the viewport, but a browser-level bounce reveals the canvas
+    behind it; without this that gap is the default white. Keep in sync with
+    `--ls-surface` per theme above.
+  */
+  html:has(.landing) {
+    background-color: #f7f1e8;
+  }
+
+  html:has(.landing[data-theme="paper"]) {
+    background-color: #ffffff;
+  }
+
+  html:has(.landing[data-theme="black"]) {
+    background-color: #0f0f0f;
+  }
+
+  /*
     Marketing print of the companion (`CompanionPreview`). The live app is
     light-only, so the print keeps the app's class names but re-points the
     `--lumina-*` chrome at the active landing palette. Without this the
@@ -209,22 +227,73 @@
     is untouched.
   */
   .landing .lc-preview {
-    --lumina-bg: var(--ls-surface-alt);
-    --lumina-panel: var(--ls-card);
-    --lumina-line: var(--ls-line);
-    --lumina-txt: var(--ls-ink);
-    --lumina-dim: var(--ls-ink-2);
-    --lumina-ink: var(--ls-solid);
-    --lumina-ink-hover: var(--ls-solid-hover);
-    --lumina-ink-soft: var(--ls-ink-2);
-    --lumina-ink-mute: var(--ls-ink-3);
-    --lumina-ink-faint: var(--ls-ink-3);
-    --lumina-ink-line: color-mix(in srgb, var(--lumina-bg) 38%, transparent);
-    --lumina-chip: var(--ls-card-alt);
-    --lumina-edge: var(--ls-line);
-    --lumina-edge-soft: var(--ls-line);
-    --lumina-hairline: var(--ls-line);
-    --lumina-hairline-strong: var(--ls-line-strong);
+    /*
+      The hero demo is the live Companion, so it carries the live workspace
+      palette value for value (`[data-workspace]` in appnext-tokens.css): warm
+      paper ground, peach field, flame accent. Mapping it to the landing
+      palette instead made the same component read grey on cream.
+    */
+    --lumina-bg: #fff9f5;
+    --lumina-panel: #fff9f5;
+    --lumina-panel-2: #f8ece4;
+    --lumina-line: #f3e5dc;
+    --lumina-field: #f8ece4;
+    --lumina-txt: #231e1b;
+    --lumina-dim: #7a6f68;
+    --lumina-ink: #231e1b;
+    --lumina-ink-hover: #3a2f28;
+    --lumina-ink-soft: #4a433e;
+    --lumina-ink-mute: #6c635d;
+    --lumina-ink-faint: #857971;
+    --lumina-ink-line: color-mix(in oklab, var(--lumina-txt) 12%, transparent);
+    --lumina-chip: #fde6d8;
+    --lumina-chip-hover: #fbd9c6;
+    --lumina-edge: #f3e5dc;
+    --lumina-edge-soft: #f3e5dc;
+    --lumina-hairline: #efe3da;
+    --lumina-hairline-strong: #e6d4c8;
+    --lumina-brand: #f05a1a;
+    --lumina-brand-strong: #e85515;
+    --lumina-brand-soft: #fde6d8;
+    --lumina-brand-soft-2: #fce8dc;
+    --lumina-brand-tint: #fdece2;
+    --lumina-brand-line: #f6cfb8;
+    --lumina-brand-glow: #f97316;
+    --lumina-brand-ink: #c2410c;
+    --lumina-brand-ink-soft: #9a3412;
+    --lumina-brand-chip: #fde6d8;
+    --lumina-brand-chip-ink: #ea580c;
+    --lumina-brand-edge: #f6cfb8;
+    --lumina-brand-edge-soft: #fdece2;
+
+    /*
+      `[data-workspace]` in appnext-tokens.css paints this peach field on the
+      live companion. Copied here value for value so the hero window sits on
+      the same ground instead of the landing section showing through it.
+    */
+    background-color: var(--lumina-bg);
+    /*
+      The live app window has no corner of its own: it fills the workspace.
+      In the hero it sits inside the 24px glass rim, so its square corners cut
+      the cream field and the peach gradient into a hard edge inside a rounded
+      frame. Give the window its own radius plus a hairline so the cream reads
+      as a rounded panel, concentric with the rim.
+    */
+    border-radius: 22px;
+    outline: 1px solid var(--lumina-hairline);
+    outline-offset: -1px;
+    background-image:
+      radial-gradient(
+        circle at 34% 6%,
+        color-mix(in oklab, #fff3ec 92%, transparent) 0%,
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at 100% 0%,
+        color-mix(in oklab, #f6ad85 34%, transparent) 0%,
+        transparent 42%
+      ),
+      linear-gradient(165deg, #fdf1e8 0%, #fce5d7 60%, #fad9c6 100%);
   }
 
   /*
@@ -252,7 +321,26 @@
     surface rather than reusing the light peach stop.
   */
   .landing[data-theme="black"] .lc-preview {
+    /* The warm workspace palette above is light-only; black is the one landing
+       theme whose hero preview still needs a dark ground. */
     --lumina-danger: #f87171;
+    --lumina-bg: var(--ls-surface-alt);
+    --lumina-panel: var(--ls-card);
+    --lumina-panel-2: var(--ls-card-alt);
+    --lumina-line: var(--ls-line);
+    --lumina-field: var(--ls-card-alt);
+    --lumina-txt: var(--ls-ink);
+    --lumina-dim: var(--ls-ink-2);
+    --lumina-ink: var(--ls-solid);
+    --lumina-ink-hover: var(--ls-solid-hover);
+    --lumina-ink-soft: var(--ls-ink-2);
+    --lumina-ink-mute: var(--ls-ink-3);
+    --lumina-ink-faint: var(--ls-ink-3);
+    --lumina-chip: var(--ls-card-alt);
+    --lumina-edge: var(--ls-line);
+    --lumina-edge-soft: var(--ls-line);
+    --lumina-hairline: var(--ls-line);
+    --lumina-hairline-strong: var(--ls-line-strong);
     --lumina-brand-soft: var(--ls-accent-soft);
     --lumina-brand-tint: color-mix(
       in srgb,
