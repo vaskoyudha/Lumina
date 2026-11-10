@@ -25,7 +25,7 @@ describe("Features", () => {
 
     expect(container.querySelector(".ask-preview")).not.toBeNull();
     expect(
-      screen.getAllByText("What do you want to do?").length,
+      screen.getAllByText("Mau periksa apa hari ini?").length,
     ).toBeGreaterThan(0);
   });
 
@@ -35,13 +35,13 @@ describe("Features", () => {
 
     expect(container.querySelector(".periksa-preview")).not.toBeNull();
     expect(
-      screen.getAllByText("Show Sources").length,
+      screen.getAllByText("Lihat bukti").length,
     ).toBeGreaterThan(0);
 
     await user.click(screen.getAllByRole("button", { name: "Langkah" })[0]);
 
     expect(container.querySelector(".langkah-preview")).not.toBeNull();
-    expect(screen.getAllByText("Ticket Ready").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Langkah tersusun").length).toBeGreaterThan(0);
     expect(container.querySelector('[data-framer-name="BG 3"]')).toHaveStyle({
       opacity: 1,
     });
