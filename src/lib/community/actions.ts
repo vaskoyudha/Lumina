@@ -11,6 +11,7 @@ import {
   ReplyInputSchema,
   ReportSchema,
   TargetSchema,
+  VerifyPostSchema,
 } from "@/lib/community/schema";
 import {
   CommunityError,
@@ -18,6 +19,7 @@ import {
   reportContent,
   reviewContent,
   setHelpful,
+  setPostVerified,
   setSaved,
   writePost,
   writeReply,
@@ -64,9 +66,14 @@ export async function publishReply(input: unknown): Promise<MutationResult> {
   try {
     const session = await actor("balasan");
     const parsed = ReplyInputSchema.parse(input);
-    const id = await writeReply(session.id, parsed);
-    refresh(id);
-    return { ok: true, id };
+    const result = await writeReply(session.id, parsed);
+    refresh(result.postId);
+    return {
+      ok: true,
+      id: result.postId,
+      replyId: result.replyId,
+      page: result.page,
+    };
   } catch (e) {
     return failed(e);
   }
@@ -122,6 +129,24 @@ export async function moderateContent(input: unknown): Promise<MutationResult> {
     const parsed = TargetSchema.extend({ hide: z.boolean() }).parse(input);
     await reviewContent(parsed, parsed.hide);
     refresh();
+    revalidatePath("/komunitas/moderasi");
+    return { ok: true };
+  } catch (e) {
+    return failed(e);
+  }
+}
+/**
+ * Admin verification. The allowlist is the same moderator list used for
+ * report review; no browser input can grant it.
+ */
+export async function verifyPost(input: unknown): Promise<MutationResult> {
+  try {
+    const session = await actor();
+    if (!isCommunityModerator(session.id))
+      throw new CommunityError("Hanya admin yang dapat memverifikasi kiriman.");
+    const parsed = VerifyPostSchema.parse(input);
+    await setPostVerified(parsed.id, session.id, parsed.value);
+    refresh(parsed.id);
     revalidatePath("/komunitas/moderasi");
     return { ok: true };
   } catch (e) {

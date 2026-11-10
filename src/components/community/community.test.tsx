@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { CommunityAside } from "@/components/community/community-aside";
 import {
   PostEditor,
+  ReplyEditor,
   TimelineComposer,
 } from "@/components/community/community-editor";
 import { EXPLORE_EVENT } from "@/components/community/community-explore";
@@ -35,6 +36,9 @@ jest.mock("next/navigation", () => ({
 const post: CommunityPost = {
   id: "892e48bd-9178-461d-bd83-c32fc614bb23",
   author: "Rina",
+  authorKind: "member",
+  agentId: null,
+  verified: false,
   category: "modus-baru",
   title: "Pesan kurir meminta APK baru",
   body: "Pesan mengaku kurir meminta memasang aplikasi. Bagaimana cara memeriksanya?",
@@ -49,6 +53,25 @@ const post: CommunityPost = {
   isOwner: false,
   hidden: false,
 };
+
+it("navigates a new reply to its actual page and anchor", async () => {
+  const replyId = "892e48bd-9178-461d-bd83-c32fc614bb24";
+  jest
+    .mocked(publishReply)
+    .mockResolvedValueOnce({ ok: true, id: post.id, replyId, page: 2 });
+  const user = userEvent.setup();
+  render(<ReplyEditor postId={post.id} inline />);
+  await user.type(
+    screen.getByRole("textbox", { name: "Tulis balasan" }),
+    "Balasan baru setelah halaman pertama penuh.",
+  );
+  await user.click(screen.getByRole("button", { name: "Kirim balasan" }));
+  await waitFor(() =>
+    expect(push).toHaveBeenCalledWith(
+      `/komunitas/${post.id}?page=2#balasan-${replyId}`,
+    ),
+  );
+});
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(publishPost).mockResolvedValue({ ok: true, id: post.id });
@@ -493,6 +516,62 @@ it("does not print a composer-derived title twice in the timeline body", () => {
   expect(
     screen.getByText("Nomor asing mengirim tautan pemasangan."),
   ).toBeInTheDocument();
+});
+
+it("labels an agent post with its field and an admin-verified badge", () => {
+  render(
+    <CommunityFeed
+      posts={[
+        {
+          ...post,
+          author: "Mochi",
+          authorKind: "agent",
+          agentId: "message",
+          verified: true,
+        },
+      ]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite={false}
+    />,
+  );
+  expect(screen.getByText("Mochi")).toBeInTheDocument();
+  expect(
+    screen.getByText("Agen Lumina · Pesan & rekayasa sosial"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Terverifikasi admin")).toBeInTheDocument();
+  expect(
+    screen.getByText("Ditinjau admin · terverifikasi"),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("Dibagikan anggota · belum terverifikasi"),
+  ).not.toBeInTheDocument();
+});
+
+it("does not claim an unverified agent post was approved", () => {
+  render(
+    <CommunityFeed
+      posts={[
+        {
+          ...post,
+          author: "Bao",
+          authorKind: "agent",
+          agentId: "evidence",
+          verified: false,
+        },
+      ]}
+      total={1}
+      query={QuerySchema.parse({})}
+      canWrite={false}
+    />,
+  );
+  expect(
+    screen.getByText("Agen Lumina · Bukti & pelaporan"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Agen Lumina · belum ditinjau admin"),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Terverifikasi admin")).not.toBeInTheDocument();
 });
 
 it("opens the filter panel when the rail asks for it, and never hides text", async () => {

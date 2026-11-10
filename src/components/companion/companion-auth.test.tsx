@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionAuth } from "@/components/companion/companion-auth";
+import { EMPTY_PROGRESS } from "@/lib/progress";
+
+const originalFetch = global.fetch;
+afterEach(() => {
+  global.fetch = originalFetch;
+});
 
 jest.mock("next/link", () => {
   const Link = ({
@@ -107,6 +113,13 @@ describe("CompanionAuth", () => {
   });
 
   it("opens the progress card in place instead of navigating", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        progress: { ...EMPTY_PROGRESS, completedModules: [10] },
+        moduleCount: 12,
+      }),
+    }) as typeof fetch;
     const user = userEvent.setup();
     render(
       <CompanionAuth session={{ nama: "Siti", email: "siti@lumina.id" }} />,
@@ -120,7 +133,9 @@ describe("CompanionAuth", () => {
     expect(await screen.findByRole("dialog")).toHaveAccessibleName(
       /pengaturan/i,
     );
-    expect(screen.getByText(/0 dari 12 modul selesai/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/1 dari 12 modul selesai/i),
+    ).toBeInTheDocument();
   });
 
   it("keeps the rail avatar as the same account menu", async () => {

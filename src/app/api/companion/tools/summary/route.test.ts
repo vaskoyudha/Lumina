@@ -78,8 +78,32 @@ describe("POST /api/companion/tools/summary", () => {
     ) as { messages: { role: string; content: string }[] };
     const sent = body.messages[1]?.content ?? "";
     expect(sent).toContain("Frontend Engineer");
+    expect(sent).toContain('"rekomendasi"');
+    expect(sent).toContain('"aman":1');
     expect(sent).not.toContain("description");
     expect(sent).not.toContain("query");
+  });
+
+  it("tells the model the recommendation it must not re-score", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue(upstream("Satu lowongan perlu diperiksa."));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await POST(
+      request({
+        count: 1,
+        postings: [{ ...posting, sentinelStatus: "suspicious" }],
+      }),
+    );
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0]?.[1] as RequestInit).body as string,
+    ) as { messages: { role: string; content: string }[] };
+    const system = body.messages[0]?.content ?? "";
+    const sent = body.messages[1]?.content ?? "";
+    expect(system).toMatch(/jangan menilai ulang/i);
+    expect(sent).toContain('"waspada":1');
   });
 
   it("returns 503 not-configured when the model is unset", async () => {

@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
+import { listConversationHistory } from "@/lib/companion/history";
 
 /**
  * The chat shell, not the engine. These render the real component tree and
@@ -8,6 +9,14 @@ import { CompanionChat } from "@/components/companion/companion-chat";
  * attachment becomes part of what gets scored, and that the panel follows the
  * conversation.
  */
+
+jest.mock("@/lib/companion/history", () => ({
+  listConversationHistory: jest.fn(async () => ({
+    ok: true,
+    conversations: [],
+  })),
+  saveConversationHistory: jest.fn(async () => ({ ok: true })),
+}));
 
 jest.mock("next/link", () => {
   const Link = ({
@@ -37,6 +46,13 @@ async function sendMessage(
 }
 
 describe("CompanionChat · shell", () => {
+  beforeEach(() => {
+    jest.mocked(listConversationHistory).mockClear();
+    jest
+      .mocked(listConversationHistory)
+      .mockResolvedValue({ ok: true, conversations: [] });
+  });
+
   it("opens on a new-chat state with the quick access and agent history cards", () => {
     render(<CompanionChat />);
 
@@ -48,13 +64,13 @@ describe("CompanionChat · shell", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/pesan/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /butuh apa lagi, tamu\?/i }),
+      screen.getByRole("heading", { name: /mau periksa apa, tamu\?/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /riwayat agen/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /analisis iklan lowongan/i }),
+      screen.getByRole("button", { name: /periksa pesan mencurigakan/i }),
     ).toBeInTheDocument();
   });
 
@@ -126,6 +142,43 @@ describe("CompanionChat · shell", () => {
         sidebarScope.getAllByText(/akun anda akan diblokir/i).length,
       ).toBeGreaterThan(0);
     });
+  });
+
+  it("lists the signed-in account's saved conversations in the sidebar", async () => {
+    jest.mocked(listConversationHistory).mockResolvedValue({
+      ok: true,
+      conversations: [
+        {
+          id: "11111111-1111-4111-8111-111111111111",
+          title: "Tagihan listrik palsu lewat tautan",
+          turns: 4,
+          risk: "tinggi",
+          updatedAt: "2026-11-09T09:00:00.000Z",
+        },
+        {
+          id: "22222222-2222-4222-8222-222222222222",
+          title: "Cek tautan karier",
+          turns: 2,
+          risk: null,
+          updatedAt: "2026-11-08T09:00:00.000Z",
+        },
+      ],
+    });
+    const { container } = render(
+      <CompanionChat
+        session={{ nama: "Tamu Lumina", email: "demo@lumina.id" }}
+      />,
+    );
+    const sidebar = container.querySelector("aside") as HTMLElement;
+    expect(
+      await within(sidebar).findByText("Tagihan listrik palsu lewat tautan"),
+    ).toBeInTheDocument();
+    expect(within(sidebar).getByText("Cek tautan karier")).toBeInTheDocument();
+  });
+
+  it("does not request a saved history for a signed-out reader", () => {
+    render(<CompanionChat />);
+    expect(listConversationHistory).not.toHaveBeenCalled();
   });
 
   it("scores the attachment filename, because that is where the signal is", async () => {

@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { authDatabase } from "@/lib/auth/database";
+import type { CommunityAgentId } from "@/lib/community/agents";
 import {
   type Category,
   type CommunityPost,
@@ -17,6 +18,9 @@ export class CommunityError extends Error {}
 type PostRow = {
   id: string;
   nama: string;
+  author_kind: "member" | "agent";
+  agent_id: CommunityAgentId | null;
+  verified_at: Date | null;
   category: Category;
   title: string;
   body: string;
@@ -44,6 +48,9 @@ function post(row: PostRow): CommunityPost {
   return {
     id: row.id,
     author: row.nama,
+    authorKind: row.author_kind,
+    agentId: row.agent_id,
+    verified: !!row.verified_at,
     category: row.category,
     title: row.title,
     body: row.body,
@@ -64,6 +71,7 @@ function post(row: PostRow): CommunityPost {
   };
 }
 export async function listPosts(query: CommunityQuery, userId: string | null) {
+  if (!userId && (query.mine || query.saved)) return { posts: [], total: 0 };
   const search = query.q.replace(/[\\%_]/g, "\\$&");
   const listWhere = [visible];
   const listValues: unknown[] = [userId];
@@ -188,18 +196,26 @@ export async function writeReply(userId: string, input: ReplyInput) {
   const id = input.id ?? randomUUID();
   const r = input.id
     ? await authDatabase().query(
-        `UPDATE community_replies r SET body=$4,updated_at=now() FROM community_posts p WHERE r.id=$1 AND r.author_id=$2 AND r.post_id=$3 AND p.id=r.post_id AND r.deleted_at IS NULL AND r.hidden_at IS NULL AND ${visible}`,
+        `UPDATE community_replies r SET body=$4,updated_at=now() FROM community_posts p WHERE r.id=$1 AND r.author_id=$2 AND r.post_id=$3 AND p.id=r.post_id AND r.deleted_at IS NULL AND r.hidden_at IS NULL AND ${visible} RETURNING r.created_at`,
         [id, userId, input.postId, input.body],
       )
     : await authDatabase().query(
-        `INSERT INTO community_replies(id,author_id,post_id,body) SELECT $1,$2,p.id,$4 FROM community_posts p WHERE p.id=$3 AND ${visible}`,
+        `INSERT INTO community_replies(id,author_id,post_id,body) SELECT $1,$2,p.id,$4 FROM community_posts p WHERE p.id=$3 AND ${visible} RETURNING created_at`,
         [id, userId, input.postId, input.body],
       );
   if (!r.rowCount)
     throw new CommunityError(
       "Diskusi atau balasan tidak tersedia atau bukan milikmu.",
     );
-  return input.postId;
+  const position = await authDatabase().query<{ total: number }>(
+    `SELECT count(*)::int AS total FROM community_replies WHERE post_id=$1 AND deleted_at IS NULL AND hidden_at IS NULL AND (created_at,id)<=(SELECT r.created_at,r.id FROM community_replies r WHERE r.id=$2)`,
+    [input.postId, id],
+  );
+  return {
+    postId: input.postId,
+    replyId: id,
+    page: Math.max(1, Math.ceil(position.rows[0].total / REPLY_PAGE_SIZE)),
+  };
 }
 export async function removeOwnContent(userId: string, target: Target) {
   const table =
@@ -253,7 +269,12 @@ export async function reportContent(
     target.kind === "post" ? "community_posts" : "community_replies";
   const field = target.kind === "post" ? "post_id" : "reply_id";
   const r = await authDatabase().query(
-    `INSERT INTO community_reports(reporter_id,${field},reason) SELECT $1,id,$3 FROM ${table} WHERE id=$2 AND deleted_at IS NULL AND hidden_at IS NULL ON CONFLICT DO NOTHING RETURNING id`,
+    `INSERT INTO community_reports(reporter_id,${field},reason) SELECT $1,id,$3 FROM ${table} WHERE id=$2 AND deleted_at IS NULL AND hidden_at IS NULL
+     ON CONFLICT (reporter_id,${field}) WHERE ${field} IS NOT NULL DO UPDATE
+     SET reason=EXCLUDED.reason,reviewed_at=NULL,created_at=now()
+     WHERE community_reports.reviewed_at IS NOT NULL AND EXISTS(
+       SELECT 1 FROM ${table} content WHERE content.id=EXCLUDED.${field} AND content.updated_at>community_reports.reviewed_at
+     ) RETURNING id`,
     [userId, target.id, reason],
   );
   if (!r.rowCount) {
@@ -302,4 +323,53 @@ export async function reviewContent(target: Target, hide: boolean) {
   } finally {
     client.release();
   }
+}
+/**
+ * Admin approval of a post. `verified` is deliberately binary and reversible:
+ * the badge says an admin reviewed it, not that the claim was fact-checked.
+ */
+export async function setPostVerified(
+  postId: string,
+  verifierId: string,
+  value: boolean,
+) {
+  const r = await authDatabase().query(
+    `UPDATE community_posts
+     SET verified_at=CASE WHEN $3::boolean THEN now() ELSE NULL END,
+         verified_by=CASE WHEN $3::boolean THEN $2::uuid ELSE NULL END
+     WHERE id=$1 AND deleted_at IS NULL
+     RETURNING id`,
+    [postId, verifierId, value],
+  );
+  if (!r.rowCount) throw new CommunityError("Topik tidak tersedia.");
+}
+/** Visible posts for the admin verification screen, unverified first. */
+export async function listVerifiablePosts() {
+  const { rows } = await authDatabase().query<{
+    id: string;
+    nama: string;
+    category: Category;
+    title: string;
+    body: string;
+    author_kind: "member" | "agent";
+    agent_id: CommunityAgentId | null;
+    verified_at: Date | null;
+    created_at: Date;
+  }>(
+    `SELECT p.id,u.nama,p.category,p.title,p.body,p.author_kind,p.agent_id,p.verified_at,p.created_at
+     FROM community_posts p JOIN users u ON u.id=p.author_id
+     WHERE p.deleted_at IS NULL AND p.hidden_at IS NULL
+     ORDER BY (p.verified_at IS NULL) DESC,p.created_at DESC LIMIT 50`,
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    author: row.nama,
+    authorKind: row.author_kind,
+    agentId: row.agent_id,
+    category: row.category,
+    title: row.title,
+    body: row.body,
+    verified: !!row.verified_at,
+    createdAt: row.created_at.toISOString(),
+  }));
 }

@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfileDialog } from "@/components/profil/profile-dialog";
+import { EMPTY_PROGRESS } from "@/lib/progress";
 
 jest.mock("next/link", () => {
   const Link = ({
@@ -288,5 +289,52 @@ describe("ProfileDialog settings shell", () => {
       (await screen.findAllByText(/sesi itu sudah tidak aktif/i)).length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText(/chrome · windows/i).length).toBeGreaterThan(0);
+  });
+  it("loads saved progress without a learning provider and uses the database module count", async () => {
+    global.fetch = jest.fn().mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url === "/api/account/progress"
+          ? {
+              ok: true,
+              progress: {
+                ...EMPTY_PROGRESS,
+                completedModules: [10],
+                badges: ["penjaga-apk"],
+              },
+              moduleCount: 13,
+            }
+          : { ok: true, account: session, hasPassword: true, sessions: [] },
+    })) as typeof fetch;
+    render(
+      <ProfileDialog
+        session={session}
+        section="kemajuan"
+        onOpenChange={jest.fn()}
+      />,
+    );
+    expect(
+      await screen.findByText("1 dari 13 modul selesai"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Lencana: Penjaga APK.")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/0 dari .*modul selesai/),
+    ).not.toBeInTheDocument();
+  });
+  it("shows a loading failure instead of claiming zero progress", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false }) as typeof fetch;
+    render(
+      <ProfileDialog
+        session={session}
+        section="kemajuan"
+        onOpenChange={jest.fn()}
+      />,
+    );
+    expect(
+      await screen.findByText(/Progres belum bisa dimuat/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/0 dari .*modul selesai/),
+    ).not.toBeInTheDocument();
   });
 });

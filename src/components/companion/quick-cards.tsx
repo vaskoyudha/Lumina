@@ -2,19 +2,23 @@
 
 import {
   ArrowRight,
-  BarChart2,
   Briefcase,
   ChevronRight,
-  Clock,
-  Compass,
+  Flag,
+  History,
+  Link2,
   type LucideIcon,
   MessageSquare,
   MoreVertical,
-  Sparkles,
-  TrendingUp,
-  User,
+  QrCode,
+  ShieldCheck,
 } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
+import {
+  AGENT_REGISTRY,
+  type DetectorAgent,
+} from "@/components/companion/agents";
 
 /**
  * The two dashboard cards the owner supplied (`lumina_dashboard.tsx`), cloned
@@ -51,126 +55,92 @@ interface QuickFeature {
 
 const QUICK_FEATURES: readonly QuickFeature[] = [
   {
-    id: "analisis",
-    label: "Analisis iklan lowongan",
+    id: "pesan",
+    label: "Periksa pesan mencurigakan",
     prompt:
-      "Tolong analisis iklan lowongan Frontend Engineer di PT Maju Jaya beserta poin negosiasi gajinya.",
-    icon: Briefcase,
+      'Periksa pesan ini: "Akun Anda akan diblokir dalam 2 jam. Verifikasi OTP sekarang di bit.ly/verifikasi-wa." Apakah ini penipuan?',
+    icon: MessageSquare,
     tone: "danger",
     filled: true,
   },
   {
-    id: "kecocokan",
-    label: "Cek kecocokan karier",
+    id: "tautan",
+    label: "Cek tautan & domain palsu",
     prompt:
-      "Cek persentase kecocokan profil saya untuk posisi Senior Frontend Engineer (React & TypeScript).",
-    icon: TrendingUp,
+      "Tolong cek tautan bit.ly/verifikasi-wa ini — apakah mengarah ke situs resmi atau halaman login palsu?",
+    icon: Link2,
     tone: "danger",
   },
   {
-    id: "wawancara",
-    label: "Simulasi wawancara",
+    id: "lowongan",
+    label: "Periksa tawaran kerja palsu",
     prompt:
-      "Mulai simulasi wawancara teknis untuk posisi Senior Frontend Engineer di PT Maju Jaya.",
-    icon: MessageSquare,
+      "Periksa tawaran kerja ini: saya diminta bayar Rp500.000 untuk biaya pendaftaran dan top up saldo. Apakah lowongan ini asli?",
+    icon: Briefcase,
     tone: "brand",
     filled: true,
   },
   {
-    id: "tips",
-    label: "Tips karier terbaru",
+    id: "qris",
+    label: "Cek QRIS & bukti bayar",
     prompt:
-      "Berikan 5 tips karier terbaru agar CV dan portofolio Frontend Engineer menonjol di tahun ini.",
-    icon: Compass,
+      "Periksa QRIS ini: nama merchant di layar berbeda dengan nama penerima. Apakah aman untuk dibayar?",
+    icon: QrCode,
     tone: "brand",
   },
   {
     id: "komunitas",
-    label: "Komunitas profesional",
+    label: "Laporkan ke komunitas",
     prompt:
-      "Tampilkan diskusi terbaru dari komunitas profesional IT & Engineering di Jakarta.",
-    icon: Sparkles,
+      "Bantu saya laporkan pesan penipuan ini ke komunitas dan rangkum buktinya.",
+    icon: Flag,
     tone: "brand",
     filled: true,
     highlight: true,
   },
 ];
 
-interface AgentHistoryItem {
-  id: string;
-  title: string;
-  time: string;
-  unreadDot?: boolean;
-  icon: LucideIcon;
-  tone: Tone;
-  filled?: boolean;
+export interface RecentAgentRun {
+  id: DetectorAgent;
+  key: string;
+  sessionId: number;
+  ms: number;
 }
-
-const AGENT_HISTORY: readonly AgentHistoryItem[] = [
-  {
-    id: "h1",
-    title: "Pencari Lowongan",
-    time: "2 menit yang lalu",
-    unreadDot: true,
-    icon: Briefcase,
-    tone: "brand",
-    filled: true,
-  },
-  {
-    id: "h2",
-    title: "Pesaing Agent",
-    time: "1 jam yang lalu",
-    icon: BarChart2,
-    tone: "marketplace",
-  },
-  {
-    id: "h3",
-    title: "Identitas Agent",
-    time: "3 jam yang lalu",
-    icon: User,
-    tone: "evidence",
-    filled: true,
-  },
-  {
-    id: "h4",
-    title: "Conversation Insights",
-    time: "1 hari yang lalu",
-    icon: MessageSquare,
-    tone: "message",
-    filled: true,
-  },
-];
 
 export function CompanionQuickCards({
   onFeature,
   onOpenHistory,
   onResume,
+  name = "Tamu",
+  history = [],
 }: {
   /** Loads the feature prompt into the composer. */
   onFeature: (prompt: string) => void;
   /** Opens the agent overview — the "Lihat semua" destination. */
   onOpenHistory: () => void;
-  /** Loads "Lanjutkan sesi …" into the composer. */
-  onResume: (title: string) => void;
+  /** Opens the actual in-memory conversation that produced the run. */
+  onResume: (sessionId: number) => void;
+  name?: string;
+  history?: readonly RecentAgentRun[];
 }) {
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
 
   return (
     <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-      {/* TOP CARD: Butuh apa lagi, Tamu? */}
+      {/* TOP CARD: Mau periksa apa, Tamu? */}
       <div className="rounded-[24px] border border-edge-soft bg-panel p-4 shadow-rest">
         <div className="mb-3.5 flex items-center gap-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft">
             <div className="flex size-6 items-center justify-center rounded-full bg-brand text-panel">
-              <Clock aria-hidden strokeWidth={2.3} className="size-3.5" />
+              <ShieldCheck aria-hidden strokeWidth={2.3} className="size-3.5" />
             </div>
           </div>
           <div>
             <h2 className="text-[13.5px] font-bold text-ink leading-tight">
-              Butuh apa lagi, Tamu?
+              Mau periksa apa, {name}?
             </h2>
             <p className="mt-0.5 text-[11px] text-ink-mute">
-              Akses cepat ke fitur favorit Anda
+              Akses cepat ke pemeriksaan penipuan
             </p>
           </div>
         </div>
@@ -217,8 +187,15 @@ export function CompanionQuickCards({
 
       {/* BOTTOM CARD: Riwayat Agen */}
       <div className="rounded-[24px] border border-edge-soft bg-panel p-4 shadow-rest">
-        <div className="mb-3.5 flex items-center justify-between">
-          <h2 className="text-[14px] font-bold text-ink">Riwayat Agen</h2>
+        <div className="mb-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft">
+              <div className="flex size-6 items-center justify-center rounded-full bg-brand text-panel">
+                <History aria-hidden strokeWidth={2.3} className="size-3.5" />
+              </div>
+            </div>
+            <h2 className="text-[14px] font-bold text-ink">Riwayat Agen</h2>
+          </div>
           <button
             type="button"
             onClick={onOpenHistory}
@@ -230,12 +207,23 @@ export function CompanionQuickCards({
         </div>
 
         <div className="space-y-3">
-          {AGENT_HISTORY.map((item) => {
+          {history.length === 0 ? (
+            <p className="text-xs leading-relaxed text-dim">
+              Belum ada pemeriksaan di tab ini. Riwayat muncul setelah agen
+              benar-benar berjalan.
+            </p>
+          ) : null}
+          {history.map((run) => {
+            const item = {
+              ...AGENT_REGISTRY[run.id],
+              ...run,
+              name: AGENT_REGISTRY[run.id].displayName,
+            };
             const Icon = item.icon;
-            const tone = TONE[item.tone];
+            const tone = TONE.brand;
             return (
               <div
-                key={item.id}
+                key={item.key}
                 className="group relative flex items-center justify-between gap-3 rounded-2xl p-1.5 transition-colors hover:bg-panel-2"
               >
                 <button
@@ -244,26 +232,28 @@ export function CompanionQuickCards({
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
                   <span
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone.box}`}
+                    className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${tone.box}`}
                   >
-                    <Icon
-                      aria-hidden
-                      className={`size-5 ${tone.ink} ${
-                        item.filled ? "fill-current" : ""
-                      }`}
-                    />
+                    {item.portrait ? (
+                      <Image
+                        src={item.portrait}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <Icon aria-hidden className={`size-5 ${tone.ink}`} />
+                    )}
                   </span>
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5">
                       <span className="truncate text-[12.5px] font-bold text-ink transition-colors group-hover:text-brand-strong">
-                        {item.title}
+                        {item.name}
                       </span>
-                      {item.unreadDot ? (
-                        <span className="size-1.5 shrink-0 rounded-full bg-brand" />
-                      ) : null}
                     </span>
                     <span className="mt-0.5 block text-[11px] text-ink-faint">
-                      {item.time}
+                      Selesai · {Math.round(item.ms)} ms
                     </span>
                   </span>
                 </button>
@@ -273,17 +263,17 @@ export function CompanionQuickCards({
                     type="button"
                     onClick={() =>
                       setOpenMenuId((prev) =>
-                        prev === item.id ? null : item.id,
+                        prev === item.key ? null : item.key,
                       )
                     }
-                    aria-label={`Menu riwayat ${item.title}`}
-                    aria-expanded={openMenuId === item.id}
+                    aria-label={`Menu riwayat ${item.name}`}
+                    aria-expanded={openMenuId === item.key}
                     className="flex size-7 items-center justify-center rounded-lg text-ink-mute hover:bg-edge-soft"
                   >
                     <MoreVertical aria-hidden className="size-3.5" />
                   </button>
 
-                  {openMenuId === item.id ? (
+                  {openMenuId === item.key ? (
                     <div className="absolute right-0 top-8 z-30 w-40 rounded-xl border border-edge-soft bg-panel py-1 text-xs shadow-lift">
                       <button
                         type="button"
@@ -299,11 +289,11 @@ export function CompanionQuickCards({
                         type="button"
                         onClick={() => {
                           setOpenMenuId(null);
-                          onResume(item.title);
+                          onResume(item.sessionId);
                         }}
                         className="w-full px-3 py-1.5 text-left font-medium text-brand-strong hover:bg-panel-2"
                       >
-                        Jalankan ulang
+                        Buka percakapan
                       </button>
                     </div>
                   ) : null}

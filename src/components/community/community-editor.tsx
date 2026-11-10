@@ -366,6 +366,11 @@ export function ReplyEditor({
       if (result.ok) {
         if (!reply) setBody("");
         onDone?.();
+        if (!reply && result.page && result.replyId) {
+          router.push(
+            `/komunitas/${postId}?page=${result.page}#balasan-${result.replyId}`,
+          );
+        }
         router.refresh();
       } else setError(result.error);
     } catch {

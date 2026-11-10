@@ -22,7 +22,8 @@
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "wip": "node scripts/wip-report.mjs",
     "db:seed": "node --env-file-if-exists=.env.local scripts/seed-content.mjs",
-    "db:seed:community": "node --env-file-if-exists=.env.local scripts/seed-community.mjs"
+    "db:seed:community": "node --env-file-if-exists=.env.local scripts/seed-community.mjs",
+    "db:seed:community:agents": "node --env-file-if-exists=.env.local scripts/seed-community-agents.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

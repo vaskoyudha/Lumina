@@ -57,12 +57,23 @@ describe("halaman misi simulasi", () => {
     expect(
       screen.getByRole("link", { name: "Mulai briefing" }),
     ).toHaveAttribute("href", "/simulasi/L1-kurir-apk");
-    const planned = screen.getByRole("region", { name: "Level lain" });
-    expect(within(planned).getAllByRole("link")).toHaveLength(4);
-    expect(within(planned).queryByText("Rencana")).not.toBeInTheDocument();
+
+    // All five missions are written now, so the level picker links to each of
+    // them and no "Rencana" badge remains.
+    const levels = screen.getByRole("region", { name: "Level simulasi" });
+    const levelLinks = within(levels).getAllByRole("link");
+    expect(levelLinks).toHaveLength(5);
+    expect(levelLinks.map((link) => link.getAttribute("href"))).toEqual([
+      "/simulasi/L1-kurir-apk",
+      "/simulasi/L2-phishing-tautan",
+      "/simulasi/L3-lowongan-berbayar",
+      "/simulasi/L3-pinjol-fiktif",
+      "/simulasi/L4-fake-call",
+    ]);
+    expect(screen.queryByText("Rencana")).not.toBeInTheDocument();
     expect(
-      within(planned).getByRole("link", { name: /Tautan sebelum saldo/i }),
-    ).toHaveAttribute("href", "/simulasi/L2-phishing-tautan");
+      screen.queryByRole("region", { name: "Level lain" }),
+    ).not.toBeInTheDocument();
   });
 });
 

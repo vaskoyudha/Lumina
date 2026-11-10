@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import type { ScanOutcome } from "@/lib/loker/receipt";
-import { type RunDeps, runScanJob } from "@/lib/loker/run";
+import { type RunDeps, runScanJob, scanWindowDays } from "@/lib/loker/run";
 
 const RECEIPT: ScanOutcome = {
   ok: true,
@@ -40,9 +40,29 @@ function deps(over: Partial<RunDeps> = {}) {
     keys: jest.fn().mockResolvedValue(new Set<string>()),
     ingest: jest.fn().mockResolvedValue({ added: 2, dropped: 0 }),
     finish: jest.fn().mockResolvedValue(undefined),
+    window: jest.fn().mockResolvedValue(30),
     ...over,
   };
 }
+
+describe("scanWindowDays", () => {
+  const now = Date.parse("2026-11-10T12:00:00.000Z");
+
+  it("asks for the full month before the first successful run", () => {
+    expect(scanWindowDays(null, now)).toBe(30);
+    expect(scanWindowDays("not-a-date", now)).toBe(30);
+    expect(scanWindowDays("2099-01-01T00:00:00.000Z", now)).toBe(30);
+  });
+
+  it("only asks for the days since the last successful run", () => {
+    expect(scanWindowDays("2026-11-10T06:00:00.000Z", now)).toBe(2);
+    expect(scanWindowDays("2026-11-08T12:00:00.000Z", now)).toBe(3);
+  });
+
+  it("never exceeds the scanner's own default", () => {
+    expect(scanWindowDays("2026-01-01T00:00:00.000Z", now)).toBe(30);
+  });
+});
 
 describe("runScanJob", () => {
   it("ingests this run's rows plus the unimported backlog, then records an ok run", async () => {
@@ -84,6 +104,28 @@ describe("runScanJob", () => {
       "https://id.jobstreet.com/job/1",
       "https://id.jobstreet.com/job/2",
     ]);
+  });
+
+  it("does not re-fetch a receipt URL the corpus already holds", async () => {
+    const d = deps({
+      keys: jest
+        .fn()
+        .mockResolvedValue(new Set(["https://id.jobstreet.com/job/1"])),
+    });
+    await runScanJob(9, d);
+    const rows = ((d.ingest as jest.Mock).mock.calls[0] as unknown[])[0] as {
+      url: string;
+    }[];
+    expect(rows.map((r) => r.url)).toEqual([
+      "https://id.jobstreet.com/job/2",
+      "https://id.jobstreet.com/job/3",
+    ]);
+  });
+
+  it("passes the incremental window to the scanner", async () => {
+    const d = deps({ window: jest.fn().mockResolvedValue(3) });
+    await runScanJob(9, d);
+    expect(d.scan).toHaveBeenCalledWith({ since: 3 });
   });
 
   it("records a failed run when the scanner is fatal", async () => {
