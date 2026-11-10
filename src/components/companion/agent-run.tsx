@@ -21,6 +21,7 @@ import {
   type DetectorAgent,
   LUMINA_STEPS,
 } from "@/components/companion/agents";
+import { LinkVerify } from "@/components/companion/link-verify";
 import {
   Collapsible,
   CollapsibleContent,
@@ -404,6 +405,9 @@ function AgentBubble({
                       <span className="mt-0.5 block text-dim [overflow-wrap:anywhere]">
                         “{signal.evidence}”
                       </span>
+                    ) : null}
+                    {stage.id === "link" && signal.evidence ? (
+                      <LinkVerify url={signal.evidence} />
                     ) : null}
                   </li>
                 ))}
