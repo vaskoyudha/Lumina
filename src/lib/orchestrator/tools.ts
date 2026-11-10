@@ -118,7 +118,10 @@ async function lookupDomain(
   try {
     const response = await fetch(`https://rdap.org/domain/${host}`, {
       signal: controller.signal,
-      headers: { accept: "application/rdap+json" },
+      headers: {
+        accept: "application/rdap+json",
+        "user-agent": "Lumina/1.0 (domain safety check)",
+      },
     });
     if (!response.ok) {
       return { ok: false, host, error: `rdap-${response.status}` };

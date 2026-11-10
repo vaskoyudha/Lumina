@@ -125,6 +125,9 @@ describe("orchestrator tools", () => {
     expect(output.registrar).toBe("Example Registrar");
     expect(output.ageDays).toBeGreaterThan(0);
     expect(output.statuses).toEqual(["clientTransferProhibited"]);
+    expect(
+      (fetchMock.mock.calls[0]?.[1] as RequestInit | undefined)?.headers,
+    ).toMatchObject({ "user-agent": expect.stringContaining("Lumina") });
     globalThis.fetch = originalFetch;
   });
 });
