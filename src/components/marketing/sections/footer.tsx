@@ -45,7 +45,7 @@ export function Footer() {
           <br />
           {footerCopy.title[1]}
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-amberwarm-100/75 text-xs leading-relaxed sm:text-sm">
+        <p className="mx-auto mt-3 max-w-md text-amberwarm-100/75 text-sm leading-relaxed">
           {footerCopy.body}
         </p>
         <div className="mt-7">

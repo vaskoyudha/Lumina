@@ -80,7 +80,7 @@ export function BelajarLencana() {
                     <h4 className="font-bold text-sm text-txt">
                       {BADGE_LABEL[badgeId] ?? badgeId}
                     </h4>
-                    <p className="mt-0.5 font-medium text-[11px] text-dim">
+                    <p className="mt-0.5 font-medium text-[13px] text-dim">
                       {!progress
                         ? "Memuat progres di akunmu…"
                         : earned

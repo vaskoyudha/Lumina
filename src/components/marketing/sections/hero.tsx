@@ -138,7 +138,7 @@ export function Hero() {
           <div className="flex lg:col-span-5 lg:justify-end">
             <div className="glass-card w-full max-w-sm rounded-2xl p-4 shadow-2xl sm:p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="font-medium text-amberwarm-50 text-xs sm:text-sm">
+                <span className="font-medium text-amberwarm-50 text-sm">
                   Bagaimana perasaanmu?
                 </span>
                 <span
