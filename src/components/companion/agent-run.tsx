@@ -22,6 +22,7 @@ import {
   LUMINA_STEPS,
 } from "@/components/companion/agents";
 import { LinkVerify } from "@/components/companion/link-verify";
+import { ValidationNote } from "@/components/companion/validation-note";
 import {
   Collapsible,
   CollapsibleContent,
@@ -85,6 +86,8 @@ const SIGNAL_AGENTS: ReadonlySet<AgentStage["id"]> = new Set([
   "job",
   "marketplace",
   "qris",
+  "email",
+  "injection",
 ]);
 
 function statusText(stage: AgentStage): string {
@@ -697,6 +700,14 @@ export function AgentRun({
         ) : null}
       </motion.ol>
 
+      <ValidationNote trace={trace} />
+      {trace.stages
+        .filter((s) => s.id === "verify" || s.id === "verify-plan")
+        .map((s) => (
+          <p key={s.id} className="text-sm text-dim">
+            {s.label}: {s.note}
+          </p>
+        ))}
       {announce ? (
         <output className="sr-only" aria-live="polite">
           {announcement}

@@ -210,7 +210,7 @@ export function suggestedActions(result: ScoreResult | null) {
  * the user never asked for.
  */
 export function composeAnswerFallback(
-  lane: "tanya" | "lanjutan" | "obrolan",
+  lane: "tanya" | "lanjutan" | "obrolan" | "belajar",
   outcome: "unconfigured" | "timeout" | "failed" = "failed",
   context: { question: string; history: string[] } = {
     question: "",
