@@ -121,9 +121,11 @@ export function validateReport(
       );
     }
   });
-  if (report.points.length > context.signals.length + 1) {
+  const maxObservations = context.signals.length === 0 ? 2 : 1;
+  const maxPoints = context.signals.length + maxObservations;
+  if (report.points.length > maxPoints) {
     issues.push(
-      "points: maksimal satu poin observasi tambahan di luar sinyal tool",
+      `points: maksimal ${maxObservations} poin observasi tambahan di luar sinyal tool`,
     );
   }
 
@@ -138,9 +140,9 @@ export function validateReport(
     const known = byLabel.has(key);
     if (!known) {
       observations += 1;
-      if (observations > 1) {
+      if (observations > maxObservations) {
         issues.push(
-          `points.${index}.signal: hanya satu observasi agen yang boleh di luar sinyal tool`,
+          `points.${index}.signal: hanya ${maxObservations} observasi agen yang boleh di luar sinyal tool`,
         );
       }
       if (!point.quote) {
@@ -187,7 +189,7 @@ export const SUBMIT_REPORT_TOOL = {
   function: {
     name: "submit_report",
     description:
-      "Submit the final evidence-grounded report. Call this when your investigation is ready; if the harness rejects it, read the issues and call it again with the corrected fields. Prefer a label returned by the other tools. If no tool signal fits but you can see a clear pattern, you may submit at most one observation point with an exact quote from the message; invented labels or quotes are rejected.",
+      "Submit the final evidence-grounded report. Call this when your investigation is ready; if the harness rejects it, read the issues and call it again with the corrected fields. Prefer a label returned by the other tools. If tool signals exist, you may add at most one observation point; if no tool signal fits, you may submit at most two observation points with exact quotes from the message. Invented labels or quotes are rejected.",
     parameters: z.toJSONSchema(SubmitReportSchema),
   },
 };

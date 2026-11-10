@@ -65,6 +65,40 @@ describe("validateReport", () => {
     expect(validateReport(report, { message, signals: [] }).ok).toBe(true);
   });
 
+  it("accepts two quoted observations when the tools returned nothing", () => {
+    const report = {
+      ...valid,
+      points: [
+        {
+          ...valid.points[0],
+          signal: "Pola tugas berbayar",
+          quote: "biaya admin",
+        },
+        {
+          ...valid.points[0],
+          signal: "Desakan membayar",
+          point: "Pesan mendesak membayar biaya admin.",
+          quote: "Rp250.000",
+        },
+      ],
+    };
+    const result = validateReport(report, { message, signals: [] });
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a third observation when the tools returned nothing", () => {
+    const report = {
+      ...valid,
+      points: [
+        { ...valid.points[0], signal: "Pola satu", quote: "biaya admin" },
+        { ...valid.points[0], signal: "Pola dua", quote: "Rp250.000" },
+        { ...valid.points[0], signal: "Pola tiga", quote: "Selamat!" },
+      ],
+    };
+    const result = validateReport(report, { message, signals: [] });
+    expect(result.ok).toBe(false);
+  });
+
   it("rejects an observation without a quote", () => {
     const report = {
       ...valid,
