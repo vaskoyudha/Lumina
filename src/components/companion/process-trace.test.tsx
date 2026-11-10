@@ -132,7 +132,6 @@ describe("ProcessTrace", () => {
     expect(
       screen.getByRole("region", { name: /agen di bawah komando lumina/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/agen dipanggil · 1/i)).toBeInTheDocument();
     expect(
       screen.getByText(/saya melihat pola permintaan otp/i),
     ).toBeInTheDocument();
@@ -236,7 +235,7 @@ describe("ProcessTrace", () => {
       />,
     );
 
-    expect(screen.getByText(/agen dipanggil · 1/i)).toBeInTheDocument();
+    expect(screen.queryByText("QRIS Agent")).not.toBeInTheDocument();
     expect(screen.queryByText("Ruru")).not.toBeInTheDocument();
     expect(
       screen.queryByText(/dilewati karena batas waktu/i),

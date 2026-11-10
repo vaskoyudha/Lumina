@@ -293,17 +293,13 @@ export function ProcessTrace({
             aria-label="Agen di bawah komando Lumina"
             className="flex flex-col gap-2.5"
           >
-            {visibleBlocks.length > 0 ? (
-              <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
-                Agen dipanggil · {visibleBlocks.length}
-              </p>
-            ) : (
+            {visibleBlocks.length === 0 ? (
               <p className="text-[11px] text-dim">
                 {blocks.length > 0
                   ? "Tidak ada agen yang sempat melapor."
                   : "Menyiapkan agen…"}
               </p>
-            )}
+            ) : null}
 
             {visibleBlocks.length > 0 ? (
               <ol className="flex flex-col gap-2.5">
