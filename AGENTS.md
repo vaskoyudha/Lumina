@@ -6,10 +6,11 @@
 
 **Pengecualian database, 9 November 2026:** materi Belajar, kuis, dan skenario Simulasi dibaca dari PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Percakapan dan pesan yang diperiksa tetap tidak disimpan. Lihat `docs/learning-database.md`.
 
-Empat orang, submission 10 November 2026. Branch stream sudah di-merge ke
-`main`; `main` adalah cabang integrasi. Aturan di file ini mengikat semua agent.
-Baca `docs/plan.md` (sumber kebenaran produk) dan `STATUS.md` (status per stream)
-sebelum menyentuh kode.
+`main` adalah cabang integrasi; branch stream lama sudah di-merge. Aturan di file
+ini mengikat semua agent. Baca `docs/plan.md` (sumber kebenaran produk),
+`STATUS.md` (status per irisan, terakhir 10 November), dan
+`docs/plans/execution-2026-11-10.md` (apa yang benar-benar dipasang versus
+ditunda) sebelum menyentuh kode.
 
 ## Stack — jangan diganti tanpa kesepakatan
 
@@ -50,6 +51,10 @@ npm run format         # biome format --write
 npm run db:migrate     # jalankan migrasi; DATABASE_URL harus menunjuk DB tujuan
 npm run db:cleanup     # hapus sesi/state OAuth/penghitung kedaluwarsa
 npm run db:import-sqlite -- <backup.sqlite>  # cutover akun, sumber read-only
+npm run db:seed        # isi modul/kuis/skenario dari content/competition.json (aditif)
+npm run db:seed -- content/competition.json --replace   # timpa baris bernama
+npm run db:seed:community          # seed topik komunitas
+npm run db:seed:community:agents   # seed agen komunitas
 npm run wip            # semua worktree: berkas kotor + commit belum di-push
 ```
 
@@ -66,9 +71,9 @@ bisa menyembunyikannya.
 Selain gate, ada dua jebakan:
 
 a. `biome.json` mengecualikan `src/components/marketing/powder/sections`,
-   `src/styles/powder-{framer,fonts}.css`, dan `src/data/powder`. `lint:fix`
-   tidak memformat berkas itu; sunting dengan tangan dan pertahankan kelas
-   `framer-*` yang sudah ada.
+   `src/styles/powder-{framer,fonts}.css`, `src/data/powder`, `scanner/`, dan
+   `.scan-data/`. `lint:fix` tidak memformat berkas itu; sunting dengan tangan,
+   pertahankan kelas `framer-*`, dan jangan memformat engine vendored.
 b. Tangkapan layar review di `.opencode/` (PNG, `shots/`, `walk-*/`) bukan
    source; jangan ikut di-commit. Yang dilacak di sana hanya symlink `skills/`.
 
@@ -96,6 +101,22 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 - `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; callback = `AUTH_URL + /api/auth/google/callback`. Lihat `docs/auth.md`.
 - `LUMINA_DEMO_EMAIL`, `LUMINA_DEMO_PASSWORD` — opsional; tombol akun demo di `/masuk` hanya membaca keduanya di server. Kosongkan di lingkungan yang tidak boleh punya akun bersama.
 - `LUMINA_AI_GLOBAL_LIMIT` — batas AI global per menit (template Compose 100; kode jatuh ke 200 bila kosong).
+- `LUMINA_LLM_FALLBACK_MODEL`, `LUMINA_LLM_REASONING_EFFORT`,
+  `LUMINA_LLM_FALLBACK_REASONING_EFFORT` — retry 429/5xx ke model kedua dan pin
+  `reasoning_effort`; biarkan kosong untuk model yang menolak `none`.
+- `LUMINA_LLM_LANES`, `LUMINA_LLM_LANE_KEY` — lane egress tambahan (base URL
+  opencode2api dipisah koma + kunci bersama).
+- `LUMINA_COMPANION_ORCHESTRATOR=1` — pakai planner → spesialis → synthesizer;
+  tanpa itu Companion tetap satu panggilan suara. `LUMINA_ORCHESTRATOR_DEADLINE_MS`
+  (default 60000) membatasi seluruh run.
+- `URLVET_API_URL` — verifikasi tautan opt-in. Kosong = `https://api.url.vet`
+  publik; `off` mematikan. Hanya URL yang dikirim.
+- `VERIFY_LINK`, `VERIFY_FILE` — reputasi tautan/berkas lewat scanner; default
+  mati, isi `on` untuk mengaktifkan. Verifikasi berkas hanya mengirim SHA-256.
+- `COMMUNITY_MODERATOR_IDS` — UUID akun yang boleh meninjau laporan komunitas.
+- `STUDIO_ALLOWED_IDS`, `STUDIO_WORKSPACE_ROOT`, `STUDIO_APPEND_PROMPT` —
+  allowlist UUID untuk `/studio`, akar workspace per akun (di luar repo), dan
+  instruksi tambahan system prompt.
 - `LOKER_SCAN_DATA_DIR` — akar data pemindai lowongan (default `<cwd>/.scan-data`;
   di container `/app/.scan-data`). Harus bisa ditulis proses aplikasi.
 - `LOKER_PREWARM_INTERVAL_MS` — jeda pemanasan korpus lowongan di latar belakang
@@ -126,6 +147,11 @@ d. Riwayat Companion menyimpan metadata per akun di `companion_conversations`
    (judul, jumlah giliran, waktu, dan skor terakhir). Isi pesan, lampiran, dan
    transkrip tidak pernah ikut; membuka riwayat di perangkat lain hanya
    memulihkan judul, bukan percakapan.
+e. Satu-satunya artefak yang boleh keluar dari perangkat adalah URL saat pembaca
+   menekan **Periksa tautan**: body-nya `{ "url": … }`, opt-in per tautan, dan
+   hasilnya tidak ditulis balik ke `signals`. Verifikasi berkas hanya mengirim
+   hash. Matikan dengan `URLVET_API_URL=off` bila deployment tidak
+   mengizinkannya.
 
 ## Deploy
 
@@ -138,8 +164,13 @@ Backup, rollback, dan cutover SQLite: `docs/deploy.md`.
 
 `scanner/` adalah engine career-ops yang di-vendor utuh dan dijalankan sebagai
 subprocess; `Dockerfile` menyalinnya dan membuat `/app/.scan-data` milik UID
-1001. Migrasi `002_loker.sql` ikut `npm run db:migrate`; aplikasi tidak membuat
-tabel.
+1001. `npm run build` menjalankan `scripts/link-standalone-externals.mjs` setelah
+`next build` untuk menambal symlink modul standalone.
+
+Migrasi bernomor `001`–`011` (auth, loker, learning/simulation, community,
+companion history, review) ikut `npm run db:migrate`, lalu `npm run db:seed`
+memuat `content/competition.json`. Aplikasi tidak membuat tabel. Jangan menulis
+materi langsung ke tabel; ubah JSON lalu seed (`--replace` untuk baris bernama).
 
 ## Skills
 
@@ -172,18 +203,22 @@ dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
 |---|---|---|---|
 | `(marketing)` | `SiteProvider` + `SiteHeader` + `Footer` + `ThemeSlider` + `SmoothScroll` | `.landing[data-theme]` (`--ls-*`) | `/` landing |
 | `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | profil |
-| `(chat)` | tanpa nav, sidebar sendiri (`WorkspaceShell`) | `--lumina-*` via `.appnext` | `/companion`, `/belajar`, `/simulasi`, `/komunitas` |
+| `(chat)` | tanpa nav, sidebar sendiri (`WorkspaceShell`) | `--lumina-*` via `.appnext` | `/companion`, `/agen`, `/belajar`, `/simulasi`, `/komunitas` |
 | `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
+| `/studio` | `StudioChat` tanpa nav | `--lumina-*` | coding agent; hanya UUID di `STUDIO_ALLOWED_IDS`, `robots: noindex` |
 | `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
-| `api/companion/*` | route handler | — | `answer`, `vision`, `voice` |
+| `api/companion/*` | route handler | — | `answer`, `vision`, `voice`, `orchestrate`, `tools/{summary,report}` |
+| `api/account`, `api/session` | route handler | — | progres per akun; sesi |
+| `api/link/verify`, `api/verify-link`, `api/verify-file` | route handler | — | verifikasi tautan/berkas opt-in |
+| `api/studio/chat` | route handler | — | coding agent, allowlist |
 | `api/auth/google/*` | route handler | — | mulai OAuth + callback |
 | `api/health` | route handler | — | `SELECT 1` ke DB; bukan cek provider AI |
-| `api/loker/scan` | route handler | — | mulai pindai (sesi + rate limit + advisory lock) |
-| `api/loker/scan/status` | route handler | — | status run terakhir; `204` bila belum ada |
-| `api/companion/tools/summary` | route handler | — | ringkasan fase 2 (tanpa query/deskripsi) |
+| `api/loker/scan`, `api/loker/scan/status` | route handler | — | pindai + status run; `204` bila belum ada |
 
 Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
-ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`.
+ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`. `/agen` adalah
+alamat tersendiri untuk tampilan agen; jangan menambah alias
+`/companion?panel=agen`.
 
 `/admin` sengaja tidak ada di nav: itu workbench penulis kurikulum, bukan
 permukaan produk. Draf tinggal di perangkat; publikasi adalah ekspor + commit,
@@ -236,13 +271,17 @@ src/
 │   │   └── profil/           akun + kemajuan akun
 │   ├── (chat)/               tanpa nav; catatan privasi ada di panel/sidebar
 │   │   ├── companion/        A · percakapan + panel bukti
-│   │   ├── belajar/          B · katalog + [modul], sidebar Companion
+│   │   ├── agen/             tampilan 8 agen sebagai alamat sendiri
+│   │   ├── belajar/          B · katalog + [modul] + latihan, sidebar Companion
 │   │   └── simulasi/         C · daftar + [id] + layout runner, sidebar bersama
 │   ├── admin/                workbench kurikulum, AdminNav sendiri
+│   ├── studio/               coding agent, hanya UUID allowlist
 │   ├── api/
-│   │   ├── companion/        answer, vision, voice
+│   │   ├── companion/        answer, vision, voice, orchestrate, tools/
+│   │   ├── account/ session/ progres per akun + sesi
+│   │   ├── link/ verify-link/ verify-file/  verifikasi opt-in
+│   │   ├── studio/           chat coding agent
 │   │   ├── loker/            scan + scan/status
-│   │   ├── companion/tools/  summary
 │   │   ├── auth/google/      mulai OAuth + callback
 │   │   └── health/           SELECT 1 ke DB
 │   ├── masuk/ daftar/        auth akun, tanpa chrome
@@ -252,16 +291,22 @@ src/
 │   ├── shell/                nav + AuthNav + pembaca sesi + WorkspaceShell
 │   ├── auth/                 AuthDialog, AuthPanel, UserMenu
 │   ├── marketing/            sections landing + powder/ (vendored, Biome-exempt)
-│   ├── brand/                logo + mascot (dipakai shell, marketing, companion)
+│   ├── brand/                logo, mascot, potret agen
 │   ├── admin/                admin inventory/nav
-│   ├── companion/            percakapan, panel bukti, kartu lowongan
-│   │   ├── loker-tool.tsx    kartu pencarian lowongan
-│   │   └── loker-card.tsx    satu lowongan + dua penilaian
-│   └── belajar/ community/ profil/
+│   ├── companion/            percakapan, agent-run, panel bukti, link-verify, loker
+│   └── belajar/ simulasi/ community/ profil/ studio/
 ├── lib/
-│   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run
+│   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run, orchestrator, report, tool, verify
 │   ├── scoring/              engine deterministik + eval.ts + bench-cases.ts
+│   ├── orchestrator/         planner → spesialis → synthesizer + subagent runtime
+│   ├── agents/               identitas 8 agen (server-safe, dipakai semua permukaan)
+│   ├── agent/                case store metadata + TTL (bukan runtime tool)
 │   ├── companion/            turn, reply, explain, answer-client, vision-client, voice-stream
+│   ├── learning/             path, review, practice, tutor, validasi
+│   ├── content/              schema + store bundle materi
+│   ├── verify/               tautan, berkas, reputasi, forensik gambar
+│   ├── link-verify/          klien urlvet
+│   ├── studio/               akses, loop, tools coding agent
 │   ├── auth/                 database, accounts, password, google, session, server-session, maintenance
 │   ├── server/               clientKey/limitAI + pembaca body berbatas
 │   ├── simulasi/             catalog, scenario, validate
@@ -269,16 +314,17 @@ src/
 │   ├── community/            diskusi, balasan, reaksi, laporan
 │   ├── evidence/             bundle, extract, timeline, narrative
 │   ├── admin/                draft-store, export-course
-│   └── progress.ts, modus.ts, scroll.ts, site.ts, utils.ts
-├── data/                     modus.json, official-domains.json, kurikulum.ts, modul-10.ts, modul-schema.ts, tactics.ts, triage.ts, powder/
+│   └── progress.ts, ledger.ts, modus.ts, scroll.ts, site.ts, utils.ts
+├── data/                     modul-01..12, kurikulum, modul-schema, patterns, scam-templates, modus.json, official-domains.json, tactics, report-contacts, community/, powder/
 └── styles/                   appnext-tokens.css, landing-tokens.css, powder-*.css
 ```
 
 Di akar repo:
 
 ```
-├── migrations/               SQL bernomor, dijalankan `scripts/migrate.mjs`
-├── scripts/                  migrate/cleanup/import-sqlite
+├── content/                  competition.json — bundle seed materi (divalidasi schema)
+├── migrations/               SQL bernomor 001–011, dijalankan `scripts/migrate.mjs`
+├── scripts/                  migrate/cleanup/import-sqlite/seed-*/link-standalone/wip-report
 ├── deploy/                   Caddyfile, backup, db-init
 └── scanner/                  engine career-ops yang di-vendor (jangan diedit)
 ```
@@ -287,17 +333,22 @@ Jangan menambah tabel lewat kode aplikasi — tambah migrasi bernomor.
 
 ## Batas stream
 
-Branch stream sudah merge ke `main`; tabel ini soal kepemilikan kode, bukan
-branch. Jangan menyentuh milik stream lain tanpa memberi tahu. Kalau butuh
-sesuatu, minta bentuk datanya, bukan filenya.
+Tabel ini soal kepemilikan kode, bukan branch. Jangan menyentuh milik stream lain
+tanpa memberi tahu. Kalau butuh sesuatu, minta bentuk datanya, bukan filenya.
 
 | Stream | Boleh | Jangan |
 |---|---|---|
-| A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner, PDF |
-| B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-10.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
-| C | `app/(chat)/simulasi/`, `lib/simulasi/`, `components/` milik simulasi | konten modul, PDF |
+| A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner |
+| B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-*.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
+| C | `app/(chat)/simulasi/`, `lib/simulasi/`, `components/simulasi/` | konten modul |
 | D | `app/(chat)/komunitas/`, `components/community/`, `lib/community/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
-| Loker (pasca-submisi) | `scanner/`, `lib/loker/`, `api/loker/`, `api/companion/tools/`, `components/companion/loker-*`, `migrations/002_loker.sql` | engine skor pesan, konten modul, PDF |
+| Loker (pasca-submisi) | `scanner/`, `lib/loker/`, `api/loker/`, `api/companion/tools/`, `components/companion/loker-*`, `migrations/002_loker.sql` | engine skor pesan, konten modul |
+
+Pekerjaan pasca-10 November (orchestrator/agen, learning adaptif, verifikasi
+tautan/berkas, Studio) tidak punya pemilik stream: perlakukan sebagai permukaan
+bersama dan sebutkan di PR. Dokumen desainnya:
+`docs/agent-orchestration.md`, `docs/companion-routing.md`,
+`docs/link-verification.md`, `docs/plans/execution-2026-11-10.md`.
 
 `StageId` mendapat entri aditif `"job-search"` untuk jejak agen; `AgentId` tidak
 berubah. Perubahan ini terasa di panel bukti bersama, jadi sebutkan di PR.
@@ -314,7 +365,13 @@ a. Panel bukti hanya mencetak temuan engine, bukan temuan karangan. Setiap agent
    dan Identity Agent memilih tidak melapor daripada mengarang.
 b. Modul yang belum ditulis berstatus "Segera", bukan stub kosong.
 c. Level simulasi yang belum jadi ditandai `Rencana`, tidak dimainkan seolah jadi.
-d. Klaim akurasi mengikuti hasil ukur, bukan angka di proposal (§11.8).
+d. Klaim akurasi mengikuti `runEval()` pada korpus 120 kasus (60 scam / 60 sah),
+   bukan angka di proposal (§11.8). Perubahan detektor diukur ulang; angka di
+   dokumen adalah hasil ukur, bukan target.
+e. Verifikasi tautan/berkas tidak menulis balik ke `signals`. `/api/link/verify`
+   memakai `URLVET_API_URL` (mati dengan `off`); reputasi di `/api/verify-link`
+   dan `/api/verify-file` mati kecuali `VERIFY_LINK=on` / `VERIFY_FILE=on`, dan
+   verifikasi berkas hanya mengirim hash SHA-256.
 
 ## Test
 
