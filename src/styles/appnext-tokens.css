@@ -607,11 +607,16 @@
     --sidebar-ring: #f05a1a;
 
     /* The reference ground is a peach field that gets deeper at the bottom,
-       so the cream cards read as lifted instead of outlined. */
+       so the cream cards read as lifted instead of outlined. The three stops
+       are tokens because the composer fade at the bottom of the transcript
+       must match the ground instead of washing it out with cream. */
+    --appnext-field-top: #fdf1e8;
+    --appnext-field-mid: #fce5d7;
+    --appnext-field-bottom: #fad9c6;
     background-image:
       radial-gradient(
         circle at 34% 6%,
-        color-mix(in oklab, #fff3ec 92%, transparent) 0%,
+        color-mix(in oklab, var(--appnext-field-mid) 92%, transparent) 0%,
         transparent 58%
       ),
       radial-gradient(
@@ -619,7 +624,12 @@
         color-mix(in oklab, #f6ad85 34%, transparent) 0%,
         transparent 42%
       ),
-      linear-gradient(165deg, #fdf1e8 0%, #fce5d7 60%, #fad9c6 100%);
+      linear-gradient(
+        165deg,
+        var(--appnext-field-top) 0%,
+        var(--appnext-field-mid) 60%,
+        var(--appnext-field-bottom) 100%
+      );
   }
 
   .appnext :where(.bg-bg) {

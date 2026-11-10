@@ -3240,7 +3240,7 @@ export function CompanionChat({
               >
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-bg via-bg/90 to-transparent"
+                  className="absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-[var(--appnext-field-bottom)] to-transparent"
                 />
                 <div className="pointer-events-auto relative mx-auto w-full max-w-[640px]">
                   <Composer
