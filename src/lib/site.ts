@@ -26,17 +26,10 @@ export const heroPerks = [
 ];
 
 export const aboutCopy = {
-  badge: "TENTANG LUMINA",
-  title: ["Membantu orang membaca pola,", "sebelum uangnya hilang"],
-  body: "Kami percaya keamanan dimulai dari penjelasan yang bisa dibaca, bukan dari rasa takut. Lumina menunjukkan apa yang memicu penilaian, supaya kamu bisa menilai sendiri.",
+  badge: "Delapan agen, satu skor",
+  title: ["Delapan agen memeriksa pesanmu,", "satu skor yang bisa diperiksa"],
+  body: "Kata yang menekan, tautan yang menyamar, identitas pengirim, alur percakapan, tawaran kerja, jual-beli, dan QRIS dibaca delapan agen sekaligus. Temuannya dirangkum jadi kutipan dan garis waktu, lalu dihitung oleh engine yang sama untuk semua.",
   cta: "Kenali cara kerjanya",
-  portraits: [
-    { alt: "Pria berkacamata hitam tersenyum di luar ruangan" },
-    { alt: "Pria berkaos putih menatap kamera dengan langit biru" },
-    { alt: "Pria berkaos abu-abu bersandar di tepi pantai" },
-    { alt: "Pria berkaos marun berjalan di bawah sinar matahari" },
-    { alt: "Pria berkaos gelap tersenyum ke arah kamera" },
-  ],
 };
 
 export const aboutStats = [
