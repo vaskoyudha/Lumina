@@ -117,6 +117,7 @@ import {
   isWebLookupQuestion,
   type Lane,
   planTurn,
+  refersToPriorAttachment,
   wantsSafetyCheck,
 } from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
@@ -207,6 +208,12 @@ interface Turn {
   visionNote?: string;
   /** Local transcript for an attachment the user asked about. Never from a check. */
   attachmentText?: string;
+  /**
+   * Local OCR text kept so a later turn that refers back to the screenshot can
+   * be answered. Never persisted and never shown; the model sees it only when
+   * the reader explicitly points at the earlier attachment.
+   */
+  recallText?: string;
   /** A local note when an attachment could not be read. */
   attachmentNote?: string;
   /** True when this turn asked about attachment content, not its safety. */
@@ -883,10 +890,28 @@ export function CompanionChat({
         const hasImages = !tutorModule && attachments.some(isImageAttachment);
         const hasAttachments = !tutorModule && attachments.length > 0;
         const hasLinks = !tutorModule && extractLinks(text).length > 0;
+        /*
+         * A text-only turn can still be about a screenshot the reader sent on
+         * an earlier turn ("the screenshot I just gave you"). The local OCR
+         * text is kept on that turn; replay it only when the wording points
+         * back at it and nothing new was attached. This is the same content
+         * question exception as an attachment in the current turn, so the
+         * checked message itself still never becomes chat history.
+         */
+        const recalledText =
+          !tutorModule &&
+          !hasAttachments &&
+          !hasLinks &&
+          refersToPriorAttachment(text)
+            ? [...(active?.turns ?? [])]
+                .reverse()
+                .find((turn) => turn.role === "companion" && turn.recallText)
+                ?.recallText
+            : undefined;
         const contentQuestion =
           !options.force &&
-          (hasAttachments || hasLinks) &&
-          isContentQuestion(text) &&
+          (hasAttachments || hasLinks || !!recalledText) &&
+          (isContentQuestion(text) || !!recalledText) &&
           !wantsSafetyCheck(text);
         const safetyCheck =
           !options.force &&
@@ -991,9 +1016,11 @@ export function CompanionChat({
           : null;
         const readMs = performance.now() - readStarted;
         const links = hasLinks ? extractLinks(text) : [];
-        const modelAttachments = readResult
-          ? toAttachmentContext(readResult.reads)
-          : [];
+        const modelAttachments = recalledText
+          ? [{ kind: "image" as const, text: recalledText.slice(0, 6000) }]
+          : readResult
+            ? toAttachmentContext(readResult.reads)
+            : [];
 
         const scored = [
           transcription.text,
@@ -1128,24 +1155,36 @@ export function CompanionChat({
          * the trace cannot imply a report was being prepared.
          */
         const readerStage: AgentStage | null =
-          contentQuestion && readResult
+          contentQuestion && recalledText
             ? {
                 id: "evidence",
                 label: "Pembaca Lampiran",
-                task: "Membaca teks dari lampiran yang ditanyakan",
-                status:
-                  readResult.readable > 0 || hasLinks ? "selesai" : "dilewati",
+                task: "Memakai teks lampiran yang dikirim sebelumnya",
+                status: "selesai",
                 findings: 0,
-                ms: readMs,
-                note:
-                  readResult.readable > 0
-                    ? `${readResult.readable} lampiran terbaca`
-                    : hasLinks
-                      ? `${links.length} tautan dibaca dari pertanyaan`
-                      : (readResult.reads.find((read) => read.note)?.note ??
-                        "Tidak ada teks yang bisa dibaca."),
+                ms: 0,
+                note: "Teks dari lampiran sebelumnya dipakai.",
               }
-            : null;
+            : contentQuestion && readResult
+              ? {
+                  id: "evidence",
+                  label: "Pembaca Lampiran",
+                  task: "Membaca teks dari lampiran yang ditanyakan",
+                  status:
+                    readResult.readable > 0 || hasLinks
+                      ? "selesai"
+                      : "dilewati",
+                  findings: 0,
+                  ms: readMs,
+                  note:
+                    readResult.readable > 0
+                      ? `${readResult.readable} lampiran terbaca`
+                      : hasLinks
+                        ? `${links.length} tautan dibaca dari pertanyaan`
+                        : (readResult.reads.find((read) => read.note)?.note ??
+                          "Tidak ada teks yang bisa dibaca."),
+                }
+              : null;
 
         const stages: AgentStage[] = checked
           ? [
@@ -1267,6 +1306,13 @@ export function CompanionChat({
                       ocrConfidence: transcription.text
                         ? extractEntities(transcription.text).confidence
                         : undefined,
+                      recallText:
+                        transcription.items.length > 0
+                          ? transcription.items
+                              .map((item) => item.text)
+                              .join("\n\n")
+                              .slice(0, 6000)
+                          : undefined,
                       trace: openTrace ?? undefined,
                     },
                   ],

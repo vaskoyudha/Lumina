@@ -91,6 +91,30 @@ export function isContentQuestion(text: string): boolean {
 }
 
 /**
+ * The attachment nouns and the markers that point back at one already sent.
+ *
+ * A follow-up like "the screenshot I just gave you" is a content question about
+ * an earlier turn, not a new file. The client keeps the local transcription and
+ * replays it only when this returns true; an ordinary sentence cannot pull a
+ * checked screenshot back into the conversation.
+ */
+const ATTACHMENT_NOUN =
+  /\b(?:screenshot|screen\s?shot|ss|image|photo|picture|attachment|file|document|tangkapan\s+layar|gambar|foto|lampiran|berkas|dokumen)\b/i;
+
+const PRIOR_REFERENCE =
+  /\b(?:tadi|barusan|sebelumnya|sebelum\s+ini|di\s+atas|above|earlier|previous(?:ly)?|before|(?:saya|aku)\s+(?:baru\s+)?(?:kirim|kasih|beri|unggah|tempel|bagikan)|(?:just|baru)\s+(?:sent|send|gave|give|shared|share|uploaded|upload|pasted|paste|attached|attach|showed|show))\b/i;
+
+/** True when the reader is asking about an attachment sent on an earlier turn. */
+export function refersToPriorAttachment(text: string): boolean {
+  const t = normalized(text);
+  if (t.length === 0) return false;
+  if (!ATTACHMENT_NOUN.test(t) || !PRIOR_REFERENCE.test(t)) return false;
+  // A URL, phone, or `.apk` name means this is new evidence, not a callback.
+  if (MESSAGE_ARTIFACT.test(t)) return false;
+  return !wantsSafetyCheck(t);
+}
+
+/**
  * A report *request*, not a question about reports.
  *
  * The old regex was `buat|bikin|susun … laporan`, which offered the tool for
