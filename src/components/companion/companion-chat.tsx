@@ -432,6 +432,11 @@ export function CompanionChat({
   /** `null` = the newest session, never a hardcoded id. */
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [busy, setBusy] = React.useState(false);
+  /** Set while an attached image is being read, before the answer turn exists. */
+  const [readingAt, setReadingAt] = React.useState<{
+    turnId: number;
+    at: number;
+  } | null>(null);
   const inFlight = React.useRef<symbol | null>(null);
   const attachmentUrls = React.useRef(new Set<string>());
   const pendingControllers = React.useRef(new Set<AbortController>());
@@ -795,6 +800,7 @@ export function CompanionChat({
         if (inFlight.current !== operation) return;
         inFlight.current = null;
         setBusy(false);
+        setReadingAt(null);
       };
       const control = new AbortController();
       pendingControllers.current.add(control);
@@ -862,6 +868,7 @@ export function CompanionChat({
 
         if (hasImages) {
           setBusy(true);
+          setReadingAt({ turnId: userTurn.id, at: Date.now() });
           setSessions((prev) =>
             prev.map((session) =>
               session.id === target
@@ -1165,6 +1172,7 @@ export function CompanionChat({
           : "Percakapan Companion";
 
         setBusy(true);
+        setReadingAt(null);
         setSessions((prev) =>
           prev.map((session) =>
             session.id === target
@@ -2504,6 +2512,15 @@ export function CompanionChat({
                           </ul>
                         ) : null}
 
+                        {readingAt?.turnId === turn.id ? (
+                          <div className="self-start">
+                            <ThinkingRow
+                              label="Membaca lampiran"
+                              startedAt={readingAt.at}
+                            />
+                          </div>
+                        ) : null}
+
                         {turn.visionNote ? (
                           <p className="max-w-[85%] text-right text-[11px] text-danger leading-snug">
                             {turn.visionNote}
@@ -2521,6 +2538,7 @@ export function CompanionChat({
                         <ProcessTrace
                           events={turn.orchestration}
                           live={turn.streaming}
+                          startedAt={turn.voiceStartedAt}
                         />
                       ) : turn.trace ? (
                         <AgentRun
