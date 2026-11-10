@@ -18,6 +18,7 @@ import {
   reportContent,
   reviewContent,
   setHelpful,
+  setSaved,
   writePost,
   writeReply,
 } from "@/lib/community/store";
@@ -86,6 +87,17 @@ export async function markHelpful(input: unknown): Promise<MutationResult> {
     const session = await actor();
     const parsed = z.object({ id: z.uuid(), value: z.boolean() }).parse(input);
     await setHelpful(session.id, parsed.id, parsed.value);
+    refresh(parsed.id);
+    return { ok: true };
+  } catch (e) {
+    return failed(e);
+  }
+}
+export async function markSaved(input: unknown): Promise<MutationResult> {
+  try {
+    const session = await actor();
+    const parsed = z.object({ id: z.uuid(), value: z.boolean() }).parse(input);
+    await setSaved(session.id, parsed.id, parsed.value);
     refresh(parsed.id);
     return { ok: true };
   } catch (e) {

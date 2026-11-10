@@ -22,11 +22,13 @@ type PostRow = {
   body: string;
   source_url: string | null;
   image_url: string | null;
+  image_urls: string[];
   created_at: Date;
   updated_at: Date;
   reply_count: number;
   helpful_count: number;
   has_helped: boolean;
+  has_saved: boolean;
   is_owner: boolean;
   hidden_at: Date | null;
 };
@@ -34,6 +36,7 @@ const selectPost = `SELECT p.*,u.nama,
  (SELECT count(*)::int FROM community_replies r WHERE r.post_id=p.id AND r.deleted_at IS NULL AND r.hidden_at IS NULL) AS reply_count,
  (SELECT count(*)::int FROM community_helpful h WHERE h.post_id=p.id) AS helpful_count,
  EXISTS(SELECT 1 FROM community_helpful h WHERE h.post_id=p.id AND h.user_id=$1::uuid) AS has_helped,
+ EXISTS(SELECT 1 FROM community_saves s WHERE s.post_id=p.id AND s.user_id=$1::uuid) AS has_saved,
  (p.author_id=$1::uuid) IS TRUE AS is_owner
  FROM community_posts p JOIN users u ON u.id=p.author_id`;
 const visible = "p.deleted_at IS NULL AND p.hidden_at IS NULL";
@@ -45,27 +48,75 @@ function post(row: PostRow): CommunityPost {
     title: row.title,
     body: row.body,
     sourceUrl: row.source_url,
-    imageUrl: row.image_url,
+    imageUrls: row.image_urls?.length
+      ? row.image_urls
+      : row.image_url
+        ? [row.image_url]
+        : [],
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     replies: row.reply_count,
     helpful: row.helpful_count,
     hasHelped: row.has_helped,
+    hasSaved: row.has_saved,
     isOwner: row.is_owner,
     hidden: !!row.hidden_at,
   };
 }
 export async function listPosts(query: CommunityQuery, userId: string | null) {
   const search = query.q.replace(/[\\%_]/g, "\\$&");
-  const where = `${visible} AND ($2::text IS NULL OR p.category=$2) AND ($3='' OR p.title ILIKE '%'||$3||'%' OR p.body ILIKE '%'||$3||'%') ${query.sort === "belum-dibalas" ? "AND NOT EXISTS(SELECT 1 FROM community_replies r WHERE r.post_id=p.id AND r.deleted_at IS NULL AND r.hidden_at IS NULL)" : ""}`;
-  const values = [userId, query.category ?? null, search];
+  const listWhere = [visible];
+  const listValues: unknown[] = [userId];
+  const countWhere = [visible];
+  const countValues: unknown[] = [];
+
+  const addFilter = (build: (index: number) => string, value: unknown) => {
+    listValues.push(value);
+    listWhere.push(build(listValues.length));
+    countValues.push(value);
+    countWhere.push(build(countValues.length));
+  };
+
+  if (query.category) {
+    addFilter((index) => `p.category=$${index}`, query.category);
+  }
+  if (search) {
+    addFilter(
+      (index) =>
+        `(p.title ILIKE '%'||$${index}||'%' OR p.body ILIKE '%'||$${index}||'%')`,
+      search,
+    );
+  }
+  if (query.mine && userId) {
+    listWhere.push("p.author_id=$1::uuid");
+    countValues.push(userId);
+    countWhere.push(`p.author_id=$${countValues.length}::uuid`);
+  }
+  if (query.saved && userId) {
+    listWhere.push(
+      "EXISTS(SELECT 1 FROM community_saves sv WHERE sv.post_id=p.id AND sv.user_id=$1::uuid)",
+    );
+    countValues.push(userId);
+    countWhere.push(
+      `EXISTS(SELECT 1 FROM community_saves sv WHERE sv.post_id=p.id AND sv.user_id=$${countValues.length}::uuid)`,
+    );
+  }
+  if (query.sort === "belum-dibalas") {
+    const unanswered =
+      "NOT EXISTS(SELECT 1 FROM community_replies r WHERE r.post_id=p.id AND r.deleted_at IS NULL AND r.hidden_at IS NULL)";
+    listWhere.push(unanswered);
+    countWhere.push(unanswered);
+  }
+
+  const listClause = listWhere.join(" AND ");
+  const countClause = countWhere.join(" AND ");
   const { rows } = await authDatabase().query<PostRow>(
-    `${selectPost} WHERE ${where} ORDER BY ${query.sort === "ramai" ? "reply_count DESC, helpful_count DESC," : ""} p.created_at DESC,p.id DESC LIMIT $4 OFFSET $5`,
-    [...values, PAGE_SIZE, (query.page - 1) * PAGE_SIZE],
+    `${selectPost} WHERE ${listClause} ORDER BY ${query.sort === "ramai" ? "reply_count DESC, helpful_count DESC," : ""} p.created_at DESC,p.id DESC LIMIT $${listValues.length + 1} OFFSET $${listValues.length + 2}`,
+    [...listValues, PAGE_SIZE, (query.page - 1) * PAGE_SIZE],
   );
   const count = await authDatabase().query<{ total: number }>(
-    `SELECT count(*)::int AS total FROM community_posts p WHERE ${where.replaceAll("$2", "$1").replaceAll("$3", "$2")}`,
-    [query.category ?? null, search],
+    `SELECT count(*)::int AS total FROM community_posts p WHERE ${countClause}`,
+    countValues,
   );
   return { posts: rows.map(post), total: count.rows[0].total };
 }
@@ -154,7 +205,7 @@ export async function removeOwnContent(userId: string, target: Target) {
   const table =
     target.kind === "post" ? "community_posts" : "community_replies";
   const result = await authDatabase().query(
-    `UPDATE ${table} SET deleted_at=now(),body='[Konten ini telah dihapus oleh penulis.]' ${target.kind === "post" ? ",title='Topik dihapus',source_url=NULL,image_url=NULL" : ""} WHERE id=$1 AND author_id=$2 AND deleted_at IS NULL RETURNING ${target.kind === "post" ? "id" : "post_id"} AS post_id`,
+    `UPDATE ${table} SET deleted_at=now(),body='[Konten ini telah dihapus oleh penulis.]' ${target.kind === "post" ? ",title='Topik dihapus',source_url=NULL,image_url=NULL,image_urls='{}'" : ""} WHERE id=$1 AND author_id=$2 AND deleted_at IS NULL RETURNING ${target.kind === "post" ? "id" : "post_id"} AS post_id`,
     [target.id, userId],
   );
   if (!result.rowCount)
@@ -176,6 +227,20 @@ export async function setHelpful(
   } else
     await authDatabase().query(
       "DELETE FROM community_helpful WHERE post_id=$1 AND user_id=$2",
+      [postId, userId],
+    );
+}
+export async function setSaved(userId: string, postId: string, value: boolean) {
+  if (value) {
+    const r = await authDatabase().query(
+      `INSERT INTO community_saves(post_id,user_id) SELECT p.id,$2 FROM community_posts p WHERE p.id=$1 AND ${visible} ON CONFLICT DO NOTHING`,
+      [postId, userId],
+    );
+    if (!r.rowCount && !(await getPost(postId, userId)))
+      throw new CommunityError("Topik tidak tersedia.");
+  } else
+    await authDatabase().query(
+      "DELETE FROM community_saves WHERE post_id=$1 AND user_id=$2",
       [postId, userId],
     );
 }
