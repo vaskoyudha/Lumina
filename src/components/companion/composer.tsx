@@ -400,7 +400,8 @@ export function Composer({
         Isi pesan lengkap tidak dikirim: pemeriksaan berjalan di perangkat ini.
         Yang bisa sampai ke lapisan bahasa hanya ringkasan temuan tanpa kutipan,
         dan gambar yang kamu lampirkan dikirim ke layanan baca gambar untuk
-        disalin teksnya. Percakapan tidak disimpan.
+        disalin teksnya. Isi percakapan tidak disimpan; hanya judul, waktu, dan
+        skor terakhir yang tercatat di riwayat akunmu.
       </p>
     </div>
   );
