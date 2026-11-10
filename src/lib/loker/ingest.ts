@@ -67,11 +67,10 @@ async function ingestRow(
 
   const company = detail.bahan.company.trim() || row.company;
   const email = deps.email(detail.bahan.description, company);
-  if (!email) return false;
 
   const applyUrl = detail.bahan.apply_url.trim() || row.url;
   const age = await deps.domainAge(applyUrl);
-  if (age.status !== "ok" || age.ageDays === null) return false;
+  const ageDays = age.status === "ok" ? age.ageDays : null;
 
   const description = detail.bahan.description.slice(0, MAKS_DESKRIPSI);
   const audit = deps.audit({
@@ -80,7 +79,7 @@ async function ingestRow(
     description,
     apply_url: applyUrl,
     company_email: email,
-    domain_age_days: age.ageDays,
+    domain_age_days: ageDays,
     employer_known: detail.bahan.employer_known,
   });
   const scored = deps.score(
@@ -103,7 +102,7 @@ async function ingestRow(
     source: detail.source,
     postedAt: row.postedAt ?? null,
     companyEmail: email,
-    domainAgeDays: age.ageDays,
+    domainAgeDays: ageDays,
     employerKnown: detail.bahan.employer_known,
     sentinelStatus: audit.status,
     sentinelFlags: audit.flags,
@@ -122,8 +121,10 @@ async function ingestRow(
 /**
  * Turn discovered rows into audited postings.
  *
- * A row missing any audit field is `dropped` and counted, never inserted with a
- * placeholder that would make the card lie about what was checked.
+ * A row whose board detail cannot be fetched is `dropped` and counted, never
+ * inserted with an empty description. Missing email or domain age is stored as
+ * null: the board does not publish it, and the audit treats null as "not
+ * checked" rather than inventing a value.
  */
 export async function ingestScan(
   rows: readonly InboxJobShape[],

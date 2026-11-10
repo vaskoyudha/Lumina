@@ -43,10 +43,13 @@ a. The scanner is vendored byte-identical under `scanner/`; Lumina never
    it as user config, so the seed must be force-tracked (`git add -f
    scanner/portals.yml`); without it a fresh clone cannot bootstrap.
 b. `pipeline.md` has no description, so the ported board adapters enrich each
-   row before the audit. A row whose adapter or RDAP lookup fails is `dropped`,
-   never inserted with empty audit data.
+   row before the audit. A row whose adapter cannot return a description is
+   `dropped`; missing email or domain age is stored as `null` and shown as
+   "Tidak ditemukan" / "Tidak diketahui".
 c. `url_key` is the engine's dedupe key; a re-scan upserts and refreshes
-   `fetched_at` instead of duplicating rows.
+   `fetched_at` instead of duplicating rows. A refresh also backfills up to 200
+   unimported `pipeline.md` rows (newest posted first), so an existing corpus
+   does not need a rescan.
 d. The visible corpus is cumulative, newest `fetched_at` first, capped by the
    RSC loader. The card prints the real count when the cap applies.
 
@@ -56,9 +59,11 @@ d. The visible corpus is cumulative, newest `fetched_at` first, capped by the
 `loker_domain_cache`. The app creates no tables. Run `npm run db:migrate`
 before starting the app.
 
-`company_email`, `domain_age_days`, and `employer_known` are `not null`: a row
-that cannot fill them is not inserted. `lumina_signals` stores
-`{label, weight}[]` only — no evidence quotes.
+`company_email` and `domain_age_days` are nullable: job boards publish neither,
+and the Sentinel audit treats a missing value as "not checked" (no identity
+signal) rather than a clean pass. A row whose board detail cannot be fetched is
+still `dropped` and counted; it is never inserted with an invented description.
+`lumina_signals` stores `{label, weight}[]` only — no evidence quotes.
 
 ## Privacy boundaries
 

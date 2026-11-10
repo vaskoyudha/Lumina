@@ -305,7 +305,7 @@ export function classifyLink(raw: string): LinkFinding | null {
     if (brandSld.length < 3) continue;
     const hit =
       brandSld.length >= 4
-        ? imitatesBrand(normalized, brandSld)
+        ? imitatesBrand(normalized, brandSld, link.sld)
         : prefixedBy(normalized, brandSld);
     if (hit) {
       return {
@@ -410,13 +410,27 @@ function normalizeSld(raw: string): string {
  * mistyped" fiction a lookalike buys), or the brand embedded as substring
  * (appended-confirmation fakes like `shopeeverif`).
  */
-function imitatesBrand(normalizedSld: string, brand?: string): boolean {
+function imitatesBrand(
+  normalizedSld: string,
+  brand: string,
+  rawSld: string,
+): boolean {
   if (!brand) return false;
   // The official registrable was resolved before this runs, so an exact SLD
   // match here can only mean the brand's name bought on a suffix the brand
   // does not own (`bca.com`). It is a typosquat, not an official path.
   if (editDistance(normalizedSld, brand) <= 2) return true;
-  return normalizedSld.includes(brand);
+  // Hyphens are real label boundaries: "investasi-cepat" must not read as
+  // "sicepat". Match only inside a single label, never across two labels.
+  const tokens = rawSld.toLowerCase().split(/[-.]/);
+  return tokens.some((token) => {
+    const normalized = normalizeSld(token);
+    return (
+      normalized === brand ||
+      normalized.startsWith(brand) ||
+      normalized.endsWith(brand)
+    );
+  });
 }
 
 /**

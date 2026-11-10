@@ -23,8 +23,8 @@ export interface LokerView {
   source: string;
   postedAt: string | null;
   fetchedAt: string;
-  companyEmail: string;
-  domainAgeDays: number;
+  companyEmail: string | null;
+  domainAgeDays: number | null;
   employerKnown: boolean;
   sentinelStatus: LokerSentinelStatus;
   sentinelFlags: string[];

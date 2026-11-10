@@ -43,6 +43,19 @@ function disagreement(posting: LokerView): boolean {
   return sentinelCaution !== luminaCaution;
 }
 
+/** Only an http(s) URL can be opened as a job application. */
+function tautanLamaran(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Caution = amber wash, danger = red wash, clean = quiet neutral. */
 function sentinelTone(posting: LokerView): string {
   if (posting.sentinelStatus === "rejected") {
@@ -85,6 +98,7 @@ export function LokerCard({
   onToggleSave: (posting: LokerView) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const applyUrl = tautanLamaran(posting.applyUrl);
 
   return (
     <li className="min-w-0 rounded-2xl border border-line bg-panel p-4 shadow-rest">
@@ -262,7 +276,9 @@ export function LokerCard({
               <div>
                 <dt className="text-dim">Umur domain</dt>
                 <dd className="tabular text-[11px] text-txt">
-                  {posting.domainAgeDays} hari
+                  {posting.domainAgeDays === null
+                    ? "Tidak diketahui"
+                    : `${posting.domainAgeDays} hari`}
                 </dd>
               </div>
               <div>
@@ -279,18 +295,14 @@ export function LokerCard({
               </div>
             </dl>
 
-            {posting.applyUrl ? (
+            {applyUrl ? (
               <Button
                 asChild
                 variant="outline"
                 size="sm"
                 className="h-8 w-fit rounded-full border-line bg-panel px-3 text-[11px] font-medium text-txt hover:bg-panel-2"
               >
-                <a
-                  href={posting.applyUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
+                <a href={applyUrl} target="_blank" rel="noreferrer noopener">
                   Buka lamaran <ExternalLink aria-hidden />
                 </a>
               </Button>
