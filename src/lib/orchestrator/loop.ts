@@ -29,6 +29,12 @@ import {
   validateReport,
 } from "@/lib/orchestrator/report";
 import {
+  type SubagentMessage,
+  type SubagentResult,
+  SubagentRuntime,
+  type SubagentSession,
+} from "@/lib/orchestrator/subagent-runtime";
+import {
   openAITools,
   TOOL_DEFS,
   type ToolContext,
@@ -77,6 +83,8 @@ interface ChatOptions {
   maxTokens: number;
   temperature?: number;
   responseFormat?: "json";
+  /** Per-child model override; falls back to LUMINA_LLM_MODEL. */
+  model?: string;
 }
 
 export interface OrchestratorDeps {
@@ -193,7 +201,7 @@ async function defaultChat(
     const response = await fetchChat({
       base: target.base,
       apiKey: target.apiKey,
-      model: env.model,
+      model: options.model ?? env.model,
       fallbackModel: env.fallbackModel,
       signal,
       body: {
@@ -431,16 +439,6 @@ async function makePlan(
   }
 }
 
-interface SpecialistResult {
-  agent: SpecialistId;
-  label: string;
-  status: AgentStatus;
-  summary: string;
-  findings: string[];
-  points: ReportPoint[];
-  ms: number;
-}
-
 async function runSpecialist(
   spec: SpecialistSpec,
   task: string,
@@ -451,7 +449,15 @@ async function runSpecialist(
   chat: OrchestratorDeps["chat"],
   emit: (event: EventInput) => void,
   signal: AbortSignal,
-): Promise<SpecialistResult> {
+  options: {
+    session?: SubagentSession;
+    tools?: string[];
+    model?: string;
+  } = {},
+): Promise<SubagentResult> {
+  const { session, model } = options;
+  const toolNames =
+    options.tools?.filter((tool) => spec.tools.includes(tool)) ?? spec.tools;
   const started = performance.now();
   const toolContext: ToolContext = {
     message: request.message,
@@ -466,26 +472,26 @@ async function runSpecialist(
     label: spec.label,
     task,
     skills: spec.skills,
-    tools: spec.tools,
+    tools: toolNames,
   });
 
   const calls: { name: string; args: unknown }[] = [];
-  if (spec.tools.includes("scan_detector") && spec.id !== "evidence") {
+  if (toolNames.includes("scan_detector") && spec.id !== "evidence") {
     calls.push({ name: "scan_detector", args: { detector: spec.id } });
   }
-  if (spec.tools.includes("score_message")) {
+  if (toolNames.includes("score_message")) {
     calls.push({ name: "score_message", args: {} });
   }
-  if (spec.tools.includes("scrub_secrets")) {
+  if (toolNames.includes("scrub_secrets")) {
     calls.push({ name: "scrub_secrets", args: {} });
   }
-  if (spec.tools.includes("extract_entities")) {
+  if (toolNames.includes("extract_entities")) {
     calls.push({ name: "extract_entities", args: {} });
   }
-  if (spec.tools.includes("extract_links")) {
+  if (toolNames.includes("extract_links")) {
     calls.push({ name: "extract_links", args: {} });
   }
-  if (spec.tools.includes("verify_link")) {
+  if (toolNames.includes("verify_link")) {
     const link = extractLinks(request.message)[0];
     if (link) calls.push({ name: "verify_link", args: { url: link } });
   }
@@ -532,26 +538,36 @@ async function runSpecialist(
   }
 
   const evidenceBlock = evidence.join("\n\n").slice(0, 6000);
-  const messages: ModelMessage[] = [
-    { role: "system", content: specialistSystemPrompt(spec) },
-    {
-      role: "user",
-      content: `${specialistUserPrompt(spec, {
-        question: request.question,
-        message: request.message,
-        baseline,
-        priorTurns: request.priorTurns,
-        task,
-        brief,
-      })}
+  const childPrompt = `${specialistUserPrompt(spec, {
+    question: request.question,
+    message: request.message,
+    baseline,
+    priorTurns: spec.id === "conversation" ? request.priorTurns : [],
+    task,
+    brief,
+  })}
 
 <tool_evidence>
 ${evidenceBlock || "Tidak ada tool yang mengembalikan bukti."}
 </tool_evidence>
 
-Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submit_report dengan poin yang merujuk tepat pada label sinyal di atas. Jika tool menolak laporan, baca issues lalu perbaiki sekali.`,
-    },
-  ];
+Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submit_report dengan poin yang merujuk tepat pada label sinyal di atas. Jika tool menolak laporan, baca issues lalu perbaiki sekali.`;
+  const messages: ModelMessage[] = session?.messages.length
+    ? [...session.messages, { role: "user", content: childPrompt }]
+    : [
+        { role: "system", content: specialistSystemPrompt(spec) },
+        { role: "user", content: childPrompt },
+      ];
+
+  const commitSession = (summary?: string) => {
+    if (!session) return;
+    const next: SubagentMessage[] = summary
+      ? [...messages, { role: "assistant", content: summary }]
+      : messages;
+    session.messages = next.slice(-40);
+    session.turns += 1;
+    session.updatedAt = Date.now();
+  };
 
   const baseResult = {
     agent: spec.id,
@@ -564,6 +580,7 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
   };
 
   if (!chat) {
+    commitSession(lastToolSummary || "Model tidak tersedia; agen dilewati.");
     return {
       ...baseResult,
       status: "dilewati",
@@ -589,6 +606,7 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
           tools,
           maxTokens: MAX_SPECIALIST_TOKENS,
           temperature: 0.1,
+          model,
         },
         signal,
       );
@@ -661,7 +679,7 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
 
     const toolName = call.function.name;
     const tool = TOOL_DEFS[toolName];
-    const allowed = tool && spec.tools.includes(toolName);
+    const allowed = tool && toolNames.includes(toolName);
     if (!tool || !allowed) {
       const reason = tool ? "tool-not-allowed" : "unknown-tool";
       messages.push({
@@ -728,14 +746,16 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
   }
 
   if (!report) {
+    const failure =
+      lastToolSummary ||
+      (lastError instanceof Error
+        ? `Agen gagal melaporkan hasil (${lastError.message.slice(0, 80)}).`
+        : "Agen tidak memanggil submit_report setelah satu kesempatan perbaikan.");
+    commitSession(failure);
     return {
       ...baseResult,
       status: "gagal",
-      summary:
-        lastToolSummary ||
-        (lastError instanceof Error
-          ? `Agen gagal melaporkan hasil (${lastError.message.slice(0, 80)}).`
-          : "Agen tidak memanggil submit_report setelah satu kesempatan perbaikan."),
+      summary: failure,
       ms: Math.round(performance.now() - started),
     };
   }
@@ -748,6 +768,7 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
     });
   }
 
+  commitSession(report.summary);
   return {
     agent: spec.id,
     label: spec.label,
@@ -820,11 +841,35 @@ export async function runOrchestrator(
     ms: plan.ms,
   });
 
-  const reports: SpecialistResult[] = [];
+  const caseId = request.caseId ?? runId;
+  const runtime = new SubagentRuntime(
+    async (session, envelope) => {
+      const spec = SPECIALISTS[envelope.agent];
+      return runSpecialist(
+        spec,
+        envelope.task,
+        envelope.brief,
+        request,
+        baseline,
+        () => cached,
+        chat,
+        emit,
+        session.controller.signal,
+        {
+          session,
+          tools: envelope.tools,
+          model: envelope.model,
+        },
+      );
+    },
+    { signal },
+  );
+
+  const reports: SubagentResult[] = [];
   const runOne = async (step: (typeof plan.steps)[number]) => {
     if (signal.aborted) {
       const spec = SPECIALISTS[step.agent];
-      const skipped: SpecialistResult = {
+      const skipped: SubagentResult = {
         agent: spec.id,
         label: spec.label,
         status: "dilewati",
@@ -845,18 +890,32 @@ export async function runOrchestrator(
       });
       return skipped;
     }
-    const spec = SPECIALISTS[step.agent];
-    const result = await runSpecialist(
-      spec,
-      step.task,
-      plan.rationale,
-      request,
-      baseline,
-      () => cached,
-      chat,
-      emit,
-      signal,
-    );
+    let result: SubagentResult;
+    try {
+      const run = await runtime.spawn({
+        caseId,
+        agent: step.agent,
+        task: step.task,
+        brief: plan.rationale,
+        message: request.message,
+        tools: step.tools,
+      });
+      result = run.result;
+    } catch (error) {
+      const spec = SPECIALISTS[step.agent];
+      result = {
+        agent: spec.id,
+        label: spec.label,
+        status: signal.aborted ? "dilewati" : "gagal",
+        summary:
+          error instanceof Error
+            ? `Agen gagal dijalankan (${error.message.slice(0, 80)}).`
+            : "Agen gagal dijalankan.",
+        findings: [],
+        points: [],
+        ms: 0,
+      };
+    }
     emit({
       type: "agent_result",
       agent: result.agent,

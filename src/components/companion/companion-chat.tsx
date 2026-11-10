@@ -1444,6 +1444,7 @@ export function CompanionChat({
               const orchestrated = await streamOrchestrator(
                 {
                   lane: "periksa",
+                  caseId: conversationId,
                   question: (
                     text.trim() ||
                     (hasImages

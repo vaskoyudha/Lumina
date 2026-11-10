@@ -13,6 +13,8 @@ import { ReportPointSchema } from "@/lib/orchestrator/report";
 export const OrchestratorRequestSchema = z
   .object({
     lane: z.literal("periksa"),
+    /** Stable case id lets a follow-up reuse the same child sessions. */
+    caseId: z.string().min(1).max(120).optional(),
     question: z.string().min(1).max(2000),
     message: z.string().min(1).max(20_000),
     history: z.array(AnswerHistoryEntrySchema).max(10).default([]),
