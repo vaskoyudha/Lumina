@@ -767,6 +767,11 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
       (lastError instanceof Error
         ? `Agen gagal melaporkan hasil (${lastError.message.slice(0, 80)}).`
         : "Agen tidak memanggil submit_report setelah satu kesempatan perbaikan.");
+    console.info(
+      `[subagent] failed agent=${spec.id} calls=${modelCalls} error=${
+        lastError instanceof Error ? lastError.message.slice(0, 120) : "none"
+      } summary=${failure.slice(0, 160)}`,
+    );
     commitSession(failure);
     return {
       ...baseResult,
