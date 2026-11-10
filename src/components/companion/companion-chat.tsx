@@ -304,6 +304,20 @@ export function CompanionChat({
   );
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  /** Height of the floating composer, so the log can pad its tail above it. */
+  const [composerHeight, setComposerHeight] = React.useState(0);
+  const composerObserver = React.useRef<ResizeObserver | null>(null);
+  const setComposerNode = React.useCallback((node: HTMLDivElement | null) => {
+    composerObserver.current?.disconnect();
+    composerObserver.current = null;
+    if (!node) return;
+    const measure = () =>
+      setComposerHeight(node.getBoundingClientRect().height);
+    measure();
+    composerObserver.current = new ResizeObserver(measure);
+    composerObserver.current.observe(node);
+  }, []);
+  React.useEffect(() => () => composerObserver.current?.disconnect(), []);
   const { saved, toggle: toggleSaved } = useSavedLoker();
 
   /*
@@ -1688,11 +1702,12 @@ export function CompanionChat({
               </div>
             </div>
           ) : (
-            <>
+            <div className="relative flex min-h-0 flex-1 flex-col">
               <div
                 key={active?.id ?? "new"}
                 ref={scrollRef}
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6"
+                style={{ paddingBottom: composerHeight + 8 }}
+                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6"
                 role="log"
                 aria-live="polite"
                 aria-label="Percakapan"
@@ -1864,8 +1879,22 @@ export function CompanionChat({
                 )}
               </div>
 
-              <div className="shrink-0 px-4 pt-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6">
-                <div className="mx-auto w-full max-w-[640px]">
+              {/*
+               * The composer floats over the transcript tail instead of sitting
+               * in the flow. As a hard sibling it ended the log on a straight
+               * edge, so scrolling looked like content being chopped by a box.
+               * The gradient lets the last rows slide under the field, and the
+               * measured height keeps the newest turn reachable above it.
+               */}
+              <div
+                ref={setComposerNode}
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6"
+              >
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-bg via-bg/90 to-transparent"
+                />
+                <div className="pointer-events-auto relative mx-auto w-full max-w-[640px]">
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
@@ -1874,7 +1903,7 @@ export function CompanionChat({
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
         </section>
 
