@@ -43,6 +43,37 @@ const TONE: Record<Tone, { box: string; ink: string }> = {
   message: { box: "bg-agent-message-soft", ink: "text-agent-message" },
 };
 
+/** Each agent keeps its own identity tint, matching the /agen cards. */
+const AGENT_TONE: Record<DetectorAgent, { box: string; ink: string }> = {
+  injection: { box: "bg-agent-message-soft", ink: "text-agent-message" },
+  email: { box: "bg-agent-identity-soft", ink: "text-agent-identity" },
+  message: { box: "bg-agent-message-soft", ink: "text-agent-message" },
+  link: { box: "bg-agent-link-soft", ink: "text-agent-link" },
+  identity: { box: "bg-agent-identity-soft", ink: "text-agent-identity" },
+  conversation: {
+    box: "bg-agent-conversation-soft",
+    ink: "text-agent-conversation",
+  },
+  job: { box: "bg-agent-job-soft", ink: "text-agent-job" },
+  marketplace: {
+    box: "bg-agent-marketplace-soft",
+    ink: "text-agent-marketplace",
+  },
+  qris: { box: "bg-agent-qris-soft", ink: "text-agent-qris" },
+  evidence: { box: "bg-agent-evidence-soft", ink: "text-agent-evidence" },
+};
+
+/**
+ * A fresh tab has no trace yet. These four are a roster, not history: the rows
+ * say "Siap memeriksa" and never invent a duration or a finished run.
+ */
+const PREVIEW_AGENTS: readonly DetectorAgent[] = [
+  "message",
+  "marketplace",
+  "qris",
+  "evidence",
+];
+
 interface QuickFeature {
   id: string;
   label: string;
@@ -126,6 +157,17 @@ export function CompanionQuickCards({
   history?: readonly RecentAgentRun[];
 }) {
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+  const rows: Array<RecentAgentRun & { preview?: boolean }> =
+    history.length > 0
+      ? history.map((run) => ({ ...run }))
+      : PREVIEW_AGENTS.map((id) => ({
+          id,
+          key: `preview-${id}`,
+          sessionId: -1,
+          ms: 0,
+          source: "akun" as const,
+          preview: true,
+        }));
 
   return (
     <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
@@ -211,18 +253,17 @@ export function CompanionQuickCards({
         <div className="space-y-3">
           {history.length === 0 ? (
             <p className="text-xs leading-relaxed text-dim">
-              Belum ada pemeriksaan di tab ini. Riwayat muncul setelah agen
-              benar-benar berjalan.
+              Belum ada riwayat di tab ini. Empat agen ini siap memeriksa.
             </p>
           ) : null}
-          {history.map((run) => {
+          {rows.map((run) => {
             const item = {
               ...AGENT_REGISTRY[run.id],
               ...run,
               name: AGENT_REGISTRY[run.id].displayName,
             };
             const Icon = item.icon;
-            const tone = TONE.brand;
+            const tone = AGENT_TONE[item.id];
             return (
               <div
                 key={item.key}
@@ -255,10 +296,11 @@ export function CompanionQuickCards({
                       </span>
                     </span>
                     <span className="mt-0.5 block text-[11px] text-ink-faint">
-                      {item.source === "akun"
-                        ? "Pemeriksaan terakhir"
-                        : "Selesai"}{" "}
-                      · {Math.round(item.ms)} ms
+                      {item.preview
+                        ? "Siap memeriksa"
+                        : item.source === "akun"
+                          ? `Pemeriksaan terakhir · ${Math.round(item.ms)} ms`
+                          : `Selesai · ${Math.round(item.ms)} ms`}
                     </span>
                   </span>
                 </button>
@@ -290,7 +332,7 @@ export function CompanionQuickCards({
                       >
                         Lihat ringkasan
                       </button>
-                      {item.source === "akun" ? null : (
+                      {item.preview || item.source === "akun" ? null : (
                         <button
                           type="button"
                           onClick={() => {
