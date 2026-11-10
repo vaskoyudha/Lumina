@@ -128,14 +128,14 @@ it("retains transcript image URLs until unmount and uses OCR as local conversati
   unmount();
   expect(revoke).toHaveBeenCalledWith(url);
 });
-it("keeps the data-transfer notice screen-reader-only", () => {
+it("keeps the agent data-transfer notice screen-reader-only", () => {
   render(<CompanionChat />);
   expect(
     screen.queryByText(
       /Percakapan ini dikirim ke model untuk menyusun jawaban/i,
     ),
   ).not.toBeInTheDocument();
-  const detail = screen.getByText(/Isi pesan lengkap.*tidak dikirim/);
+  const detail = screen.getByText(/teks yang kamu kirim.*dapat diproses/);
   expect(detail).toHaveClass("sr-only");
 });
 it("keeps a tool-only response out of subsequent model history", async () => {

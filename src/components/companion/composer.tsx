@@ -392,12 +392,11 @@ export function Composer({
 
       {/* Plan §11.6: the notice stays in the DOM for assistive tech only. */}
       <p className="sr-only">
-        Isi pesan lengkap yang diperiksa tidak dikirim: pemeriksaan berjalan di
-        perangkat ini. Pertanyaan, riwayat obrolan yang tidak diperiksa, dan
-        ringkasan temuan tanpa kutipan dapat dikirim ke layanan AI. Gambar
-        lampiran dikirim untuk disalin teksnya. Isi percakapan tidak disimpan di
-        server; akun hanya menyimpan label topik, waktu, jumlah giliran, dan
-        tingkat risiko terakhir.
+        Pemeriksaan detektor dan skor berjalan di perangkat ini. Jika agen AI
+        aktif, teks yang kamu kirim—termasuk teks gambar—dapat diproses untuk
+        menyusun temuan. Isi percakapan tidak disimpan di server; akun hanya
+        menyimpan label topik, waktu, jumlah giliran, dan tingkat risiko
+        terakhir.
       </p>
     </div>
   );
