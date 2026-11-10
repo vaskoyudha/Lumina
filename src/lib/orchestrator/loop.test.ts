@@ -1,5 +1,6 @@
 import type { OrchestratorRequest } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
+import { clearSubagentSessions } from "@/lib/orchestrator/subagent-runtime";
 import { runOrchestrator } from "@/lib/orchestrator/loop";
 
 const baseline: ScoreResult = {
@@ -436,6 +437,46 @@ describe("runOrchestrator", () => {
       expect(report.points).toEqual([]);
       expect(report.summary.trim().startsWith("{")).toBe(false);
     }
+  });
+
+  it("reuses the same child session for the same case id", async () => {
+    const caseId = "case-session-reuse";
+    clearSubagentSessions(caseId);
+    const specialistPrompts: string[] = [];
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban")) {
+          return { role: "assistant", content: "Skor resmi 72/100." };
+        }
+        specialistPrompts.push(
+          options.messages
+            .map((message) => String(message.content ?? ""))
+            .join("\n"),
+        );
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+    const scoped = { ...request, caseId };
+
+    await runOrchestrator(scoped, { chat: chat as never, score: scored });
+    await runOrchestrator(scoped, { chat: chat as never, score: scored });
+
+    const reused = specialistPrompts.filter(
+      (prompt) =>
+        prompt.split("Tugas dari koordinator: Periksa narasi dan OTP.").length -
+          1 >=
+        2,
+    );
+    expect(reused.length).toBeGreaterThan(0);
+    clearSubagentSessions(caseId);
   });
 
   it("keeps the deterministic score when the planner is unavailable", async () => {
