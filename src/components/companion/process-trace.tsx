@@ -153,7 +153,7 @@ export function ProcessTrace({
                       key={agent.agent}
                       className="inline-flex items-center gap-1 rounded-full border border-line bg-panel-2 px-2 py-0.5 text-[10px] text-txt"
                     >
-                      <span className="font-mono">
+                      <span className="font-medium">
                         {AGENT_IDENTITIES[agent.agent].displayName}
                       </span>
                       <span className="text-dim">
@@ -166,7 +166,7 @@ export function ProcessTrace({
                   <summary className="cursor-pointer select-none text-[10.5px] text-dim">
                     Alasan rencana
                   </summary>
-                  <p className="mt-1 text-[10.5px] leading-relaxed text-txt">
+                  <p className="mt-1 font-serif text-[14px] text-txt leading-[1.7]">
                     {plan.rationale}
                   </p>
                 </details>
@@ -211,17 +211,17 @@ export function ProcessTrace({
                           </span>
                         </div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                          <span className="font-mono text-[10px] text-dim">
+                          <span className="text-[10.5px] text-dim">
                             {block.start.agent}
                           </span>
                           <span className="text-[10px] text-dim">
                             {block.start.label}
                           </span>
                         </div>
-                        <p className="mt-1 text-[10.5px] leading-relaxed text-dim">
+                        <p className="mt-1 font-serif text-[13.5px] text-dim leading-[1.7]">
                           {AGENT_IDENTITIES[block.start.agent].purpose}
                         </p>
-                        <p className="mt-0.5 text-[10.5px] text-dim">
+                        <p className="mt-0.5 font-serif text-[13.5px] text-dim leading-[1.7]">
                           {block.start.task}
                         </p>
                       </div>
@@ -262,7 +262,7 @@ export function ProcessTrace({
                           {block.thoughts.map((thought, index) => (
                             <p
                               key={`${thought.seq}-${index}`}
-                              className="leading-relaxed text-dim italic"
+                              className="font-serif text-[13.5px] text-dim leading-[1.7] italic"
                             >
                               {thought.text}
                             </p>
@@ -305,7 +305,7 @@ export function ProcessTrace({
                     })}
 
                     {block.end?.summary ? (
-                      <p className="mt-1.5 leading-relaxed text-txt">
+                      <p className="mt-1.5 font-serif text-[15px] text-txt leading-[1.7]">
                         {block.end.summary}
                       </p>
                     ) : null}
@@ -321,10 +321,10 @@ export function ProcessTrace({
                               key={`${point.signal}-${index}`}
                               className="rounded bg-panel/70 px-2 py-1.5"
                             >
-                              <p className="font-medium text-[11px] text-txt">
+                              <p className="font-medium font-serif text-[14px] text-txt">
                                 {point.point}
                               </p>
-                              <p className="mt-0.5 text-[10.5px] leading-relaxed text-dim">
+                              <p className="mt-0.5 font-serif text-[13px] text-dim leading-[1.7]">
                                 <span className="font-medium text-txt/80">
                                   Alasan:{" "}
                                 </span>
@@ -333,14 +333,14 @@ export function ProcessTrace({
                               <span className="mt-1 inline-block rounded-full border border-brand-edge bg-brand-soft px-1.5 py-0.5 font-mono text-[9.5px] text-brand-ink">
                                 {point.pattern}
                               </span>
-                              <p className="mt-1 text-[10.5px] leading-relaxed text-warn">
+                              <p className="mt-1 font-serif text-[13px] text-warn leading-[1.7]">
                                 <span className="font-medium">
                                   Perhatikan:{" "}
                                 </span>
                                 {point.watchout}
                               </p>
                               {point.quote ? (
-                                <p className="mt-0.5 text-[10px] text-dim">
+                                <p className="mt-0.5 font-serif text-[12.5px] text-dim italic">
                                   Kutipan: “{point.quote}”
                                 </p>
                               ) : null}
@@ -353,14 +353,14 @@ export function ProcessTrace({
                     {block.end &&
                     block.end.points.length === 0 &&
                     block.end.findings.length > 0 ? (
-                      <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-4 text-[11px] text-txt/80">
+                      <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-4 font-serif text-[13.5px] text-txt/80 leading-[1.7]">
                         {block.end.findings.map((finding) => (
                           <li key={finding}>{finding}</li>
                         ))}
                       </ul>
                     ) : null}
                     {block.end?.status === "gagal" ? (
-                      <p className="mt-1 flex items-center gap-1 text-[10.5px] text-danger">
+                      <p className="mt-1 flex items-center gap-1 text-[13px] text-danger">
                         <CircleAlert aria-hidden className="size-3" /> Agen
                         gagal; hasil ini tidak dipakai sebagai bukti.
                       </p>
