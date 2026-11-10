@@ -50,6 +50,27 @@ export const PlanStepSchema = z
 
 export type PlanStep = z.infer<typeof PlanStepSchema>;
 
+export const ConsensusPointSchema = z
+  .object({
+    agent: z.enum(SPECIALIST_IDS),
+    signal: z.string().min(2).max(160),
+    point: z.string().min(3).max(240),
+    quote: z.string().max(240).optional(),
+    pattern: z.string().min(2).max(120),
+  })
+  .strict();
+
+export const ConsensusGroupSchema = z
+  .object({
+    pattern: z.string().min(2).max(120),
+    agents: z.array(z.enum(SPECIALIST_IDS)).min(2),
+    points: z.array(ConsensusPointSchema).min(2),
+  })
+  .strict();
+
+export type ConsensusPoint = z.infer<typeof ConsensusPointSchema>;
+export type ConsensusGroup = z.infer<typeof ConsensusGroupSchema>;
+
 const BaseEventSchema = z
   .object({
     runId: z.string().min(1).max(80),
@@ -123,6 +144,17 @@ export const OrchestratorEventSchema = z.discriminatedUnion("type", [
     ms: z.number().int().min(0),
   }).strict(),
   BaseEventSchema.extend({
+    type: z.literal("consensus"),
+    groups: z.array(ConsensusGroupSchema),
+  }).strict(),
+  BaseEventSchema.extend({
+    type: z.literal("score_decision"),
+    result: z.unknown(),
+    baseline: z.unknown(),
+    rationale: z.string().min(1).max(600),
+    source: z.enum(["model", "fallback"]),
+  }).strict(),
+  BaseEventSchema.extend({
     type: z.literal("synthesis_start"),
     agent: z.literal("synthesizer"),
   }).strict(),
@@ -190,6 +222,9 @@ export const OrchestrationTraceSchema = z
     synthesis: z.string(),
     totalMs: z.number().int().min(0),
     degraded: z.boolean(),
+    baselineScore: z.unknown().optional(),
+    finalScore: z.unknown().optional(),
+    consensus: z.array(ConsensusGroupSchema).optional(),
   })
   .strict();
 
