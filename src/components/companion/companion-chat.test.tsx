@@ -577,11 +577,11 @@ describe("CompanionChat · verdict before voice", () => {
 });
 
 describe("CompanionChat · privacy copy matches the wire", () => {
-  it("says the full checked message stays on the device", () => {
+  it("discloses that agent processing can read the text the user sends", () => {
     render(<CompanionChat />);
 
     expect(
-      screen.getByText(/isi pesan lengkap.*tidak dikirim/i),
+      screen.getByText(/teks yang kamu kirim.*dapat diproses/i),
     ).toBeInTheDocument();
   });
 });

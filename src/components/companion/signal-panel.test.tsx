@@ -130,10 +130,10 @@ describe("SignalPanel", () => {
     expect(screen.getByText(String(result.score))).toBeInTheDocument();
     expect(screen.getByText(RISK_LABEL[result.risk])).toBeInTheDocument();
 
-    // The result screen displays the checked message, so the disclosure that
-    // only a lossy digest can leave the device belongs on this screen too.
+    // The result screen displays the checked message, so the agent-processing
+    // disclosure belongs on this screen too.
     expect(
-      screen.getByText(/pesan lengkap tetap di perangkat/i),
+      screen.getByText(/teks yang diperiksa.*dapat diproses/i),
     ).toBeInTheDocument();
 
     // The result ledger is not the teaching graph: no Q-codes or fake ports.

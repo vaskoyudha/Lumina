@@ -1075,8 +1075,8 @@ export function SignalPanel({
 
               <p className="mt-3 flex items-start gap-1.5 rounded-[10px] bg-txt/5 px-2.5 py-1.5 text-[10.5px] text-dim leading-snug">
                 <Lock aria-hidden className="mt-px size-3 shrink-0" />
-                Pesan lengkap tetap di perangkat; ringkasan tanpa kutipan bisa
-                sampai ke lapisan bahasa.
+                Pemeriksaan detektor berjalan di perangkat; jika agen AI aktif,
+                teks yang kamu kirim dapat dibaca untuk menyusun temuan.
               </p>
             </div>
           </CardContent>
@@ -1373,8 +1373,8 @@ export function SignalPanel({
           <span className="text-txt">scoring.ts</span> (deterministik).
         </p>
         <p className="mt-1 text-[10.5px] text-dim leading-snug">
-          Pesan lengkap tetap di perangkat; ringkasan tanpa kutipan bisa sampai
-          ke lapisan bahasa.
+          Jika agen AI aktif, teks yang diperiksa—termasuk teks gambar—dapat
+          diproses untuk menyusun jawaban; isi tidak disimpan di server.
         </p>
         {result.risk === "tinggi" ? (
           <Button
