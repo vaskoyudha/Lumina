@@ -1,4 +1,16 @@
-# Status — per 9 November 2026
+# Status — per 10 November 2026
+
+**10 November 2026 — Belajar adaptif, deteksi lebih luas, pipeline agen yang
+memvalidasi.** Tiga rencana di `docs/plans/` dijalankan kecuali voice (A6) dan
+tool loop `pi-agent-core` (A7, decision gate belum terpenuhi). Belajar kini punya
+taksonomi 24 pola, jadwal ulangan 1/3/7/14/30 hari, satu langkah berikutnya,
+kartu remediasi, halaman latihan campuran, tutor modul, dan profil yang tidak
+mengarang persentase penguasaan; progres, ulangan, dan percobaan kuis disimpan per
+akun di PostgreSQL (migrasi `011_learning_reviews.sql`). Engine bertambah agen
+Injection dan Email, normalisasi dengan peta span, pemeriksaan IDN/homoglyph,
+bench 120 kasus, serta validator yang menggabungkan temuan sejenis dan menyatakan
+bukti cukup/tipis/bertentangan. Verifikasi URL dan hash bersifat opsional dan mati
+secara bawaan. Rincian dan alasan penundaan: `docs/plans/execution-2026-11-10.md`.
 
 **10 November 2026 — perbaikan maksud percakapan Companion.** Cerita akun diretas
 atau uang hilang, pertanyaan, penjelasan lampiran, dan permintaan materi
@@ -57,8 +69,9 @@ b. Design tokens dari §4 hidup di `src/app/globals.css` sebagai `--lumina-*`.
 c. Semua rute render: `/`, `/companion`, `/belajar`, `/belajar/[modul]`,
    `/simulasi`, `/simulasi/[id]`, `/darurat`.
 d. `modus.json`: 12 modus tervalidasi zod, satu sumber kebenaran untuk A dan B.
-e. Engine skor deterministik: delapan agen pemeriksa (Message, Link, Identity,
-   Conversation, Job, Marketplace, QRIS, Evidence) plus Scoring Orchestrator.
+e. Engine skor deterministik: sepuluh agen pemeriksa (Message, Link, Identity,
+   Conversation, Job, Marketplace, QRIS, Email, Injection, Evidence) plus Scoring
+   Orchestrator, dengan validator yang menyatakan kecukupan bukti.
 f. Panel bukti dan bubble per agent; agen yang tidak melapor menyebut alasannya
    (`dilewati`), tanpa label `belum aktif`.
 g. Tiga contoh §11.6 sebagai tombol di companion.
@@ -182,3 +195,23 @@ sendiri: 20/20 tertangkap, 17/20 langsung `tinggi`, 0/20 false positive.
 Perubahannya ada di kualitas penjelasan, bukan di volume deteksi — dan itu
 memang tujuannya. Perbaikan presisi di bagian berikutnya yang menggeser
 angkanya.
+
+### Akurasi terukur — 10 November 2026 (korpus 120)
+
+Korpus tumbuh dari 57 menjadi 120 pesan: 60 scam (lima per keluarga modus) dan 60
+pesan sah, termasuk jebakan near-miss per detektor. Semua angka di bawah adalah
+keluaran `runEval()` di `src/lib/scoring/eval.ts` pada commit PR `#85`.
+
+| Ukuran | Korpus 57 (8 Nov) | Korpus 120 (10 Nov) | Target |
+|---|---|---|---|
+| Scam tertangkap (`mencurigakan`/`tinggi`) | 29/29 | **60/60** | ≥ 90% |
+| Scam langsung `tinggi` | 25/29 | **49/60** | — |
+| False positive pada pesan sah | 0/28 | **0/60** | ≤ 5% |
+| Klasifikasi modus benar (di mana `wantModus` ada) | 25/29 | **56/56** | ≥ 85% |
+| CPU terlambat per kasus | < 50 ms | **< 1 ms** | < 50 ms |
+
+Batas yang tetap diakui: sebelas scam berhenti di `mencurigakan`, bukan `tinggi`;
+validator kini menahan kasus dengan satu mekanisme lemah di bawah 39 dan
+menyebutnya `tipis` alih-alih memberi keyakinan palsu. Verifikasi jaringan
+(RDAP, blocklist, reputasi hash) tidak ikut diukur di sini karena mati secara
+bawaan; trace menyebutnya `dilewati`.

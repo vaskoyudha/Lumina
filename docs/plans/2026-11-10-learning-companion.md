@@ -388,3 +388,35 @@ Demo script (3 minutes):
 - **“Adaptive” is an overused word.** The UI says “Langkah berikutnya”, not “AI yang memahami kamu”. The plan’s claim is evidence-based scheduling, not mind reading.
 - **Simulation hand-off is thin.** Only L1 exists. Do not render a practice CTA for modules without a playable scenario.
 - **Open question:** should review scheduling survive a device change? That requires an account and a server store; it is out of scope until the product has one.
+
+  **Answered 10 November 2026:** the product now has accounts, so reviews,
+  attempts and missed patterns live in PostgreSQL (`learning_reviews`,
+  `learning_attempts`, `learning_progress`) per account, not in `localStorage`.
+  Clearing a browser no longer erases the schedule.
+
+---
+
+## 17. Result — 10 November 2026
+
+Every task in §14 shipped except where noted. What the learner can do today:
+
+- See one next step on `/belajar`, chosen by due review → unremediated miss →
+  next module → mixed practice, with a short reason and no streak pressure.
+- Practise on `/belajar/latihan` (5 questions, interleaved, `?pola=` filter) and
+  get `3 benar, 2 perlu diulang` back from the same quiz component.
+- See the remediation card on a module after a quiz with misses, naming at most
+  three patterns and linking to `#anatomi` / `#contoh` / `#checklist`.
+- Ask the module tutor from `/belajar/[modul]`: the answer is built from that
+  module's published text, the quiz answer keys are never sent, and the
+  deterministic fallback keeps the route alive when the provider is down.
+- Read the profile without a mastery percentage: completed modules, patterns to
+  review, due reviews.
+
+Verified by test, not by prose: 100% quiz-question → pattern coverage, v1 → v2
+migration fixture, no `Math.random()` in path or practice selection, no
+`correctId`/`rationale` in the tutor payload, 380px with no horizontal scroll on
+`/belajar`, `/belajar/latihan`, `/belajar/10` and `/companion`.
+
+Not done: the simulation hand-off only renders for a playable scenario
+(`L1-kurir-apk`, module 10); modules without one show nothing rather than a 404.
+No telemetry — every number above is derived from the account store.
