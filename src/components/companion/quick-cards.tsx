@@ -105,6 +105,8 @@ export interface RecentAgentRun {
   key: string;
   sessionId: number;
   ms: number;
+  /** `akun` rows come from the saved latest run, not this tab's trace. */
+  source?: "tab" | "akun";
 }
 
 export function CompanionQuickCards({
@@ -253,7 +255,10 @@ export function CompanionQuickCards({
                       </span>
                     </span>
                     <span className="mt-0.5 block text-[11px] text-ink-faint">
-                      Selesai · {Math.round(item.ms)} ms
+                      {item.source === "akun"
+                        ? "Pemeriksaan terakhir"
+                        : "Selesai"}{" "}
+                      · {Math.round(item.ms)} ms
                     </span>
                   </span>
                 </button>
@@ -285,16 +290,18 @@ export function CompanionQuickCards({
                       >
                         Lihat ringkasan
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          onResume(item.sessionId);
-                        }}
-                        className="w-full px-3 py-1.5 text-left font-medium text-brand-strong hover:bg-panel-2"
-                      >
-                        Buka percakapan
-                      </button>
+                      {item.source === "akun" ? null : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            onResume(item.sessionId);
+                          }}
+                          className="w-full px-3 py-1.5 text-left font-medium text-brand-strong hover:bg-panel-2"
+                        >
+                          Buka percakapan
+                        </button>
+                      )}
                     </div>
                   ) : null}
                 </div>
