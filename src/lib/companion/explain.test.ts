@@ -21,6 +21,16 @@ describe("explain", () => {
     expect(ids).toContain("uang"); // the "biaya administrasi"
   });
 
+  it("explains a job-task scam through the money tactic, not only links", () => {
+    const text =
+      "itu 420K masih ada bayar lagi tidak untuk tugas2 selanjutnya, dan apa bisa langsung di tarik? Hanya sekali pembayaran saja. 420 selesaikan tugas tidak ada lagi pembayaran dan bisa langsung penarikan.";
+    const result = scoreText({ text });
+    const { tactics } = explain(result, text);
+    const money = tactics.find((tactic) => tactic.id === "uang");
+    expect(money).toBeDefined();
+    expect(money?.evidence).toMatch(/tugas|pembayaran|penarikan/i);
+  });
+
   it("never invents a tactic the detectors did not find", () => {
     const result = scoreText({ text: BENIGN });
     const { tactics } = explain(result, BENIGN);

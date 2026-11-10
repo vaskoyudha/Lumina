@@ -54,6 +54,19 @@ describe("riskFor (§4 bands)", () => {
 });
 
 describe("scoreText contract invariants", () => {
+  it("escalates a conversational task scam even without the word lowongan", () => {
+    const result = scoreText({
+      text: [
+        "itu 420K masih ada bayar lagi tidak untuk tugas2 selanjutnya, dan apa bisa langsung di tarik?",
+        "Hanya sekali pembayaran saja",
+        "aku carikan dana nya dlu ya ka...ini bner ya 420 sudah bisa penarikan",
+        "makesure lagi ka..420 selesaikan tugas tidak ada lagi pembayaran dan bisa lngsung penarikan",
+      ].join("\n"),
+    });
+    expect(result.signals.some((signal) => signal.agent === "job")).toBe(true);
+    expect(result.risk).not.toBe("bersih");
+  });
+
   it("never returns an empty signals array", () => {
     const result = scoreText({ text: "besok kita makan siang bareng ya" });
     expect(result.signals.length).toBeGreaterThanOrEqual(1);
