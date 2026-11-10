@@ -22,6 +22,18 @@ describe("marketplaceSignals", () => {
     expect(has(text, /refund|qris/i)).toBe(true);
   });
 
+  it("catches an overpayment refund request to the sender's own account", () => {
+    const text =
+      "Halo kak, saya mau beli barang di toko kak. Saya sudah transfer Rp1.500.000, padahal harganya Rp1.000.000. Kelebihan Rp500.000 tolong refund ke rekening saya ya.";
+    expect(has(text, /kelebihan|refund/i)).toBe(true);
+  });
+
+  it("leaves an automatic marketplace refund alone", () => {
+    const text =
+      "Kelebihan bayar akan dikembalikan otomatis oleh Shopee ke rekening kamu.";
+    expect(marketplaceSignals(text).signals).toEqual([]);
+  });
+
   it("treats an implausible price as context, not a verdict", () => {
     const text = "Dijual cepat, harga 80% di bawah pasaran, transfer dulu.";
     const signals = marketplaceSignals(text).signals;
