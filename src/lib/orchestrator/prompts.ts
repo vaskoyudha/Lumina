@@ -70,7 +70,7 @@ export function specialistUserPrompt(
     "<message>",
     input.message,
     "</message>",
-    "Gunakan tool yang tersedia, lalu panggil submit_report dengan poin yang merujuk pada sinyal hasil tool. Jika tidak ada sinyal tool yang cocok tetapi kamu melihat pola jelas, kirim maksimal satu poin observasi dengan label deskriptif dan quote persis dari pesan; jangan mengarang label atau kutipan.",
+    "Gunakan tool yang tersedia, lalu panggil submit_report dengan poin yang merujuk pada sinyal hasil tool. Jika ada sinyal tool, kamu boleh menambah maksimal satu poin observasi. Jika tidak ada sinyal tool yang cocok tetapi kamu melihat pola jelas, kirim maksimal dua poin observasi, masing-masing dengan label deskriptif dan quote persis dari pesan; jangan mengarang label atau kutipan.",
   ].join("\n");
 }
 
