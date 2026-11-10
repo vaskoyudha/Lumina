@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
@@ -267,42 +267,49 @@ describe("CompanionChat · real user intent regressions", () => {
 
   it("hides the band until synthesis finishes", async () => {
     const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
-    orchestrate.mockImplementationOnce(async (_request, options) => {
-      const event = {
-        type: "plan" as const,
-        runId: "run-band",
-        seq: 1,
-        at: 0,
-        rationale: "Memeriksa pesan.",
-        agents: [
-          {
-            agent: "message" as const,
-            task: "Baca pesan",
-            skills: [],
-            tools: [],
-          },
-        ],
-        planner: "model" as const,
-        ms: 1,
-      };
-      options.onEvent?.(event);
-      return {
-        outcome: "model" as const,
-        text: "Jawaban agen.",
-        events: [event],
-        trace: null,
-        score: null,
-      };
-    });
+    orchestrate.mockClear();
+    let settleRun: (
+      result: orchestratorClient.OrchestratorStreamResult,
+    ) => void = () => undefined;
+    orchestrate.mockImplementationOnce(
+      (_request, options) =>
+        new Promise((resolve) => {
+          settleRun = (result) => {
+            options.onEvent?.({
+              type: "synthesis_end",
+              runId: "run-band",
+              seq: 2,
+              at: 1,
+              agent: "synthesizer",
+              text: result.text,
+              ms: 1,
+            });
+            resolve(result);
+          };
+        }),
+    );
 
     const user = userEvent.setup();
     render(<CompanionChat orchestrator />);
     await sendApk(user);
 
+    await waitFor(() => expect(orchestrate).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("score-card")).not.toBeInTheDocument();
+
+    await act(async () => {
+      settleRun({
+        outcome: "model",
+        text: "Jawaban agen.",
+        events: [],
+        trace: null,
+        score: null,
+      });
+    });
+
     await waitFor(() =>
       expect(screen.getByText("Jawaban agen.")).toBeInTheDocument(),
     );
-    expect(screen.queryByTestId("score-card")).not.toBeInTheDocument();
+    expect(screen.getByTestId("score-card")).toBeInTheDocument();
   });
 
   it("excludes a checked message from later conversational history in every lane", async () => {
