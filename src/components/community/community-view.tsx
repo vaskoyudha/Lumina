@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   MessageCircle,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { CommunityBottomNav } from "@/components/community/community-bottom-nav";
@@ -19,7 +20,7 @@ import {
 import { ExplorePanel } from "@/components/community/community-explore";
 import { PostImages } from "@/components/community/community-gallery";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,10 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  type CommunityAgentProfile,
+  communityAgent,
+} from "@/lib/community/agents";
 import {
   CATEGORIES,
   type CommunityPost,
@@ -77,7 +82,8 @@ export function CommunityRules({ moderator = false }: { moderator?: boolean }) {
               meminta kode rahasia.
             </li>
             <li>
-              Diskusi anggota belum terverifikasi. Banyak reaksi bukan bukti
+              Kiriman berlabel “Terverifikasi admin” sudah ditinjau pengelola;
+              label itu bukan jaminan fakta. Banyak reaksi bukan bukti
               kebenaran.
             </li>
           </ul>
@@ -151,9 +157,16 @@ function postBody(post: CommunityPost) {
     ? post.body.slice(post.title.length).trimStart()
     : post.body;
 }
-function AuthorAvatar({ name }: { name: string }) {
+function AuthorAvatar({
+  name,
+  portrait,
+}: {
+  name: string;
+  portrait?: string | null;
+}) {
   return (
     <Avatar className="size-10 shrink-0">
+      {portrait ? <AvatarImage src={portrait} alt="" /> : null}
       <AvatarFallback className="bg-brand-soft text-brand-ink">
         {name.trim().charAt(0).toUpperCase() || "A"}
       </AvatarFallback>
@@ -164,21 +177,58 @@ function Identity({
   name,
   date,
   updated,
+  agent,
+  verified,
 }: {
   name: string;
   date: string;
   updated?: string;
+  agent?: CommunityAgentProfile | null;
+  verified?: boolean;
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
       <p className="max-w-full truncate text-sm font-semibold text-txt">
         {name}
       </p>
+      {agent && (
+        <Badge
+          variant="outline"
+          className="border-brand-line bg-brand-soft text-brand-ink"
+        >
+          Agen Lumina · {agent.field}
+        </Badge>
+      )}
+      {verified && (
+        <Badge className="bg-primary text-primary-foreground">
+          <ShieldCheck aria-hidden />
+          Terverifikasi admin
+        </Badge>
+      )}
       <p className="text-xs text-dim">
         <time dateTime={date}>{communityDate(date)}</time>
         {updated && updated !== date ? " · disunting" : ""}
       </p>
     </div>
+  );
+}
+/** Provenance line: who wrote this and whether an admin reviewed it. */
+function Provenance({
+  post,
+  className = "mt-2",
+}: {
+  post: CommunityPost;
+  className?: string;
+}) {
+  const agent = communityAgent(post.agentId);
+  return (
+    <p className={cn("text-xs text-dim", className)}>
+      {post.verified
+        ? "Ditinjau admin · terverifikasi"
+        : agent
+          ? "Agen Lumina · belum ditinjau admin"
+          : "Dibagikan anggota · belum terverifikasi"}
+    </p>
   );
 }
 export function CommunityFeed({
@@ -336,7 +386,10 @@ export function CommunityFeed({
                 className="relative min-w-0 px-4 py-4 transition-colors hover:bg-panel-2/40"
               >
                 <div className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3">
-                  <AuthorAvatar name={post.author} />
+                  <AuthorAvatar
+                    name={post.author}
+                    portrait={communityAgent(post.agentId)?.portrait}
+                  />
                   <div className="min-w-0">
                     <div className="-mt-2 -mr-2 flex items-start justify-between gap-1">
                       <div className="min-w-0 pt-2">
@@ -344,6 +397,8 @@ export function CommunityFeed({
                           name={post.author}
                           date={post.createdAt}
                           updated={post.updatedAt}
+                          agent={communityAgent(post.agentId)}
+                          verified={post.verified}
                         />
                       </div>
                       <div className="relative z-10 shrink-0">
@@ -375,9 +430,7 @@ export function CommunityFeed({
                       images={post.imageUrls}
                       priority={index === 0}
                     />
-                    <p className="mt-2 text-xs text-dim">
-                      Dibagikan anggota · belum terverifikasi
-                    </p>
+                    <Provenance post={post} />
                     <div className="relative z-10 -ml-3 mt-1 flex flex-wrap items-start gap-x-5">
                       <Button
                         asChild
@@ -536,12 +589,17 @@ export function CommunityThread({
 
       <article aria-labelledby="thread-title" className="min-w-0 p-4 sm:p-6">
         <div className="flex items-start gap-3">
-          <AuthorAvatar name={post.author} />
+          <AuthorAvatar
+            name={post.author}
+            portrait={communityAgent(post.agentId)?.portrait}
+          />
           <div className="min-w-0 flex-1">
             <Identity
               name={post.author}
               date={post.createdAt}
               updated={post.updatedAt}
+              agent={communityAgent(post.agentId)}
+              verified={post.verified}
             />
             <Badge
               variant="secondary"
@@ -592,9 +650,7 @@ export function CommunityThread({
             </p>
           </div>
         )}
-        <p className="mt-4 text-xs text-dim">
-          Dibagikan anggota · belum terverifikasi
-        </p>
+        <Provenance post={post} className="mt-4" />
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-line py-2 text-sm text-dim">
           <a
             href="#balasan"
@@ -640,6 +696,7 @@ export function CommunityThread({
             {replies.map((reply) => (
               <article
                 key={reply.id}
+                id={`balasan-${reply.id}`}
                 aria-label={`Balasan dari ${reply.author}`}
                 className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-6"
               >

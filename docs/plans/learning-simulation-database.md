@@ -3,7 +3,9 @@
 Permintaan pemilik produk: materi, kuis, dan skenario dibaca dari PostgreSQL;
 progres belajar dan hasil simulasi disimpan per akun, termasuk di deployment.
 Ini menggantikan batas progres localStorage pada plan §8 dan aturan auth lama.
-Percakapan serta pesan yang diperiksa tetap tidak disimpan.
+Percakapan serta pesan yang diperiksa tetap tidak disimpan; hanya metadata
+riwayat Companion (judul, waktu, jumlah giliran, skor terakhir) yang tersimpan
+per akun.
 
 1. Versi terkecil: tabel konten JSONB, seed 12 modul dan satu skenario nyata,
    pembaca server untuk katalog/detail, penyimpanan kuis dan hasil simulasi

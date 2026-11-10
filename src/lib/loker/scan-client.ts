@@ -1,4 +1,4 @@
-import type { ScanRunStatus } from "@/lib/loker/types";
+import type { ScanStatus } from "@/lib/loker/types";
 
 export type TriggerResult =
   | "started"
@@ -38,12 +38,15 @@ export interface PollOptions {
  * an error, so it returns null rather than throwing.
  */
 export async function pollScan(
-  onTick: (status: ScanRunStatus) => void,
+  onTick: (status: ScanStatus) => void,
   options: PollOptions = {},
-): Promise<ScanRunStatus | null> {
+): Promise<ScanStatus | null> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const intervalMs = options.intervalMs ?? 3_000;
-  const maxTicks = options.maxTicks ?? 100;
+  // The scanner alone may take five minutes, and ingest runs after it. A cold
+  // corpus needs the whole budget, so a short poll must not declare failure
+  // while the job is still writing rows.
+  const maxTicks = options.maxTicks ?? 200;
 
   for (let tick = 0; tick < maxTicks; tick += 1) {
     let response: Response;
@@ -57,7 +60,7 @@ export async function pollScan(
     if (response.status === 204) return null;
     if (!response.ok) return null;
 
-    const status = (await response.json()) as ScanRunStatus;
+    const status = (await response.json()) as ScanStatus;
     onTick(status);
     if (status.status !== "running") return status;
 

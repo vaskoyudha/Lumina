@@ -28,8 +28,8 @@ describe("modus.json (§11.2 — single source of truth for A and B)", () => {
     ]);
   });
 
-  it("keeps at least one unwritten module marked 'segera'", () => {
-    expect(MODUS.some((m) => m.modulStatus === "segera")).toBe(true);
+  it("marks every module as 'lengkap' once all 12 are written", () => {
+    expect(MODUS.every((m) => m.modulStatus === "lengkap")).toBe(true);
   });
 });
 

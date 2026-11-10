@@ -98,6 +98,10 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
 - `LUMINA_AI_GLOBAL_LIMIT` — batas AI global per menit (template Compose 100; kode jatuh ke 200 bila kosong).
 - `LOKER_SCAN_DATA_DIR` — akar data pemindai lowongan (default `<cwd>/.scan-data`;
   di container `/app/.scan-data`). Harus bisa ditulis proses aplikasi.
+- `LOKER_PREWARM_INTERVAL_MS` — jeda pemanasan korpus lowongan di latar belakang
+  (default 21600000 = 6 jam; `0` mematikan). Pemanasan dimulai
+  `src/instrumentation.ts` dan memakai kunci advisory yang sama dengan tombol
+  "Pindai ulang", jadi keduanya tidak pernah memindai bersamaan.
 - `TRUST_PROXY` — hanya `true` di belakang Caddy yang menimpa `X-Lumina-Client-IP`; tanpa itu semua pengguna anonim berbagi satu kunci limit.
 - `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
   OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan
@@ -118,6 +122,10 @@ b. `/api/companion/vision` hanya menyalin teks dari gambar. Kontraknya tidak pun
    field skor/risk/signal; hasilnya hanya boleh masuk kembali ke `scoreText()`.
 c. Model tidak pernah diminta memberi skor dan tidak boleh menambah atau
    menurunkan `signals` (plan §3b, §11.6a).
+d. Riwayat Companion menyimpan metadata per akun di `companion_conversations`
+   (judul, jumlah giliran, waktu, dan skor terakhir). Isi pesan, lampiran, dan
+   transkrip tidak pernah ikut; membuka riwayat di perangkat lain hanya
+   memulihkan judul, bukan percakapan.
 
 ## Deploy
 

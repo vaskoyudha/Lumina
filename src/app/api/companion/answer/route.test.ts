@@ -325,4 +325,83 @@ describe("POST /api/companion/answer", () => {
     const body = (await response.json()) as { toolCalls: unknown[] };
     expect(body.toolCalls).toEqual([]);
   });
+
+  it("offers report_draft and returns it with no message content", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Saya buka template laporannya.",
+              tool_calls: [
+                {
+                  id: "call-2",
+                  type: "function",
+                  function: {
+                    name: "report_draft",
+                    arguments: JSON.stringify({ channel: "iasc" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "lanjutan", question: "buatkan laporan ke OJK" }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      text: "Saya buka template laporannya.",
+      toolCalls: [
+        { id: "call-2", name: "report_draft", arguments: { channel: "iasc" } },
+      ],
+    });
+
+    const sent = JSON.parse(
+      (fetchMock.mock.calls[0]?.[1] as RequestInit).body as string,
+    ) as { tools: { function: { name: string } }[] };
+    expect(sent.tools.map((tool) => tool.function.name)).toEqual([
+      "job_search",
+      "report_draft",
+    ]);
+  });
+
+  it("drops a report_draft call that names an unknown channel", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Baik.",
+              tool_calls: [
+                {
+                  id: "call-3",
+                  type: "function",
+                  function: {
+                    name: "report_draft",
+                    arguments: JSON.stringify({ channel: "bank" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await POST(
+      request({ lane: "lanjutan", question: "buatkan laporan" }),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { toolCalls: unknown[] };
+    expect(body.toolCalls).toEqual([]);
+  });
 });
