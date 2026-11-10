@@ -118,6 +118,10 @@ b. `/api/companion/vision` hanya menyalin teks dari gambar. Kontraknya tidak pun
    field skor/risk/signal; hasilnya hanya boleh masuk kembali ke `scoreText()`.
 c. Model tidak pernah diminta memberi skor dan tidak boleh menambah atau
    menurunkan `signals` (plan §3b, §11.6a).
+d. Riwayat Companion menyimpan metadata per akun di `companion_conversations`
+   (judul, jumlah giliran, waktu, dan skor terakhir). Isi pesan, lampiran, dan
+   transkrip tidak pernah ikut; membuka riwayat di perangkat lain hanya
+   memulihkan judul, bukan percakapan.
 
 ## Deploy
 
