@@ -205,3 +205,57 @@ export async function googleAccount(
   }
   return account;
 }
+
+const displayName = z.string().trim().min(1).max(80);
+
+export async function updateAccountName(
+  userId: string,
+  nama: string,
+): Promise<Account> {
+  const parsed = displayName.safeParse(nama);
+  if (!parsed.success) throw new AuthError("Nama harus 1–80 karakter.");
+  const row = (
+    await authDatabase().query<Account>(
+      `UPDATE users SET nama = $2
+       WHERE id = $1
+       RETURNING id, email, nama, created_at`,
+      [userId, parsed.data],
+    )
+  ).rows[0];
+  if (!row) throw new AuthError("Akun tidak ditemukan.");
+  return { ...row, created_at: new Date(row.created_at).toISOString() };
+}
+
+export async function changeAccountPassword(
+  userId: string,
+  current: string,
+  next: string,
+): Promise<void> {
+  const parsed = z
+    .object({
+      current: z.string().max(128),
+      next: z.string().min(8).max(128),
+    })
+    .safeParse({ current, next });
+  if (!parsed.success)
+    throw new AuthError("Password baru harus 8–128 karakter.");
+
+  const row = (
+    await authDatabase().query<{ password_hash: string | null }>(
+      "SELECT password_hash FROM users WHERE id = $1",
+      [userId],
+    )
+  ).rows[0];
+  if (!row) throw new AuthError("Akun tidak ditemukan.");
+  if (!row.password_hash)
+    throw new AuthError(
+      "Akun ini masuk lewat Google. Password belum dapat diubah di sini.",
+    );
+  if (!(await checkPassword(parsed.data.current, row.password_hash)))
+    throw new AuthError("Password saat ini salah.");
+
+  await authDatabase().query(
+    "UPDATE users SET password_hash = $2 WHERE id = $1",
+    [userId, await hashPassword(parsed.data.next)],
+  );
+}
