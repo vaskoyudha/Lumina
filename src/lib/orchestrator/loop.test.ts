@@ -579,14 +579,14 @@ describe("runOrchestrator", () => {
     expect(result.trace.commander.text).toContain("permintaan OTP");
   });
 
-  it("falls back when the commander leaks a band or a score", async () => {
+  it("falls back when the commander leaks a band", async () => {
     const chat = jest.fn(
       async (options: {
         messages: { role: string; content: string | null }[];
       }) => {
         const system = systemOf(options.messages);
         if (system.includes("komandan agen"))
-          return commanderCall("Ini penipuan tinggi, 91/100.");
+          return commanderCall("Saya rasa ini mencurigakan.");
         if (system.includes("koordinator tim agen")) return plannerCall();
         if (system.includes("penyusun jawaban"))
           return { role: "assistant", content: "Pesan ini 72/100." };
@@ -605,10 +605,41 @@ describe("runOrchestrator", () => {
     const say = result.events.find((event) => event.type === "commander_say");
 
     expect(result.trace.commander.source).toBe("fallback");
-    expect(say && say.type === "commander_say" ? say.text : "").not.toContain(
-      "91/100",
-    );
     expect(say && say.type === "commander_say" ? say.text : "").not.toMatch(
+      /mencurigakan/i,
+    );
+  });
+
+  it("falls back when the commander puts a band in focus", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall(
+            "Saya sudah membaca pesan ini dan akan memeriksa polanya.",
+            "penipuan tinggi",
+          );
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const say = result.events.find((event) => event.type === "commander_say");
+
+    expect(result.trace.commander.source).toBe("fallback");
+    expect(say && say.type === "commander_say" ? say.focus : "").not.toMatch(
       /tinggi/i,
     );
   });
