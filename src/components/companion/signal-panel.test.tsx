@@ -65,6 +65,57 @@ describe("SignalPanel", () => {
     expect(screen.getByText(STAGE_LABEL.message.task)).toBeInTheDocument();
   });
 
+  it("shows a link verification instead of the message pipeline", () => {
+    render(
+      <SignalPanel
+        link={{
+          verdict: "Safe",
+          score: 98,
+          badReasons: [],
+          goodReasons: ["Long-standing domain history."],
+          incomplete: false,
+          domain: "example.com",
+        }}
+        result={null}
+        sequence={AGENT_SEQUENCE}
+      />,
+    );
+
+    expect(screen.getByText("Verifikasi tautan")).toBeInTheDocument();
+    expect(screen.getByText("1 tautan")).toBeInTheDocument();
+    expect(screen.getByText("example.com")).toBeInTheDocument();
+    expect(screen.getByText("98/100")).toBeInTheDocument();
+    expect(screen.getByText(/Link Agent/)).toBeInTheDocument();
+    expect(screen.getByText(/sub-agen tautan/i)).toBeInTheDocument();
+    expect(screen.queryByText(/10 agen/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/belum ada yang diperiksa/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a pending link instead of the message pipeline", () => {
+    render(
+      <SignalPanel
+        linkPending={{ url: "https://example.com" }}
+        result={null}
+        sequence={AGENT_SEQUENCE}
+      />,
+    );
+
+    expect(screen.getByText("Verifikasi tautan")).toBeInTheDocument();
+    expect(screen.getByText("1 tautan")).toBeInTheDocument();
+    expect(screen.getByText("https://example.com")).toBeInTheDocument();
+    expect(screen.getByText(/menunggu persetujuan/i)).toBeInTheDocument();
+    expect(screen.getByText(/tautan belum dikirim/i)).toBeInTheDocument();
+    expect(screen.getByText(/Link Agent/)).toBeInTheDocument();
+    expect(screen.getByText(/sub-agen tautan/i)).toBeInTheDocument();
+    expect(screen.getByText(/menunggu izin/i)).toBeInTheDocument();
+    expect(screen.queryByText(/10 agen/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/belum ada yang diperiksa/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("leads with the verdict and never invents a finding", () => {
     const { result, trace } = scoreWithTrace({ text: APK_MESSAGE });
     const { container } = render(
@@ -136,7 +187,7 @@ describe("SignalPanel", () => {
 
     await user.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("Link Agent")).toBeInTheDocument();
+    expect(screen.getByText(/Link Agent/)).toBeInTheDocument();
     expect(
       screen.getByText(/tidak ada tautan pada pesan ini/i),
     ).toBeInTheDocument();

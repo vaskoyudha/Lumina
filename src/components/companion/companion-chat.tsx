@@ -30,6 +30,7 @@ import {
   CompanionAuth,
   type CompanionSession,
 } from "@/components/companion/companion-auth";
+import { CompanionMarkdown } from "@/components/companion/companion-markdown";
 import {
   type Attachment,
   Composer,
@@ -37,9 +38,13 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
-import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
+import {
+  DetectionText,
+  HighlightExplanation,
+} from "@/components/companion/highlight-text";
 import { LokerTool } from "@/components/companion/loker-tool";
+import { ProcessTrace } from "@/components/companion/process-trace";
 import { CompanionQuickCards } from "@/components/companion/quick-cards";
 import { ReportTemplate } from "@/components/companion/report-template";
 import { ScoreCard } from "@/components/companion/score-card";
@@ -78,10 +83,20 @@ import {
 } from "@/lib/companion/attachment-reader";
 import { type Explanation, explain } from "@/lib/companion/explain";
 import {
+  collectHighlights,
+  highlightQuoteKey,
+  highlightSegments,
+} from "@/lib/companion/highlights";
+
+import {
   listConversationHistory,
   saveConversationHistory,
 } from "@/lib/companion/history";
-import { conversationIntent, learningModulesFor } from "@/lib/companion/intent";
+import {
+  conversationIntent,
+  learningModulesFor,
+  wantsLinkCheck,
+} from "@/lib/companion/intent";
 import {
   composeAnswerFallback,
   composeReply,
@@ -92,6 +107,7 @@ import {
   isContentQuestion,
   isFollowUpQuestion,
   isQuestionAbout,
+  isWebLookupQuestion,
   type Lane,
   planTurn,
   wantsSafetyCheck,
@@ -105,9 +121,11 @@ import {
   voiceDigest,
 } from "@/lib/contracts/agent-run";
 import type { ToolObservation } from "@/lib/contracts/loop";
-import type { ScoreResult, Signal } from "@/lib/contracts/score";
+import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
+import type { ScoreResult } from "@/lib/contracts/score";
 import type { ToolCall } from "@/lib/contracts/tool";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
+import type { LinkVerdict } from "@/lib/link-verify/urlvet";
 import { filterPostings } from "@/lib/loker/search";
 import type {
   LokerCorpus,
@@ -117,6 +135,7 @@ import type {
 import { useSavedLoker } from "@/lib/loker/use-saved";
 import { kalimatRekomendasi, ringkasRekomendasi } from "@/lib/loker/verdict";
 import { modusFor } from "@/lib/modus";
+import { streamOrchestrator } from "@/lib/orchestrator/client";
 import { extractEntities, extractedSignals } from "@/lib/scoring/extract";
 import { extractLinks } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
@@ -175,6 +194,8 @@ interface Turn {
   contentQuestion?: boolean;
   /** What the agents actually did for this turn, measured. */
   trace?: AgentTrace;
+  /** The real multi-agent run: planner, specialists, tool calls, synthesis. */
+  orchestration?: OrchestratorEvent[];
   /** The teaching layer: tactics, anatomy, checks, and where to report. */
   explanation?: Explanation;
   /** True while the language layer is still writing. */
@@ -193,6 +214,12 @@ interface Turn {
   tool?: LokerTurnTool;
   /** The report card the model opened for the previous verdict. */
   report?: ReportTurnTool;
+  /** A manual link scan the agent ran at the reader's explicit request. */
+  link?: LinkVerdict;
+  /** A link waiting for the reader's approval before it leaves the browser. */
+  linkPrompt?: { url: string };
+  /** Why the link scan could not produce a verdict. */
+  linkError?: string;
   /** Public learning destinations, separate from a scored pattern. */
   learningModules?: number[];
   ocrConfidence?: number;
@@ -217,6 +244,70 @@ interface LokerTurnTool {
   summaryState: "idle" | "running" | "done" | "failed";
 }
 
+/**
+ * The visible process for a link turn. The steps are derived from what the
+ * browser actually did: it asked for consent, waited, scanned, then answered.
+ * This is not hidden chain-of-thought; it is the same audit trail Pi shows
+ * around a tool call, scoped to the link lane.
+ */
+function LinkProcess({ turn }: { turn: Turn }) {
+  const steps: { label: string; active?: boolean }[] = [
+    { label: "Mengenali tautan dan menyiapkan pemeriksaan" },
+  ];
+  if (turn.linkPrompt) {
+    steps.push({
+      label: "Menunggu persetujuan sebelum URL dikirim ke pemindai",
+      active: true,
+    });
+  }
+  if (turn.link) {
+    steps.push({
+      label: `Memindai ${turn.link.domain ?? "tautan"} dengan url.vet`,
+    });
+    steps.push({ label: "Menyusun jawaban dari hasil pemindaian" });
+  }
+  if (turn.linkError) {
+    steps.push({ label: "Pemeriksaan gagal; menyiapkan penjelasan" });
+  }
+
+  return (
+    <details
+      open
+      className="max-w-[92%] rounded-[12px] border border-line bg-panel-2 px-3 py-2 text-[12px]"
+    >
+      <summary className="flex cursor-pointer select-none items-center gap-2 font-medium">
+        <Workflow aria-hidden className="size-3.5" />
+        Proses
+        <span className="font-normal text-dim">{steps.length} langkah</span>
+      </summary>
+      <ol className="mt-2 flex flex-col gap-1.5">
+        {steps.map((step, index) => (
+          <li key={`${step.label}-${index}`} className="flex gap-2">
+            <span
+              className={cn(
+                "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-medium",
+                step.active
+                  ? "bg-brand-soft text-brand-ink"
+                  : "bg-panel text-dim",
+              )}
+            >
+              {index + 1}
+            </span>
+            <p
+              className={cn(
+                "pt-0.5 leading-relaxed",
+                step.active ? "text-txt" : "text-dim",
+              )}
+            >
+              {step.label}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </details>
+  );
+}
+
 interface Session {
   id: number;
   /** Account-scoped row id; present once the thread is saved for a signed-in reader. */
@@ -231,16 +322,26 @@ interface Session {
   updatedAt?: number;
 }
 
+interface ActiveHighlight {
+  turnId: number;
+  quote: string;
+}
+
 /**
  * A user turn borrows the findings of the companion answer that follows it.
- * A question-only turn has no result, and therefore nothing to highlight.
+ * Agent-generated points supply detailed highlights; deterministic signals and
+ * the teaching explanation fill the quotes the agents did not cover.
  */
-function signalsForUserTurn(
-  turns: readonly Turn[],
-  index: number,
-): readonly Signal[] {
+function highlightsForUserTurn(turns: readonly Turn[], index: number) {
+  const turn = turns[index];
   const next = turns[index + 1];
-  return next?.role === "companion" ? (next.result?.signals ?? []) : [];
+  if (!turn || next?.role !== "companion") return [];
+  return collectHighlights({
+    text: turn.text,
+    signals: next.result?.signals ?? [],
+    explanation: next.explanation,
+    events: next.orchestration,
+  });
 }
 
 /** One dot colour per band, reused by the header pill and the pipeline header. */
@@ -288,6 +389,7 @@ export function CompanionChat({
   initialPanel,
   corpus = EMPTY_CORPUS,
   initialModule,
+  orchestrator = false,
 }: {
   session?: CompanionSession | null;
   /** Set when another surface links straight into the detector overview. */
@@ -295,6 +397,8 @@ export function CompanionChat({
   /** The capped cumulative scan snapshot; the client filters it locally. */
   corpus?: LokerCorpus;
   initialModule?: { no: number; title: string };
+  /** Server-resolved flag for the real multi-agent orchestrator. */
+  orchestrator?: boolean;
 }) {
   const [tutorModule, setTutorModule] = React.useState(initialModule);
   const router = useRouter();
@@ -341,9 +445,8 @@ export function CompanionChat({
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
-  const [activeEvidence, setActiveEvidence] = React.useState<string | null>(
-    null,
-  );
+  const [activeHighlight, setActiveHighlight] =
+    React.useState<ActiveHighlight | null>(null);
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
   /** Height of the floating composer, so the log can pad its tail above it. */
@@ -379,6 +482,27 @@ export function CompanionChat({
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
+  const highlightsByUserTurn = React.useMemo(() => {
+    const map = new Map<number, ReturnType<typeof highlightsForUserTurn>>();
+    turns.forEach((turn, index) => {
+      if (turn.role === "user") {
+        map.set(turn.id, highlightsForUserTurn(turns, index));
+      }
+    });
+    return map;
+  }, [turns]);
+  const segmentsByUserTurn = React.useMemo(() => {
+    const map = new Map<number, ReturnType<typeof highlightSegments>>();
+    turns.forEach((turn) => {
+      if (turn.role === "user") {
+        map.set(
+          turn.id,
+          highlightSegments(turn.text, highlightsByUserTurn.get(turn.id) ?? []),
+        );
+      }
+    });
+    return map;
+  }, [turns, highlightsByUserTurn]);
 
   /**
    * Persists only the account-scoped metadata. The transcript and attachments
@@ -402,10 +526,36 @@ export function CompanionChat({
     [session],
   );
 
-  const selectEvidence = React.useCallback((evidence: string) => {
-    setShowEvidence(false);
-    setActiveEvidence((current) => (current === evidence ? null : evidence));
-  }, []);
+  const selectEvidence = React.useCallback(
+    (evidence: string, turnId?: number) => {
+      setShowEvidence(false);
+      setActiveHighlight((current) => {
+        let selectedTurn = turnId;
+        if (selectedTurn === undefined) {
+          const evidenceKey = highlightQuoteKey(evidence);
+          for (let index = turns.length - 1; index >= 0; index -= 1) {
+            const turn = turns[index];
+            if (
+              turn.role === "user" &&
+              highlightQuoteKey(turn.text).includes(evidenceKey)
+            ) {
+              selectedTurn = turn.id;
+              break;
+            }
+          }
+        }
+        if (selectedTurn === undefined) return current;
+        if (
+          current?.turnId === selectedTurn &&
+          highlightQuoteKey(current.quote) === highlightQuoteKey(evidence)
+        ) {
+          return null;
+        }
+        return { turnId: selectedTurn, quote: evidence };
+      });
+    },
+    [turns],
+  );
 
   /** Loads a prompt into the empty-state composer without sending it. */
   const prefillComposer = React.useCallback((text: string) => {
@@ -414,16 +564,23 @@ export function CompanionChat({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on session change
   React.useEffect(() => {
-    setActiveEvidence(null);
+    setActiveHighlight(null);
   }, [activeId]);
 
   React.useEffect(() => {
-    if (activeEvidence === null) return;
+    if (activeHighlight === null) return;
+    const turn = document.querySelector<HTMLElement>(
+      `[data-turn-id="${activeHighlight.turnId}"]`,
+    );
     const target = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-evidence]"),
-    ).find((element) => element.dataset.evidence === activeEvidence);
+      turn?.querySelectorAll<HTMLElement>("[data-evidence]") ?? [],
+    ).find(
+      (element) =>
+        highlightQuoteKey(element.dataset.evidence ?? "") ===
+        highlightQuoteKey(activeHighlight.quote),
+    );
     target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-  }, [activeEvidence]);
+  }, [activeHighlight]);
 
   /*
    * Opening the Agents view unmounts the transcript, and with it AgentRun's
@@ -513,6 +670,22 @@ export function CompanionChat({
   const latestResult = latestCheck?.result ?? null;
   const latestTrace = latestCheck?.trace ?? null;
 
+  const latestLink = React.useMemo(() => {
+    for (let i = turns.length - 1; i >= 0; i--) {
+      const turn = turns[i];
+      if (turn?.link) return turn.link;
+    }
+    return null;
+  }, [turns]);
+
+  const latestLinkPrompt = React.useMemo(() => {
+    for (let i = turns.length - 1; i >= 0; i--) {
+      const turn = turns[i];
+      if (turn?.linkPrompt) return turn.linkPrompt;
+    }
+    return null;
+  }, [turns]);
+
   /**
    * The panel goes live while the language stage is streaming. The open turn
    * already carries the detector's `result` and an `AgentTrace` whose voice
@@ -534,6 +707,8 @@ export function CompanionChat({
 
   const panelResult = liveCheck?.result ?? latestResult;
   const panelTrace = liveCheck?.trace ?? latestTrace;
+  const panelLink = panelResult ? null : latestLink;
+  const panelLinkPending = panelResult || panelLink ? null : latestLinkPrompt;
   const running = liveCheck != null;
 
   const latestExplanation = latestCheck?.explanation ?? null;
@@ -567,7 +742,12 @@ export function CompanionChat({
     async (
       raw: string,
       attachments: Attachment[] = [],
-      options: { force?: "periksa"; recheckOf?: number } = {},
+      options: {
+        force?: "periksa";
+        recheckOf?: number;
+        /** Set by the link confirmation card; unlocks check_link on this turn. */
+        linkApproved?: string;
+      } = {},
     ) => {
       const text = raw.trim();
       if ((!text && attachments.length === 0) || busy || inFlight.current)
@@ -751,8 +931,16 @@ export function CompanionChat({
          * scored 70/tinggi and named the pinjol scheme. A question is not a
          * message someone received, so the detectors never see it.
          */
+        const webLookup =
+          !options.force &&
+          attachments.length === 0 &&
+          isWebLookupQuestion(text);
         const asked =
           contentQuestion ||
+          webLookup ||
+          (!options.force &&
+            attachments.length === 0 &&
+            wantsLinkCheck(text)) ||
           (options.force || attachments.length > 0
             ? false
             : isQuestionAbout(scored, {
@@ -1166,11 +1354,11 @@ export function CompanionChat({
           }));
 
         /*
-         * 45 s for a bounded multi-step turn: three model calls, each with the
-         * route's own 20 s ceiling. A single call still returns much sooner.
+         * 55 s for the planner + specialists + synthesizer, under the route's
+         * own 60 s deadline. The deterministic answer path still returns sooner.
          */
         const controller = control;
-        const abortTimer = setTimeout(() => controller.abort(), 45000);
+        const abortTimer = setTimeout(() => controller.abort(), 55000);
         pendingTimers.current.add(abortTimer);
         const fallbackContext = {
           question: text,
@@ -1223,6 +1411,40 @@ export function CompanionChat({
               return;
             }
 
+            /*
+             * The real multi-agent path. It runs only for a checked message
+             * with no attachments, and the local score is still the verdict.
+             * Any failure falls through to the original voice call below.
+             */
+            if (orchestrator && attachments.length === 0) {
+              const orchestrated = await streamOrchestrator(
+                {
+                  lane: "periksa",
+                  question: text,
+                  message: scored,
+                  history: chatHistory.slice(-10),
+                  priorTurns: priorTurns.map((turn) => turn.text).slice(-5),
+                  consent: true,
+                },
+                {
+                  signal: controller.signal,
+                  onEvent: (event) => {
+                    patchCompanion((turn) => ({
+                      ...turn,
+                      orchestration: [...(turn.orchestration ?? []), event],
+                    }));
+                  },
+                },
+              );
+              if (
+                orchestrated.outcome === "model" &&
+                orchestrated.text.trim().length > 0
+              ) {
+                finish(orchestrated.text, "model");
+                return;
+              }
+            }
+
             const voice = await requestReply(
               digest,
               appendText,
@@ -1267,6 +1489,8 @@ export function CompanionChat({
               contentQuestion,
               attachmentContext: modelAttachments,
               hasVerdict: checked || latestResult !== null,
+              linkApproved: options.linkApproved,
+              userName: session?.nama,
             }),
             ...(tutorModule ? { moduleNo: tutorModule.no } : {}),
           };
@@ -1300,6 +1524,99 @@ export function CompanionChat({
                   report: { channel, result: latestResult, channels },
                 }));
                 return { kind: "terminal", terminal: "report" } as const;
+              }
+
+              if (call.name === "ask_link_check") {
+                patchCompanion((turn) => ({
+                  ...turn,
+                  linkPrompt: { url: call.arguments.url },
+                }));
+                return { kind: "terminal", terminal: "link" } as const;
+              }
+
+              if (call.name === "check_link") {
+                let observation: ToolObservation;
+                try {
+                  const response = await fetch("/api/link/verify", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ url: call.arguments.url }),
+                    signal: controller.signal,
+                  });
+                  const json = (await response.json()) as
+                    | { ok: true; verdict: LinkVerdict }
+                    | { ok: false; error: string };
+                  if (json.ok) {
+                    patchCompanion((turn) => ({
+                      ...turn,
+                      link: json.verdict,
+                    }));
+                    observation = {
+                      name: "check_link",
+                      callId: call.id,
+                      arguments: call.arguments,
+                      ok: true,
+                      result: {
+                        verdict: json.verdict.verdict,
+                        score: json.verdict.score,
+                        badReasons: json.verdict.badReasons.slice(0, 5),
+                        goodReasons: json.verdict.goodReasons.slice(0, 5),
+                        incomplete: json.verdict.incomplete,
+                        domain: json.verdict.domain,
+                      },
+                    };
+                  } else {
+                    const error =
+                      json.error === "rate-limited" ||
+                      json.error === "upstream-timeout" ||
+                      json.error === "upstream-invalid" ||
+                      json.error === "not-configured"
+                        ? json.error
+                        : "upstream-failed";
+                    patchCompanion((turn) => ({
+                      ...turn,
+                      linkError:
+                        error === "rate-limited"
+                          ? "Batas pemeriksaan tautan tercapai. Coba lagi sebentar."
+                          : error === "upstream-timeout"
+                            ? "Pemeriksaan tautan melewati batas waktu."
+                            : error === "not-configured"
+                              ? "Pemeriksa tautan belum dikonfigurasi."
+                              : "Pemeriksaan tautan gagal.",
+                    }));
+                    observation = {
+                      name: "check_link",
+                      callId: call.id,
+                      arguments: call.arguments,
+                      ok: false,
+                      result: {
+                        badReasons: [],
+                        goodReasons: [],
+                        incomplete: false,
+                        error,
+                      },
+                    };
+                  }
+                } catch {
+                  patchCompanion((turn) => ({
+                    ...turn,
+                    linkError: "Pemeriksaan tautan gagal.",
+                  }));
+                  observation = {
+                    name: "check_link",
+                    callId: call.id,
+                    arguments: call.arguments,
+                    ok: false,
+                    result: {
+                      badReasons: [],
+                      goodReasons: [],
+                      incomplete: false,
+                      error: "upstream-failed",
+                    },
+                  };
+                }
+
+                return { kind: "observation", observation } as const;
               }
 
               const toolStarted = performance.now();
@@ -1374,6 +1691,39 @@ export function CompanionChat({
               "model",
             );
             return;
+          }
+
+          if (loop.terminal === "link") {
+            finish(
+              loop.text ||
+                "Mau saya periksa tautan ini dengan pemindai phishing? Hanya URL-nya yang dikirim ke url.vet; isi pesan tetap di perangkat.",
+              "model",
+            );
+            return;
+          }
+
+          /*
+           * The model may answer a link request without calling the tool. The
+           * reader still gets the consent card instead of a silent scan or a
+           * bare prose answer: no URL leaves the browser before approval.
+           */
+          if (
+            !loop.terminal &&
+            wantsLinkCheck(text) &&
+            !loop.calls.some((call) => call.name === "check_link")
+          ) {
+            const pendingUrl = extractLinks(text)[0];
+            if (pendingUrl) {
+              patchCompanion((turn) => ({
+                ...turn,
+                linkPrompt: { url: pendingUrl },
+              }));
+              finish(
+                "Mau saya periksa tautan ini dengan pemindai phishing? Hanya URL-nya yang dikirim ke url.vet; isi pesan tetap di perangkat.",
+                "template",
+              );
+              return;
+            }
           }
 
           if (loop.outcome === "model") {
@@ -1481,6 +1831,8 @@ export function CompanionChat({
       latestResult,
       tutorModule,
       persistSession,
+      session?.nama,
+      orchestrator,
     ],
   );
 
@@ -1665,7 +2017,7 @@ export function CompanionChat({
   return (
     <div
       data-workspace
-      className="relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
+      className="companion-font relative flex h-full min-h-0 flex-col overflow-x-hidden bg-bg select-none"
     >
       {/*
         One live region for the whole shell, outside the transcript's
@@ -1727,7 +2079,7 @@ export function CompanionChat({
         <section className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header
             className={cn(
-              "absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-2 px-4 pt-4 pb-2 sm:px-5",
+              "absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-2 px-4 pt-4 pb-2 pointer-events-none sm:px-5 [&_a]:pointer-events-auto [&_button]:pointer-events-auto",
               showAgents && "md:hidden",
             )}
           >
@@ -1758,7 +2110,7 @@ export function CompanionChat({
                     className="size-6 object-contain"
                   />
                 </span>
-                <span className="truncate font-medium text-[12px] text-txt">
+                <span className="truncate font-medium font-serif text-[12px] text-txt">
                   {showAgents
                     ? "Agen pemeriksa"
                     : (active?.title ?? "Percakapan baru")}
@@ -1962,12 +2314,12 @@ export function CompanionChat({
                   />
                 </div>
 
-                <h1 className="text-center font-semibold text-[24px] leading-[1.2] tracking-[-0.025em] sm:text-[26px]">
+                <h1 className="text-center font-semibold font-serif text-[24px] leading-[1.2] tracking-[-0.015em] sm:text-[26px]">
                   <span className="bg-[linear-gradient(90deg,var(--lumina-brand-glow)_0%,var(--lumina-brand-ink-soft)_50%,var(--lumina-brand-glow)_100%)] bg-clip-text text-transparent">
                     Periksa sebelum
                   </span>
                 </h1>
-                <h2 className="mt-0.5 text-center font-semibold text-[24px] leading-[1.22] tracking-[-0.025em] text-ink sm:text-[26px]">
+                <h2 className="mt-0.5 text-center font-semibold font-serif text-[24px] leading-[1.22] tracking-[-0.015em] text-ink sm:text-[26px]">
                   kamu percaya.
                 </h2>
 
@@ -2023,18 +2375,40 @@ export function CompanionChat({
                     <div
                       key={turn.id}
                       data-turn
+                      data-turn-id={turn.id}
                       className="mx-auto w-full max-w-[820px]"
                     >
                       <div className="flex flex-col items-end gap-1.5">
                         {turn.text ? (
                           <p className="max-w-[85%] whitespace-pre-wrap rounded-[14px] border border-brand bg-panel px-4 py-2.5 font-normal text-[15px] text-txt leading-relaxed tracking-normal shadow-rest sm:text-[14px]">
-                            <EvidenceText
-                              activeEvidence={activeEvidence}
-                              onSelect={selectEvidence}
-                              signals={signalsForUserTurn(turns, turnIndex)}
+                            <DetectionText
+                              activeQuote={
+                                activeHighlight?.turnId === turn.id
+                                  ? activeHighlight.quote
+                                  : null
+                              }
+                              highlights={
+                                highlightsByUserTurn.get(turn.id) ?? []
+                              }
+                              onSelect={(quote) =>
+                                selectEvidence(quote, turn.id)
+                              }
                               text={turn.text}
                             />
                           </p>
+                        ) : null}
+                        {activeHighlight?.turnId === turn.id ? (
+                          <HighlightExplanation
+                            quote={activeHighlight.quote}
+                            details={
+                              (segmentsByUserTurn.get(turn.id) ?? []).find(
+                                (segment) =>
+                                  segment.quote !== null &&
+                                  highlightQuoteKey(segment.quote) ===
+                                    highlightQuoteKey(activeHighlight.quote),
+                              )?.details ?? []
+                            }
+                          />
                         ) : null}
 
                         {turn.attachments?.length ? (
@@ -2088,7 +2462,9 @@ export function CompanionChat({
                       data-turn
                       className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
                     >
-                      {turn.trace ? (
+                      {turn.orchestration && turn.orchestration.length > 0 ? (
+                        <ProcessTrace events={turn.orchestration} />
+                      ) : turn.trace ? (
                         <AgentRun
                           trace={turn.trace}
                           result={turn.result}
@@ -2099,7 +2475,8 @@ export function CompanionChat({
 
                       {turn.streaming &&
                       turn.text.length === 0 &&
-                      !turn.trace ? (
+                      !turn.trace &&
+                      !turn.orchestration ? (
                         <ThinkingRow
                           label="Menyusun jawaban"
                           startedAt={turn.voiceStartedAt ?? null}
@@ -2107,15 +2484,10 @@ export function CompanionChat({
                       ) : null}
 
                       {turn.text.length > 0 ? (
-                        <p className="max-w-[92%] whitespace-pre-wrap font-normal text-[15px] text-txt leading-relaxed tracking-normal sm:text-[14px]">
-                          {turn.text}
-                          {turn.streaming ? (
-                            <span
-                              aria-hidden
-                              className="ms-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-dim align-baseline"
-                            />
-                          ) : null}
-                        </p>
+                        <CompanionMarkdown
+                          content={turn.text}
+                          streaming={turn.streaming}
+                        />
                       ) : null}
 
                       {turn.attachmentNote ? (
@@ -2144,6 +2516,141 @@ export function CompanionChat({
                           saved={saved}
                           onToggleSave={toggleSaved}
                         />
+                      ) : null}
+
+                      {turn.linkPrompt || turn.link || turn.linkError ? (
+                        <LinkProcess turn={turn} />
+                      ) : null}
+
+                      {turn.linkPrompt ? (
+                        <div className="max-w-[92%] rounded-[12px] border border-brand-edge bg-brand-soft/40 p-3 text-[12px]">
+                          <p className="font-medium text-txt">
+                            Periksa tautan ini dengan pemindai phishing?
+                          </p>
+                          <p className="mt-1 break-all font-mono text-[11px] text-dim">
+                            {turn.linkPrompt.url}
+                          </p>
+                          <p className="mt-1.5 text-[10.5px] text-dim">
+                            Hanya URL ini yang dikirim ke url.vet. Isi pesan
+                            tetap di perangkat.
+                          </p>
+                          <div className="mt-2.5 flex flex-wrap gap-2">
+                            <Button
+                              className="min-h-9"
+                              onClick={() => {
+                                const url = turn.linkPrompt?.url;
+                                if (!url) return;
+                                setSessions((prev) =>
+                                  prev.map((session) =>
+                                    session.id === activeId
+                                      ? {
+                                          ...session,
+                                          turns: session.turns.map((item) =>
+                                            item.id === turn.id
+                                              ? {
+                                                  ...item,
+                                                  linkPrompt: undefined,
+                                                }
+                                              : item,
+                                          ),
+                                        }
+                                      : session,
+                                  ),
+                                );
+                                void send(
+                                  `Ya, periksa tautan ${url} apakah aman?`,
+                                  [],
+                                  { linkApproved: url },
+                                );
+                              }}
+                              size="sm"
+                            >
+                              Ya, periksa
+                            </Button>
+                            <Button
+                              className="min-h-9"
+                              onClick={() =>
+                                setSessions((prev) =>
+                                  prev.map((session) =>
+                                    session.id === activeId
+                                      ? {
+                                          ...session,
+                                          turns: session.turns.map((item) =>
+                                            item.id === turn.id
+                                              ? {
+                                                  ...item,
+                                                  linkPrompt: undefined,
+                                                  text: "Baik, tautan tidak diperiksa.",
+                                                }
+                                              : item,
+                                          ),
+                                        }
+                                      : session,
+                                  ),
+                                )
+                              }
+                              size="sm"
+                              variant="outline"
+                            >
+                              Tidak
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {turn.link ? (
+                        <div className="max-w-[92%] rounded-[12px] border border-line bg-panel-2 p-3 text-[12px]">
+                          <p className="flex flex-wrap items-center gap-2 font-medium">
+                            <span
+                              className={cn(
+                                turn.link.verdict === "Risky"
+                                  ? "text-danger"
+                                  : turn.link.verdict === "Suspicious"
+                                    ? "text-warn"
+                                    : "text-brand-ink",
+                              )}
+                            >
+                              {turn.link.verdict === "Risky"
+                                ? "Berisiko"
+                                : turn.link.verdict === "Suspicious"
+                                  ? "Mencurigakan"
+                                  : "Aman"}
+                            </span>
+                            <span className="tabular text-[11px] text-dim">
+                              {turn.link.score}/100
+                            </span>
+                            {turn.link.domain ? (
+                              <span className="truncate text-[11px] text-dim">
+                                {turn.link.domain}
+                              </span>
+                            ) : null}
+                          </p>
+                          {turn.link.badReasons.length > 0 ? (
+                            <ul className="mt-1.5 flex list-disc flex-col gap-0.5 pl-4 text-[11px] text-txt/80">
+                              {turn.link.badReasons
+                                .slice(0, 3)
+                                .map((reason) => (
+                                  <li key={reason}>{reason}</li>
+                                ))}
+                            </ul>
+                          ) : null}
+                          {turn.link.incomplete ? (
+                            <p className="mt-1 text-[10.5px] text-warn">
+                              Sebagian pemeriksaan tidak selesai; ulangi bila
+                              perlu.
+                            </p>
+                          ) : null}
+                          <p className="mt-1.5 text-[10px] text-dim">
+                            Diperiksa oleh url.vet · hanya tautan ini yang
+                            dikirim
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {turn.linkError ? (
+                        <p className="max-w-[92%] text-[11px] text-dim">
+                          {turn.linkError}
+                        </p>
                       ) : null}
 
                       {turn.report ? (
@@ -2408,6 +2915,8 @@ export function CompanionChat({
                 }
                 className="rounded-[22px] bg-panel shadow-lift ring-1 ring-edge/50"
                 evidence={evidence}
+                link={panelLink}
+                linkPending={panelLinkPending}
                 onSelectEvidence={selectEvidence}
                 result={panelResult}
                 sequence={AGENT_SEQUENCE}
@@ -2467,6 +2976,8 @@ export function CompanionChat({
                 }
                 className="rounded-none border-0"
                 evidence={evidence}
+                link={panelLink}
+                linkPending={panelLinkPending}
                 onSelectEvidence={selectEvidence}
                 result={panelResult}
                 sequence={AGENT_SEQUENCE}
