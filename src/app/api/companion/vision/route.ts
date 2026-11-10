@@ -1,4 +1,5 @@
 import { VisionRequestSchema } from "@/lib/contracts/vision";
+import { fetchChat } from "@/lib/server/llm";
 import {
   BodyTooLarge,
   limitAI,
@@ -77,38 +78,31 @@ export async function POST(request: Request) {
   const upstreamControl = upstreamAbort(request, TIMEOUT_MS);
 
   try {
-    const upstream = await fetch(
-      `${base.replace(/\/+$/, "")}/chat/completions`,
-      {
-        method: "POST",
-        signal: upstreamControl.signal,
-        headers: {
-          "content-type": "application/json",
-          ...(process.env.LUMINA_LLM_KEY
-            ? { authorization: `Bearer ${process.env.LUMINA_LLM_KEY}` }
-            : {}),
-        },
-        body: JSON.stringify({
-          model,
-          stream: false,
-          temperature: 0.1,
-          max_tokens: MAX_TOKENS,
-          messages: [
-            { role: "system", content: SYSTEM },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: "Salin semua teks pada gambar ini." },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:${mediaType};base64,${data}` },
-                },
-              ],
-            },
-          ],
-        }),
+    const upstream = await fetchChat({
+      base,
+      apiKey: process.env.LUMINA_LLM_KEY,
+      model,
+      fallbackModel: process.env.LUMINA_LLM_FALLBACK_MODEL,
+      signal: upstreamControl.signal,
+      body: {
+        stream: false,
+        temperature: 0.1,
+        max_tokens: MAX_TOKENS,
+        messages: [
+          { role: "system", content: SYSTEM },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Salin semua teks pada gambar ini." },
+              {
+                type: "image_url",
+                image_url: { url: `data:${mediaType};base64,${data}` },
+              },
+            ],
+          },
+        ],
       },
-    );
+    });
 
     if (!upstream.ok) return fail(503, "upstream-failed");
 

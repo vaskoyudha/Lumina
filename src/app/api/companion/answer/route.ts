@@ -15,6 +15,7 @@ import {
   type ToolCall,
 } from "@/lib/contracts/tool";
 import { tutorContext, tutorFallback } from "@/lib/learning/tutor";
+import { fetchChat } from "@/lib/server/llm";
 import {
   BodyTooLarge,
   limitAI,
@@ -264,34 +265,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const upstream = await fetch(
-      `${base.replace(/\/+$/, "")}/chat/completions`,
-      {
-        method: "POST",
-        signal: upstreamControl.signal,
-        headers: {
-          "content-type": "application/json",
-          ...(process.env.LUMINA_LLM_KEY
-            ? { authorization: `Bearer ${process.env.LUMINA_LLM_KEY}` }
-            : {}),
-        },
-        body: JSON.stringify({
-          model,
-          stream: false,
-          temperature: 0.4,
-          /*
-           * Same model and same minimum-thinking floor as the voice route:
-           * measured 6.6-10.2 s per turn on the fastest Antigravity account.
-           */
-          reasoning_effort: "none",
-          max_tokens: MAX_TOKENS,
-          ...(availableTools.length > 0
-            ? { tools: availableTools, tool_choice: "auto" }
-            : {}),
-          messages,
-        }),
+    const upstream = await fetchChat({
+      base,
+      apiKey: process.env.LUMINA_LLM_KEY,
+      model,
+      fallbackModel: process.env.LUMINA_LLM_FALLBACK_MODEL,
+      signal: upstreamControl.signal,
+      body: {
+        stream: false,
+        temperature: 0.4,
+        max_tokens: MAX_TOKENS,
+        ...(availableTools.length > 0
+          ? { tools: availableTools, tool_choice: "auto" }
+          : {}),
+        messages,
       },
-    );
+    });
 
     if (!upstream.ok)
       return tutor
