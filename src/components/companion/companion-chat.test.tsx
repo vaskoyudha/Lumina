@@ -39,10 +39,16 @@ jest.mock("next/link", () => {
   return { __esModule: true, default: Link };
 });
 
+let mockPathname = "/companion";
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn() }),
-  usePathname: () => "/companion",
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => mockPathname,
 }));
+
+beforeEach(() => {
+  mockPathname = "/companion";
+});
 
 /**
  * Paste, not type. Every test here asserts what the engine and the panel do
@@ -335,6 +341,7 @@ describe("CompanionChat · verdict before voice", () => {
   });
 
   it("announces the settled summary after opening the Agents view mid-run", async () => {
+    mockPathname = "/agen";
     let resolveReply: (value: unknown) => void = () => undefined;
     fetchMock.mockImplementation(
       () =>

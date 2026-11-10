@@ -1325,6 +1325,22 @@ export function CompanionChat({
     setSelectedId(session.id);
   };
 
+  /**
+   * "Agen" is its own address. From the conversation, send the reader to
+   * `/agen`; on `/agen` itself, only reset the selected brief so the sidebar
+   * does not push the same route again.
+   */
+  const openAgents = () => {
+    setShowSessions(false);
+    if (!onAgentRoute) {
+      router.push("/agen");
+      return;
+    }
+    setShowAgents(true);
+    setSelectedAgent(AGENT_SEQUENCE[0]);
+    setAgentsAnnouncement("");
+  };
+
   React.useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -1434,12 +1450,7 @@ export function CompanionChat({
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           agentsActive={showAgents}
-          onShowAgents={() => {
-            setShowAgents(true);
-            setSelectedAgent(AGENT_SEQUENCE[0]);
-            setShowSessions(false);
-            setAgentsAnnouncement("");
-          }}
+          onShowAgents={openAgents}
           onShowChat={() => {
             setShowAgents(false);
             setShowSessions(false);
@@ -1716,7 +1727,7 @@ export function CompanionChat({
                     name={session?.nama}
                     history={recentAgentRuns}
                     onFeature={prefillComposer}
-                    onOpenHistory={() => setShowAgents(true)}
+                    onOpenHistory={openAgents}
                     onResume={(sessionId) => {
                       setSelectedId(sessionId);
                       setShowAgents(false);
