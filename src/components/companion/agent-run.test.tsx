@@ -79,7 +79,7 @@ describe("AgentRun", () => {
   it("renders the standing crew with every agent card", () => {
     render(<AgentRun trace={{ stages: [], totalMs: 0 }} />);
 
-    expect(screen.getByText("8 agen siap")).toBeInTheDocument();
+    expect(screen.getByText("10 agen siap")).toBeInTheDocument();
     expect(screen.getByText("Belum ada pemeriksaan")).toBeInTheDocument();
     for (const id of [
       "message",
@@ -89,6 +89,8 @@ describe("AgentRun", () => {
       "job",
       "marketplace",
       "qris",
+      "email",
+      "injection",
       "evidence",
     ]) {
       expect(screen.getByTestId(`agent-card-${id}`)).toHaveAttribute(

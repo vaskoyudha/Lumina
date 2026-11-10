@@ -1,4 +1,7 @@
 import type { Signal } from "@/lib/contracts/score";
+import { isQuotedWarning } from "@/lib/scoring/context";
+import { annotateSignal } from "@/lib/scoring/mechanism";
+import { normalizeWithMap, originalSpan } from "@/lib/scoring/normalize";
 
 /**
  * Message Agent — rules, not ML (§11.7: "tanpa ML berbayar").
@@ -72,6 +75,35 @@ const OTP_WARNING_IN_MATCH =
   /\bjangan\b[^.!]{0,40}\b(?:berikan|bagikan|share|kirim|sebutkan|bacakan)\b/i;
 
 export const MESSAGE_RULES: readonly Rule[] = [
+  {
+    id: "investment-withdrawal",
+    weight: 0.8,
+    label: "Meminta pembayaran tambahan untuk menarik saldo investasi",
+    pattern:
+      /\b(?:investasi|profit|withdraw|penarikan)\b[^.!?]{0,90}\b(?:bayar|transfer|setor)\b[^.!?]{0,50}\b(?:pajak|biaya|deposit)\b/i,
+  },
+  {
+    id: "investment-pyramid",
+    weight: 0.7,
+    label: "Komisi investasi bergantung pada merekrut anggota baru",
+    pattern:
+      /\b(?:komisi|profit|bonus)\b[^.!?]{0,70}\b(?:rekrut|merekrut|ajak)\b[^.!?]{0,30}\b(?:anggota|orang)\b/i,
+    gate: (text) => /\b(?:investasi|robot trading|modal|setoran)\b/i.test(text),
+  },
+  {
+    id: "love-emergency",
+    weight: 0.7,
+    label: "Kenalan menolak verifikasi video tetapi meminta uang",
+    pattern:
+      /\b(?:kenalan|sayang|pacar|cinta)\b[\s\S]{0,150}\b(?:tidak bisa|menolak|jangan)\b[^.!?]{0,40}\bvideo\s*call\b[\s\S]{0,120}\b(?:transfer|kirim uang|bayar)\b/i,
+  },
+  {
+    id: "love-mule",
+    weight: 0.7,
+    label: "Kenalan meminta rekeningmu menjadi perantara dana",
+    pattern:
+      /\b(?:kenalan|sayang|pacar|cinta)\b[\s\S]{0,130}\b(?:terima|tampung)\b[^.!?]{0,40}\b(?:uang|dana)\b[\s\S]{0,100}\b(?:kirim kembali|transfer lagi|rekeningmu)\b/i,
+  },
   {
     // HARD: the killer signal is the *request* — "give me the code".
     // A bank that sends an OTP to its own customer is a benign
@@ -159,6 +191,12 @@ export const MESSAGE_RULES: readonly Rule[] = [
     pattern: /\b(?:qris|qr\s*code|scan\s+qr|stiker\s+qr)\b/i,
     gate: (text, match) => {
       if (/000201/.test(text)) return false; // the QRIS Agent owns pasted payloads
+      if (
+        /\b(?:cocokkan|mencocokkan|periksa|memeriksa)\b[^.!?]{0,80}\b(?:nama|penerima|merchant)\b[^.!?]{0,100}\b(?:sebelum|konfirmasi)\b/i.test(
+          sentenceAround(text, match),
+        )
+      )
+        return false;
       if (match.index === undefined) return false;
       const start = Math.max(0, match.index - 80);
       const end = Math.min(text.length, match.index + match[0].length + 80);
@@ -214,7 +252,7 @@ export const MESSAGE_RULES: readonly Rule[] = [
     weight: 0.7,
     label: "Melarang menceritakan atau memverifikasi ke pihak lain",
     pattern:
-      /\b(?:jangan\s+(?:bilang|beritahu|cerita)|jangan\s+(?:konfirmasi|verifikasi)|rahasia|hanya\s+antara\s+kita)\b/i,
+      /\b(?:jangan\s+(?:bilang|beritahu|cerita)|jangan\s+(?:konfirmasi|verifikasi)|(?:proses|prosedur|operasi|transaksi|ini|tugas(?:ku)?)\s+rahasia|hanya\s+antara\s+kita)\b/i,
   },
 ];
 
@@ -301,13 +339,16 @@ function globalCopy(pattern: RegExp): RegExp {
   );
 }
 
-export function detectMessage(text: string): RuleHit[] {
+export function detectMessage(input: string): RuleHit[] {
+  const normalized = normalizeWithMap(input);
+  const text = normalized.text;
   const matches: { rule: Rule; match: RegExpMatchArray }[] = [];
 
   for (const rule of MESSAGE_RULES) {
     const found = Array.from(text.matchAll(globalCopy(rule.pattern))).find(
       (match) =>
         !isWarning(rule, text, match) &&
+        !isQuotedWarning(text, match.index ?? 0, match[0].length) &&
         (rule.gate ? rule.gate(text, match) : true),
     );
     if (found) matches.push({ rule, match: found });
@@ -323,7 +364,15 @@ export function detectMessage(text: string): RuleHit[] {
     const withAction = escalated && rule.weightWithAction !== undefined;
     return {
       rule,
-      evidence: match[0].trim(),
+      evidence: input
+        .slice(
+          ...originalSpan(
+            normalized,
+            match.index ?? 0,
+            (match.index ?? 0) + match[0].length,
+          ),
+        )
+        .trim(),
       weight: withAction ? (rule.weightWithAction as number) : rule.weight,
       label:
         withAction && rule.labelWithAction ? rule.labelWithAction : rule.label,
@@ -332,10 +381,15 @@ export function detectMessage(text: string): RuleHit[] {
 }
 
 export function messageSignals(text: string): Signal[] {
-  return detectMessage(text).map(({ label, weight, evidence }) => ({
-    label,
-    weight,
-    evidence,
-    agent: "message" as const,
-  }));
+  return detectMessage(text).map(({ label, weight, evidence, rule }) =>
+    annotateSignal(
+      {
+        label,
+        weight,
+        evidence,
+        agent: "message" as const,
+      },
+      `message.${rule.id}`,
+    ),
+  );
 }

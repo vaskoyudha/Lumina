@@ -5,7 +5,16 @@ export const QuizSubmissionSchema = z.object({
     .record(z.string().min(1).max(100), z.string().min(1).max(100))
     .refine((a) => Object.keys(a).length <= 6),
   complete: z.boolean(),
+  attemptId: z.uuid().optional(),
 });
+export const ReviewSubmissionSchema = z
+  .object({
+    attemptId: z.uuid(),
+    moduleNo: z.number().int().min(1).max(99),
+    questionId: z.string().min(1).max(100),
+    answer: z.string().min(1).max(100),
+  })
+  .strict();
 export const SimulationSubmissionSchema = z.object({
   attemptId: z.uuid(),
   scenarioId: z.string().min(1).max(100),

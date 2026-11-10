@@ -37,6 +37,7 @@ import {
   isImageAttachment,
   scoringTextWithAttachments,
 } from "@/components/companion/composer";
+import { DeviceMemory } from "@/components/companion/device-memory";
 import { EvidenceText } from "@/components/companion/evidence-text";
 import { ExplanationCard } from "@/components/companion/explanation-card";
 import { LokerTool } from "@/components/companion/loker-tool";
@@ -46,6 +47,7 @@ import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { ThinkingRow } from "@/components/companion/thinking-row";
+import { VerificationControls } from "@/components/companion/verification-controls";
 import {
   requestReply,
   type VoiceOutcome,
@@ -67,6 +69,7 @@ import {
 } from "@/components/ui/sheet";
 import type { ReportChannelId } from "@/data/report-contacts";
 import type { ReportChannel } from "@/data/tactics";
+import { caseMetrics, sessionCases } from "@/lib/agent/case-store";
 import {
   buildAnswerRequest,
   requestAnswer,
@@ -77,12 +80,23 @@ import {
   saveConversationHistory,
 } from "@/lib/companion/history";
 import {
+  conversationIntent,
+  learningModulesFor,
+  wantsJobSearch,
+} from "@/lib/companion/intent";
+import {
   composeAnswerFallback,
   composeReply,
   suggestedActions,
 } from "@/lib/companion/reply";
 import { requestToolSummary } from "@/lib/companion/tool-client";
-import { isQuestionAbout, type Lane, planTurn } from "@/lib/companion/turn";
+import {
+  isContentQuestion,
+  isFollowUpQuestion,
+  isQuestionAbout,
+  type Lane,
+  planTurn,
+} from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
 import {
   type AgentStage,
@@ -93,6 +107,7 @@ import {
 } from "@/lib/contracts/agent-run";
 import type { ScoreResult, Signal } from "@/lib/contracts/score";
 import { buildEvidenceBundle } from "@/lib/evidence/bundle";
+import { LEDGER_EVENT, lookupLedger, recordLedger } from "@/lib/ledger";
 import { filterPostings } from "@/lib/loker/search";
 import type {
   LokerCorpus,
@@ -102,8 +117,10 @@ import type {
 import { useSavedLoker } from "@/lib/loker/use-saved";
 import { kalimatRekomendasi, ringkasRekomendasi } from "@/lib/loker/verdict";
 import { modusFor } from "@/lib/modus";
+import { extractEntities, extractedSignals } from "@/lib/scoring/extract";
 import { scoreWithTrace } from "@/lib/scoring/score";
 import { cn } from "@/lib/utils";
+import { inspectFileMetadata } from "@/lib/verify/file";
 
 /**
  * Companion — the full chat workspace. No site nav: navigation lives in the
@@ -169,6 +186,10 @@ interface Turn {
   tool?: LokerTurnTool;
   /** The report card the model opened for the previous verdict. */
   report?: ReportTurnTool;
+  /** Public learning destinations, separate from a scored pattern. */
+  learningModules?: number[];
+  ocrConfidence?: number;
+  caseId?: string;
 }
 
 interface ReportTurnTool {
@@ -259,13 +280,16 @@ export function CompanionChat({
   session = null,
   initialPanel,
   corpus = EMPTY_CORPUS,
+  initialModule,
 }: {
   session?: CompanionSession | null;
   /** Set when another surface links straight into the detector overview. */
   initialPanel?: "agen";
   /** The capped cumulative scan snapshot; the client filters it locally. */
   corpus?: LokerCorpus;
+  initialModule?: { no: number; title: string };
 }) {
+  const [tutorModule, setTutorModule] = React.useState(initialModule);
   const router = useRouter();
   // `null` outside a mounted router (and in tests); the agent route check below
   // then reads false and the shell keeps its in-place behavior.
@@ -306,7 +330,7 @@ export function CompanionChat({
   });
   /** Which agent's brief the right pane shows while the overview is open. */
   const [selectedAgent, setSelectedAgent] =
-    React.useState<DetectorAgent | null>(AGENT_SEQUENCE[0]);
+    React.useState<DetectorAgent | null>("message");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [evidenceCollapsed, setEvidenceCollapsed] = React.useState(false);
   const [copiedThread, setCopiedThread] = React.useState(false);
@@ -589,7 +613,13 @@ export function CompanionChat({
          * therefore known before the pixels are read, which lets the user's
          * message appear immediately instead of after the transcription.
          */
-        const hasImages = attachments.some(isImageAttachment);
+        const hasImages = !tutorModule && attachments.some(isImageAttachment);
+        const asksAboutAttachment =
+          !options.force &&
+          !tutorModule &&
+          attachments.length > 0 &&
+          attachments.every((attachment) => !isImageAttachment(attachment)) &&
+          (isContentQuestion(text) || isQuestionAbout(text));
 
         const userTurn: Turn = {
           id: id(),
@@ -627,7 +657,7 @@ export function CompanionChat({
          * a verdict.
          */
         const transcription = await transcribeImages(
-          attachments,
+          tutorModule ? [] : attachments,
           control.signal,
         );
 
@@ -685,11 +715,21 @@ export function CompanionChat({
          * message someone received, so the detectors never see it.
          */
         const asked =
-          options.force || attachments.length > 0
+          asksAboutAttachment ||
+          (options.force || attachments.length > 0
             ? false
             : isQuestionAbout(scored, {
                 hasPriorVerdict: latestResult !== null,
-              });
+              }));
+        const intent =
+          !options.force && attachments.length === 0
+            ? conversationIntent(text)
+            : null;
+        const followUp =
+          !options.force &&
+          attachments.length === 0 &&
+          latestResult !== null &&
+          isFollowUpQuestion(text);
 
         /*
          * Prior *checked* user turns go to the Conversation Agent so escalation
@@ -707,9 +747,26 @@ export function CompanionChat({
           )
           .map((turn) => ({ text: turn.source ?? "" }));
 
-        const { result, trace } = asked
-          ? { result: null, trace: null }
-          : scoreWithTrace({ text: scored, turns: priorTurns });
+        let deviceSignals: import("@/lib/contracts/score").Signal[] = [];
+        if (!asked && !intent && !followUp && !tutorModule) {
+          try {
+            deviceSignals = await lookupLedger(localStorage, scored);
+          } catch {}
+        }
+        const { result, trace } =
+          asked || intent || followUp || tutorModule
+            ? { result: null, trace: null }
+            : scoreWithTrace({
+                text: scored,
+                turns: priorTurns,
+                extraSignals: [
+                  ...deviceSignals,
+                  ...attachments.flatMap(inspectFileMetadata),
+                  ...(transcription.text
+                    ? extractedSignals(transcription.text)
+                    : []),
+                ],
+              });
 
         const plan = planTurn({
           text: scored,
@@ -717,10 +774,15 @@ export function CompanionChat({
           lastResult: latestResult,
           lastExplanation: latestExplanation,
           asked,
+          intent,
           attachments: attachments.length,
         });
 
-        const lane: Lane = options.force ? "periksa" : plan.lane;
+        const lane: Lane = options.force
+          ? "periksa"
+          : tutorModule
+            ? "belajar"
+            : plan.lane;
 
         /*
          * The card and the trace render on `result`, never on `risk`. The bench
@@ -728,6 +790,13 @@ export function CompanionChat({
          * two scam samples and turn a 20/20 claim into 18/20 on stage.
          */
         const checked = lane === "periksa" && result !== null;
+        if (checked) {
+          try {
+            void recordLedger(localStorage, scored, result)
+              .then(() => window.dispatchEvent(new Event(LEDGER_EVENT)))
+              .catch(() => {});
+          } catch {}
+        }
 
         /*
          * The user turn carries the lane too. The chat-lane history is built by
@@ -844,6 +913,22 @@ export function CompanionChat({
                       result: checked ? (result ?? undefined) : undefined,
                       source: checked ? scored : undefined,
                       explanation,
+                      learningModules:
+                        intent === "learning"
+                          ? learningModulesFor(
+                              text,
+                              (active?.turns ?? [])
+                                .filter(
+                                  (turn) =>
+                                    turn.role === "user" &&
+                                    turn.lane !== "periksa",
+                                )
+                                .map((turn) => turn.text),
+                            )
+                          : undefined,
+                      ocrConfidence: transcription.text
+                        ? extractEntities(transcription.text).confidence
+                        : undefined,
                       trace: openTrace ?? undefined,
                     },
                   ],
@@ -945,6 +1030,27 @@ export function CompanionChat({
                 }
               : undefined,
           }));
+          if (checked && result && openTrace) {
+            const caseTrace: AgentTrace = {
+              ...openTrace,
+              totalMs: detectorMs + voiceMs,
+              stages: openTrace.stages.map((stage) =>
+                stage.id === "voice"
+                  ? {
+                      ...stage,
+                      status: voice === "model" ? "selesai" : "dilewati",
+                      ms: voiceMs,
+                    }
+                  : stage,
+              ),
+            };
+            void sessionCases
+              .record(scored, result, caseTrace)
+              .then((item) =>
+                patchCompanion((turn) => ({ ...turn, caseId: item.id })),
+              )
+              .catch(() => {});
+          }
           release();
         };
         let sealed = false;
@@ -979,7 +1085,9 @@ export function CompanionChat({
             (turn) =>
               !privateIds.has(turn.id) &&
               turn.text.trim().length > 0 &&
-              (turn.lane === "tanya" || turn.lane === "obrolan"),
+              (turn.lane === "tanya" ||
+                turn.lane === "obrolan" ||
+                turn.lane === "lanjutan"),
           )
           .map((turn) => ({
             role: turn.role,
@@ -995,9 +1103,33 @@ export function CompanionChat({
         const controller = control;
         const abortTimer = setTimeout(() => controller.abort(), 23000);
         pendingTimers.current.add(abortTimer);
+        const fallbackContext = {
+          question: text,
+          history: chatHistory
+            .filter((turn) => turn.role === "user")
+            .map((turn) => turn.text),
+        };
 
         // Defensive: nothing below may leave `busy` stuck.
         try {
+          if (
+            tutorModule &&
+            (attachments.length > 0 ||
+              /https?:\/\/|\b(cek|periksa|analisis|analisa)\b/i.test(text))
+          ) {
+            finish(
+              "Konteks materi sedang aktif. Untuk memeriksa pesan atau lampiran, tutup konteks modul lalu kirim lewat pemeriksa; isi ini tidak dikirim ke tutor.",
+              "template",
+            );
+            return;
+          }
+          if (asksAboutAttachment) {
+            finish(
+              "Saya belum bisa menjelaskan isi lampiran ini. Pembacaan gambar saat ini hanya untuk pemeriksaan pesan; isi PDF, dokumen, dan berkas kode belum dapat saya baca. Salin bagian yang ingin dibahas dan tulis pertanyaanmu tentang bagian itu.",
+              "template",
+            );
+            return;
+          }
           if (lane !== "periksa" && text.length > 2000) {
             finish(
               "Pertanyaan maksimal 2.000 karakter. Ringkas pertanyaanmu lalu kirim lagi.",
@@ -1056,11 +1188,14 @@ export function CompanionChat({
           }
 
           const answer = await requestAnswer(
-            buildAnswerRequest(lane, text, {
-              history: chatHistory,
-              digest,
-              explanation: latestExplanation,
-            }),
+            {
+              ...buildAnswerRequest(lane, text, {
+                history: chatHistory,
+                digest,
+                explanation: latestExplanation,
+              }),
+              ...(tutorModule ? { moduleNo: tutorModule.no } : {}),
+            },
             controller.signal,
           );
 
@@ -1079,6 +1214,7 @@ export function CompanionChat({
             }
             finish(answer.text, "model");
             if (!call) return;
+            if (call.name === "job_search" && !wantsJobSearch(text)) return;
 
             if (call.name === "report_draft") {
               if (!latestResult || !latestExplanation) return;
@@ -1195,7 +1331,7 @@ export function CompanionChat({
           }
 
           finish(
-            composeAnswerFallback(lane),
+            composeAnswerFallback(lane, answer.outcome, fallbackContext),
             "template",
             answer.outcome as VoiceOutcome,
           );
@@ -1206,7 +1342,7 @@ export function CompanionChat({
                   first: false,
                   containsContent: checked,
                 })
-              : composeAnswerFallback(lane),
+              : composeAnswerFallback(lane, "failed", fallbackContext),
             "template",
             "failed",
           );
@@ -1229,6 +1365,7 @@ export function CompanionChat({
       corpus,
       latestExplanation,
       latestResult,
+      tutorModule,
       persistSession,
     ],
   );
@@ -1658,7 +1795,23 @@ export function CompanionChat({
               ) : null}
             </div>
           </header>
+          <DeviceMemory />
 
+          {tutorModule && (
+            <div className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm">
+              <span>
+                Modul {tutorModule.no}: {tutorModule.title}
+              </span>
+              <Button
+                variant="outline"
+                className="min-h-11"
+                aria-label="Tutup konteks materi"
+                onClick={() => setTutorModule(undefined)}
+              >
+                Tutup konteks
+              </Button>
+            </div>
+          )}
           {showAgents ? (
             <div className="min-h-0 flex-1 py-4 pr-2.5 pl-4 xl:py-5 xl:pr-3 xl:pl-5">
               <AgentsView
@@ -1858,6 +2011,30 @@ export function CompanionChat({
                         />
                       ) : null}
 
+                      {turn.learningModules ? (
+                        <div className="flex flex-wrap gap-2">
+                          {turn.learningModules.map((no) => (
+                            <Button
+                              key={no}
+                              asChild
+                              variant="outline"
+                              className="min-h-11 max-w-full whitespace-normal text-left"
+                            >
+                              <Link href={`/belajar/${no}`}>
+                                {modusFor(no)?.nama ?? `Modul ${no}`}
+                              </Link>
+                            </Button>
+                          ))}
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="min-h-11"
+                          >
+                            <Link href="/belajar">Semua materi Belajar</Link>
+                          </Button>
+                        </div>
+                      ) : null}
+
                       {turn.lane === "tanya" && turn.laneSource ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-dim text-[0.7rem]">
@@ -1868,10 +2045,15 @@ export function CompanionChat({
                             size="sm"
                             className="h-7 text-dim text-xs hover:text-txt"
                             onClick={() =>
-                              send(turn.laneSource ?? "", [], {
-                                force: "periksa",
-                                recheckOf: turn.id,
-                              })
+                              send(
+                                turn.laneSource ?? "",
+                                turns[turns.indexOf(turn) - 1]?.attachments ??
+                                  [],
+                                {
+                                  force: "periksa",
+                                  recheckOf: turn.id,
+                                },
+                              )
                             }
                           >
                             Periksa sebagai pesan
@@ -1881,6 +2063,13 @@ export function CompanionChat({
 
                       {turn.result ? (
                         <>
+                          {turn.ocrConfidence !== undefined && (
+                            <p className="text-xs text-dim">
+                              Kelengkapan entitas OCR:{" "}
+                              {Math.round(turn.ocrConfidence * 100)}%. Ini
+                              ukuran kelengkapan kolom, bukan kepastian deteksi.
+                            </p>
+                          )}
                           <ScoreCard
                             result={turn.result}
                             trace={turn.trace}
@@ -1898,6 +2087,104 @@ export function CompanionChat({
                             />
                           ) : null}
                           <ActionRow result={turn.result} />
+                          {!turn.streaming && turn.source && turn.trace && (
+                            <VerificationControls
+                              text={turn.source}
+                              initial={{
+                                result: turn.result,
+                                trace: turn.trace,
+                              }}
+                              attachments={
+                                turns[turnIndex - 1]?.attachments ?? []
+                              }
+                              onResult={(updated) => {
+                                setSessions((previous) =>
+                                  previous.map((s) =>
+                                    s.id === activeId
+                                      ? {
+                                          ...s,
+                                          turns: s.turns.map((item) =>
+                                            item.id === turn.id
+                                              ? {
+                                                  ...item,
+                                                  result: updated.result,
+                                                  explanation: explain(
+                                                    updated.result,
+                                                    turn.source ?? "",
+                                                  ),
+                                                  trace: {
+                                                    ...updated.trace,
+                                                    stages: [
+                                                      ...updated.trace.stages.filter(
+                                                        (stage) =>
+                                                          ![
+                                                            "voice",
+                                                            "evidence",
+                                                          ].includes(stage.id),
+                                                      ),
+                                                      ...(item.trace?.stages.filter(
+                                                        (stage) =>
+                                                          stage.id ===
+                                                            "voice" ||
+                                                          stage.id ===
+                                                            "evidence",
+                                                      ) ?? []),
+                                                    ],
+                                                  },
+                                                  text:
+                                                    updated.result.score >
+                                                    (turn.result?.score ?? 0)
+                                                      ? `${item.text}\n\nVerifikasi lanjutan menambah temuan. Lihat kartu hasil yang diperbarui.`
+                                                      : item.text,
+                                                }
+                                              : item,
+                                          ),
+                                        }
+                                      : s,
+                                  ),
+                                );
+                              }}
+                            />
+                          )}
+                          <Button
+                            variant="ghost"
+                            className="min-h-11 w-fit"
+                            onClick={async () => {
+                              if (!turn.result || !turn.trace) return;
+                              try {
+                                const record = await sessionCases.record(
+                                  turn.source ?? "",
+                                  turn.result,
+                                  turn.trace,
+                                  Date.now(),
+                                  turn.caseId,
+                                );
+                                const data = JSON.stringify(
+                                  {
+                                    case: record,
+                                    metrics: caseMetrics(sessionCases.list()),
+                                  },
+                                  null,
+                                  2,
+                                );
+                                const url = URL.createObjectURL(
+                                  new Blob([data], {
+                                    type: "application/json",
+                                  }),
+                                );
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `lumina-trace-${record.id}.json`;
+                                a.click();
+                                setTimeout(
+                                  () => URL.revokeObjectURL(url),
+                                  1000,
+                                );
+                              } catch {}
+                            }}
+                          >
+                            Ekspor jejak tanpa isi pesan
+                          </Button>
                         </>
                       ) : null}
                     </div>

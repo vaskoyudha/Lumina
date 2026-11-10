@@ -54,9 +54,9 @@ export function buildAnswerRequest(
   return {
     lane,
     question,
-    history: lane === "obrolan" ? state.history.slice(-10) : [],
+    history: lane === "belajar" ? [] : state.history.slice(-10),
     digest: lane === "lanjutan" ? state.digest : null,
-    modules: lane === "tanya" ? MODULE_FACTS : [],
+    modules: lane === "belajar" ? [] : MODULE_FACTS,
     tactics:
       lane === "tanya" || lane === "lanjutan"
         ? tacticFacts(state.explanation)

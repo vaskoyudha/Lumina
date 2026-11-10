@@ -39,6 +39,7 @@ import {
   type WireTone,
 } from "@/components/companion/panel-wires";
 import { StatusPulse } from "@/components/companion/status-pulse";
+import { ValidationNote } from "@/components/companion/validation-note";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,6 +118,8 @@ const PORT_OUT: Record<NodeStatus, string> = {
  * line tells a reader what the branch does and nothing it does not.
  */
 const BRANCH_KIND: Record<AgentId, string> = {
+  email: "Email",
+  injection: "Instruksi",
   message: "Urgensi",
   link: "Tautan",
   identity: "Identitas",
@@ -991,6 +994,7 @@ export function SignalPanel({
 
       <div className="relative flex min-h-0 flex-1 flex-col">
         <CardContent className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3.5 pt-3 pb-4">
+          <ValidationNote trace={trace} />
           <RootNode
             port={false}
             title={

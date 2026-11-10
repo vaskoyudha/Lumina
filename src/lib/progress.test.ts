@@ -13,9 +13,9 @@ describe("account progress shape", () => {
     expect(EMPTY_PROGRESS.completedModules).toEqual([]);
   });
   it("deduplicates missed patterns", () =>
-    expect(recordMissed(EMPTY_PROGRESS, ["q1", "q1"]).missedPatterns).toEqual([
-      "q1",
-    ]));
+    expect(
+      recordMissed(EMPTY_PROGRESS, ["apk-q1", "apk-q1"]).missedPatterns,
+    ).toEqual(["apk-tak-diminta"]));
   it("validates the server snapshot", () =>
     expect(
       ProgressSchema.safeParse({ ...EMPTY_PROGRESS, completedModules: ["10"] })
