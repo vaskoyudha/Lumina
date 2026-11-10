@@ -9,12 +9,14 @@ import {
   moderateContent,
   publishPost,
   publishReply,
+  verifyPost,
 } from "@/lib/community/actions";
 import {
   removeOwnContent,
   reportContent,
   reviewContent,
   setHelpful,
+  setPostVerified,
   writePost,
   writeReply,
 } from "@/lib/community/store";
@@ -31,6 +33,7 @@ jest.mock("@/lib/community/store", () => ({
   writeReply: jest.fn(),
   removeOwnContent: jest.fn(),
   setHelpful: jest.fn(),
+  setPostVerified: jest.fn(),
   reportContent: jest.fn(),
   reviewContent: jest.fn(),
   CommunityError: class extends Error {},
@@ -63,6 +66,7 @@ it("requires a session for every write", async () => {
     markHelpful({ id, value: true }),
     flagContent({ id, kind: "post", reason: "spam" }),
     moderateContent({ id, kind: "post", hide: true }),
+    verifyPost({ id, value: true }),
   ]);
   expect(results.every((r) => !r.ok)).toBe(true);
   for (const method of [
@@ -70,6 +74,7 @@ it("requires a session for every write", async () => {
     writeReply,
     removeOwnContent,
     setHelpful,
+    setPostVerified,
     reportContent,
     reviewContent,
   ])
@@ -101,6 +106,15 @@ it("does not grant moderation to a client-supplied role", async () => {
     { id, kind: "post", hide: true },
     true,
   );
+});
+it("requires the moderator allowlist to verify or unverify a post", async () => {
+  expect((await verifyPost({ id, value: true })).ok).toBe(false);
+  expect(setPostVerified).not.toHaveBeenCalled();
+  process.env.COMMUNITY_MODERATOR_IDS = id;
+  expect((await verifyPost({ id, value: true })).ok).toBe(true);
+  expect(setPostVerified).toHaveBeenCalledWith(id, id, true);
+  expect((await verifyPost({ id, value: false })).ok).toBe(true);
+  expect(setPostVerified).toHaveBeenLastCalledWith(id, id, false);
 });
 it("reports failures honestly without exposing database errors", async () => {
   jest

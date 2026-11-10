@@ -5,6 +5,8 @@ import {
   Heart,
   MoreHorizontal,
   Pencil,
+  ShieldCheck,
+  ShieldOff,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -38,6 +40,7 @@ import {
   markHelpful,
   markSaved,
   moderateContent,
+  verifyPost,
 } from "@/lib/community/actions";
 import type {
   CommunityPost,
@@ -419,6 +422,44 @@ export function ModerationControls({
           Tetap tampilkan
         </Button>
       </div>
+      {m.message && (
+        <Alert variant="destructive">
+          <AlertDescription>{m.message}</AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+}
+export function VerificationControls({
+  id,
+  verified,
+}: {
+  id: string;
+  verified: boolean;
+}) {
+  const m = useMutation();
+  return (
+    <div className="flex flex-col gap-2">
+      {verified ? (
+        <Button
+          variant="outline"
+          className="min-h-11 w-fit"
+          disabled={m.pending}
+          onClick={() => void m.run(() => verifyPost({ id, value: false }))}
+        >
+          <ShieldOff aria-hidden />
+          Batalkan verifikasi
+        </Button>
+      ) : (
+        <Button
+          className="min-h-11 w-fit"
+          disabled={m.pending}
+          onClick={() => void m.run(() => verifyPost({ id, value: true }))}
+        >
+          <ShieldCheck aria-hidden />
+          Verifikasi kiriman
+        </Button>
+      )}
       {m.message && (
         <Alert variant="destructive">
           <AlertDescription>{m.message}</AlertDescription>
