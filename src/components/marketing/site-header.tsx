@@ -58,17 +58,27 @@ export function SiteHeader() {
               scrolled ? "opacity-100" : "opacity-0"
             }`}
           />
-          <div className="relative hidden items-center gap-7 font-medium text-sm md:flex">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                type="button"
-                onClick={() => scrollToId(link.id)}
-                className={`transition-colors duration-300 ${linkTone}`}
-              >
-                {link.label}
-              </button>
-            ))}
+          <div className="relative hidden items-center gap-4 font-medium text-sm md:flex lg:gap-7">
+            {navLinks.map((link) =>
+              link.href ? (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`transition-colors duration-300 ${linkTone}`}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <button
+                  key={link.id}
+                  type="button"
+                  onClick={() => scrollToId(link.id ?? "section-home")}
+                  className={`transition-colors duration-300 ${linkTone}`}
+                >
+                  {link.label}
+                </button>
+              ),
+            )}
           </div>
 
           <button
