@@ -10,9 +10,9 @@ import {
   BelajarProgress,
   ProgressNotice,
 } from "@/components/belajar/belajar-progress";
+import { MODULE_FIXTURES } from "@/lib/content/fixtures";
 import { getAccountProgress } from "@/lib/learning/actions";
 import { completeModule, EMPTY_PROGRESS, STORAGE_KEY } from "@/lib/progress";
-import { MODULE_FIXTURES } from "@/lib/content/fixtures";
 import { mockAccount, renderAccount } from "@/test/learning";
 
 jest.mock("@/lib/learning/actions", () => ({
