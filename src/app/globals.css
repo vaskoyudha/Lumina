@@ -891,49 +891,52 @@ a.bg-primary {
 }
 
 /*
- * Role pill in the process trace. Each agent keeps the mascot-sampled hue from
- * its identity bubble, so a pill reads as that agent instead of a generic brand
- * tag. `data-agent-tone` maps the agent id to its ink + soft tint pair.
+ * Role pill in the process trace. Reuses the commander pill's treatment
+ * (pale gradient fill, saturated ink, bold 11.5px) but swaps the hue for the
+ * agent's mascot-sampled colour, so only the colour changes between pills.
+ * `data-agent-tone` maps the agent id to its ink; the two light gradient stops
+ * are mixed from that ink.
  */
 .agent-role-pill {
-  border: 1px solid color-mix(in oklch, var(--pill-ink) 38%, transparent);
+  --pill-from: color-mix(in oklch, var(--pill-ink) 18%, white);
+  --pill-to: color-mix(in oklch, var(--pill-ink) 12%, white);
+  --pill-glow: rgb(255 255 255 / 0.72);
+  background-image:
+    radial-gradient(
+      130% 150% at 0% 0%,
+      var(--pill-glow) 0%,
+      rgb(255 255 255 / 0) 62%
+    ),
+    linear-gradient(135deg, var(--pill-from) 0%, var(--pill-to) 100%);
   border-radius: 9999px;
-  padding: 0.0625rem 0.375rem;
-  font-size: 9.5px;
-  line-height: 1.35;
+  padding: 0.125rem 0.625rem;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
   color: var(--pill-ink);
-  background: var(--pill-soft);
 }
 
 [data-agent-tone="message"] {
   --pill-ink: var(--lumina-agent-message);
-  --pill-soft: var(--lumina-agent-message-soft);
 }
 [data-agent-tone="link"] {
   --pill-ink: var(--lumina-agent-link);
-  --pill-soft: var(--lumina-agent-link-soft);
 }
 [data-agent-tone="identity"] {
   --pill-ink: var(--lumina-agent-identity);
-  --pill-soft: var(--lumina-agent-identity-soft);
 }
 [data-agent-tone="conversation"] {
   --pill-ink: var(--lumina-agent-conversation);
-  --pill-soft: var(--lumina-agent-conversation-soft);
 }
 [data-agent-tone="job"] {
   --pill-ink: var(--lumina-agent-job);
-  --pill-soft: var(--lumina-agent-job-soft);
 }
 [data-agent-tone="marketplace"] {
   --pill-ink: var(--lumina-agent-marketplace);
-  --pill-soft: var(--lumina-agent-marketplace-soft);
 }
 [data-agent-tone="qris"] {
   --pill-ink: var(--lumina-agent-qris);
-  --pill-soft: var(--lumina-agent-qris-soft);
 }
 [data-agent-tone="evidence"] {
   --pill-ink: var(--lumina-agent-evidence);
-  --pill-soft: var(--lumina-agent-evidence-soft);
 }
