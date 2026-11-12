@@ -129,6 +129,10 @@ describe("ProcessTrace", () => {
 
     expect(screen.getByText("Proses agen")).toBeInTheDocument();
     expect(
+      screen.getByRole("region", { name: /agen di bawah komando lumina/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/sub-agen/i)).toBeInTheDocument();
+    expect(
       screen.getByText(/saya melihat pola permintaan otp/i),
     ).toBeInTheDocument();
     expect(screen.getByText("Rencana agen")).toBeInTheDocument();
