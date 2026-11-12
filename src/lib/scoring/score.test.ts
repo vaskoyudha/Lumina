@@ -103,6 +103,18 @@ describe("scoreText contract invariants", () => {
     expect(result.relatedModule).toBe(10);
   });
 
+  it("scores an overpayment refund scam high and names the marketplace scheme", () => {
+    const result = scoreText({
+      text: "Halo kak, saya mau beli barang di toko kak. Saya sudah transfer Rp1.500.000, padahal harganya Rp1.000.000. Kelebihan Rp500.000 tolong refund ke rekening saya ya.",
+    });
+    expect(result.score).toBeGreaterThanOrEqual(70);
+    expect(result.risk).toBe("tinggi");
+    expect(result.modus).toBe("jual-beli-palsu");
+    expect(
+      result.signals.some((signal) => signal.agent === "marketplace"),
+    ).toBe(true);
+  });
+
   it("does not treat a greeting as a prize announcement", () => {
     // Regression: bare "Selamat" in "Selamat siang" scored 65/mencurigakan.
     const result = scoreText({
