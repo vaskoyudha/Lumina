@@ -108,7 +108,8 @@ c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
   opencode2api dipisah koma + kunci bersama).
 - `LUMINA_COMPANION_ORCHESTRATOR=1` — pakai planner → spesialis → synthesizer;
   tanpa itu Companion tetap satu panggilan suara. `LUMINA_ORCHESTRATOR_DEADLINE_MS`
-  (default 60000) membatasi seluruh run.
+  (default 120000; maksimum 180000) membatasi seluruh run serial; timer abort dan
+  kebijakan lewati agen memakai nilai yang sama.
 - `URLVET_API_URL` — verifikasi tautan opt-in. Kosong = `https://api.url.vet`
   publik; `off` mematikan. Hanya URL yang dikirim.
 - `VERIFY_LINK`, `VERIFY_FILE` — reputasi tautan/berkas lewat scanner; default
@@ -167,10 +168,11 @@ subprocess; `Dockerfile` menyalinnya dan membuat `/app/.scan-data` milik UID
 1001. `npm run build` menjalankan `scripts/link-standalone-externals.mjs` setelah
 `next build` untuk menambal symlink modul standalone.
 
-Migrasi bernomor `001`–`011` (auth, loker, learning/simulation, community,
-companion history, review) ikut `npm run db:migrate`, lalu `npm run db:seed`
-memuat `content/competition.json`. Aplikasi tidak membuat tabel. Jangan menulis
-materi langsung ke tabel; ubah JSON lalu seed (`--replace` untuk baris bernama).
+Migrasi bernomor `001`–`012` (auth, loker, learning/simulation, community,
+companion history, review, `012_agent_runs`) ikut `npm run db:migrate`, lalu
+`npm run db:seed` memuat `content/competition.json`. Aplikasi tidak membuat tabel.
+Jangan menulis materi langsung ke tabel; ubah JSON lalu seed (`--replace` untuk
+baris bernama).
 
 ## Skills
 
@@ -223,6 +225,9 @@ alamat tersendiri untuk tampilan agen; jangan menambah alias
 `/admin` sengaja tidak ada di nav: itu workbench penulis kurikulum, bukan
 permukaan produk. Draf tinggal di perangkat; publikasi adalah ekspor + commit,
 bukan tombol. Jangan menambahkan tautan admin ke nav publik.
+
+`/agen` menampilkan ringkasan pemeriksaan terakhir milik akun yang masuk (tanpa
+isi pesan); tanpa sesi atau tanpa run, tampilan statis yang sama dipakai.
 
 ### Titik masuk auth
 
@@ -323,13 +328,11 @@ Di akar repo:
 
 ```
 ├── content/                  competition.json — bundle seed materi (divalidasi schema)
-├── migrations/               SQL bernomor 001–011, dijalankan `scripts/migrate.mjs`
+├── migrations/               SQL bernomor 001–012, dijalankan `scripts/migrate.mjs`
 ├── scripts/                  migrate/cleanup/import-sqlite/seed-*/link-standalone/wip-report
 ├── deploy/                   Caddyfile, backup, db-init
 └── scanner/                  engine career-ops yang di-vendor (jangan diedit)
 ```
-
-Jangan menambah tabel lewat kode aplikasi — tambah migrasi bernomor.
 
 ## Batas stream
 

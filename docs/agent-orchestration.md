@@ -33,10 +33,25 @@ companion-chat appends:
 AgentRun  ── orchestrator card + one bubble per specialist + voice bubble
 ```
 
-The trace is the only contract between the engine and the UI. The two contracts
-this feature touches — `src/lib/contracts/score.ts` and
-`src/lib/contracts/agent-run.ts` — are frozen; changes there must stay additive
-and be announced to the other owners before a commit (AGENTS.md §5).
+The trace is the only contract between the engine and the UI. The three contracts
+this feature touches — `src/lib/contracts/score.ts`,
+`src/lib/contracts/agent-run.ts`, and `src/lib/contracts/orchestrator.ts` — are
+frozen; changes there must stay additive and be announced to the other owners
+before a commit (AGENTS.md §5). In `orchestrator.ts`, `commander_say` is additive
+while `trace.commander` is a required field added together with its producer.
+
+## Orchestrator pipeline
+
+The streaming orchestrator emits one ordered pipeline:
+
+```
+run_start → commander_say → score → plan → agent_start/agent_result (serial, ≤6) → synthesis_end → done
+```
+
+Specialists run one at a time under `LUMINA_ORCHESTRATOR_DEADLINE_MS` (default
+120000 for serial runs, maximum 180000); agents not started by the deadline are
+reported as `dilewati`. The commander sees the OCR'd message and the baseline
+modus only; the band is revealed after synthesis.
 
 ## The crew
 
@@ -121,11 +136,13 @@ b. **Crew bubbles** — a left border in the agent's identity token, a portrait 
    is display-only.
 c. **Voice bubble** — rendered after the specialists, with no identity token.
 
-`AgentsView` (`src/components/companion/agents-view.tsx`) is the pre-run
-overview opened from the rail. It reads `AGENT_SEQUENCE` for its count, cards,
-and diagram. `AgentsDetailPanel` is its right-hand brief pane; selection is a
-highlight, not a filter, and the pane is a `role="region"` with
-`aria-current` on the selected brief.
+`AgentsView` (`src/components/companion/agents-view.tsx`) is the overview opened
+from the rail; when the signed-in account has a run, it also renders that
+latest-run summary (modus, band, per-agent status, durations) and never the
+message. It reads `AGENT_SEQUENCE` for its count, cards, and diagram.
+`AgentsDetailPanel` is its right-hand brief pane; selection is a highlight, not a
+filter, and the pane is a `role="region"` with `aria-current` on the selected
+brief.
 
 Announcements: `AgentRun` exports `runAnnouncement(trace)`. In the chat shell the
 transcript's `AgentRun` renders with `announce={false}` and the shell owns a
