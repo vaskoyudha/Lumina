@@ -92,8 +92,8 @@ function fallbackCommander(baseline: ScoreResult): string {
     ? MODUS_BY_ID.get(baseline.modus)?.nama.trim()
     : undefined;
   return label
-    ? `Saya melihat pola yang sering muncul pada ${label}. Saya akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.`
-    : "Saya sudah membaca pesan ini dan akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.";
+    ? `Aku sudah membaca pesanmu dan melihat pola yang sering muncul pada ${label}. Aku akan mengerahkan agen yang paling relevan untuk memeriksanya lebih dalam.`
+    : "Aku sudah membaca pesanmu. Aku akan mengerahkan agen yang paling relevan untuk memeriksanya lebih dalam, lalu menjelaskan hasilnya dengan jelas.";
 }
 
 async function makeCommander(
