@@ -128,17 +128,24 @@ describe("CompanionChat · the language layer is actually called", () => {
     expect(body).not.toContain("1234567890");
   });
 
-  it("falls back to the template when the model is not configured", async () => {
+  it("fails with a retry when the model is not configured", async () => {
     fetchMock.mockResolvedValue(errorResponse("not-configured"));
 
     await sendScam();
 
-    // The template's own sentence, which the model stub above never produces.
+    // No template is printed as if it were the model's answer; the reader is
+    // told the model is unavailable and offered a retry instead.
     await waitFor(() => {
       expect(
-        screen.getByText(/Ini berbahaya\. Jangan bertindak dulu/i),
-      ).toBeInTheDocument();
+        screen.getAllByText(/Model belum dikonfigurasi/i).length,
+      ).toBeGreaterThan(0);
     });
+    expect(
+      screen.getByRole("button", { name: /coba lagi/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Ini berbahaya\. Jangan bertindak dulu/i),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a substantive reply that was cut off instead of swapping it", async () => {
@@ -161,17 +168,23 @@ describe("CompanionChat · the language layer is actually called", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("still falls back when the cut leaves almost nothing", async () => {
+  it("fails with a retry when the cut leaves almost nothing", async () => {
     fetchMock.mockResolvedValue(okResponse("Pemeriksaan kali"));
 
     await sendScam();
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Ini berbahaya\. Jangan bertindak dulu/i),
-      ).toBeInTheDocument();
+        screen.getAllByText(/Jawaban model terpotong/i).length,
+      ).toBeGreaterThan(0);
     });
+    expect(
+      screen.getByRole("button", { name: /coba lagi/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Pemeriksaan kali")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Ini berbahaya\. Jangan bertindak dulu/i),
+    ).not.toBeInTheDocument();
   });
 
   it("says the model was too slow instead of pretending it is unconfigured", async () => {
