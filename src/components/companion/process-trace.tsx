@@ -57,10 +57,13 @@ export function ProcessTrace({
   events,
   className,
   live = true,
+  startedAt,
 }: {
   events: OrchestratorEvent[];
   className?: string;
   live?: boolean;
+  /** Epoch ms when the run left the client, for the commander's live counter. */
+  startedAt?: number;
 }) {
   const plan = events.find(
     (event): event is Extract<OrchestratorEvent, { type: "plan" }> =>
@@ -128,6 +131,7 @@ export function ProcessTrace({
           announcement={commander?.text}
           agents={plan?.agents}
           source={commander?.source}
+          startedAt={startedAt}
         />
 
         {plan ? (

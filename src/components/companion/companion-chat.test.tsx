@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionChat } from "@/components/companion/companion-chat";
+import * as visionClient from "@/lib/companion/vision-client";
 import type { LokerCorpus, LokerView } from "@/lib/loker/types";
 import * as orchestratorClient from "@/lib/orchestrator/client";
 import * as scoring from "@/lib/scoring/score";
@@ -15,6 +16,13 @@ jest.mock("@/lib/orchestrator/client", () => {
 jest.mock("@/lib/scoring/score", () => {
   const actual = jest.requireActual<typeof scoring>("@/lib/scoring/score");
   return { ...actual, scoreWithTrace: jest.fn(actual.scoreWithTrace) };
+});
+
+jest.mock("@/lib/companion/vision-client", () => {
+  const actual = jest.requireActual<typeof visionClient>(
+    "@/lib/companion/vision-client",
+  );
+  return { ...actual, transcribeImages: jest.fn(actual.transcribeImages) };
 });
 
 jest.mock("@/lib/companion/history", () => ({
@@ -263,6 +271,41 @@ describe("CompanionChat · real user intent regressions", () => {
     ).toBeInTheDocument();
     expect(await screen.findByText("Proses agen")).toBeInTheDocument();
     expect(screen.queryByText("Orkestrator")).not.toBeInTheDocument();
+  });
+
+  it("shows a live status while the attached image is being read", async () => {
+    const transcribe = jest.mocked(visionClient.transcribeImages);
+    transcribe.mockClear();
+    let releaseOcr: (value: visionClient.ImageTranscription) => void = () =>
+      undefined;
+    transcribe.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseOcr = resolve;
+        }),
+    );
+
+    const user = userEvent.setup();
+    render(<CompanionChat />);
+    const fileInput =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!fileInput) throw new Error("file input missing");
+    await user.upload(
+      fileInput,
+      new File(["image-bytes"], "bukti.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    expect(await screen.findByText("Membaca lampiran")).toBeInTheDocument();
+    expect(screen.getByText(/detik/)).toBeInTheDocument();
+
+    await act(async () => {
+      releaseOcr({ text: "", attempted: 1, failed: 0, skipped: 0, items: [] });
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByText("Membaca lampiran")).not.toBeInTheDocument(),
+    );
   });
 
   it("hides the band until synthesis finishes", async () => {

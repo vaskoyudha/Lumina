@@ -37,4 +37,14 @@ describe("CommanderCard", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/menyiapkan 2 agen/i)).toBeInTheDocument();
   });
+
+  it("counts elapsed time while it is still reading", () => {
+    render(<CommanderCard phase="reading" startedAt={Date.now() - 1500} />);
+    expect(screen.getByText(/detik/)).toBeInTheDocument();
+  });
+
+  it("drops the counter once the run is settled", () => {
+    render(<CommanderCard phase="done" startedAt={Date.now() - 1500} />);
+    expect(screen.queryByText(/detik/)).not.toBeInTheDocument();
+  });
 });

@@ -3,6 +3,7 @@
 import { Check, Loader2 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import Image from "next/image";
+import * as React from "react";
 import type { PlanStep } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
 
@@ -26,14 +27,31 @@ export function CommanderCard({
   announcement,
   agents = [],
   source,
+  startedAt,
 }: {
   phase: CommanderPhase;
   announcement?: string;
   agents?: PlanStep[];
   source?: "model" | "fallback";
+  /** Epoch ms when the run left the client; null hides the counter. */
+  startedAt?: number;
 }) {
   const reduce = useReducedMotion();
   const settled = phase === "done" || phase === "stopped";
+  const waiting = !settled && phase !== "preparing";
+  const [elapsed, setElapsed] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!waiting || startedAt === undefined) {
+      setElapsed(0);
+      return;
+    }
+    setElapsed(Date.now() - startedAt);
+    const timer = window.setInterval(() => {
+      setElapsed(Date.now() - startedAt);
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [waiting, startedAt]);
 
   return (
     <div className="rounded-lg border border-brand-edge bg-brand-soft/40 px-3 py-2">
@@ -63,6 +81,11 @@ export function CommanderCard({
               {phase === "preparing" && agents.length > 0
                 ? `Menyiapkan ${agents.length} agen`
                 : STATUS[phase]}
+              {waiting && startedAt !== undefined ? (
+                <span className="tabular">
+                  · {(elapsed / 1000).toFixed(1)} detik
+                </span>
+              ) : null}
             </span>
           </div>
           {announcement ? (
