@@ -92,7 +92,7 @@ export function CommanderCard({
             </span>
           </div>
           {announcement ? (
-            <p className="mt-1 text-[11.5px] leading-relaxed text-txt">
+            <p className="mt-1 font-serif text-[15px] text-txt leading-[1.7]">
               {announcement}
             </p>
           ) : null}
