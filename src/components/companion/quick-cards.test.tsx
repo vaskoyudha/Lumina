@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanionQuickCards } from "@/components/companion/quick-cards";
 
-it("does not invent previous agent activity and greets the signed-in name", () => {
+it("shows a ready roster instead of inventing previous activity", () => {
   render(
     <CompanionQuickCards
       name="Rina"
@@ -14,12 +14,24 @@ it("does not invent previous agent activity and greets the signed-in name", () =
   expect(
     screen.getByRole("heading", { name: "Mau periksa apa, Rina?" }),
   ).toBeInTheDocument();
-  expect(
-    screen.getByText(/Belum ada pemeriksaan di tab ini/),
-  ).toBeInTheDocument();
+  expect(screen.getByText(/Belum ada riwayat di tab ini/)).toBeInTheDocument();
+  expect(screen.getAllByText("Siap memeriksa")).toHaveLength(4);
+  expect(screen.queryByText(/Selesai ·/)).not.toBeInTheDocument();
   expect(
     screen.queryByText(/2 menit yang lalu|1 jam yang lalu|1 hari yang lalu/),
   ).not.toBeInTheDocument();
+  expect(
+    screen
+      .getByText("Mochi")
+      .closest("button")
+      ?.querySelector(".bg-agent-message-soft"),
+  ).not.toBeNull();
+  expect(
+    screen
+      .getByText("Lala")
+      .closest("button")
+      ?.querySelector(".bg-agent-marketplace-soft"),
+  ).not.toBeNull();
 });
 it("shows a measured run and reopens the conversation that produced it", async () => {
   const resume = jest.fn();
