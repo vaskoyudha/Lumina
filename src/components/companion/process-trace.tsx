@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
+import {
+  CommanderCard,
+  type CommanderPhase,
+} from "@/components/companion/commander-card";
 import { AGENT_IDENTITIES } from "@/lib/agents/identities";
 import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
@@ -52,9 +56,11 @@ function groupAgents(events: OrchestratorEvent[]): AgentBlock[] {
 export function ProcessTrace({
   events,
   className,
+  live = true,
 }: {
   events: OrchestratorEvent[];
   className?: string;
+  live?: boolean;
 }) {
   const plan = events.find(
     (event): event is Extract<OrchestratorEvent, { type: "plan" }> =>
@@ -65,7 +71,22 @@ export function ProcessTrace({
       event.type === "synthesis_end",
   );
   const blocks = React.useMemo(() => groupAgents(events), [events]);
-  if (!plan && blocks.length === 0) return null;
+  const runStart = events.find((event) => event.type === "run_start");
+  const commander = events.find(
+    (event): event is Extract<OrchestratorEvent, { type: "commander_say" }> =>
+      event.type === "commander_say",
+  );
+  if (!runStart && !plan && blocks.length === 0) return null;
+
+  const phase: CommanderPhase = synthesis
+    ? "done"
+    : !live
+      ? "stopped"
+      : plan
+        ? "preparing"
+        : commander
+          ? "recognising"
+          : "reading";
 
   const stepCount =
     (plan?.agents.length ?? 0) +
@@ -101,29 +122,50 @@ export function ProcessTrace({
         />
       </summary>
 
-      {plan ? (
-        <div className="mt-2 rounded-lg border border-line bg-panel px-2.5 py-2">
-          <p className="text-[10.5px] font-medium tracking-wide text-dim uppercase">
-            Rencana koordinator
-          </p>
-          <p className="mt-1 leading-relaxed text-txt">{plan.rationale}</p>
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {plan.agents.map((agent) => (
-              <span
-                key={agent.agent}
-                className="inline-flex items-center gap-1 rounded-full border border-brand-edge bg-brand-soft px-2 py-0.5 text-[10px] text-brand-ink"
-              >
-                <span className="font-mono">
-                  {AGENT_IDENTITIES[agent.agent].displayName}
+      <div className="mt-2 flex flex-col gap-2">
+        <CommanderCard
+          phase={phase}
+          announcement={commander?.text}
+          agents={plan?.agents}
+          source={commander?.source}
+        />
+
+        {plan ? (
+          <section
+            aria-label="Rencana agen"
+            className="rounded-lg border border-line bg-panel px-2.5 py-2"
+          >
+            <p className="text-[10.5px] font-medium tracking-wide text-dim uppercase">
+              Rencana agen
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {plan.agents.map((agent) => (
+                <span
+                  key={agent.agent}
+                  className="inline-flex items-center gap-1 rounded-full border border-line bg-panel-2 px-2 py-0.5 text-[10px] text-txt"
+                >
+                  <span className="font-mono">
+                    {AGENT_IDENTITIES[agent.agent].displayName}
+                  </span>
+                  <span className="text-dim">
+                    {AGENT_IDENTITIES[agent.agent].field}
+                  </span>
                 </span>
-                <span className="opacity-70">
-                  {AGENT_IDENTITIES[agent.agent].field}
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
+              ))}
+            </div>
+            <details className="mt-1.5 rounded border border-line bg-panel-2 px-2 py-1">
+              <summary className="cursor-pointer select-none text-[10.5px] text-dim">
+                Alasan rencana
+              </summary>
+              <p className="mt-1 text-[10.5px] leading-relaxed text-txt">
+                {plan.rationale}
+              </p>
+            </details>
+          </section>
+        ) : null}
+
+        <div aria-hidden className="mx-auto h-3 w-px bg-line" />
+      </div>
 
       <ol className="mt-2 flex flex-col gap-2">
         {blocks.map((block) => (
