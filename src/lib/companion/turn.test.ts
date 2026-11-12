@@ -5,6 +5,7 @@ import {
   isWebLookupQuestion,
   PASTE_LENGTH,
   planTurn,
+  refersToPriorAttachment,
   SHORTEST_SCAM,
   wantsReportDraft,
   wantsSafetyCheck,
@@ -307,6 +308,44 @@ describe("isWebLookupQuestion · lookup requests are chat, not evidence", () => 
         asked: isWebLookupQuestion(text),
       }).lane,
     ).toBe("tanya");
+  });
+});
+
+describe("refersToPriorAttachment", () => {
+  it("recognizes a callback to a screenshot sent earlier", () => {
+    expect(
+      refersToPriorAttachment(
+        "So basically the screenshot that I just give you it is one of indicators from other people",
+      ),
+    ).toBe(true);
+    expect(
+      refersToPriorAttachment(
+        "So basically based on that image it is like some fraud system right",
+      ),
+    ).toBe(true);
+    expect(refersToPriorAttachment("gambar tadi itu dari teman saya")).toBe(
+      true,
+    );
+    expect(refersToPriorAttachment("gambar itu dari teman saya")).toBe(true);
+    expect(refersToPriorAttachment("lampiran yang saya kirim sebelumnya")).toBe(
+      true,
+    );
+    expect(refersToPriorAttachment("the image I sent earlier is odd")).toBe(
+      true,
+    );
+  });
+
+  it("does not recall an attachment for an unrelated sentence", () => {
+    expect(refersToPriorAttachment("besok kita makan siang bareng ya")).toBe(
+      false,
+    );
+    expect(refersToPriorAttachment("apa isi gambar ini?")).toBe(false);
+    expect(refersToPriorAttachment("cek screenshot ini sekarang")).toBe(false);
+    expect(
+      refersToPriorAttachment(
+        "screenshot tadi ada tautan https://contoh.test yang perlu dicek",
+      ),
+    ).toBe(false);
   });
 });
 

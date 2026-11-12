@@ -227,6 +227,41 @@
   }
 }
 
+@keyframes activity-orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes activity-orb-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes activity-orb-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes trace-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /*
  * Streaming shimmer, extracted from the reference's `thinking-label-shimmer`:
  * a 300%-wide gradient swept from 100% to 0% over 2.2s, linear and infinite.
@@ -516,30 +551,31 @@
   --lumina-filter-bg: #f9efea;
   --lumina-filter-ink: #5c534e;
 
-  /* Agent identity ramp. Eight hues at one lightness and chroma; the line
-     token paints a 2px border, the soft tint fills the bubble. Brand orange
-     remains the action accent — these never mean a status. */
-  --lumina-agent-message: oklch(0.52 0.1 245);
-  --lumina-agent-link: oklch(0.52 0.1 200);
-  --lumina-agent-identity: oklch(0.52 0.1 155);
+  /* Agent identity ramp. Hues are sampled from each agent's mascot portrait;
+     one lightness and chroma keep the row coherent. The line token paints a
+     2px border, the soft tint fills the bubble. Brand orange remains the action
+     accent — these never mean a status. */
+  --lumina-agent-message: oklch(0.52 0.1 331);
+  --lumina-agent-link: oklch(0.52 0.1 254);
+  --lumina-agent-identity: oklch(0.52 0.1 88);
   --lumina-agent-email: var(--lumina-agent-identity);
   --lumina-agent-email-soft: var(--lumina-agent-identity-soft);
   --lumina-agent-injection: var(--lumina-agent-message);
   --lumina-agent-injection-soft: var(--lumina-agent-message-soft);
-  --lumina-agent-conversation: oklch(0.52 0.1 290);
-  --lumina-agent-job: oklch(0.52 0.1 110);
-  --lumina-agent-marketplace: oklch(0.52 0.1 335);
-  --lumina-agent-qris: oklch(0.52 0.1 15);
-  --lumina-agent-evidence: oklch(0.52 0.1 75);
+  --lumina-agent-conversation: oklch(0.52 0.1 26);
+  --lumina-agent-job: oklch(0.52 0.1 282);
+  --lumina-agent-marketplace: oklch(0.52 0.06 140);
+  --lumina-agent-qris: oklch(0.52 0.1 67);
+  --lumina-agent-evidence: oklch(0.52 0.1 160);
 
-  --lumina-agent-message-soft: oklch(0.96 0.02 245);
-  --lumina-agent-link-soft: oklch(0.96 0.02 200);
-  --lumina-agent-identity-soft: oklch(0.96 0.02 155);
-  --lumina-agent-conversation-soft: oklch(0.96 0.02 290);
-  --lumina-agent-job-soft: oklch(0.96 0.02 110);
-  --lumina-agent-marketplace-soft: oklch(0.96 0.02 335);
-  --lumina-agent-qris-soft: oklch(0.96 0.02 15);
-  --lumina-agent-evidence-soft: oklch(0.96 0.02 75);
+  --lumina-agent-message-soft: oklch(0.96 0.02 331);
+  --lumina-agent-link-soft: oklch(0.96 0.02 254);
+  --lumina-agent-identity-soft: oklch(0.96 0.02 88);
+  --lumina-agent-conversation-soft: oklch(0.96 0.02 26);
+  --lumina-agent-job-soft: oklch(0.96 0.02 282);
+  --lumina-agent-marketplace-soft: oklch(0.96 0.02 140);
+  --lumina-agent-qris-soft: oklch(0.96 0.02 67);
+  --lumina-agent-evidence-soft: oklch(0.96 0.02 160);
 
   /* The lavender field, drawn as three overlapping clouds over the radial. */
   --lumina-cloud-1: rgb(255 255 255 / 0.65);

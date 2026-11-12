@@ -1,6 +1,15 @@
 "use client";
 
 import * as React from "react";
+import { ActivityOrb } from "@/components/companion/activity-orb";
+import { cn } from "@/lib/utils";
+
+/**
+ * Text-clipped 105° gradient swept by the `thinking-shimmer` keyframes.
+ * Pair with a solid colour for the reduced-motion fallback already baked in.
+ */
+export const SHIMMER_TEXT_CLASS =
+  "bg-[linear-gradient(105deg,var(--lumina-dim)_0%,var(--lumina-dim)_39%,var(--lumina-panel)_48%,var(--lumina-panel)_52%,var(--lumina-dim)_61%,var(--lumina-dim)_100%)] bg-[length:300%_100%] bg-clip-text text-transparent motion-safe:animate-[thinking-shimmer_2.2s_linear_infinite] motion-reduce:bg-none motion-reduce:text-dim";
 
 /**
  * Streaming indicator, extracted from the reference's `LiveReasoningStatus.vue`.
@@ -11,16 +20,10 @@ import * as React from "react";
  * elapsed time sits beside it in tabular figures with a reserved width, so the
  * number changing does not reflow the row.
  *
- * Two divergences, both deliberate:
- *
- * a. No 40px avatar. The source has one because its thread carries per-agent
- *    avatars; this chat has none anywhere, so an avatar that appears only
- *    during the wait would shift the layout on arrival and again on
- *    completion. The row keeps the source's 40px height instead, so the space
- *    it occupies is the space the reply then fills.
- * b. The shimmer runs in ink, not an accent colour. On a surface where colour
- *    only ever means risk, a coloured shimmer reads as a warning rather than as
- *    work in progress.
+ * One divergence: the shimmer runs in ink, not an accent colour. On a surface
+ * where colour only ever means risk, a coloured shimmer reads as a warning
+ * rather than as work in progress. The small activity orb to its left carries
+ * the motion cue without turning the label into a warning.
  *
  * This is the only genuinely in-flight state in the product, and it is honest
  * about being a wait: the counter starts when the call leaves and counts real
@@ -52,8 +55,14 @@ export function ThinkingRow({
   if (startedAt === null) return null;
 
   return (
-    <output className="flex h-10 items-center gap-2.5">
-      <span className="bg-[linear-gradient(105deg,var(--lumina-dim)_0%,var(--lumina-dim)_39%,var(--lumina-panel)_48%,var(--lumina-panel)_52%,var(--lumina-dim)_61%,var(--lumina-dim)_100%)] bg-[length:300%_100%] bg-clip-text font-semibold text-[15px] text-transparent leading-5 motion-safe:animate-[thinking-shimmer_2.2s_linear_infinite] motion-reduce:bg-none motion-reduce:text-dim">
+    <output className="flex h-10 motion-safe:animate-[trace-enter_180ms_ease-out] items-center gap-2.5">
+      <ActivityOrb className="size-[15px]" />
+      <span
+        className={cn(
+          SHIMMER_TEXT_CLASS,
+          "font-semibold text-[15px] leading-5",
+        )}
+      >
         {label}
       </span>
       <span className="tabular min-w-[3.5rem] text-[11px] text-dim">

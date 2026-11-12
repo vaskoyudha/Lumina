@@ -10,10 +10,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
+import { ActivityOrb } from "@/components/companion/activity-orb";
 import {
   CommanderCard,
   type CommanderPhase,
 } from "@/components/companion/commander-card";
+import { SHIMMER_TEXT_CLASS } from "@/components/companion/thinking-row";
 import { AGENT_IDENTITIES } from "@/lib/agents/identities";
 import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
@@ -108,11 +110,28 @@ export function ProcessTrace({
   const subordinateCount = plan?.agents.length ?? blocks.length;
 
   return (
-    <details open className={cn("group max-w-[92%] text-[12px]", className)}>
+    <details
+      open
+      className={cn(
+        "group max-w-[92%] text-[12px] motion-safe:animate-[trace-enter_220ms_ease-out]",
+        className,
+      )}
+    >
       <summary className="flex cursor-pointer select-none items-center gap-2 py-1 font-medium">
         <Workflow aria-hidden className="size-3.5" />
-        Proses agen
-        <span className="font-normal text-dim">{stepCount} langkah</span>
+        <span
+          className={cn(
+            "font-semibold text-[15px] leading-5",
+            live && !synthesis ? SHIMMER_TEXT_CLASS : "text-txt",
+          )}
+        >
+          Proses agen
+        </span>
+        {stepCount > 0 ? (
+          <span className="tabular font-normal text-[11px] text-dim">
+            {stepCount} langkah
+          </span>
+        ) : null}
         {synthesis ? (
           <span className="ml-auto flex items-center gap-1 font-normal text-[10.5px] text-dim">
             <Check aria-hidden className="size-3" /> selesai
@@ -205,10 +224,16 @@ export function ProcessTrace({
 
             {blocks.length > 0 ? (
               <ol className="flex flex-col gap-2.5">
-                {blocks.map((block) => (
+                {blocks.map((block, index) => (
                   <li
                     key={block.start.agent}
-                    className="rounded-lg border border-line bg-panel px-2.5 py-2"
+                    style={{
+                      animationDelay: `${Math.min(index, 6) * 45}ms`,
+                    }}
+                    className={cn(
+                      "motion-safe:animate-[trace-enter_260ms_ease-out_both] rounded-lg border bg-panel px-2.5 py-2",
+                      block.end ? "border-line" : "border-brand-edge/60",
+                    )}
                   >
                     <div className="flex items-start gap-2">
                       <Image
@@ -220,6 +245,9 @@ export function ProcessTrace({
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
+                          {!block.end ? (
+                            <ActivityOrb className="size-3.5" />
+                          ) : null}
                           <span className="font-semibold text-txt">
                             {AGENT_IDENTITIES[block.start.agent].displayName}
                           </span>
