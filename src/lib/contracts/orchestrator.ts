@@ -171,6 +171,13 @@ export const OrchestrationAgentSchema = z
 export const OrchestrationTraceSchema = z
   .object({
     runId: z.string(),
+    commander: z
+      .object({
+        text: z.string().max(400),
+        source: z.enum(["model", "fallback"]),
+        ms: z.number().int().min(0),
+      })
+      .strict(),
     planner: z
       .object({
         rationale: z.string(),

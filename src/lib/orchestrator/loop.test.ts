@@ -536,4 +536,80 @@ describe("runOrchestrator", () => {
       true,
     );
   });
+
+  function commanderCall(text: string, focus = "permintaan OTP") {
+    return {
+      role: "assistant",
+      content: JSON.stringify({ announcement: text, focus }),
+    };
+  }
+
+  it("speaks as Lumina before planning", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall(
+            "Saya melihat pola permintaan OTP yang sering dipakai penipuan. Saya akan memanggil agen yang relevan.",
+          );
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const types = result.events.map((event) => event.type);
+
+    expect(types.indexOf("commander_say")).toBeGreaterThan(
+      types.indexOf("run_start"),
+    );
+    expect(types.indexOf("commander_say")).toBeLessThan(types.indexOf("plan"));
+    expect(result.trace.commander.source).toBe("model");
+    expect(result.trace.commander.text).toContain("permintaan OTP");
+  });
+
+  it("falls back when the commander leaks a band or a score", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall("Ini penipuan tinggi, 91/100.");
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const say = result.events.find((event) => event.type === "commander_say");
+
+    expect(result.trace.commander.source).toBe("fallback");
+    expect(say && say.type === "commander_say" ? say.text : "").not.toContain(
+      "91/100",
+    );
+    expect(say && say.type === "commander_say" ? say.text : "").not.toMatch(
+      /tinggi/i,
+    );
+  });
 });
