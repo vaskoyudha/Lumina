@@ -90,6 +90,7 @@ export function ScoreCard({
 
   return (
     <Card
+      data-testid="score-card"
       className={`gap-0 overflow-hidden rounded-[12px] border ${style.border} bg-panel py-0 ring-0`}
     >
       <CardHeader className="gap-3 border-line border-b bg-panel-2/60 px-4 py-4">
