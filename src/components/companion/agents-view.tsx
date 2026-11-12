@@ -567,7 +567,7 @@ function LuminaCard() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <CardTitle className="font-semibold text-[18px] text-panel leading-tight tracking-[-0.02em]">
+              <CardTitle className="font-semibold text-[15.5px] text-panel leading-tight tracking-[-0.02em]">
                 Lumina
               </CardTitle>
               <Badge
