@@ -12,6 +12,9 @@ async function main() {
     await pool.query(`DELETE FROM simulation_intrusion_timers t
       WHERE t.started_at < now()-interval '1 day'
       AND NOT EXISTS(SELECT 1 FROM simulation_results r WHERE r.attempt_id=t.attempt_id)`);
+    await pool.query(
+      "DELETE FROM agent_runs WHERE created_at < now() - interval '90 days'",
+    );
   } finally {
     await pool.end();
   }
