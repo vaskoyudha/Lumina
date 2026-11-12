@@ -172,9 +172,11 @@ describe("CompanionChat · real user intent regressions", () => {
     const incident =
       "pas aku doowload game bajakan akun tokopedia aku ke hack dan aku kehilangan duit karena gopay aku connect ke tokped";
     await sendText(user, incident);
+    // The model is offline in this test, so the first turn fails honestly
+    // instead of printing a template as if the model had answered.
     expect(
-      await screen.findByText(/dugaan peretasan atau kehilangan uang/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/model belum dikonfigurasi/i).length,
+    ).toBeGreaterThan(0);
     await sendText(
       user,
       "kasih solusi yg jelas dong, ada course yg berguna ga",
@@ -353,84 +355,6 @@ describe("CompanionChat · real user intent regressions", () => {
       expect(screen.getByText("Jawaban agen.")).toBeInTheDocument(),
     );
     expect(screen.getByTestId("score-card")).toBeInTheDocument();
-  });
-
-  it("streams the answer before the run settles", async () => {
-    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
-    orchestrate.mockClear();
-    const gate = Promise.withResolvers<void>();
-    orchestrate.mockImplementationOnce(async (_request, options) => {
-      options.onEvent?.({
-        type: "synthesis_delta",
-        runId: "run-stream",
-        seq: 1,
-        at: 0,
-        agent: "synthesizer",
-        text: "Bagian satu. ",
-      });
-      await gate.promise;
-      return {
-        outcome: "model" as const,
-        text: "Bagian satu. Bagian dua.",
-        events: [],
-        trace: null,
-        score: null,
-      };
-    });
-
-    const user = userEvent.setup();
-    render(<CompanionChat orchestrator />);
-    await sendApk(user);
-
-    expect(await screen.findByText(/bagian satu/i)).toBeInTheDocument();
-    await act(async () => {
-      gate.resolve();
-    });
-    expect(await screen.findByText(/bagian dua/i)).toBeInTheDocument();
-  });
-
-  it("stop keeps the partial answer", async () => {
-    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
-    orchestrate.mockClear();
-    orchestrate.mockImplementationOnce((_request, options) => {
-      const { promise, resolve } =
-        Promise.withResolvers<orchestratorClient.OrchestratorStreamResult>();
-      options.onEvent?.({
-        type: "synthesis_delta",
-        runId: "run-stop",
-        seq: 1,
-        at: 0,
-        agent: "synthesizer",
-        text: "Bagian satu.",
-      });
-      const settle = () => {
-        clearTimeout(timer);
-        resolve({
-          outcome: "timeout",
-          text: "Bagian satu.",
-          events: [],
-          trace: null,
-          score: null,
-        });
-      };
-      const timer = setTimeout(settle, 1000);
-      options.signal?.addEventListener("abort", settle, { once: true });
-      return promise;
-    });
-
-    const user = userEvent.setup();
-    render(<CompanionChat orchestrator />);
-    await sendApk(user);
-    await screen.findByText(/bagian satu/i);
-
-    await user.click(screen.getByRole("button", { name: "Hentikan" }));
-
-    expect(screen.getByText(/bagian satu/i)).toBeInTheDocument();
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("button", { name: "Hentikan" }),
-      ).not.toBeInTheDocument(),
-    );
   });
 
   it("excludes a checked message from later conversational history in every lane", async () => {
@@ -627,7 +551,7 @@ describe("CompanionChat · an honest zero", () => {
 });
 
 describe("CompanionChat · a question is not a bad message", () => {
-  it("answers a question about a scam without a score card or a trace", async () => {
+  it("treats a question about a scam as a question, without a score card or a trace", async () => {
     const user = userEvent.setup();
     render(<CompanionChat />);
 
@@ -641,7 +565,7 @@ describe("CompanionChat · a question is not a bad message", () => {
     // The measured defect: this message used to score 70/tinggi, showing a red
     // card about the person asking the question.
     expect(
-      await within(log).findByText(/Dijawab sebagai pertanyaan/i),
+      await within(log).findByText(/Dianggap pertanyaan/i),
     ).toBeInTheDocument();
     expect(within(log).queryByText(/70\/100/)).not.toBeInTheDocument();
     expect(within(log).queryByText("Message Agent")).not.toBeInTheDocument();
@@ -887,7 +811,7 @@ describe("CompanionChat · verdict before voice", () => {
     // The transcript is unmounted, so the shell must own this announcement.
     await waitFor(() =>
       expect(screen.getByTestId("run-announcement")).toHaveTextContent(
-        /jawaban disusun dari templat/i,
+        /penyusun bahasa gagal/i,
       ),
     );
   });
@@ -962,7 +886,7 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
     expect(typeof body.digest?.risk).toBe("string");
   });
 
-  it("settles the language stage as skipped when the model returns 503", async () => {
+  it("fails honestly with a retry when the model returns 503", async () => {
     fetchMock.mockImplementation(() =>
       Promise.resolve({
         ok: false,
@@ -981,11 +905,56 @@ describe("CompanionChat · a follow-up answers from the verdict it followed", ()
     const log = await screen.findByRole("log", { name: /percakapan/i });
     const voice = within(log).getByTestId("agent-voice");
 
-    // The row must stop saying "Berjalan" and name the template fallback.
-    await waitFor(() =>
-      expect(voice).toHaveAttribute("data-status", "dilewati"),
+    // A failed voice stage is a failure, not a deliberate template fallback.
+    await waitFor(() => expect(voice).toHaveAttribute("data-status", "gagal"));
+    expect(within(voice).queryByText(/disusun dari templat/i)).toBeNull();
+
+    // The bubble says the model did not answer and offers a retry instead of
+    // pretending a template is the model's answer.
+    expect(
+      within(log).getAllByText(/model belum dikonfigurasi/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(log).getByRole("button", { name: /coba lagi/i }),
+    ).toBeInTheDocument();
+    // The deterministic verdict stays visible.
+    expect(
+      screen.getByRole("list", { name: /temuan terdeteksi/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("fails with a retry when the orchestrator and voice lane both fail", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockClear();
+    orchestrate.mockImplementationOnce(async () => ({
+      outcome: "unavailable" as const,
+      text: "",
+      events: [],
+      trace: null,
+      score: null,
+    }));
+    fetchMock.mockImplementation(() =>
+      Promise.resolve({
+        ok: false,
+        status: 502,
+        body: null,
+        json: async () => ({ error: "upstream-error" }),
+      }),
     );
-    expect(within(voice).getByText(/templat/i)).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+
+    await sendApk(user);
+    await screen.findAllByText("File APK via WhatsApp");
+
+    const log = await screen.findByRole("log", { name: /percakapan/i });
+    expect(
+      await within(log).findByText(/model tidak merespons/i),
+    ).toBeInTheDocument();
+
+    await user.click(within(log).getByRole("button", { name: /coba lagi/i }));
+    await waitFor(() => expect(orchestrate).toHaveBeenCalledTimes(2));
   });
 });
 

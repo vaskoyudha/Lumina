@@ -96,29 +96,28 @@ export function ProcessTrace({
     : !live
       ? "stopped"
       : plan
-        ? blocks.length > 0
-          ? "delegating"
-          : "preparing"
+        ? "preparing"
         : commander
           ? "recognising"
           : "reading";
 
-  const visibleBlocks = blocks.filter(
-    (block) => block.end?.status !== "dilewati",
-  );
-  const stepCount = visibleBlocks.reduce(
-    (total, block) => total + 1 + block.thoughts.length + block.tools.length,
-    0,
-  );
+  const stepCount =
+    (plan?.agents.length ?? 0) +
+    blocks.reduce(
+      (total, block) => total + block.thoughts.length + block.tools.length,
+      0,
+    );
+  const subordinateCount = plan?.agents.length ?? blocks.length;
 
   return (
-    <div
+    <details
+      open
       className={cn(
-        "max-w-[92%] text-[12px] motion-safe:animate-[trace-enter_220ms_ease-out]",
+        "group max-w-[92%] text-[12px] motion-safe:animate-[trace-enter_220ms_ease-out]",
         className,
       )}
     >
-      <p className="flex select-none items-center gap-2 py-1">
+      <summary className="flex cursor-pointer select-none items-center gap-2 py-1 font-medium">
         <Workflow aria-hidden className="size-3.5" />
         <span
           className={cn(
@@ -138,18 +137,30 @@ export function ProcessTrace({
             <Check aria-hidden className="size-3" /> selesai
           </span>
         ) : null}
-      </p>
+        <ChevronRight
+          aria-hidden
+          className={cn(
+            "size-3.5 text-dim transition-transform",
+            synthesis ? "" : "ml-auto",
+            "group-open:rotate-90",
+          )}
+        />
+      </summary>
 
       <div className="mt-2 flex flex-col gap-2.5">
         <CommanderCard
           phase={phase}
           announcement={commander?.text}
+          agents={plan?.agents}
           source={commander?.source}
           startedAt={startedAt}
         />
 
         {consensus?.groups[0] || decision ? (
-          <section aria-label="Konsensus agen" className="flex flex-col gap-1">
+          <section
+            aria-label="Konsensus agen"
+            className="ml-1.5 flex flex-col gap-1 border-line border-l pl-3"
+          >
             {consensus?.groups[0] ? (
               <p className="text-dim text-[11px]">
                 {consensus.groups[0].agents.length} agen sepakat ·{" "}
@@ -170,23 +181,50 @@ export function ProcessTrace({
         {plan || blocks.length > 0 ? (
           <section
             aria-label="Agen di bawah komando Lumina"
-            className="flex flex-col gap-2.5"
+            className="ml-1.5 flex flex-col gap-2.5 border-line border-l pl-3"
           >
-            {visibleBlocks.length > 0 ? (
-              <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
-                Agen dipanggil · {visibleBlocks.length}
-              </p>
-            ) : (
-              <p className="text-[11px] text-dim">
-                {blocks.length > 0
-                  ? "Tidak ada agen yang sempat melapor."
-                  : "Menyiapkan agen…"}
-              </p>
-            )}
+            <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
+              Sub-agen
+              {subordinateCount > 0 ? ` · ${subordinateCount}` : ""}
+            </p>
 
-            {visibleBlocks.length > 0 ? (
+            {plan ? (
+              <section
+                aria-label="Rencana agen"
+                className="rounded-lg border border-line bg-panel px-2.5 py-2"
+              >
+                <p className="text-[10.5px] font-medium tracking-wide text-dim uppercase">
+                  Rencana agen
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {plan.agents.map((agent) => (
+                    <span
+                      key={agent.agent}
+                      className="inline-flex items-center gap-1 rounded-full border border-line bg-panel-2 px-2 py-0.5 text-[10px] text-txt"
+                    >
+                      <span className="font-medium">
+                        {AGENT_IDENTITIES[agent.agent].displayName}
+                      </span>
+                      <span className="text-dim">
+                        {AGENT_IDENTITIES[agent.agent].field}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <details className="mt-1.5 rounded border border-line bg-panel-2 px-2 py-1">
+                  <summary className="cursor-pointer select-none text-[10.5px] text-dim">
+                    Alasan rencana
+                  </summary>
+                  <p className="mt-1 font-serif text-[14px] text-txt leading-[1.7]">
+                    {plan.rationale}
+                  </p>
+                </details>
+              </section>
+            ) : null}
+
+            {blocks.length > 0 ? (
               <ol className="flex flex-col gap-2.5">
-                {visibleBlocks.map((block, index) => (
+                {blocks.map((block, index) => (
                   <li
                     key={block.start.agent}
                     style={{
@@ -389,20 +427,9 @@ export function ProcessTrace({
                 ))}
               </ol>
             ) : null}
-
-            {plan ? (
-              <details>
-                <summary className="cursor-pointer select-none text-[10.5px] text-dim">
-                  Alasan rencana
-                </summary>
-                <p className="mt-1 font-serif text-[14px] text-txt leading-[1.7]">
-                  {plan.rationale}
-                </p>
-              </details>
-            ) : null}
           </section>
         ) : null}
       </div>
-    </div>
+    </details>
   );
 }

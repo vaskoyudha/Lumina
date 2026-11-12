@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowDown,
   Check,
   ChevronDown,
   Download,
@@ -10,7 +9,9 @@ import {
   PanelLeftOpen,
   PanelRightOpen,
   Paperclip,
+  RotateCcw,
   SquarePen,
+  TriangleAlert,
   Users,
   Workflow,
   X,
@@ -58,7 +59,6 @@ import { ScoreCard } from "@/components/companion/score-card";
 import { SessionSidebar } from "@/components/companion/session-sidebar";
 import { SignalPanel } from "@/components/companion/signal-panel";
 import { ThinkingRow } from "@/components/companion/thinking-row";
-import { useStickyScroll } from "@/components/companion/use-sticky-scroll";
 import { VerificationControls } from "@/components/companion/verification-controls";
 import {
   requestReply,
@@ -105,11 +105,7 @@ import {
   learningModulesFor,
   wantsLinkCheck,
 } from "@/lib/companion/intent";
-import {
-  composeAnswerFallback,
-  composeReply,
-  suggestedActions,
-} from "@/lib/companion/reply";
+import { composeReply, suggestedActions } from "@/lib/companion/reply";
 import { runSettled } from "@/lib/companion/run-state";
 import { requestToolSummary } from "@/lib/companion/tool-client";
 import {
@@ -119,7 +115,6 @@ import {
   isWebLookupQuestion,
   type Lane,
   planTurn,
-  refersToPriorAttachment,
   wantsSafetyCheck,
 } from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
@@ -210,12 +205,6 @@ interface Turn {
   visionNote?: string;
   /** Local transcript for an attachment the user asked about. Never from a check. */
   attachmentText?: string;
-  /**
-   * Local OCR text kept so a later turn that refers back to the screenshot can
-   * be answered. Never shown; the model sees it only when the reader explicitly
-   * points at the earlier attachment. Stored with the account transcript.
-   */
-  recallText?: string;
   /** A local note when an attachment could not be read. */
   attachmentNote?: string;
   /** True when this turn asked about attachment content, not its safety. */
@@ -240,6 +229,12 @@ interface Turn {
   lane?: Lane;
   /** The reader's own words, kept only so the lane chip can re-send them. */
   laneSource?: string;
+  /**
+   * Set when the model lane produced no usable answer. The bubble shows an
+   * honest failure and a retry instead of a templated answer dressed as the
+   * model's voice.
+   */
+  failure?: VoiceOutcome;
   /** The job-search card for this turn, when the tool ran. */
   tool?: LokerTurnTool;
   /** The report card the model opened for the previous verdict. */
@@ -399,164 +394,6 @@ function titleFor(text: string, attachments: readonly Attachment[]): string {
   return base.length > 42 ? `${base.slice(0, 42).trimEnd()}…` : base;
 }
 
-/**
- * A turn as it goes to `companion_conversations.transcript`. Attachment bytes,
- * blob URLs, and runtime-only fields are dropped; the name, size, and MIME
- * type stay so the restored bubble can still show a file chip.
- */
-type StoredTurn = Record<string, unknown>;
-
-const MAX_STORED_TURN_TEXT = 20_000;
-const MAX_TRANSCRIPT_CHARS = 700_000;
-
-function storedTurn(turn: Turn): StoredTurn {
-  const stored: StoredTurn = {
-    role: turn.role,
-    text: turn.text.slice(0, MAX_STORED_TURN_TEXT),
-  };
-  if (turn.at !== undefined) stored.at = turn.at;
-  if (turn.result !== undefined) stored.result = turn.result;
-  if (turn.source !== undefined) stored.source = turn.source;
-  if (turn.attachments?.length)
-    stored.attachments = turn.attachments.map((attachment) => ({
-      id: attachment.id,
-      name: attachment.name,
-      size: attachment.size,
-      type: attachment.type,
-    }));
-  if (turn.visionNote !== undefined) stored.visionNote = turn.visionNote;
-  if (turn.attachmentText !== undefined)
-    stored.attachmentText = turn.attachmentText;
-  if (turn.recallText !== undefined) stored.recallText = turn.recallText;
-  if (turn.attachmentNote !== undefined)
-    stored.attachmentNote = turn.attachmentNote;
-  if (turn.contentQuestion !== undefined)
-    stored.contentQuestion = turn.contentQuestion;
-  if (turn.trace !== undefined) stored.trace = turn.trace;
-  if (turn.orchestration !== undefined)
-    stored.orchestration = turn.orchestration;
-  if (turn.orchestrated !== undefined) stored.orchestrated = turn.orchestrated;
-  if (turn.explanation !== undefined) stored.explanation = turn.explanation;
-  if (turn.lane !== undefined) stored.lane = turn.lane;
-  if (turn.laneSource !== undefined) stored.laneSource = turn.laneSource;
-  if (turn.tool !== undefined) stored.tool = turn.tool;
-  if (turn.report !== undefined) stored.report = turn.report;
-  if (turn.link !== undefined) stored.link = turn.link;
-  if (turn.linkPrompt !== undefined) stored.linkPrompt = turn.linkPrompt;
-  if (turn.linkError !== undefined) stored.linkError = turn.linkError;
-  if (turn.learningModules !== undefined)
-    stored.learningModules = turn.learningModules;
-  if (turn.ocrConfidence !== undefined)
-    stored.ocrConfidence = turn.ocrConfidence;
-  if (turn.caseId !== undefined) stored.caseId = turn.caseId;
-  return stored;
-}
-
-/**
- * Keeps the payload under the Server Action body limit. When a long thread is
- * too large, process traces go first, then the oldest turns; the visible text
- * of the newest turns is the part worth keeping.
- */
-function encodeTranscript(turns: readonly Turn[]): StoredTurn[] {
-  const stored = turns.map(storedTurn);
-  if (JSON.stringify(stored).length <= MAX_TRANSCRIPT_CHARS) return stored;
-  for (const turn of stored) {
-    delete turn.orchestration;
-    delete turn.trace;
-    if (JSON.stringify(stored).length <= MAX_TRANSCRIPT_CHARS) return stored;
-  }
-  while (stored.length > 1) {
-    stored.shift();
-    if (JSON.stringify(stored).length <= MAX_TRANSCRIPT_CHARS) return stored;
-  }
-  return stored;
-}
-
-function transcriptSignature(turns: readonly Turn[]) {
-  return JSON.stringify(encodeTranscript(turns));
-}
-
-function restoredAttachment(value: unknown): Attachment | null {
-  if (value === null || typeof value !== "object" || Array.isArray(value))
-    return null;
-  const item = value as Record<string, unknown>;
-  if (typeof item.name !== "string" || !item.name) return null;
-  const name = item.name.slice(0, 200);
-  const type =
-    typeof item.type === "string" ? item.type : "application/octet-stream";
-  return {
-    id: typeof item.id === "string" ? item.id : `restored-${name}`,
-    name,
-    size:
-      typeof item.size === "number" && Number.isFinite(item.size)
-        ? item.size
-        : 0,
-    type,
-    // Bytes stay on the device that created them; restored turns show a chip.
-    url: "",
-    file: new File([], name, { type }),
-  };
-}
-
-function restoredTurns(raw: unknown): Turn[] {
-  if (!Array.isArray(raw)) return [];
-  const turns: Turn[] = [];
-  for (const value of raw) {
-    if (value === null || typeof value !== "object" || Array.isArray(value))
-      continue;
-    const item = value as Record<string, unknown>;
-    if (
-      (item.role !== "user" && item.role !== "companion") ||
-      typeof item.text !== "string"
-    )
-      continue;
-    const turn: Turn = {
-      id: id(),
-      role: item.role,
-      text: item.text.slice(0, MAX_STORED_TURN_TEXT),
-    };
-    if (typeof item.at === "string") turn.at = item.at;
-    if (item.result) turn.result = item.result as ScoreResult;
-    if (typeof item.source === "string") turn.source = item.source;
-    if (Array.isArray(item.attachments)) {
-      const attachments = item.attachments
-        .map(restoredAttachment)
-        .filter((attachment): attachment is Attachment => attachment !== null);
-      if (attachments.length) turn.attachments = attachments;
-    }
-    if (typeof item.visionNote === "string") turn.visionNote = item.visionNote;
-    if (typeof item.attachmentText === "string")
-      turn.attachmentText = item.attachmentText;
-    if (typeof item.recallText === "string") turn.recallText = item.recallText;
-    if (typeof item.attachmentNote === "string")
-      turn.attachmentNote = item.attachmentNote;
-    if (typeof item.contentQuestion === "boolean")
-      turn.contentQuestion = item.contentQuestion;
-    if (item.trace) turn.trace = item.trace as AgentTrace;
-    if (Array.isArray(item.orchestration))
-      turn.orchestration = item.orchestration as OrchestratorEvent[];
-    if (typeof item.orchestrated === "boolean")
-      turn.orchestrated = item.orchestrated;
-    if (item.explanation) turn.explanation = item.explanation as Explanation;
-    if (typeof item.lane === "string") turn.lane = item.lane as Lane;
-    if (typeof item.laneSource === "string") turn.laneSource = item.laneSource;
-    if (item.tool) turn.tool = item.tool as LokerTurnTool;
-    if (item.report) turn.report = item.report as ReportTurnTool;
-    if (item.link) turn.link = item.link as LinkVerdict;
-    if (item.linkPrompt) turn.linkPrompt = item.linkPrompt as { url: string };
-    if (typeof item.linkError === "string") turn.linkError = item.linkError;
-    if (Array.isArray(item.learningModules))
-      turn.learningModules = item.learningModules.filter(
-        (module): module is number => typeof module === "number",
-      );
-    if (typeof item.ocrConfidence === "number")
-      turn.ocrConfidence = item.ocrConfidence;
-    if (typeof item.caseId === "string") turn.caseId = item.caseId;
-    turns.push(turn);
-  }
-  return turns;
-}
-
 const EMPTY_CORPUS: LokerCorpus = {
   postings: [],
   total: 0,
@@ -570,6 +407,29 @@ const EMPTY_CORPUS: LokerCorpus = {
  */
 function summaryFallback(postings: readonly LokerView[]): string {
   return kalimatRekomendasi(ringkasRekomendasi(postings));
+}
+
+function failureHeadline(reason: VoiceOutcome): string {
+  if (reason === "timeout") return "Model terlalu lambat menjawab.";
+  if (reason === "unconfigured") return "Model belum dikonfigurasi.";
+  if (reason === "truncated") return "Jawaban model terpotong.";
+  return "Model tidak merespons.";
+}
+
+function failureHint(reason: VoiceOutcome): string {
+  if (reason === "unconfigured")
+    return "Jawaban AI belum aktif di lingkungan ini.";
+  return "Tidak ada jawaban yang ditampilkan. Coba lagi sebentar lagi.";
+}
+
+function failureNote(reason: VoiceOutcome): string {
+  if (reason === "timeout")
+    return "Model terlalu lambat menjawab; tidak ada jawaban yang ditampilkan.";
+  if (reason === "unconfigured")
+    return "Model belum dikonfigurasi; tidak ada jawaban yang ditampilkan.";
+  if (reason === "truncated")
+    return "Jawaban model terpotong; tidak ada jawaban yang ditampilkan.";
+  return "Model gagal dihubungi; tidak ada jawaban yang ditampilkan.";
 }
 
 export function CompanionChat({
@@ -608,13 +468,6 @@ export function CompanionChat({
     at: number;
   } | null>(null);
   const inFlight = React.useRef<symbol | null>(null);
-  const activeControlRef = React.useRef<AbortController | null>(null);
-  const stoppedRef = React.useRef(false);
-  const streamedRef = React.useRef("");
-  const stop = React.useCallback(() => {
-    stoppedRef.current = true;
-    activeControlRef.current?.abort();
-  }, []);
   const attachmentUrls = React.useRef(new Set<string>());
   const pendingControllers = React.useRef(new Set<AbortController>());
   const pendingTimers = React.useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -650,6 +503,7 @@ export function CompanionChat({
   const [activeHighlight, setActiveHighlight] =
     React.useState<ActiveHighlight | null>(null);
   const [agentsAnnouncement, setAgentsAnnouncement] = React.useState("");
+  const scrollRef = React.useRef<HTMLDivElement>(null);
   /** Height of the floating composer, so the log can pad its tail above it. */
   const [composerHeight, setComposerHeight] = React.useState(0);
   const composerObserver = React.useRef<ResizeObserver | null>(null);
@@ -683,7 +537,6 @@ export function CompanionChat({
   const active = sessions.find((s) => s.id === selectedId) ?? sessions[0];
   const activeId = active?.id;
   const turns = active?.turns ?? [];
-  const sticky = useStickyScroll<HTMLDivElement>(active?.id);
   const highlightsByUserTurn = React.useMemo(() => {
     const map = new Map<number, ReturnType<typeof highlightsForUserTurn>>();
     turns.forEach((turn, index) => {
@@ -707,9 +560,8 @@ export function CompanionChat({
   }, [turns, highlightsByUserTurn]);
 
   /**
-   * Persists the account-scoped row so the sidebar can show the thread
-   * immediately. The transcript itself follows from the debounced sync below
-   * once the answer stops streaming.
+   * Persists only the account-scoped metadata. The transcript and attachments
+   * stay in React state; this table never receives a message body.
    */
   const persistSession = React.useCallback(
     (input: {
@@ -936,9 +788,9 @@ export function CompanionChat({
   const liveCheck = React.useMemo(() => {
     for (let i = turns.length - 1; i >= 0; i--) {
       const turn = turns[i];
-      if (turn?.streaming && turn.trace && turn.result) {
+      if (turn?.streaming && turn.trace) {
         return {
-          result: turn.result,
+          result: turn.result ?? null,
           trace: turn.trace,
           orchestration: turn.orchestration,
         };
@@ -977,17 +829,16 @@ export function CompanionChat({
     [latestCheck],
   );
 
-  React.useLayoutEffect(() => {
+  React.useEffect(() => {
+    // `turns` is the trigger: this runs after every appended turn so the newest
+    // one is anchored to the top of the log.
     if (turns.length === 0) return;
-    sticky.pinIfFollowing();
-  }, [turns, sticky.pinIfFollowing]);
-
-  const lastComposerHeight = React.useRef(composerHeight);
-  React.useLayoutEffect(() => {
-    if (lastComposerHeight.current === composerHeight) return;
-    lastComposerHeight.current = composerHeight;
-    sticky.pinIfFollowing();
-  }, [composerHeight, sticky.pinIfFollowing]);
+    const log = scrollRef.current;
+    if (!log) return;
+    const nodes = log.querySelectorAll<HTMLElement>("[data-turn]");
+    const last = nodes[nodes.length - 1];
+    if (last) log.scrollTop = last.offsetTop - log.offsetTop - 8;
+  }, [turns]);
 
   const send = React.useCallback(
     async (
@@ -1012,10 +863,7 @@ export function CompanionChat({
       if (target === undefined) return;
       const operation = Symbol();
       inFlight.current = operation;
-      stoppedRef.current = false;
-      streamedRef.current = "";
       setBusy(true);
-      sticky.arm();
       const release = () => {
         if (inFlight.current !== operation) return;
         inFlight.current = null;
@@ -1023,7 +871,6 @@ export function CompanionChat({
         setReadingAt(null);
       };
       const control = new AbortController();
-      activeControlRef.current = control;
       pendingControllers.current.add(control);
       try {
         // The composer owns its draft URLs and revokes them after submit. The
@@ -1063,28 +910,10 @@ export function CompanionChat({
         const hasImages = !tutorModule && attachments.some(isImageAttachment);
         const hasAttachments = !tutorModule && attachments.length > 0;
         const hasLinks = !tutorModule && extractLinks(text).length > 0;
-        /*
-         * A text-only turn can still be about a screenshot the reader sent on
-         * an earlier turn ("the screenshot I just gave you"). The local OCR
-         * text is kept on that turn; replay it only when the wording points
-         * back at it and nothing new was attached. This is the same content
-         * question exception as an attachment in the current turn, so the
-         * checked message itself still never becomes chat history.
-         */
-        const recalledText =
-          !tutorModule &&
-          !hasAttachments &&
-          !hasLinks &&
-          refersToPriorAttachment(text)
-            ? [...(active?.turns ?? [])]
-                .reverse()
-                .find((turn) => turn.role === "companion" && turn.recallText)
-                ?.recallText
-            : undefined;
         const contentQuestion =
           !options.force &&
-          (hasAttachments || hasLinks || !!recalledText) &&
-          (isContentQuestion(text) || !!recalledText) &&
+          (hasAttachments || hasLinks) &&
+          isContentQuestion(text) &&
           !wantsSafetyCheck(text);
         const safetyCheck =
           !options.force &&
@@ -1179,18 +1008,19 @@ export function CompanionChat({
         }
 
         /*
-         * Attachment reading is local, not an agent stage. Images come from the
-         * OCR result; text-like files are read on the device. Unsupported files
-         * are named as unsupported rather than silently scored from a filename.
+         * Attachment reading is its own agent step. Images come from the OCR
+         * result; text-like files are read on the device. Unsupported files are
+         * named as unsupported rather than silently scored from a filename.
          */
+        const readStarted = performance.now();
         const readResult = contentQuestion
           ? await readAttachments(attachments, transcription, control.signal)
           : null;
-        const modelAttachments = recalledText
-          ? [{ kind: "image" as const, text: recalledText.slice(0, 6000) }]
-          : readResult
-            ? toAttachmentContext(readResult.reads)
-            : [];
+        const readMs = performance.now() - readStarted;
+        const links = hasLinks ? extractLinks(text) : [];
+        const modelAttachments = readResult
+          ? toAttachmentContext(readResult.reads)
+          : [];
 
         const scored = [
           transcription.text,
@@ -1236,6 +1066,10 @@ export function CompanionChat({
          * Conversation Agent models messages the user received, and feeding it
          * "apa itu dana?" because the word "dana" appears there would let a
          * question manufacture an escalation.
+         *
+         * `source` is the local text the engine examined (typed words plus
+         * OCR), not the model's answer, so a failed language layer does not
+         * invalidate it: the next turn must still see the earlier message.
          */
         const priorTurns = (active?.turns ?? [])
           .filter(
@@ -1319,13 +1153,41 @@ export function CompanionChat({
               }
             : null;
 
+        /*
+         * A content question has its own first step: reading the attachment.
+         * The stage id is reused, but the label names what actually happened, so
+         * the trace cannot imply a report was being prepared.
+         */
+        const readerStage: AgentStage | null =
+          contentQuestion && readResult
+            ? {
+                id: "evidence",
+                label: "Pembaca Lampiran",
+                task: "Membaca teks dari lampiran yang ditanyakan",
+                status:
+                  readResult.readable > 0 || hasLinks ? "selesai" : "dilewati",
+                findings: 0,
+                ms: readMs,
+                note:
+                  readResult.readable > 0
+                    ? `${readResult.readable} lampiran terbaca`
+                    : hasLinks
+                      ? `${links.length} tautan dibaca dari pertanyaan`
+                      : (readResult.reads.find((read) => read.note)?.note ??
+                        "Tidak ada teks yang bisa dibaca."),
+              }
+            : null;
+
         const stages: AgentStage[] = checked
           ? [
               ...(trace?.stages ?? []),
               ...(evidenceStage ? [evidenceStage] : []),
             ]
-          : [];
-        const detectorMs = (trace?.totalMs ?? 0) + (checked ? evidenceMs : 0);
+          : readerStage
+            ? [readerStage]
+            : [];
+        const detectorMs =
+          (trace?.totalMs ?? 0) + (checked ? evidenceMs : readMs);
 
         const companionId = id();
         const voiceStartedAt = Date.now();
@@ -1336,21 +1198,22 @@ export function CompanionChat({
          * would let the header show a finished checkmark over work still in
          * flight — the one dishonest state this card could produce.
          */
-        const openTrace: AgentTrace | null = checked
-          ? {
-              stages: [
-                ...stages,
-                {
-                  id: "voice",
-                  ...STAGE_LABEL.voice,
-                  status: "berjalan",
-                  findings: 0,
-                  ms: 0,
-                },
-              ],
-              totalMs: detectorMs,
-            }
-          : null;
+        const openTrace: AgentTrace | null =
+          checked || contentQuestion
+            ? {
+                stages: [
+                  ...stages,
+                  {
+                    id: "voice",
+                    ...STAGE_LABEL.voice,
+                    status: "berjalan",
+                    findings: 0,
+                    ms: 0,
+                  },
+                ],
+                totalMs: detectorMs,
+              }
+            : null;
 
         /*
          * The teaching layer is a pure function of the verdict, so it is computed
@@ -1435,13 +1298,6 @@ export function CompanionChat({
                       ocrConfidence: transcription.text
                         ? extractEntities(transcription.text).confidence
                         : undefined,
-                      recallText:
-                        transcription.items.length > 0
-                          ? transcription.items
-                              .map((item) => item.text)
-                              .join("\n\n")
-                              .slice(0, 6000)
-                          : undefined,
                       trace: openTrace ?? undefined,
                     },
                   ],
@@ -1477,12 +1333,10 @@ export function CompanionChat({
          * arrives late from a slow socket has nowhere to land. Without it, a
          * timed-out turn could regain text after the template was shown.
          */
-        const appendText = (chunk: string) => {
-          if (chunk) streamedRef.current += chunk;
+        const appendText = (chunk: string) =>
           patchCompanion((turn) =>
             turn.streaming ? { ...turn, text: turn.text + chunk } : turn,
           );
-        };
 
         /**
          * Why the words came from a template, in the reader's language.
@@ -1509,7 +1363,7 @@ export function CompanionChat({
           voice: "model" | "template",
           reason?: VoiceOutcome,
           finalResult?: ScoreResult,
-          note?: string,
+          failure?: VoiceOutcome,
         ) => {
           if (sealed) return;
           sealed = true;
@@ -1519,6 +1373,7 @@ export function CompanionChat({
             text: finalText,
             streaming: false,
             voiceStartedAt: undefined,
+            failure,
             lane,
             laneSource: lane === "tanya" ? text : undefined,
             result: checked
@@ -1534,16 +1389,21 @@ export function CompanionChat({
                     stage.id === "voice"
                       ? {
                           ...stage,
-                          status: voice === "model" ? "selesai" : "dilewati",
+                          status:
+                            voice === "model"
+                              ? "selesai"
+                              : failure
+                                ? "gagal"
+                                : "dilewati",
                           ms: voiceMs,
                           note:
                             voice === "model"
-                              ? (note ??
-                                (reason === "truncated"
-                                  ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
-                                  : undefined))
-                              : (note ??
-                                templateNote(reason ?? "unconfigured")),
+                              ? reason === "truncated"
+                                ? "Jawaban terpotong; bagian yang sudah tampil dipertahankan."
+                                : undefined
+                              : failure
+                                ? failureNote(reason ?? "failed")
+                                : templateNote(reason ?? "unconfigured"),
                         }
                       : stage,
                   ),
@@ -1559,7 +1419,12 @@ export function CompanionChat({
                 stage.id === "voice"
                   ? {
                       ...stage,
-                      status: voice === "model" ? "selesai" : "dilewati",
+                      status:
+                        voice === "model"
+                          ? "selesai"
+                          : failure
+                            ? "gagal"
+                            : "dilewati",
                       ms: voiceMs,
                     }
                   : stage,
@@ -1575,6 +1440,15 @@ export function CompanionChat({
           release();
         };
         let sealed = false;
+
+        /**
+         * The model lane failed. Seal the turn with no text and keep the
+         * deterministic verdict: an honest failure plus a retry beats a
+         * templated answer that looks like the model spoke.
+         */
+        const fail = (reason: VoiceOutcome, finalResult?: ScoreResult) => {
+          finish("", "template", reason, finalResult, reason);
+        };
 
         /*
          * The follow-up lane answers *from* the verdict it followed, so it must
@@ -1622,12 +1496,6 @@ export function CompanionChat({
         const controller = control;
         const abortTimer = setTimeout(() => controller.abort(), 55000);
         pendingTimers.current.add(abortTimer);
-        const fallbackContext = {
-          question: text,
-          history: chatHistory
-            .filter((turn) => turn.role === "user")
-            .map((turn) => turn.text),
-        };
 
         // Defensive: nothing below may leave `busy` stuck.
         try {
@@ -1692,23 +1560,6 @@ export function CompanionChat({
                     scored,
                   )
                 : scored;
-              let pendingDelta = "";
-              let flushTimer: number | null = null;
-              const flushDelta = () => {
-                if (flushTimer !== null) {
-                  clearTimeout(flushTimer);
-                  flushTimer = null;
-                }
-                if (!pendingDelta) return;
-                const chunk = pendingDelta;
-                pendingDelta = "";
-                appendText(chunk);
-              };
-              const queueDelta = (chunk: string) => {
-                pendingDelta += chunk;
-                if (flushTimer === null)
-                  flushTimer = window.setTimeout(flushDelta, 50);
-              };
               const orchestrated = await streamOrchestrator(
                 {
                   lane: "periksa",
@@ -1739,23 +1590,9 @@ export function CompanionChat({
                         ? { result: event.result as ScoreResult }
                         : {}),
                     }));
-                    if (event.type === "synthesis_delta")
-                      queueDelta(event.text);
                   },
                 },
               );
-              if (stoppedRef.current) {
-                flushDelta();
-                finish(
-                  orchestrated.text.trim() || "Dihentikan.",
-                  "model",
-                  undefined,
-                  orchestrated.score ?? undefined,
-                  "Dihentikan pengguna.",
-                );
-                return;
-              }
-              flushDelta();
               if (
                 orchestrated.outcome === "model" &&
                 orchestrated.text.trim().length > 0
@@ -1770,32 +1607,11 @@ export function CompanionChat({
               }
             }
 
-            if (stoppedRef.current) {
-              finish(
-                "Dihentikan.",
-                "template",
-                undefined,
-                undefined,
-                "Dihentikan pengguna.",
-              );
-              return;
-            }
-
             const voice = await requestReply(
               digest,
               appendText,
               controller.signal,
             );
-            if (stoppedRef.current) {
-              finish(
-                voice.text.trim() || "Dihentikan.",
-                voice.text.trim() ? "model" : "template",
-                undefined,
-                undefined,
-                "Dihentikan pengguna.",
-              );
-              return;
-            }
 
             /*
              * A reply that was cut but had already said something is kept.
@@ -1815,14 +1631,7 @@ export function CompanionChat({
               // clean finish.
               finish(partial, "model", keepPartial ? "truncated" : undefined);
             } else {
-              finish(
-                composeReply(text || attachments[0]?.name || "", result, {
-                  first: false,
-                  containsContent: true,
-                }),
-                "template",
-                voice.outcome,
-              );
+              fail(voice.outcome);
             }
             return;
           }
@@ -2072,17 +1881,6 @@ export function CompanionChat({
             }
           }
 
-          if (stoppedRef.current) {
-            finish(
-              streamedRef.current.trim() || "Dihentikan.",
-              "model",
-              undefined,
-              undefined,
-              "Dihentikan pengguna.",
-            );
-            return;
-          }
-
           if (loop.outcome === "model") {
             finish(loop.text, "model");
             const jobTool = jobToolRef.current;
@@ -2151,39 +1949,14 @@ export function CompanionChat({
             return;
           }
 
-          finish(
-            composeAnswerFallback(lane, loop.outcome, fallbackContext),
-            "template",
-            loop.outcome as VoiceOutcome,
-          );
+          fail(loop.outcome as VoiceOutcome);
         } catch {
-          if (stoppedRef.current) {
-            finish(
-              streamedRef.current.trim() || "Dihentikan.",
-              "model",
-              undefined,
-              undefined,
-              "Dihentikan pengguna.",
-            );
-            return;
-          }
-          finish(
-            lane === "periksa"
-              ? composeReply(text || attachments[0]?.name || "", result, {
-                  first: false,
-                  containsContent: checked,
-                })
-              : composeAnswerFallback(lane, "failed", fallbackContext),
-            "template",
-            "failed",
-          );
+          fail("failed");
         } finally {
           clearTimeout(abortTimer);
           pendingTimers.current.delete(abortTimer);
         }
       } finally {
-        if (activeControlRef.current === control)
-          activeControlRef.current = null;
         pendingControllers.current.delete(control);
         release();
       }
@@ -2202,9 +1975,36 @@ export function CompanionChat({
       persistSession,
       session?.nama,
       orchestrator,
-      sticky.arm,
     ],
   );
+
+  /**
+   * Retry a failed model turn without faking a result.
+   *
+   * The failed bubble and the user turn that produced it are removed, then the
+   * same text and attachments are sent again. The check lane is preserved so a
+   * retry of a `periksa` turn stays a check.
+   */
+  const retryTurn = (turn: Turn) => {
+    if (busy || inFlight.current) return;
+    const list = active?.turns ?? [];
+    const index = list.findIndex((item) => item.id === turn.id);
+    const userTurn = index > 0 ? list[index - 1] : undefined;
+    if (!userTurn || userTurn.role !== "user") return;
+    const removed = new Set([turn.id, userTurn.id]);
+    setSessions((prev) =>
+      prev.map((item) =>
+        item.id === activeId
+          ? { ...item, turns: item.turns.filter((t) => !removed.has(t.id)) }
+          : item,
+      ),
+    );
+    void send(
+      userTurn.text,
+      userTurn.attachments ?? [],
+      turn.lane === "periksa" ? { force: "periksa" } : {},
+    );
+  };
 
   /**
    * The chip path: open the card with no filters and no model call.
@@ -2311,11 +2111,6 @@ export function CompanionChat({
     router.push("/agen");
   };
 
-  const savedTranscripts = React.useRef(new Map<string, string>());
-  const transcriptTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
   React.useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -2328,22 +2123,17 @@ export function CompanionChat({
           );
           const loaded = result.conversations
             .filter((item) => !known.has(item.id))
-            .map((item): Session => {
-              const restored = restoredTurns(item.transcript);
-              savedTranscripts.current.set(
-                item.id,
-                transcriptSignature(restored),
-              );
-              return {
+            .map(
+              (item): Session => ({
                 id: id(),
                 serverId: item.id,
                 title: item.title,
-                turns: restored,
+                turns: [],
                 risk: item.risk ?? undefined,
                 time: item.updatedAt.slice(11, 16),
                 updatedAt: new Date(item.updatedAt).getTime(),
-              };
-            });
+              }),
+            );
           return loaded.length ? [...prev, ...loaded] : prev;
         });
       })
@@ -2353,50 +2143,11 @@ export function CompanionChat({
     };
   }, [session]);
 
-  /*
-   * The transcript is saved after a turn settles, never while text streams.
-   * One debounce covers the finish patch, tool summary turns, and the case id
-   * that arrives later, so every write is a complete, consistent snapshot.
-   */
-  React.useEffect(() => {
-    if (!session) return;
-    if (sessions.some((item) => item.turns.some((turn) => turn.streaming)))
-      return;
-    const pending = sessions.flatMap((item) => {
-      if (!item.serverId || item.turns.length === 0) return [];
-      const stored = encodeTranscript(item.turns);
-      const signature = JSON.stringify(stored);
-      if (savedTranscripts.current.get(item.serverId) === signature) return [];
-      return [{ item, stored, signature }];
-    });
-    if (pending.length === 0) return;
-    if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
-    transcriptTimer.current = setTimeout(() => {
-      for (const entry of pending) {
-        const serverId = entry.item.serverId;
-        if (!serverId) continue;
-        savedTranscripts.current.set(serverId, entry.signature);
-        void saveConversationHistory({
-          id: serverId,
-          title: entry.item.title,
-          turns: entry.item.turns.length,
-          risk: entry.item.risk ?? null,
-          transcript: entry.stored,
-        }).catch(() => {
-          savedTranscripts.current.delete(serverId);
-        });
-      }
-    }, 600);
-    return () => {
-      if (transcriptTimer.current) clearTimeout(transcriptTimer.current);
-      transcriptTimer.current = null;
-    };
-  }, [sessions, session]);
-
   /**
    * The header's "Ekspor percakapan" is the reference's Export chat, wired to
    * the only export that is honest here: the thread the reader can already see,
-   * as a plain download built from the same state that renders the transcript.
+   * as a plain download. History never leaves the tab (§11.6) — the file is
+   * built from the same state that renders the transcript, no network call.
    */
   const exportThread = () => {
     const lines = turns.map((turn) => {
@@ -2743,10 +2494,11 @@ export function CompanionChat({
                   kamu percaya.
                 </h2>
 
-                {active?.serverId && turns.length === 0 ? (
+                {active?.serverId ? (
                   <p className="mt-3 max-w-[520px] text-center text-dim text-xs leading-relaxed">
-                    Transkrip percakapan ini belum tersimpan di akunmu. Mulai
-                    pesan baru di sini, atau buka percakapan lain dari riwayat.
+                    Riwayat ini tersimpan sebagai judul di akunmu. Isi
+                    percakapan tetap di perangkat tempat ia dibuat, jadi
+                    transkripnya tidak bisa dibuka di sini.
                   </p>
                 ) : null}
 
@@ -2757,7 +2509,6 @@ export function CompanionChat({
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
                     onSearchJobs={openJobSearch}
-                    onStop={stop}
                     autoFocus
                     placeholder="Tempel pesan, lampirkan tangkapan layar, atau tulis pertanyaanmu…"
                   />
@@ -2780,11 +2531,10 @@ export function CompanionChat({
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div
                 key={active?.id ?? "new"}
-                ref={sticky.ref}
-                onScroll={sticky.onScroll}
+                ref={scrollRef}
                 style={{ paddingBottom: composerHeight + 8 }}
                 className={cn(
-                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 [scrollbar-gutter:stable] motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
+                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
                   contentTop,
                 )}
                 role="log"
@@ -2839,8 +2589,7 @@ export function CompanionChat({
                                 key={attachment.id}
                                 className="overflow-hidden rounded-sm border border-line bg-panel-2"
                               >
-                                {isImageAttachment(attachment) &&
-                                attachment.url ? (
+                                {isImageAttachment(attachment) ? (
                                   <span className="block size-20">
                                     {/* biome-ignore lint/performance/noImgElement: a blob: URL from a local File cannot go through next/image */}
                                     <img
@@ -2923,6 +2672,39 @@ export function CompanionChat({
                           content={turn.text}
                           streaming={turn.streaming}
                         />
+                      ) : null}
+
+                      {turn.failure && turn.text.length === 0 ? (
+                        <div className="max-w-[92%] rounded-[12px] border border-line bg-panel-2 px-3.5 py-3">
+                          <p className="flex items-start gap-2 text-[13px] leading-relaxed">
+                            <TriangleAlert
+                              aria-hidden
+                              strokeWidth={1.75}
+                              className="mt-0.5 size-4 shrink-0 text-warn"
+                            />
+                            <span>
+                              <span className="font-medium text-txt">
+                                {failureHeadline(turn.failure)}
+                              </span>{" "}
+                              <span className="text-dim">
+                                {failureHint(turn.failure)}
+                              </span>
+                            </span>
+                          </p>
+                          <Button
+                            className="mt-2.5 min-h-9"
+                            onClick={() => retryTurn(turn)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <RotateCcw
+                              aria-hidden
+                              strokeWidth={1.75}
+                              className="size-3.5"
+                            />
+                            Coba lagi
+                          </Button>
+                        </div>
                       ) : null}
 
                       {turn.attachmentNote ? (
@@ -3124,7 +2906,9 @@ export function CompanionChat({
                       {turn.lane === "tanya" && turn.laneSource ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-dim text-[0.7rem]">
-                            Dijawab sebagai pertanyaan
+                            {turn.failure
+                              ? "Dianggap pertanyaan"
+                              : "Dijawab sebagai pertanyaan"}
                           </span>
                           <Button
                             variant="ghost"
@@ -3288,33 +3072,26 @@ export function CompanionChat({
                 )}
               </div>
 
-              {!sticky.following ? (
-                <button
-                  type="button"
-                  onClick={sticky.pin}
-                  style={{ bottom: composerHeight + 12 }}
-                  className="absolute left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-line bg-panel px-3 py-2 text-[11px] font-medium text-txt shadow-rest hover:bg-panel-2"
-                >
-                  <ArrowDown aria-hidden className="size-3.5" /> Pesan baru
-                </button>
-              ) : null}
-
               {/*
                * The composer floats over the transcript tail instead of sitting
                * in the flow. As a hard sibling it ended the log on a straight
                * edge, so scrolling looked like content being chopped by a box.
-               * The measured height keeps the newest turn reachable above it.
+               * The gradient lets the last rows slide under the field, and the
+               * measured height keeps the newest turn reachable above it.
                */}
               <div
                 ref={setComposerNode}
                 className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6"
               >
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-bg via-bg/90 to-transparent"
+                />
                 <div className="pointer-events-auto relative mx-auto w-full max-w-[640px]">
                   <Composer
                     onSubmit={(text, attachments) => send(text, attachments)}
                     busy={busy}
                     onSearchJobs={openJobSearch}
-                    onStop={stop}
                     placeholder="Tempel pesan berikutnya…"
                   />
                 </div>
