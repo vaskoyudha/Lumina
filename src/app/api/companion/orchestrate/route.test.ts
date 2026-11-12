@@ -6,8 +6,16 @@ jest.mock("@/lib/auth/accounts", () => ({
 jest.mock("@/lib/orchestrator/loop", () => ({
   runOrchestrator: jest.fn(),
 }));
+jest.mock("@/lib/auth/server-session", () => ({
+  getSession: jest.fn(async () => null),
+}));
+jest.mock("@/lib/agent/runs", () => ({
+  saveAgentRun: jest.fn(async () => undefined),
+}));
 
 import { POST } from "@/app/api/companion/orchestrate/route";
+import { saveAgentRun } from "@/lib/agent/runs";
+import { getSession } from "@/lib/auth/server-session";
 import { runOrchestrator } from "@/lib/orchestrator/loop";
 
 const request = (body: unknown) =>
@@ -31,6 +39,7 @@ describe("POST /api/companion/orchestrate", () => {
   beforeEach(() => {
     process.env = { ...env, LUMINA_COMPANION_ORCHESTRATOR: "1" };
     jest.mocked(runOrchestrator).mockClear();
+    jest.mocked(saveAgentRun).mockClear();
     jest.mocked(runOrchestrator).mockImplementation(async (_req, deps) => {
       const events = [
         {
@@ -54,16 +63,15 @@ describe("POST /api/companion/orchestrate", () => {
         events,
         trace: {
           runId: "run-1",
-          startedAt: 1,
-          finishedAt: 2,
-          planner: "model",
-          degraded: false,
-          score: { score: 80, risk: "tinggi" },
+          commander: { text: "Halo", source: "model", ms: 1 },
+          planner: { rationale: "", agents: [], source: "model", ms: 1 },
           agents: [],
-          tools: [],
+          synthesis: "",
+          totalMs: 2,
+          degraded: false,
         } as never,
         text: "Pesan ini berisiko.",
-        score: { score: 80 } as never,
+        score: { score: 80, risk: "tinggi", modus: "jual-beli" } as never,
         degraded: false,
       };
       for (const event of events) deps?.onEvent?.(event);
@@ -94,5 +102,33 @@ describe("POST /api/companion/orchestrate", () => {
     const response = await POST(request({ ...valid, consent: false }));
     expect(response.status).toBe(400);
     expect(runOrchestrator).not.toHaveBeenCalled();
+  });
+
+  it("persists a summary only for a signed-in session", async () => {
+    jest.mocked(getSession).mockResolvedValueOnce({
+      id: "user-1",
+      email: "u@example.test",
+      nama: "Uji",
+      created_at: "2026-11-10T00:00:00.000Z",
+      exp: 9_999_999_999,
+    });
+    const response = await POST(request(valid));
+    await response.text();
+    expect(saveAgentRun).toHaveBeenCalledTimes(1);
+    const [[userId, summary]] = jest.mocked(saveAgentRun).mock.calls;
+    expect(userId).toBe("user-1");
+    expect(summary).not.toHaveProperty("caseId");
+    jest.mocked(getSession).mockResolvedValue(null);
+    const anonymous = await POST(request(valid));
+    await anonymous.text();
+    expect(saveAgentRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("still streams when the session read throws", async () => {
+    jest.mocked(getSession).mockRejectedValueOnce(new Error("db down"));
+    const response = await POST(request(valid));
+    expect(response.status).toBe(200);
+    await response.text();
+    expect(saveAgentRun).not.toHaveBeenCalled();
   });
 });

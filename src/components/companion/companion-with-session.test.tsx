@@ -1,4 +1,7 @@
 jest.mock("@/lib/auth/server-session", () => ({ getSession: jest.fn() }));
+jest.mock("@/lib/agent/runs", () => ({
+  latestAgentRun: jest.fn(async () => null),
+}));
 jest.mock("@/lib/loker/store", () => ({ loadCorpus: jest.fn() }));
 jest.mock("@/components/companion/companion-chat", () => ({
   CompanionChat: (props: {

@@ -120,6 +120,7 @@ describe("runOrchestrator", () => {
     expect(result.trace.agents.map((agent) => agent.id)).toEqual([
       "message",
       "qris",
+      "evidence",
     ]);
     expect(result.trace.agents[0].points).toHaveLength(1);
     expect(result.trace.agents[0].points[0].pattern).toBe("credential-request");
@@ -127,7 +128,11 @@ describe("runOrchestrator", () => {
       result.events
         .filter((event) => event.type === "agent_start")
         .map((event) => event.task),
-    ).toEqual(["Periksa narasi dan OTP.", "Periksa jalur pembayaran."]);
+    ).toEqual([
+      "Periksa narasi dan OTP.",
+      "Periksa jalur pembayaran.",
+      "Audit kutipan dan deduplikasi temuan.",
+    ]);
     expect(
       chat.mock.calls.some(([options]) =>
         String(options.messages[1]?.content).includes(
@@ -137,7 +142,7 @@ describe("runOrchestrator", () => {
     ).toBe(true);
     expect(
       result.events.filter((event) => event.type === "agent_result"),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
     expect(
       result.events.some(
         (event) =>
@@ -535,5 +540,293 @@ describe("runOrchestrator", () => {
     expect(result.events.some((event) => event.type === "synthesis_end")).toBe(
       true,
     );
+  });
+
+  function commanderCall(text: string, focus = "permintaan OTP") {
+    return {
+      role: "assistant",
+      content: JSON.stringify({ announcement: text, focus }),
+    };
+  }
+
+  it("speaks as Lumina before planning", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall(
+            "Saya melihat pola permintaan OTP yang sering dipakai penipuan. Saya akan memanggil agen yang relevan.",
+          );
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const types = result.events.map((event) => event.type);
+
+    expect(types.indexOf("commander_say")).toBeGreaterThan(
+      types.indexOf("run_start"),
+    );
+    expect(types.indexOf("commander_say")).toBeLessThan(types.indexOf("plan"));
+    expect(result.trace.commander.source).toBe("model");
+    expect(result.trace.commander.text).toContain("permintaan OTP");
+  });
+
+  it("falls back when the commander leaks a band", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall("Saya rasa ini mencurigakan.");
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const say = result.events.find((event) => event.type === "commander_say");
+
+    expect(result.trace.commander.source).toBe("fallback");
+    expect(say && say.type === "commander_say" ? say.text : "").not.toMatch(
+      /mencurigakan/i,
+    );
+  });
+
+  it("falls back when the commander puts a band in focus", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall(
+            "Saya sudah membaca pesan ini dan akan memeriksa polanya.",
+            "penipuan tinggi",
+          );
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const say = result.events.find((event) => event.type === "commander_say");
+
+    expect(result.trace.commander.source).toBe("fallback");
+    expect(say && say.type === "commander_say" ? say.focus : "").not.toMatch(
+      /tinggi/i,
+    );
+  });
+
+  function plannerCallWith(
+    agents: { agent: string; task: string }[],
+    rationale = "Rencana uji.",
+  ) {
+    return {
+      role: "assistant",
+      content: JSON.stringify({ rationale, agents }),
+    };
+  }
+
+  const sixAgents = [
+    { agent: "qris", task: "Periksa pembayaran." },
+    { agent: "message", task: "Periksa narasi." },
+    { agent: "link", task: "Periksa tautan." },
+    { agent: "identity", task: "Periksa identitas." },
+    { agent: "conversation", task: "Periksa eskalasi." },
+    { agent: "job", task: "Periksa lowongan." },
+  ];
+
+  function serialChat(planner: () => unknown) {
+    return jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall("Saya melihat pola penipuan pembayaran.");
+        if (system.includes("koordinator tim agen")) return planner();
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+  }
+
+  it("runs specialists one at a time and appends evidence last", async () => {
+    const chat = serialChat(() => plannerCallWith(sixAgents));
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const order = result.events
+      .filter(
+        (event) =>
+          event.type === "agent_start" || event.type === "agent_result",
+      )
+      .map((event) =>
+        event.type === "agent_start"
+          ? `start:${event.agent}`
+          : `end:${event.agent}`,
+      );
+
+    expect(result.trace.agents.map((agent) => agent.id)).toEqual([
+      "qris",
+      "message",
+      "link",
+      "identity",
+      "conversation",
+      "evidence",
+    ]);
+    for (let index = 0; index < order.length; index += 2) {
+      expect(order[index]).toBe(`start:${result.trace.agents[index / 2].id}`);
+      expect(order[index + 1]).toBe(`end:${result.trace.agents[index / 2].id}`);
+    }
+  });
+
+  it("keeps the baseline specialist when the planner fills the plan", async () => {
+    const fiveAgents = [
+      { agent: "qris", task: "Periksa pembayaran." },
+      { agent: "link", task: "Periksa tautan." },
+      { agent: "identity", task: "Periksa identitas." },
+      { agent: "conversation", task: "Periksa eskalasi." },
+      { agent: "job", task: "Periksa lowongan." },
+    ];
+    const chat = serialChat(() => plannerCallWith(fiveAgents));
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const plan = result.events.find((event) => event.type === "plan");
+
+    expect(plan?.type).toBe("plan");
+    if (plan?.type !== "plan") return;
+    const ids = plan.agents.map((step) => step.agent);
+
+    expect(ids).toEqual([
+      "qris",
+      "link",
+      "identity",
+      "conversation",
+      "message",
+      "evidence",
+    ]);
+    expect(ids.filter((id) => id === "message")).toHaveLength(1);
+    expect(ids[ids.length - 1]).toBe("evidence");
+    expect(ids).not.toContain("job");
+  });
+
+  it("runs the first specialist and skips the rest at the deadline", async () => {
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("komandan agen"))
+          return commanderCall("Saya melihat pola penipuan pembayaran.");
+        if (system.includes("koordinator tim agen"))
+          return plannerCallWith(sixAgents);
+        if (system.includes("penyusun jawaban"))
+          return { role: "assistant", content: "Pesan ini 72/100." };
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${Math.random()}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+      deadlineMs: 30,
+    });
+    const statuses = result.trace.agents.map((agent) => agent.status);
+
+    expect(statuses[0]).toBe("selesai");
+    expect(statuses.slice(1).every((status) => status === "dilewati")).toBe(
+      true,
+    );
+    expect(result.trace.degraded).toBe(true);
+
+    const agentEvents = result.events.filter(
+      (event) => event.type === "agent_start" || event.type === "agent_result",
+    );
+    for (const agent of result.trace.agents) {
+      if (agent.status !== "dilewati") continue;
+      const startIndex = agentEvents.findIndex(
+        (event) => event.type === "agent_start" && event.agent === agent.id,
+      );
+      expect(startIndex).toBeGreaterThanOrEqual(0);
+      const next = agentEvents[startIndex + 1];
+      expect(next?.type).toBe("agent_result");
+      expect(next?.type === "agent_result" ? next.agent : null).toBe(agent.id);
+    }
+  });
+
+  it("emits a start before the result for agents skipped by an abort", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const chat = serialChat(() => plannerCallWith(sixAgents));
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+      signal: controller.signal,
+    });
+
+    expect(
+      result.trace.agents.every((agent) => agent.status === "dilewati"),
+    ).toBe(true);
+    expect(result.trace.agents.length).toBeGreaterThanOrEqual(sixAgents.length);
+
+    const agentEvents = result.events.filter(
+      (event) => event.type === "agent_start" || event.type === "agent_result",
+    );
+    for (const agent of result.trace.agents) {
+      if (agent.status !== "dilewati") continue;
+      const startIndex = agentEvents.findIndex(
+        (event) => event.type === "agent_start" && event.agent === agent.id,
+      );
+      expect(startIndex).toBeGreaterThanOrEqual(0);
+      const next = agentEvents[startIndex + 1];
+      expect(next?.type).toBe("agent_result");
+      expect(next?.type === "agent_result" ? next.agent : null).toBe(agent.id);
+    }
   });
 });

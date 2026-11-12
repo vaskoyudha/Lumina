@@ -105,6 +105,7 @@ import {
   composeReply,
   suggestedActions,
 } from "@/lib/companion/reply";
+import { runSettled } from "@/lib/companion/run-state";
 import { requestToolSummary } from "@/lib/companion/tool-client";
 import {
   isContentQuestion,
@@ -139,6 +140,7 @@ import { useSavedLoker } from "@/lib/loker/use-saved";
 import { kalimatRekomendasi, ringkasRekomendasi } from "@/lib/loker/verdict";
 import { modusFor } from "@/lib/modus";
 import { streamOrchestrator } from "@/lib/orchestrator/client";
+import type { AgentRunSummary } from "@/lib/orchestrator/summary";
 import { extractEntities, extractedSignals } from "@/lib/scoring/extract";
 import { extractLinks } from "@/lib/scoring/link";
 import { scoreWithTrace } from "@/lib/scoring/score";
@@ -210,6 +212,8 @@ interface Turn {
   trace?: AgentTrace;
   /** The real multi-agent run: planner, specialists, tool calls, synthesis. */
   orchestration?: OrchestratorEvent[];
+  /** True when this turn ran the agent orchestrator, so the band waits for it. */
+  orchestrated?: boolean;
   /** The teaching layer: tactics, anatomy, checks, and where to report. */
   explanation?: Explanation;
   /** True while the language layer is still writing. */
@@ -401,6 +405,7 @@ function summaryFallback(postings: readonly LokerView[]): string {
 export function CompanionChat({
   session = null,
   initialPanel,
+  latestRun = null,
   corpus = EMPTY_CORPUS,
   initialModule,
   orchestrator = false,
@@ -408,6 +413,7 @@ export function CompanionChat({
   session?: CompanionSession | null;
   /** Set when another surface links straight into the detector overview. */
   initialPanel?: "agen";
+  latestRun?: AgentRunSummary | null;
   /** The capped cumulative scan snapshot; the client filters it locally. */
   corpus?: LokerCorpus;
   initialModule?: { no: number; title: string };
@@ -426,6 +432,11 @@ export function CompanionChat({
   /** `null` = the newest session, never a hardcoded id. */
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [busy, setBusy] = React.useState(false);
+  /** Set while an attached image is being read, before the answer turn exists. */
+  const [readingAt, setReadingAt] = React.useState<{
+    turnId: number;
+    at: number;
+  } | null>(null);
   const inFlight = React.useRef<symbol | null>(null);
   const attachmentUrls = React.useRef(new Set<string>());
   const pendingControllers = React.useRef(new Set<AbortController>());
@@ -713,15 +724,24 @@ export function CompanionChat({
         return {
           result: turn.result ?? null,
           trace: turn.trace,
+          orchestration: turn.orchestration,
         };
       }
     }
     return null;
   }, [turns]);
 
-  const panelResult = liveCheck?.result ?? latestResult;
+  const activeTurn = [...turns].reverse().find((turn) => turn.streaming);
+  const panelBandReady =
+    !activeTurn ||
+    !activeTurn.orchestrated ||
+    (activeTurn.orchestration !== undefined &&
+      runSettled(activeTurn.orchestration));
+  const panelResult = panelBandReady
+    ? (liveCheck?.result ?? latestResult)
+    : null;
   const panelTrace = liveCheck?.trace ?? latestTrace;
-  const panelLink = panelResult ? null : latestLink;
+  const panelLink = panelBandReady ? (panelResult ? null : latestLink) : null;
   const panelLinkPending = panelResult || panelLink ? null : latestLinkPrompt;
   const running = liveCheck != null;
 
@@ -780,6 +800,7 @@ export function CompanionChat({
         if (inFlight.current !== operation) return;
         inFlight.current = null;
         setBusy(false);
+        setReadingAt(null);
       };
       const control = new AbortController();
       pendingControllers.current.add(control);
@@ -847,6 +868,7 @@ export function CompanionChat({
 
         if (hasImages) {
           setBusy(true);
+          setReadingAt({ turnId: userTurn.id, at: Date.now() });
           setSessions((prev) =>
             prev.map((session) =>
               session.id === target
@@ -1150,6 +1172,7 @@ export function CompanionChat({
           : "Percakapan Companion";
 
         setBusy(true);
+        setReadingAt(null);
         setSessions((prev) =>
           prev.map((session) =>
             session.id === target
@@ -1172,6 +1195,7 @@ export function CompanionChat({
                       voiceStartedAt,
                       result: checked ? (result ?? undefined) : undefined,
                       source: checked ? scored : undefined,
+                      orchestrated: checked && orchestrator ? true : undefined,
                       explanation,
                       contentQuestion,
                       attachmentText:
@@ -2159,8 +2183,8 @@ export function CompanionChat({
                     "size-1.5 shrink-0 rounded-full",
                     showAgents
                       ? "hidden"
-                      : latestResult
-                        ? RISK_DOT[latestResult.risk]
+                      : panelResult
+                        ? RISK_DOT[panelResult.risk]
                         : "bg-dim/50",
                   )}
                 />
@@ -2324,6 +2348,7 @@ export function CompanionChat({
               )}
             >
               <AgentsView
+                latestRun={latestRun}
                 onSelect={(agent) => {
                   setSelectedAgent(agent);
                   // Picking an agent is a request to read its explanation, so
@@ -2487,6 +2512,15 @@ export function CompanionChat({
                           </ul>
                         ) : null}
 
+                        {readingAt?.turnId === turn.id ? (
+                          <div className="self-start">
+                            <ThinkingRow
+                              label="Membaca lampiran"
+                              startedAt={readingAt.at}
+                            />
+                          </div>
+                        ) : null}
+
                         {turn.visionNote ? (
                           <p className="max-w-[85%] text-right text-[11px] text-danger leading-snug">
                             {turn.visionNote}
@@ -2501,7 +2535,11 @@ export function CompanionChat({
                       className="mx-auto flex w-full max-w-[820px] flex-col gap-2"
                     >
                       {turn.orchestration && turn.orchestration.length > 0 ? (
-                        <ProcessTrace events={turn.orchestration} />
+                        <ProcessTrace
+                          events={turn.orchestration}
+                          live={turn.streaming}
+                          startedAt={turn.voiceStartedAt}
+                        />
                       ) : turn.trace ? (
                         <AgentRun
                           trace={turn.trace}
@@ -2750,7 +2788,11 @@ export function CompanionChat({
                         </div>
                       ) : null}
 
-                      {turn.result ? (
+                      {turn.result &&
+                      (!turn.streaming ||
+                        !turn.orchestrated ||
+                        (turn.orchestration !== undefined &&
+                          runSettled(turn.orchestration))) ? (
                         <>
                           {turn.ocrConfidence !== undefined && (
                             <p className="text-xs text-dim">
