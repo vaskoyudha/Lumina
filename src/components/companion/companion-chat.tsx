@@ -724,6 +724,7 @@ export function CompanionChat({
   const activeTurn = [...turns].reverse().find((turn) => turn.streaming);
   const panelBandReady =
     !activeTurn ||
+    !orchestrator ||
     (activeTurn.orchestration !== undefined &&
       runSettled(activeTurn.orchestration));
   const panelResult = panelBandReady
@@ -2763,8 +2764,10 @@ export function CompanionChat({
                       ) : null}
 
                       {turn.result &&
-                      (turn.orchestration === undefined ||
-                        runSettled(turn.orchestration)) ? (
+                      (!turn.streaming ||
+                        !orchestrator ||
+                        (turn.orchestration !== undefined &&
+                          runSettled(turn.orchestration))) ? (
                         <>
                           {turn.ocrConfidence !== undefined && (
                             <p className="text-xs text-dim">
