@@ -555,27 +555,27 @@
      one lightness and chroma keep the row coherent. The line token paints a
      2px border, the soft tint fills the bubble. Brand orange remains the action
      accent — these never mean a status. */
-  --lumina-agent-message: oklch(0.52 0.1 331);
-  --lumina-agent-link: oklch(0.52 0.1 254);
-  --lumina-agent-identity: oklch(0.52 0.1 88);
+  --lumina-agent-message: oklch(0.52 0.11 337);
+  --lumina-agent-link: oklch(0.52 0.09 259);
+  --lumina-agent-identity: oklch(0.52 0.12 63);
   --lumina-agent-email: var(--lumina-agent-identity);
   --lumina-agent-email-soft: var(--lumina-agent-identity-soft);
   --lumina-agent-injection: var(--lumina-agent-message);
   --lumina-agent-injection-soft: var(--lumina-agent-message-soft);
-  --lumina-agent-conversation: oklch(0.52 0.1 26);
-  --lumina-agent-job: oklch(0.52 0.1 282);
-  --lumina-agent-marketplace: oklch(0.52 0.06 140);
-  --lumina-agent-qris: oklch(0.52 0.1 67);
-  --lumina-agent-evidence: oklch(0.52 0.1 160);
+  --lumina-agent-conversation: oklch(0.52 0.12 21);
+  --lumina-agent-job: oklch(0.52 0.12 293);
+  --lumina-agent-marketplace: oklch(0.52 0.07 74);
+  --lumina-agent-qris: oklch(0.52 0.12 49);
+  --lumina-agent-evidence: oklch(0.52 0.08 166);
 
-  --lumina-agent-message-soft: oklch(0.96 0.02 331);
-  --lumina-agent-link-soft: oklch(0.96 0.02 254);
-  --lumina-agent-identity-soft: oklch(0.96 0.02 88);
-  --lumina-agent-conversation-soft: oklch(0.96 0.02 26);
-  --lumina-agent-job-soft: oklch(0.96 0.02 282);
-  --lumina-agent-marketplace-soft: oklch(0.96 0.02 140);
-  --lumina-agent-qris-soft: oklch(0.96 0.02 67);
-  --lumina-agent-evidence-soft: oklch(0.96 0.02 160);
+  --lumina-agent-message-soft: oklch(0.96 0.02 337);
+  --lumina-agent-link-soft: oklch(0.96 0.02 259);
+  --lumina-agent-identity-soft: oklch(0.96 0.02 63);
+  --lumina-agent-conversation-soft: oklch(0.96 0.02 21);
+  --lumina-agent-job-soft: oklch(0.96 0.02 293);
+  --lumina-agent-marketplace-soft: oklch(0.96 0.02 74);
+  --lumina-agent-qris-soft: oklch(0.96 0.02 49);
+  --lumina-agent-evidence-soft: oklch(0.96 0.02 166);
 
   /* The lavender field, drawn as three overlapping clouds over the radial. */
   --lumina-cloud-1: rgb(255 255 255 / 0.65);
@@ -888,4 +888,52 @@ a.bg-primary {
       var(--lumina-nav-active-from) 0%,
       var(--lumina-nav-active-to) 100%
     );
+}
+
+/*
+ * Role pill in the process trace. Each agent keeps the mascot-sampled hue from
+ * its identity bubble, so a pill reads as that agent instead of a generic brand
+ * tag. `data-agent-tone` maps the agent id to its ink + soft tint pair.
+ */
+.agent-role-pill {
+  border: 1px solid color-mix(in oklch, var(--pill-ink) 38%, transparent);
+  border-radius: 9999px;
+  padding: 0.0625rem 0.375rem;
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--pill-ink);
+  background: var(--pill-soft);
+}
+
+[data-agent-tone="message"] {
+  --pill-ink: var(--lumina-agent-message);
+  --pill-soft: var(--lumina-agent-message-soft);
+}
+[data-agent-tone="link"] {
+  --pill-ink: var(--lumina-agent-link);
+  --pill-soft: var(--lumina-agent-link-soft);
+}
+[data-agent-tone="identity"] {
+  --pill-ink: var(--lumina-agent-identity);
+  --pill-soft: var(--lumina-agent-identity-soft);
+}
+[data-agent-tone="conversation"] {
+  --pill-ink: var(--lumina-agent-conversation);
+  --pill-soft: var(--lumina-agent-conversation-soft);
+}
+[data-agent-tone="job"] {
+  --pill-ink: var(--lumina-agent-job);
+  --pill-soft: var(--lumina-agent-job-soft);
+}
+[data-agent-tone="marketplace"] {
+  --pill-ink: var(--lumina-agent-marketplace);
+  --pill-soft: var(--lumina-agent-marketplace-soft);
+}
+[data-agent-tone="qris"] {
+  --pill-ink: var(--lumina-agent-qris);
+  --pill-soft: var(--lumina-agent-qris-soft);
+}
+[data-agent-tone="evidence"] {
+  --pill-ink: var(--lumina-agent-evidence);
+  --pill-soft: var(--lumina-agent-evidence-soft);
 }
