@@ -422,7 +422,18 @@ function dedupePlan(steps: PlanStep[]): PlanStep[] {
   return out.slice(0, MAX_AGENTS);
 }
 
-function ensureEvidenceLast(steps: PlanStep[]): PlanStep[] {
+function requiredSpecialist(baseline: ScoreResult): SpecialistId | undefined {
+  return baseline.signals.find(
+    (signal) =>
+      signal.weight >= 0.7 &&
+      SPECIALIST_IDS.includes(signal.agent as SpecialistId),
+  )?.agent as SpecialistId | undefined;
+}
+
+function ensureEvidenceLast(
+  steps: PlanStep[],
+  baseline: ScoreResult,
+): PlanStep[] {
   const withoutEvidence = steps.filter((step) => step.agent !== "evidence");
   if (withoutEvidence.length === 0) return steps;
   const existing = steps.find((step) => step.agent === "evidence");
@@ -438,7 +449,20 @@ function ensureEvidenceLast(steps: PlanStep[]): PlanStep[] {
       skills: SPECIALISTS.evidence.skills,
       tools: SPECIALISTS.evidence.tools,
     } satisfies PlanStep);
-  return [...withoutEvidence.slice(0, MAX_AGENTS - 1), evidence];
+  const required = requiredSpecialist(baseline);
+  const kept = [...withoutEvidence];
+  while (kept.length > MAX_AGENTS - 1) {
+    let dropAt = -1;
+    for (let index = kept.length - 1; index >= 0; index -= 1) {
+      if (kept[index].agent !== required) {
+        dropAt = index;
+        break;
+      }
+    }
+    if (dropAt === -1) break;
+    kept.splice(dropAt, 1);
+  }
+  return [...kept, evidence];
 }
 
 /**
@@ -452,11 +476,7 @@ function ensureBaselineSpecialist(
   baseline: ScoreResult,
   fallback: PlanStep[],
 ): PlanStep[] {
-  const required = baseline.signals.find(
-    (signal) =>
-      signal.weight >= 0.7 &&
-      SPECIALIST_IDS.includes(signal.agent as SpecialistId),
-  )?.agent as SpecialistId | undefined;
+  const required = requiredSpecialist(baseline);
   if (!required || steps.some((step) => step.agent === required)) return steps;
 
   const spec = SPECIALISTS[required];
@@ -500,7 +520,7 @@ async function makePlan(
   const fallback = defaultPlan(request);
   if (!chat) {
     return {
-      steps: ensureEvidenceLast(fallback),
+      steps: ensureEvidenceLast(fallback, baseline),
       rationale: fallbackRationale(fallback),
       source: "fallback",
       ms: Math.round(performance.now() - started),
@@ -542,6 +562,7 @@ async function makePlan(
     );
     const steps = ensureEvidenceLast(
       ensureBaselineSpecialist(normalized, baseline, fallback),
+      baseline,
     );
     return {
       steps,
@@ -551,7 +572,7 @@ async function makePlan(
     };
   } catch {
     return {
-      steps: ensureEvidenceLast(fallback),
+      steps: ensureEvidenceLast(fallback, baseline),
       rationale: fallbackRationale(fallback),
       source: "fallback",
       ms: Math.round(performance.now() - started),

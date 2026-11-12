@@ -719,6 +719,38 @@ describe("runOrchestrator", () => {
     }
   });
 
+  it("keeps the baseline specialist when the planner fills the plan", async () => {
+    const fiveAgents = [
+      { agent: "qris", task: "Periksa pembayaran." },
+      { agent: "link", task: "Periksa tautan." },
+      { agent: "identity", task: "Periksa identitas." },
+      { agent: "conversation", task: "Periksa eskalasi." },
+      { agent: "job", task: "Periksa lowongan." },
+    ];
+    const chat = serialChat(() => plannerCallWith(fiveAgents));
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+    const plan = result.events.find((event) => event.type === "plan");
+
+    expect(plan?.type).toBe("plan");
+    if (plan?.type !== "plan") return;
+    const ids = plan.agents.map((step) => step.agent);
+
+    expect(ids).toEqual([
+      "qris",
+      "link",
+      "identity",
+      "conversation",
+      "message",
+      "evidence",
+    ]);
+    expect(ids.filter((id) => id === "message")).toHaveLength(1);
+    expect(ids[ids.length - 1]).toBe("evidence");
+    expect(ids).not.toContain("job");
+  });
+
   it("runs the first specialist and skips the rest at the deadline", async () => {
     const chat = jest.fn(
       async (options: {
@@ -752,5 +784,19 @@ describe("runOrchestrator", () => {
       true,
     );
     expect(result.trace.degraded).toBe(true);
+
+    const agentEvents = result.events.filter(
+      (event) => event.type === "agent_start" || event.type === "agent_result",
+    );
+    for (const agent of result.trace.agents) {
+      if (agent.status !== "dilewati") continue;
+      const startIndex = agentEvents.findIndex(
+        (event) => event.type === "agent_start" && event.agent === agent.id,
+      );
+      expect(startIndex).toBeGreaterThanOrEqual(0);
+      const next = agentEvents[startIndex + 1];
+      expect(next?.type).toBe("agent_result");
+      expect(next?.type === "agent_result" ? next.agent : null).toBe(agent.id);
+    }
   });
 });
