@@ -54,7 +54,7 @@ export function CommanderCard({
   }, [waiting, startedAt]);
 
   return (
-    <div className="rounded-lg border border-line bg-panel px-2.5 py-2">
+    <div className="rounded-[20px] border border-line bg-panel px-3.5 py-3 shadow-panel">
       <div className="flex items-start gap-2">
         <Image
           src="/brand/agents/lumina.jpg"
