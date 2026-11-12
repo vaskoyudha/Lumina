@@ -266,8 +266,12 @@ d. The overview is explanatory; it is not a control surface and does not start
   `falsePositives 0`, modus classification 56/60, `slowestCpuMs 3.637`. The
   suite already pins 60/60 catches and zero false positives; `slowestCpuMs` is
   CPU time for the slowest single case, not wall clock.
-- Serial latency with a 40 ms stub specialist
+- Serial latency with a 40 ms stub specialist, from a single run
   (`LUMINA_LATENCY=1 npm test -- src/lib/orchestrator/serial-latency.test.ts`):
-  `twoAgentMs 156`, `sixAgentMs 258` from the `LATENCY` line. The same run
+  the planner is asked for 2 agents, and `ensureEvidenceLast` appends `evidence`,
+  so 3 agents execute (`message, qris, evidence`); the planner is asked for 6
+  and 6 execute (the evidence rule replaces the last planner choice). Measured
+  `twoAgentMs 162` and `sixAgentMs 256` from the `LATENCY` line. The same run
   confirms every `agent_start` is immediately followed by its own
-  `agent_result` at both sizes, so the crew really runs one at a time.
+  `agent_result`, and that the start/result event count equals twice the trace's
+  agent count at both sizes, so the crew really runs one at a time.
