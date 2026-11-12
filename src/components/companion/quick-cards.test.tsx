@@ -37,3 +37,32 @@ it("shows a measured run and reopens the conversation that produced it", async (
   await user.click(screen.getByRole("button", { name: "Buka percakapan" }));
   expect(resume).toHaveBeenCalledWith(17);
 });
+it("labels a saved account run and hides the resume action", async () => {
+  const user = userEvent.setup();
+  render(
+    <CompanionQuickCards
+      history={[
+        {
+          id: "message",
+          key: "run-saved-message",
+          sessionId: -1,
+          ms: 9000,
+          source: "akun",
+        },
+      ]}
+      onFeature={jest.fn()}
+      onOpenHistory={jest.fn()}
+      onResume={jest.fn()}
+    />,
+  );
+  expect(
+    screen.getByText("Pemeriksaan terakhir · 9000 ms"),
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Menu riwayat Mochi" }));
+  expect(
+    screen.getByRole("button", { name: "Lihat ringkasan" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Buka percakapan" }),
+  ).not.toBeInTheDocument();
+});
