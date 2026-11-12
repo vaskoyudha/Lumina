@@ -96,18 +96,20 @@ export function ProcessTrace({
     : !live
       ? "stopped"
       : plan
-        ? "preparing"
+        ? blocks.length > 0
+          ? "delegating"
+          : "preparing"
         : commander
           ? "recognising"
           : "reading";
 
-  const stepCount =
-    (plan?.agents.length ?? 0) +
-    blocks.reduce(
-      (total, block) => total + block.thoughts.length + block.tools.length,
-      0,
-    );
-  const subordinateCount = plan?.agents.length ?? blocks.length;
+  const visibleBlocks = blocks.filter(
+    (block) => block.end?.status !== "dilewati",
+  );
+  const stepCount = visibleBlocks.reduce(
+    (total, block) => total + 1 + block.thoughts.length + block.tools.length,
+    0,
+  );
 
   return (
     <details
@@ -151,7 +153,6 @@ export function ProcessTrace({
         <CommanderCard
           phase={phase}
           announcement={commander?.text}
-          agents={plan?.agents}
           source={commander?.source}
           startedAt={startedAt}
         />
@@ -183,48 +184,21 @@ export function ProcessTrace({
             aria-label="Agen di bawah komando Lumina"
             className="ml-1.5 flex flex-col gap-2.5 border-line border-l pl-3"
           >
-            <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
-              Sub-agen
-              {subordinateCount > 0 ? ` · ${subordinateCount}` : ""}
-            </p>
+            {visibleBlocks.length > 0 ? (
+              <p className="text-[10px] font-medium tracking-wide text-dim uppercase">
+                Agen dipanggil · {visibleBlocks.length}
+              </p>
+            ) : (
+              <p className="text-[11px] text-dim">
+                {blocks.length > 0
+                  ? "Tidak ada agen yang sempat melapor."
+                  : "Menyiapkan agen…"}
+              </p>
+            )}
 
-            {plan ? (
-              <section
-                aria-label="Rencana agen"
-                className="rounded-lg border border-line bg-panel px-2.5 py-2"
-              >
-                <p className="text-[10.5px] font-medium tracking-wide text-dim uppercase">
-                  Rencana agen
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {plan.agents.map((agent) => (
-                    <span
-                      key={agent.agent}
-                      className="inline-flex items-center gap-1 rounded-full border border-line bg-panel-2 px-2 py-0.5 text-[10px] text-txt"
-                    >
-                      <span className="font-medium">
-                        {AGENT_IDENTITIES[agent.agent].displayName}
-                      </span>
-                      <span className="text-dim">
-                        {AGENT_IDENTITIES[agent.agent].field}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-                <details className="mt-1.5 rounded border border-line bg-panel-2 px-2 py-1">
-                  <summary className="cursor-pointer select-none text-[10.5px] text-dim">
-                    Alasan rencana
-                  </summary>
-                  <p className="mt-1 font-serif text-[14px] text-txt leading-[1.7]">
-                    {plan.rationale}
-                  </p>
-                </details>
-              </section>
-            ) : null}
-
-            {blocks.length > 0 ? (
+            {visibleBlocks.length > 0 ? (
               <ol className="flex flex-col gap-2.5">
-                {blocks.map((block, index) => (
+                {visibleBlocks.map((block, index) => (
                   <li
                     key={block.start.agent}
                     style={{
@@ -426,6 +400,17 @@ export function ProcessTrace({
                   </li>
                 ))}
               </ol>
+            ) : null}
+
+            {plan ? (
+              <details>
+                <summary className="cursor-pointer select-none text-[10.5px] text-dim">
+                  Alasan rencana
+                </summary>
+                <p className="mt-1 font-serif text-[14px] text-txt leading-[1.7]">
+                  {plan.rationale}
+                </p>
+              </details>
             ) : null}
           </section>
         ) : null}

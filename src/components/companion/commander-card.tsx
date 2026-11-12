@@ -4,13 +4,13 @@ import { Check, Loader2 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import Image from "next/image";
 import * as React from "react";
-import type { PlanStep } from "@/lib/contracts/orchestrator";
 import { cn } from "@/lib/utils";
 
 export type CommanderPhase =
   | "reading"
   | "recognising"
   | "preparing"
+  | "delegating"
   | "done"
   | "stopped";
 
@@ -18,6 +18,7 @@ const STATUS: Record<CommanderPhase, string> = {
   reading: "Membaca pesan dan lampiran…",
   recognising: "Mengenali pola",
   preparing: "Menyiapkan agen",
+  delegating: "Menjalankan agen",
   done: "Selesai",
   stopped: "Berhenti sebelum selesai",
 };
@@ -25,13 +26,11 @@ const STATUS: Record<CommanderPhase, string> = {
 export function CommanderCard({
   phase,
   announcement,
-  agents = [],
   source,
   startedAt,
 }: {
   phase: CommanderPhase;
   announcement?: string;
-  agents?: PlanStep[];
   source?: "model" | "fallback";
   /** Epoch ms when the run left the client; null hides the counter. */
   startedAt?: number;
@@ -81,9 +80,7 @@ export function CommanderCard({
                   )}
                 />
               )}
-              {phase === "preparing" && agents.length > 0
-                ? `Menyiapkan ${agents.length} agen`
-                : STATUS[phase]}
+              {STATUS[phase]}
               {waiting && startedAt !== undefined ? (
                 <span className="tabular">
                   · {(elapsed / 1000).toFixed(1)} detik
