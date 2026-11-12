@@ -9,6 +9,7 @@ import type {
 } from "@/lib/contracts/orchestrator";
 import { SPECIALIST_IDS } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
+import { MODUS_BY_ID } from "@/lib/modus";
 import {
   SPECIALISTS,
   type SpecialistSpec,
@@ -69,8 +70,7 @@ const PlannerOutputSchema = z
 
 const MAX_COMMANDER_TOKENS = 220;
 const SCORE_IN_TEXT = /\b\d{1,3}\s*\/\s*100\b|\bskor\s*\d{1,3}\b/i;
-const BAND_IN_TEXT =
-  /\b(?:band|risiko)\s+(?:bersih|rendah|mencurigakan|tinggi)\b/i;
+const BAND_IN_TEXT = /\b(?:bersih|rendah|mencurigakan|tinggi)\b/i;
 
 const CommanderOutputSchema = z
   .object({
@@ -87,9 +87,11 @@ interface CommanderBrief {
 }
 
 function fallbackCommander(baseline: ScoreResult): string {
-  const modus = baseline.modus?.trim();
-  return modus
-    ? `Saya melihat pola yang sering muncul pada ${modus}. Saya akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.`
+  const label = baseline.modus
+    ? MODUS_BY_ID.get(baseline.modus)?.nama.trim()
+    : undefined;
+  return label
+    ? `Saya melihat pola yang sering muncul pada ${label}. Saya akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.`
     : "Saya sudah membaca pesan ini dan akan memanggil agen yang paling relevan untuk memeriksanya lebih dalam.";
 }
 
