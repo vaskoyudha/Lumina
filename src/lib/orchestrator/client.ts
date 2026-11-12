@@ -86,6 +86,9 @@ export async function streamOrchestrator(
         if (event.type === "score" && event.result) {
           score = event.result as ScoreResult;
         }
+        if (event.type === "score_decision" && event.result) {
+          score = event.result as ScoreResult;
+        }
         if (event.type === "synthesis_delta") text += event.text;
         if (event.type === "synthesis_end") text = event.text;
         if (event.type === "trace") {

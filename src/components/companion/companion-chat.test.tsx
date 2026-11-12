@@ -670,6 +670,47 @@ describe("CompanionChat · verdict before voice", () => {
     );
   });
 
+  it("applies the consensus score returned by the orchestrator", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockImplementationOnce(async () => ({
+      outcome: "model" as const,
+      text: "Pesan ini 78/100.",
+      events: [],
+      trace: null,
+      score: {
+        score: 78,
+        risk: "tinggi",
+        signals: [
+          {
+            label: "Kelebihan transfer",
+            weight: 0.5,
+            evidence: "transfer Rp1.500.000",
+            agent: "marketplace",
+            source: "consensus",
+          },
+        ],
+        modus: "jual-beli-palsu",
+        advice: ["Jangan mengembalikan dana sebelum dana masuk."],
+        relatedModule: 1,
+        hardOverride: false,
+        source: "consensus",
+        baselineScore: 0,
+      },
+    }));
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+
+    await enterMessage(
+      user,
+      "Kak, saya sudah transfer Rp1.500.000 untuk barang Rp1.000.000. Kelebihannya tolong kembalikan ke rekening saya.",
+    );
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    const card = await screen.findByTestId("score-card");
+    expect(within(card).getByText("78")).toBeInTheDocument();
+  });
+
   it("announces the settled summary after opening the Agents view mid-run", async () => {
     let resolveReply: (value: unknown) => void = () => undefined;
     fetchMock.mockImplementation(
