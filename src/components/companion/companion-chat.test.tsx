@@ -594,6 +594,39 @@ describe("CompanionChat · verdict before voice", () => {
     expect(within(log).getByText(/menyusun jawaban/i)).toBeInTheDocument();
   });
 
+  it("keeps the previous panel result while a plain turn streams", async () => {
+    const orchestrate = jest.mocked(orchestratorClient.streamOrchestrator);
+    orchestrate.mockImplementationOnce(async () => ({
+      outcome: "model" as const,
+      text: "Jawaban agen.",
+      events: [],
+      trace: null,
+      score: null,
+    }));
+
+    const user = userEvent.setup();
+    render(<CompanionChat orchestrator />);
+
+    await sendApk(user);
+    await screen.findByText("Jawaban agen.");
+    await screen.findByRole("list", { name: /temuan terdeteksi/i });
+    expect(screen.getAllByText("File APK via WhatsApp").length).toBeGreaterThan(
+      0,
+    );
+
+    await enterMessage(user, "apa itu phishing?");
+    await user.click(screen.getByRole("button", { name: /^kirim$/i }));
+
+    const pending = await screen.findAllByText(/menyusun jawaban/i);
+    expect(pending.length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("list", { name: /temuan terdeteksi/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("File APK via WhatsApp").length).toBeGreaterThan(
+      0,
+    );
+  });
+
   it("announces the settled summary after opening the Agents view mid-run", async () => {
     let resolveReply: (value: unknown) => void = () => undefined;
     fetchMock.mockImplementation(

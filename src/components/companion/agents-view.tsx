@@ -40,6 +40,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { STAGE_LABEL } from "@/lib/contracts/agent-run";
+import { RISK_LABEL } from "@/lib/contracts/score";
+import { MODUS_BY_ID } from "@/lib/modus";
 import type { AgentRunSummary } from "@/lib/orchestrator/summary";
 import { cn } from "@/lib/utils";
 
@@ -173,10 +175,10 @@ export function AgentsView({
               Pemeriksaan terakhir
             </p>
             <span className="rounded-full bg-brand-soft px-2 py-0.5 font-mono text-[9.5px] text-brand-ink">
-              {latestRun.modus}
+              {MODUS_BY_ID.get(latestRun.modus)?.nama ?? latestRun.modus}
             </span>
             <span className="text-[10px] text-dim">
-              {latestRun.band} ·{" "}
+              {RISK_LABEL[latestRun.band]} ·{" "}
               {latestRun.totalMs >= 1000
                 ? `${(latestRun.totalMs / 1000).toFixed(1).replace(".", ",")} s`
                 : `${latestRun.totalMs} ms`}
@@ -188,7 +190,7 @@ export function AgentsView({
                 AGENT_DISPLAY_NAME[agent.id as keyof typeof AGENT_DISPLAY_NAME];
               return (
                 <li
-                  key={`${agent.id}-${agent.ms}`}
+                  key={agent.id}
                   className="flex items-center gap-1.5 rounded-full border border-line bg-panel-2 px-2 py-0.5 text-[10px]"
                 >
                   <span className="font-medium text-txt">

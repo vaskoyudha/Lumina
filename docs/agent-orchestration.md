@@ -50,8 +50,9 @@ run_start → commander_say → score → plan → agent_start/agent_result (ser
 
 Specialists run one at a time under `LUMINA_ORCHESTRATOR_DEADLINE_MS` (default
 120000 for serial runs, maximum 180000); agents not started by the deadline are
-reported as `dilewati`. The commander sees the OCR'd message and the baseline
-modus only; the band is revealed after synthesis.
+reported as `dilewati`. The commander sees the OCR'd message, prior turns, and
+the baseline score/modus/risk; it never states a score or band itself, and the
+band is revealed after synthesis.
 
 ## The crew
 
