@@ -99,14 +99,8 @@ export function ProcessTrace({
     );
 
   return (
-    <details
-      open
-      className={cn(
-        "group max-w-[92%] rounded-[12px] border border-line bg-panel-2 px-3 py-2 text-[12px]",
-        className,
-      )}
-    >
-      <summary className="flex cursor-pointer select-none items-center gap-2 font-medium">
+    <details open className={cn("group max-w-[92%] text-[12px]", className)}>
+      <summary className="flex cursor-pointer select-none items-center gap-2 py-1 font-medium">
         <Workflow aria-hidden className="size-3.5" />
         Proses agen
         <span className="font-normal text-dim">{stepCount} langkah</span>
@@ -125,7 +119,7 @@ export function ProcessTrace({
         />
       </summary>
 
-      <div className="mt-2 flex flex-col gap-2">
+      <div className="mt-2 flex flex-col gap-2.5">
         <CommanderCard
           phase={phase}
           announcement={commander?.text}
@@ -167,11 +161,9 @@ export function ProcessTrace({
             </details>
           </section>
         ) : null}
-
-        <div aria-hidden className="mx-auto h-3 w-px bg-line" />
       </div>
 
-      <ol className="mt-2 flex flex-col gap-2">
+      <ol className="mt-2 flex flex-col gap-2.5">
         {blocks.map((block) => (
           <li
             key={block.start.agent}
