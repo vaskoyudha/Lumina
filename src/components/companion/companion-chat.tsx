@@ -117,6 +117,7 @@ import {
   isWebLookupQuestion,
   type Lane,
   planTurn,
+  refersToPriorAttachment,
   wantsSafetyCheck,
 } from "@/lib/companion/turn";
 import { transcribeImages } from "@/lib/companion/vision-client";
@@ -207,6 +208,12 @@ interface Turn {
   visionNote?: string;
   /** Local transcript for an attachment the user asked about. Never from a check. */
   attachmentText?: string;
+  /**
+   * Local OCR text kept so a later turn that refers back to the screenshot can
+   * be answered. Never shown; the model sees it only when the reader explicitly
+   * points at the earlier attachment.
+   */
+  recallText?: string;
   /** A local note when an attachment could not be read. */
   attachmentNote?: string;
   /** True when this turn asked about attachment content, not its safety. */
@@ -924,10 +931,28 @@ export function CompanionChat({
         const hasImages = !tutorModule && attachments.some(isImageAttachment);
         const hasAttachments = !tutorModule && attachments.length > 0;
         const hasLinks = !tutorModule && extractLinks(text).length > 0;
+        /*
+         * A text-only turn can still be about a screenshot the reader sent on
+         * an earlier turn ("the screenshot I just gave you"). The local OCR
+         * text is kept on that turn; replay it only when the wording points
+         * back at it and nothing new was attached. This is the same content
+         * question exception as an attachment in the current turn, so the
+         * checked message itself still never becomes chat history.
+         */
+        const recalledText =
+          !tutorModule &&
+          !hasAttachments &&
+          !hasLinks &&
+          refersToPriorAttachment(text)
+            ? [...(active?.turns ?? [])]
+                .reverse()
+                .find((turn) => turn.role === "companion" && turn.recallText)
+                ?.recallText
+            : undefined;
         const contentQuestion =
           !options.force &&
-          (hasAttachments || hasLinks) &&
-          isContentQuestion(text) &&
+          (hasAttachments || hasLinks || !!recalledText) &&
+          (isContentQuestion(text) || !!recalledText) &&
           !wantsSafetyCheck(text);
         const safetyCheck =
           !options.force &&
@@ -1032,9 +1057,11 @@ export function CompanionChat({
           : null;
         const readMs = performance.now() - readStarted;
         const links = hasLinks ? extractLinks(text) : [];
-        const modelAttachments = readResult
-          ? toAttachmentContext(readResult.reads)
-          : [];
+        const modelAttachments = recalledText
+          ? [{ kind: "image" as const, text: recalledText.slice(0, 6000) }]
+          : readResult
+            ? toAttachmentContext(readResult.reads)
+            : [];
 
         const scored = [
           transcription.text,
@@ -1312,6 +1339,13 @@ export function CompanionChat({
                       ocrConfidence: transcription.text
                         ? extractEntities(transcription.text).confidence
                         : undefined,
+                      recallText:
+                        transcription.items.length > 0
+                          ? transcription.items
+                              .map((item) => item.text)
+                              .join("\n\n")
+                              .slice(0, 6000)
+                          : undefined,
                       trace: openTrace ?? undefined,
                     },
                   ],
@@ -2640,7 +2674,7 @@ export function CompanionChat({
                 onScroll={sticky.onScroll}
                 style={{ paddingBottom: composerHeight + 8 }}
                 className={cn(
-                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
+                  "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 [scrollbar-gutter:stable] motion-safe:animate-in motion-safe:fade-in-0 duration-150 sm:px-6",
                   contentTop,
                 )}
                 role="log"
@@ -2695,7 +2729,8 @@ export function CompanionChat({
                                 key={attachment.id}
                                 className="overflow-hidden rounded-sm border border-line bg-panel-2"
                               >
-                                {isImageAttachment(attachment) ? (
+                                {isImageAttachment(attachment) &&
+                                attachment.url ? (
                                   <span className="block size-20">
                                     {/* biome-ignore lint/performance/noImgElement: a blob: URL from a local File cannot go through next/image */}
                                     <img
