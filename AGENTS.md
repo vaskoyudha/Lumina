@@ -1,418 +1,268 @@
-# AGENTS.md — Lumina
+# Repository Guidelines
 
-**Keputusan produk 9 November 2026:** Darurat, triage, dan ekspor PDF dihapus penuh atas permintaan pemilik produk. Penggantinya `/komunitas`: diskusi publik, posting/balasan dengan akun, PostgreSQL, serta laporan dan peninjauan moderator. Aturan lama tentang mempertahankan `/darurat` tidak berlaku lagi. Kontrak scoring dan privasi pemeriksaan tetap berlaku. Lihat `docs/community.md`.
+**Repository:** `Lumina` — an Indonesian anti-scam learning companion. This file is the binding guide for AI coding assistants. Read it before changing code, then consult `docs/plan.md` (product truth), `docs/architecture/`, and the nearest module tests.
 
-**Aturan branch (pemilik produk, 9 November 2026):** jangan mengerjakan perubahan langsung di `main`. Buat branch `codex/<nama-pekerjaan>` sebelum menyunting kode.
+## Project Overview
 
-**Pengecualian database, 9 November 2026:** materi Belajar, kuis, dan skenario Simulasi dibaca dari PostgreSQL. Progres belajar dan hasil simulasi disimpan per akun, bukan localStorage. Percakapan dan pesan yang diperiksa tetap tidak disimpan. Lihat `docs/learning-database.md`.
+Lumina helps readers inspect suspicious messages, learn scam patterns, practise simulations, and discuss cases in a public community. The product decisions of 9 November 2026 are binding:
 
-`main` adalah cabang integrasi; branch stream lama sudah di-merge. Aturan di file
-ini mengikat semua agent. Baca `docs/plan.md` (sumber kebenaran produk),
-`STATUS.md` (status per irisan, terakhir 10 November), dan
-`docs/plans/execution-2026-11-10.md` (apa yang benar-benar dipasang versus
-ditunda) sebelum menyentuh kode.
+- Emergency mode, triage, and PDF export were removed. `/komunitas` is the replacement surface.
+- Learning material, quizzes, and simulation scenarios are read from PostgreSQL. Per-account progress and simulation results are stored in PostgreSQL; checked messages and conversations remain on the device.
+- The deterministic scoring engine is the verdict source. The LLM writes language, not scores. Consensus may set a final score only when at least two agents agree on the same pattern and cite evidence; the engine score stays visible.
+- Do not edit `main` directly. Create `codex/<job-name>` before editing. `main` is the integration branch.
+- Checked message text, attachments, and transcripts must not leave the device. See “Privacy invariants” below before touching AI payloads.
 
-## Stack — jangan diganti tanpa kesepakatan
+Main surfaces:
 
-| Lapisan | Pilihan | Versi terpasang |
+| Surface | Route group | Purpose |
 |---|---|---|
-| Framework | Next.js App Router + Turbopack + Cache Components | 16.4.5 |
-| UI runtime | React | 19.3 |
-| Bahasa | TypeScript (strict) | 5.x |
-| Styling | Tailwind CSS v4 (`@theme inline`) | 4.x |
-| Komponen | shadcn/ui, base **radix**, style `radix-nova` | CLI 4.x |
-| Ikon | `lucide-react` | 1.x |
-| Validasi | `zod` | 4.x |
-| Database | PostgreSQL via `pg` (pool async) | 18.x (Compose 18.6) |
-| Lint/format | Biome (bukan ESLint) | 2.x |
-| Test | Jest via `next/jest` + React Testing Library | 30.x |
+| Marketing | `src/app/(marketing)` | Landing page and public product story |
+| Account | `src/app/(app)` | Profile and account progress |
+| Workspace | `src/app/(chat)` | `/companion`, `/agen`, `/belajar`, `/simulasi`, `/komunitas` |
+| Admin | `src/app/admin` | Curriculum workbench; deliberately unlinked from public nav |
+| Studio | `src/app/studio` | Allowlisted coding agent (`STUDIO_ALLOWED_IDS`) |
+| Auth | `src/app/masuk`, `src/app/daftar` | Email/password and Google sign-in |
 
-Alasan singkat: App Router karena `routing` di plan sudah berbentuk App Router
-dan Streaming cocok untuk panel bukti yang mengisi bertahap. Tailwind v4 karena
-token bisa dideklarasikan sekali di CSS tanpa file config. Radix karena
-`asChild` adalah API yang sudah stabil untuk komponen yang membungkus `Link`.
-Biome karena satu tool untuk format + lint, dan `next lint` sudah deprecated.
-PostgreSQL karena akun, sesi, dan penghitung limit harus bertahan lintas restart
-dan dipakai bersama; progres belajar serta hasil simulasi tersimpan per akun, sedangkan percakapan tetap di perangkat.
+## Architecture & Data Flow
 
-## Perintah
+The app uses Next.js 16 App Router with Turbopack and Cache Components, React 19, strict TypeScript, Tailwind v4, and PostgreSQL through `pg`.
+
+```text
+Browser
+  ├─ RSC pages             src/app/**/{page,layout}.tsx
+  ├─ Server Actions        src/lib/{auth,community,learning,companion}/actions.ts
+  └─ Route handlers        src/app/api/**/route.ts
+        └─ src/lib/server/request.ts  validate → authorize → rate-limit → deadline
+              └─ domain modules in src/lib/
+```
+
+- **Route handlers stay thin.** Parse with Zod, enforce ownership/rate limits, set an abort deadline, then delegate. Shared request helpers live in `src/lib/server/request.ts`; LLM egress lives in `src/lib/server/llm.ts`.
+- **Companion path:** the browser scores locally with `src/lib/scoring/score.ts`, routes the turn in `src/lib/companion/turn.ts`, builds a privacy-filtered payload in `src/lib/companion/{answer-client,voice-client}.ts`, then calls `/api/companion/answer` or `/api/companion/orchestrate`.
+- **Orchestrator:** `planner → specialists → synthesizer → score decision → consensus` in `src/lib/orchestrator/loop.ts`. It streams events to the client; synthesis deltas are score-safe and final text arrives in `synthesis_end`.
+- **Offline fallback:** when `LUMINA_LLM_URL` or `LUMINA_LLM_MODEL` is empty, the companion uses deterministic templates and AI routes return `503`/`not-configured`. This is a demo path, not a defect.
+- **Persistence:** PostgreSQL stores accounts, sessions, limits, learning/simulation progress, community data, and companion metadata. Content is loaded from `content/competition.json` through `npm run db:seed`, which runs `scripts/seed-content.mjs` and validates `ContentBundleSchema`; the app never creates tables.
+
+## Key Directories
+
+| Path | Purpose |
+|---|---|
+| `src/app/(marketing)` | Landing page, theme slider, public shell |
+| `src/app/(app)` | Signed-in app shell and profile |
+| `src/app/(chat)` | Workspace surfaces with their own sidebars and scroll |
+| `src/app/admin` | Curriculum authoring; export + commit, not a publish button |
+| `src/app/api` | AI, auth, account/session, link/file verification, loker, health |
+| `src/components/ui` | shadcn/radix primitives; do not hand-edit except registry fixes |
+| `src/components/companion` | Conversation state machine, evidence panel, agent run, composer |
+| `src/components/{belajar,simulasi,community,shell,auth,brand}` | Surface and shared shell components |
+| `src/lib/contracts` | Frozen cross-stream schemas; additive changes only |
+| `src/lib/scoring` | Deterministic detectors, score engine, evaluation corpus |
+| `src/lib/orchestrator` | Planner, specialists, consensus, score decision, streaming |
+| `src/lib/companion` | Turn routing, fallback replies, SSE clients, history metadata |
+| `src/lib/auth`, `src/lib/server` | Database pool, sessions, OAuth, request limits, LLM helpers |
+| `src/lib/{learning,content,simulasi,community,loker,studio,verify,evidence}` | Domain modules |
+| `src/data` | Static curriculum, patterns, modus/tactics, official domains |
+| `src/styles` | Token layers for app, landing, and Powder sections |
+| `content/` | Seed bundle (`competition.json`), validated by schema |
+| `migrations/` | Numbered SQL; applied only by `npm run db:migrate` |
+| `scripts/` | Migration, cleanup, seeds, SQLite import, standalone linking, work report |
+| `scanner/` | Vendored career-ops engine; run as subprocess; do not edit |
+| `deploy/` | Caddy, database init, backup |
+| `docs/` | Architecture, product plan, deployment, security/privacy, testing |
+| `.agents/skills/` | Shared skills read by OpenCode, Claude Code, Codex, Hermes |
+
+## Subdirectory Guides
+
+These subtrees carry a deeper `AGENTS.md`; read the nearest one before editing there. Root rules still apply.
+
+| Guide | Owns |
+|---|---|
+| `src/app/AGENTS.md` | Route surfaces, groups, RSC/Suspense/`instant`, hex exceptions, moderation 404 |
+| `src/app/api/AGENTS.md` | Thin HTTP edges, handler→lib map, body/deadline/rate guards, privacy gating |
+| `src/lib/scoring/AGENTS.md` | Verdict production, detectors, accumulate, `finalize` caps, eval |
+| `src/lib/orchestrator/AGENTS.md` | Planner→specialists→synthesis→score→consensus, score-safe streaming, consensus gate |
+| `src/lib/companion/AGENTS.md` | Lane routing, fallbacks, attachment/vision privacy, SSE clients, history metadata |
+| `src/lib/contracts/AGENTS.md` | Frozen Zod schemas, additive-only, strict outbound payloads |
+| `src/lib/loker/AGENTS.md` | Scanner subprocess, board adapters, deterministic audit/trust/fee rules |
+| `src/lib/auth/AGENTS.md` | pg pool, hashed sessions, PKCE OAuth, server-only boundaries |
+| `src/lib/community/AGENTS.md` | Posts/replies/moderation SQL, session authorship, allowlist moderation |
+| `src/lib/server/AGENTS.md` | Request limits/abort, single LLM egress, DNS-pinned SSRF guard |
+| `src/lib/learning/AGENTS.md` | Progress/quizzes/SM-2 review, advisory-lock transactions, pure scheduling |
+| `src/components/companion/AGENTS.md` | Chat state machine, display-only scores, panel algebra, honesty rules |
+| `src/components/belajar/AGENTS.md` | Course reader/quiz/practice, content-as-prop, “Segera” labelling |
+| `src/components/marketing/AGENTS.md` | Landing tokens/theme, scripted hero demo, shared auth, generated Powder |
+| `src/components/ui/AGENTS.md` | shadcn radix-nova registry, `asChild`, no hand-edits, dead `glass-folder` |
+| `src/data/AGENTS.md` | Compile-time curriculum/patterns/tactics/domains, schema coupling |
+
+## Development Commands
+
+Requires **Node >= 24** and **npm** (`package-lock.json`; use `npm ci` for clean installs).
 
 ```bash
-npm run dev            # dev server (Turbopack)
-npm run verify         # typecheck + lint + test + build — gate sebelum commit
-npm run test           # jest sekali jalan
-npm run test:watch     # jest --watch
-npm test -- src/lib/scoring/score.test.ts   # satu file
-npm test -- -t "nama test"                  # satu test
-npm run test:coverage  # jest --coverage
-npm run typecheck      # tsc --noEmit
-npm run lint:fix       # biome check --write (format + lint)
-npm run format         # biome format --write
-npm run db:migrate     # jalankan migrasi; DATABASE_URL harus menunjuk DB tujuan
-npm run db:cleanup     # hapus sesi/state OAuth/penghitung kedaluwarsa
-npm run db:import-sqlite -- <backup.sqlite>  # cutover akun, sumber read-only
-npm run db:seed        # isi modul/kuis/skenario dari content/competition.json (aditif)
-npm run db:seed -- content/competition.json --replace   # timpa baris bernama
-npm run db:seed:community          # seed topik komunitas
-npm run db:seed:community:agents   # seed agen komunitas
-npm run wip            # semua worktree: berkas kotor + commit belum di-push
+npm run dev                 # Next dev server with Turbopack
+npm run build               # next build + standalone symlink repair
+npm run start               # production server
+npm run verify              # typecheck → Biome → Jest → build (release gate)
+npm run typecheck           # tsc --noEmit
+npm run lint                # biome check
+npm run lint:fix            # biome check --write
+npm run format              # biome format --write
+
+npm test                    # all Jest suites
+npm test -- src/lib/scoring/score.test.ts   # one file
+npm test -- -t "nama test"  # one test by name
+npm test -- --runInBand     # serial; required style for shared DB suites
+npm run test:watch
+npm run test:coverage       # informational; no coverage threshold
+
+npm run db:migrate          # applies migrations; DATABASE_URL must target the DB
+npm run db:seed             # additive seed from content/competition.json
+npm run db:seed -- content/competition.json --replace  # replace named rows
+npm run db:seed:community
+npm run db:seed:community:agents
+npm run db:cleanup
+npm run db:import-sqlite -- <backup.sqlite>
+npm run wip                 # dirty files + unpushed commits across all worktrees
 ```
 
-`npm run verify` harus lulus sebelum commit. Kalau gagal, perbaiki — jangan
-melewati gate.
+- `db:*` scripts load `.env.local` with `node --env-file-if-exists`; they do not load `.env.production` locally.
+- `npm run verify` is the only release gate; there is no CI.
+- Migrations are a separate release step. The app and container entrypoint never create tables.
+- Migration files are applied in lexicographic filename order by `scripts/migrate.mjs` and recorded in `schema_migrations` by full filename; an advisory lock prevents concurrent runs. There are no down migrations, never rename an applied file, and note that duplicate numeric prefixes exist (`005`, `006`, `008`). Deploy the migration before the code that needs it.
+- Before `git switch`/`git checkout` in this shared checkout, run `npm run wip`. Commit per path (`git commit -- <files>`) and push a branch once a slice works.
 
-Sebelum `git switch`/`git checkout` di checkout bersama, jalankan `npm run wip`.
-Checkout ini dipakai beberapa stream sekaligus, jadi suntingan yang belum
-di-commit ikut pindah branch dan tampak "hilang". Commit per path
-(`git commit -- <berkas>`) dan push branch segera setelah satu irisan
-berfungsi, supaya branch switch, reset, atau `git add -A` dari sesi lain tidak
-bisa menyembunyikannya.
+## Code Conventions & Common Patterns
 
-Selain gate, ada dua jebakan:
+### Naming and layout
 
-a. `biome.json` mengecualikan `src/components/marketing/powder/sections`,
-   `src/styles/powder-{framer,fonts}.css`, `src/data/powder`, `scanner/`, dan
-   `.scan-data/`. `lint:fix` tidak memformat berkas itu; sunting dengan tangan,
-   pertahankan kelas `framer-*`, dan jangan memformat engine vendored.
-b. Tangkapan layar review di `.opencode/` (PNG, `shots/`, `walk-*/`) bukan
-   source; jangan ikut di-commit. Yang dilacak di sana hanya symlink `skills/`.
+- Kebab-case files, PascalCase components/types, `@/*` for `src/*`.
+- Tests sit beside source: `src/**/*.test.ts?(x)`.
+- Product vocabulary is Indonesian (`ScoreResult.risk`, `signals`, `modus`, `periksa`); infrastructure names are English.
+- Keep route groups meaningful: do not add `(app)/page.tsx` (it collides with `/`).
 
-### Jebakan Next 16 di repo ini
+### Server/client boundaries
 
-a. `cacheComponents` aktif, jadi `export const runtime` / `export const dynamic`
-   di route atau page ditolak. Halaman dinamis memakai `export const instant =
-   false` (lihat `src/app/(chat)/belajar/[modul]/page.tsx` dan
-   `src/app/admin/[no]/page.tsx`); route handler tanpa segment config (lihat
-   `src/app/api/companion/answer/route.ts`). Route yang benar-benar butuh
-   permintaan dinamis memakai `await connection()` di dalam handler
-   (`src/app/api/health/route.ts`).
-b. Membaca cookie di layout membuat semua rute dinamis. Bungkus pembaca sesi
-   dalam `Suspense` seperti `NavWithSession`
-   (`src/components/shell/nav-with-session.tsx`).
-c. Baca panduan versi ini di `node_modules/next/dist/docs/` sebelum memakai API
-   Next yang kamu hafal dari versi lama (lihat blok di akhir file).
+- Add `"use client"` only when hooks or browser APIs are needed.
+- Add `import "server-only"` to DB/secret modules; tests mock it with `jest.mock("server-only", () => ({}), { virtual: true })`.
+- Wrap session/cookie readers in `Suspense` (see `src/components/shell/nav-with-session.tsx`) so a layout read does not make every route dynamic.
+- Route handlers validate body size (`readJson`), schema (Zod), ownership/session, rate limits, and deadline before calling domain code.
 
-## Env dan lapisan LLM
+### Score ownership and contracts
 
-`.env.example` adalah daftar variabel; `.env.local` tidak di-commit.
+- `src/lib/scoring/score.ts` is the only score producer. Do not invent or adjust `score`, `risk`, or `signals` in components, routes, or prompts.
+- `riskFor()` in `src/lib/contracts/score.ts` is the only bander and `RISK_TOKEN` the only color map. The orchestrator may re-author a score only on ≥2-agent grounded consensus and must keep `baselineScore`.
+- `src/lib/contracts/**` is frozen. Prefer additive fields; announce changes because all surfaces consume them.
+- Outbound AI schemas are `.strict()` at every level and must not be able to carry the checked message or `Signal.evidence`.
+- OTP/PIN/password requests force the high-risk band. Model consensus cannot override that.
 
-- `DATABASE_URL` — koneksi PostgreSQL runtime; jalankan `npm run db:migrate` sebelum app. Aplikasi tidak membuat tabel otomatis; pool maksimal lima koneksi per proses.
-- `TEST_DATABASE_URL` — database khusus pengujian (nama berakhiran `_test`, host/nama berbeda dari `DATABASE_URL`); tanpa ini suite integrasi PostgreSQL dilewati. Saat terisi, Jest memaksa `maxWorkers: 1` karena suite mereset database yang sama.
-- `AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth; callback = `AUTH_URL + /api/auth/google/callback`. Lihat `docs/auth.md`.
-- `LUMINA_DEMO_EMAIL`, `LUMINA_DEMO_PASSWORD` — opsional; tombol akun demo di `/masuk` hanya membaca keduanya di server. Kosongkan di lingkungan yang tidak boleh punya akun bersama.
-- `LUMINA_AI_GLOBAL_LIMIT` — batas AI global per menit (template Compose 100; kode jatuh ke 200 bila kosong).
-- `LUMINA_LLM_FALLBACK_MODEL`, `LUMINA_LLM_REASONING_EFFORT`,
-  `LUMINA_LLM_FALLBACK_REASONING_EFFORT` — retry 429/5xx ke model kedua dan pin
-  `reasoning_effort`; biarkan kosong untuk model yang menolak `none`.
-- `LUMINA_LLM_LANES`, `LUMINA_LLM_LANE_KEY` — lane egress tambahan (base URL
-  opencode2api dipisah koma + kunci bersama).
-- `LUMINA_COMPANION_ORCHESTRATOR` — default aktif: planner → spesialis →
-  synthesizer. Set `0` untuk kembali ke satu panggilan suara (mis. tanpa
-  endpoint chat-completions). `LUMINA_ORCHESTRATOR_DEADLINE_MS`
-  (default 120000; maksimum 180000) membatasi seluruh run serial; timer abort dan
-  kebijakan lewati agen memakai nilai yang sama.
-- `LUMINA_CONSENSUS_SCORE` — default aktif: Lumina boleh menetapkan skor akhir
-  setelah minimal dua agen sepakat pada pola yang sama dan mengutip bukti. Set
-  `0` untuk mempertahankan skor engine.
-- `URLVET_API_URL` — verifikasi tautan opt-in. Kosong = `https://api.url.vet`
-  publik; `off` mematikan. Hanya URL yang dikirim.
-- `VERIFY_LINK`, `VERIFY_FILE` — reputasi tautan/berkas lewat scanner; default
-  mati, isi `on` untuk mengaktifkan. Verifikasi berkas hanya mengirim SHA-256.
-- `COMMUNITY_MODERATOR_IDS` — UUID akun yang boleh meninjau laporan komunitas.
-- `STUDIO_ALLOWED_IDS`, `STUDIO_WORKSPACE_ROOT`, `STUDIO_APPEND_PROMPT` —
-  allowlist UUID untuk `/studio`, akar workspace per akun (di luar repo), dan
-  instruksi tambahan system prompt.
-- `LOKER_SCAN_DATA_DIR` — akar data pemindai lowongan (default `<cwd>/.scan-data`;
-  di container `/app/.scan-data`). Harus bisa ditulis proses aplikasi.
-- `LOKER_PREWARM_INTERVAL_MS` — jeda pemanasan korpus lowongan di latar belakang
-  (default 21600000 = 6 jam; `0` mematikan). Pemanasan dimulai
-  `src/instrumentation.ts` dan memakai kunci advisory yang sama dengan tombol
-  "Pindai ulang", jadi keduanya tidak pernah memindai bersamaan.
-- `TRUST_PROXY` — hanya `true` di belakang Caddy yang menimpa `X-Lumina-Client-IP`; tanpa itu semua pengguna anonim berbagi satu kunci limit.
-- `LUMINA_LLM_URL`, `LUMINA_LLM_MODEL`, `LUMINA_LLM_KEY` — endpoint
-  OpenAI-compatible. Kalau URL atau model kosong, companion tidak melakukan
-  panggilan jaringan dan jatuh ke `src/lib/companion/reply.ts`; route
-  `/api/companion/{answer,vision,voice}` membalas 503 `not-configured`. Itu jalur
-  demo offline, bukan kerusakan.
-- Compose produksi memakai `DOMAIN`, `POSTGRES_DB`, `POSTGRES_PASSWORD`,
-  `APP_DB_PASSWORD`, `APP_IMAGE`; jalankan dengan `docker compose --env-file
-  .env.production …`. Runbook lengkap: `docs/deploy.md`.
+### Honesty invariants
 
-### Batas privasi yang tidak boleh digeser
+- The evidence panel prints engine findings only. Every agent in the panel must actually run; an identity agent abstains rather than inventing a finding.
+- A module that is not written yet is labeled “Segera”, not rendered as an empty stub. An unimplemented simulation level is labeled “Rencana”, not playable.
+- Accuracy claims come from `runEval()` on the 120-case corpus (60 scam / 60 legitimate), not from proposal targets. Re-measure after detector changes.
+- Link/file verification never writes back into `signals`; it is opt-in and hash/URL-only. A model fallback must not change the deterministic score.
 
-a. Pesan yang diperiksa tidak pernah meninggalkan perangkat. Yang dikirim ke
-   `/api/companion/answer` hanya pertanyaan/riwayat obrolan pengguna, digest
-   temuan lossy tanpa kutipan, dan fakta publik dari `modus.json`/`tactics.ts`.
-   Giliran yang pernah diperiksa difilter dari riwayat obrolan di klien.
-b. `/api/companion/vision` hanya menyalin teks dari gambar. Kontraknya tidak punya
-   field skor/risk/signal; hasilnya hanya boleh masuk kembali ke `scoreText()`.
-c. Skor engine tetap baseline. Setelah minimal dua agen sepakat pada pola yang
-   sama dan masing-masing mengutip bukti, Lumina boleh menetapkan skor akhir
-   lewat `submit_score`; skor engine tetap ditampilkan dan `source` menandai
-   asal skor. Permintaan OTP/PIN/password tetap memaksa band tinggi. Model
-   tidak boleh mengarang sinyal; poin konsensus harus lolos validasi laporan.
-d. Riwayat Companion menyimpan metadata per akun di `companion_conversations`
-   (judul, jumlah giliran, waktu, dan skor terakhir). Isi pesan, lampiran, dan
-   transkrip tidak pernah ikut; membuka riwayat di perangkat lain hanya
-   memulihkan judul, bukan percakapan.
-e. Satu-satunya artefak yang boleh keluar dari perangkat adalah URL saat pembaca
-   menekan **Periksa tautan**: body-nya `{ "url": … }`, opt-in per tautan, dan
-   hasilnya tidak ditulis balik ke `signals`. Verifikasi berkas hanya mengirim
-   hash. Matikan dengan `URLVET_API_URL=off` bila deployment tidak
-   mengizinkannya.
+### Validation, errors, and async
 
-## Deploy
+- Co-locate Zod schemas with the domain; parse at read/seed boundaries.
+- Server actions return discriminated results: `{ ok: true, ... } | { ok: false, error: string }`.
+- Prefer domain error classes (`AuthError`, `CommunityError`, `LearningError`, `StudioUpstreamError`) over string throwing.
+- Network helpers degrade honestly; do not throw past the boundary when an optional dependency is unavailable.
+- Use abort signals and deadlines. Streaming parsers live in `src/lib/companion/voice-stream.ts`; do not add a second SSE parser. The orchestrator streams synthesis through `emitScoreSafe` (16-char tail) so a `\d/100` token never splits across deltas.
+- Inject clocks, `fetch`, and `chat` functions for testability (see `src/lib/orchestrator/loop.test.ts`, `src/lib/evidence/bundle.ts`).
 
-`next.config.ts` memakai `output: "standalone"`. `Dockerfile` menghasilkan image
-non-root UID 1001; `compose.yaml` menjalankan app + PostgreSQL 18.6 + Caddy, dan
-hanya Caddy yang membuka 80/443. Migrasi selalu langkah rilis terpisah
-(`npm run db:migrate`) — aplikasi tidak membuat tabel. `GET /api/health` hijau
-hanya bila `SELECT 1` lolos dalam dua detik, bukan bila provider AI hidup.
-Backup, rollback, dan cutover SQLite: `docs/deploy.md`.
+### State and UI
 
-`scanner/` adalah engine career-ops yang di-vendor utuh dan dijalankan sebagai
-subprocess; `Dockerfile` menyalinnya dan membuat `/app/.scan-data` milik UID
-1001. `npm run build` menjalankan `scripts/link-standalone-externals.mjs` setelah
-`next build` untuk menambal symlink modul standalone.
+- Local `React.useState`/`useReducer`; no Redux/Zustand. Anonymous progress may use local storage helpers; account progress uses server actions.
+- Never hardcode hex colors. Use mapped utilities from `src/app/globals.css` (`bg-bg`, `text-txt`, `border-line`, `bg-panel`, `text-danger`, `bg-brand`).
+- Token layers: `--lumina-*` root, `.appnext` mounted once on `<body>`, and landing `--ls-*` via `.landing[data-theme]`. Powder uses `--pw-*` mapped to `--ls-*`. Do not add a second `.appnext` wrapper or use landing tokens inside the app.
+- Supported floor is **380px**. Icon-only controls require accessible names. Prefer `getByRole`/accessible queries in tests.
+- Motion must respect `prefers-reduced-motion`; keep interactive controls keyboard reachable.
 
-Migrasi bernomor `001`–`012` (auth, loker, learning/simulation, community,
-companion history, review, `012_agent_runs`) ikut `npm run db:migrate`, lalu
-`npm run db:seed` memuat `content/competition.json`. Aplikasi tidak membuat tabel.
-Jangan menulis materi langsung ke tabel; ubah JSON lalu seed (`--replace` untuk
-baris bernama).
+### Next.js 16 constraints
 
-## Skills
+- `cacheComponents: true` rejects `export const runtime`, `export const dynamic`, and similar segment config. Use `export const instant = false` on dynamic pages or `await connection()` inside handlers.
+- Do not read `AUTH_URL` or request origin at module scope; read per request (`src/app/robots.ts`).
+- Check `node_modules/next/dist/docs/` before using APIs remembered from older Next versions.
 
-Skill tinggal di **`.agents/skills/`** — lokasi netral yang dibaca OpenCode,
-Claude Code, Codex, Hermes, dan harness lain. `.opencode/skills/<nama>` adalah
-symlink ke sana, bukan salinan.
+### Workflow and ownership
 
-```
-.agents/skills/shadcn-ui/SKILL.md      konfigurasi shadcn proyek ini
-.agents/skills/appnext-design/SKILL.md sistem desain AppNext (light-first)
-```
+- Work on `codex/<job-name>`, never directly on `main`.
+- Stream ownership (code, not branches):
+  - A: `src/lib/scoring`, `src/lib/contracts`, `src/components/companion`, `/companion`, `data/modus.json`.
+  - B: `/belajar`, `components/belajar`, curriculum data, `lib/progress.ts`, `/admin`.
+  - C: `/simulasi`, `lib/simulasi`, `components/simulasi`.
+  - D: `/komunitas`, `components/community`, `lib/community`, `app/layout.tsx`, `globals.css`, `styles/`.
+  - Loker: `scanner/`, `lib/loker`, `api/loker`, loker tools/cards, `migrations/002_loker.sql`.
+- Shared surfaces: `components/brand`, `components/auth`, `components/shell`, `lib/auth`, `lib/server`, `app/api`, `migrations/`, `styles/`. Announce changes in the commit/PR. `src/lib/contracts`, `lib/scoring`, and `components/companion` are shared too; the vendored `scanner/` is never edited.
+- Do not commit `.opencode/` screenshots (`PNG`, `shots/`, `walk-*/`); tracked entries there are skill symlinks only.
 
-Aturannya: **sunting `.agents/skills/`**, jangan `.opencode/skills/` — yang kedua
-mengikuti yang pertama. Kalau menambah skill baru, buat di `.agents/skills/` lalu
+### Skills
 
-```bash
-ln -sfn "../../.agents/skills/<nama>" ".opencode/skills/<nama>"
-```
+- Edit `.agents/skills/<name>/SKILL.md`; `.opencode/skills/<name>` and `.claude/skills/<name>` are symlinks.
+- Frontmatter requires `name` and `description`; the description must say *when* to use the skill.
+- To add a skill: create it under `.agents/skills/`, then link it into each harness directory. Removing a skill requires removing its symlinks too.
 
-Harness lain memakai symlink yang sama: `.claude/skills/<nama>`. Menghapus skill
-dari `.agents/` meninggalkan symlink rusak di `.opencode/` dan `.claude/`; hapus
-symlink-nya juga.
+### Privacy invariants
 
-Frontmatter wajib `name` dan `description`; deskripsi memuat *kapan* skill
-dipakai, bukan hanya isinya, karena itu yang memicu pemanggilan.
+- Checked messages never leave the device. Only the user’s question/history, lossy finding digests without quotes, and public `modus.json`/`tactics.ts` facts may be sent.
+- `/api/companion/vision` only copies text from an image; its contract has no score/risk/signal fields.
+- Link verification is opt-in per link and sends only `{ "url": ... }`; file verification sends only a SHA-256 hash. Neither writes back into `signals`.
+- `companion_conversations` stores metadata only (title, turn count, risk, timestamps). Message bodies, attachments, and transcripts are not sent to the server.
 
-## Rute dan shell
+## Known Gotchas
 
-| Grup | Shell | Token | Isi |
-|---|---|---|---|
-| `(marketing)` | `SiteProvider` + `SiteHeader` + `Footer` + `ThemeSlider` + `SmoothScroll` | `.landing[data-theme]` (`--ls-*`) | `/` landing |
-| `(app)` | `SiteNav` + footer | `--lumina-*` via `.appnext` | profil |
-| `(chat)` | tanpa nav, sidebar sendiri (`WorkspaceShell`) | `--lumina-*` via `.appnext` | `/companion`, `/agen`, `/belajar`, `/simulasi`, `/komunitas` |
-| `admin/` | `AdminNav` sendiri | `--lumina-*` | `/admin`, `/admin/[no]` |
-| `/studio` | `StudioChat` tanpa nav | `--lumina-*` | coding agent; hanya UUID di `STUDIO_ALLOWED_IDS`, `robots: noindex` |
-| `/masuk`, `/daftar` | tanpa chrome | `--lumina-*` | auth email/password + Google |
-| `api/companion/*` | route handler | — | `answer`, `vision`, `voice`, `orchestrate`, `tools/{summary,report}` |
-| `api/account`, `api/session` | route handler | — | progres per akun; sesi |
-| `api/link/verify`, `api/verify-link`, `api/verify-file` | route handler | — | verifikasi tautan/berkas opt-in |
-| `api/studio/chat` | route handler | — | coding agent, allowlist |
-| `api/auth/google/*` | route handler | — | mulai OAuth + callback |
-| `api/health` | route handler | — | `SELECT 1` ke DB; bukan cek provider AI |
-| `api/loker/scan`, `api/loker/scan/status` | route handler | — | pindai + status run; `204` bila belum ada |
+- `src/data/modul-11.ts` checklist drifts from `content/competition.json` module 11; no cross-check test guards it.
+- Dead/no-importer: `components/companion/companion-entry.tsx`, `components/ui/glass-folder.tsx`, and the `lib/verify/{account,phone,crypto}` exports. Remove rather than extend.
+- `components/companion/companion-chat.test.tsx` declares `jest.mock("@/lib/companion/history")` twice.
+- Non-token colors survive in `agents-detail-panel.tsx`, `(chat)/simulasi/page.tsx`, and `Runner.tsx`; these are documented exceptions, do not copy them.
+- `scripts/seed-demo.mjs` is not wired to any npm script.
 
-Route group tidak mengubah URL. `/` dilayani `(marketing)/page.tsx`; tidak boleh
-ada `(app)/page.tsx`, karena keduanya akan bertabrakan di `/`. `/agen` adalah
-alamat tersendiri untuk tampilan agen; jangan menambah alias
-`/companion?panel=agen`.
+## Important Files
 
-`/admin` sengaja tidak ada di nav: itu workbench penulis kurikulum, bukan
-permukaan produk. Draf tinggal di perangkat; publikasi adalah ekspor + commit,
-bukan tombol. Jangan menambahkan tautan admin ke nav publik.
+- `AGENTS.md` — this file; binding rules and workflow.
+- `docs/plan.md`, `docs/architecture/overview.md`, `docs/architecture/backend.md`, `docs/architecture/security-privacy.md` — product and system truth.
+- `src/lib/contracts/score.ts` — score/risk/signal invariants.
+- `src/lib/scoring/score.ts` — only verdict producer; add detectors here.
+- `src/lib/orchestrator/loop.ts` + `src/lib/contracts/orchestrator.ts` — agent-run contract and streaming.
+- `src/lib/companion/turn.ts` — pure lane router; `src/components/companion/companion-chat.tsx` — client state machine.
+- `src/lib/server/request.ts`, `src/lib/server/llm.ts` — request limits, abort, provider fallback.
+- `src/lib/auth/database.ts`, `src/lib/auth/server-session.ts` — pool and session access.
+- `src/lib/content/store.ts`, `migrations/`, `content/competition.json` — content source of truth.
+- `next.config.ts`, `jest.config.ts`, `jest.setup.ts`, `biome.json`, `Dockerfile`, `compose.yaml` — build/test/runtime constraints.
 
-`/agen` menampilkan ringkasan pemeriksaan terakhir milik akun yang masuk (tanpa
-isi pesan); tanpa sesi atau tanpa run, tampilan statis yang sama dipakai.
+## Runtime/Tooling Preferences
 
-### Titik masuk auth
+| Area | Choice |
+|---|---|
+| Runtime | Node **>= 24**; package manager **npm** with `package-lock.json` |
+| Framework | Next.js `16.4.5`, App Router, Turbopack, Cache Components |
+| UI | React `19.3`, Tailwind v4 via `@tailwindcss/turbopack`; no PostCSS config |
+| Components | shadcn/ui with base **radix**, style `radix-nova`; `lucide-react` icons |
+| Language | TypeScript strict, `@/* → src/*` |
+| Database | PostgreSQL 18.6 via `pg`; async pool, max 5 connections |
+| Lint/format | Biome `2.4.2`; ESLint is not used |
+| Tests | Jest 30 via `next/jest`, jsdom, React Testing Library |
 
-Navigasi membuka satu dialog bersama; halaman langsung tersedia di `/masuk` dan `/daftar`:
-`AuthDialog` (`src/components/auth/auth-dialog.tsx`), trigger-less dan
-controlled, dengan tab Masuk/Daftar dari `AuthPanel`.
+- Do not swap the stack without product-owner agreement.
+- `next.config.ts` uses `output: "standalone"`. `npm run build` runs `scripts/link-standalone-externals.mjs`; keep it.
+- Docker image runs as UID/GID `1001`; Compose runs app + PostgreSQL + Caddy, and only Caddy publishes 80/443. Secrets are env-only, never build args.
+- `GET /api/health` checks `SELECT 1` with a 2 s timeout; it does not check the LLM.
+- `TRUST_PROXY=true` only behind a proxy that overwrites `X-Lumina-Client-IP`; otherwise all anonymous users share one rate-limit key.
+- Biome ignores `scanner/`, `.scan-data/`, `src/components/marketing/powder/sections`, `src/styles/powder-{framer,fonts}.css`, `src/data/powder`, and `cyber_course_dashboard(1).tsx`. Edit those by hand; preserve `framer-*` classes.
+- Environment groups `.env.example`: required runtime (`DATABASE_URL`, `AUTH_URL`), optional auth/demo/community/studio, optional LLM/orchestrator, optional verification/scanner, Compose-only (`DOMAIN`, `POSTGRES_*`, `APP_DB_PASSWORD`, `APP_IMAGE`), and test-only (`TEST_DATABASE_URL`). Never commit `.env.local`.
+- Deploy/runbook: `docs/deploy.md`. Migrations are applied before the new app version; backups use `deploy/backup.sh`.
 
-| Permukaan | Komponen | Catatan |
-|---|---|---|
-| `SiteHeader` marketing | `MarketingAuth` | mengikuti token `--ls-*` landing; tetap tanpa sesi |
-| `SiteNav` `(app)` | `AuthNav` | masukan paling kanan setelah Komunitas |
-| Rail + sidebar companion | `CompanionAuth` | `iconsOnly` memakai tombol ikon saja; nama aksesibel wajib |
+## Testing & QA
 
-Sesudah masuk, ketiganya menampilkan `UserMenu` (atau kartu profil) yang menuju
-`/profil`. `/masuk` dan `/daftar` adalah halaman langsung untuk login dan register;
-keduanya menyusun `AuthPanel` yang sama. Logika sesi tetap di `lib/auth/`.
-
-## Tiga lapisan token, jangan dicampur
-
-| Lapisan | Di mana | Dipakai untuk |
-|---|---|---|
-| `--lumina-*` | `src/app/globals.css` `:root` | nama kanonik; utility Tailwind `bg-brand`, `text-danger`, `border-line`, … |
-| `.appnext` | dipasang **sekali di `<body>`** (`src/app/layout.tsx`), definisi di `src/styles/appnext-tokens.css` | meremap `--lumina-*` ke palet terang AppNext, plus `--appnext-*` dan kelas `.appnext-*` |
-| `.landing[data-theme]` | `src/styles/landing-tokens.css`, dipasang di `(marketing)/layout.tsx` | landing marketing: tiga palet `cream`/`paper`/`black` lewat peran `--ls-*` |
-
-`.appnext` sudah ada di `body`, jadi jangan menambah wrapper `.appnext` kedua —
-ia menggandakan custom property dan membuat "pulau" warna sulit dilacak. Jangan
-menaruh hex di komponen; pakai utility yang dipetakan `@theme inline`.
-
-Landing **tidak** memakai `--lumina-*`. Ia punya peran `--ls-*` yang diganti
-seluruhnya oleh `data-theme` (default `cream`; persist di
-`localStorage["lumina-theme"]`, dengan skrip pra-paint di layout marketing).
-Section Powder memakai `--pw-*` yang memetakan ke `--ls-*`, jadi mewarnai
-section berarti mengubah peran, bukan menempel hex lokal. Skill
-`appnext-design` mengatur permukaan `.appnext`, bukan landing; kontrak landing
-ada di komentar `src/styles/landing-tokens.css` dan `powder-theme.css`. Detail
-AppNext: `docs/design-system/appnext.md`.
-
-## Layout
-
-```
-src/
-├── app/
-│   ├── (marketing)/          landing `/` — header, footer, theme slider, smooth scroll
-│   ├── (app)/                SiteNav + footer
-│   │   └── profil/           akun + kemajuan akun
-│   ├── (chat)/               tanpa nav; catatan privasi ada di panel/sidebar
-│   │   ├── companion/        A · percakapan + panel bukti
-│   │   ├── agen/             tampilan 8 agen sebagai alamat sendiri
-│   │   ├── belajar/          B · katalog + [modul] + latihan, sidebar Companion
-│   │   └── simulasi/         C · daftar + [id] + layout runner, sidebar bersama
-│   ├── admin/                workbench kurikulum, AdminNav sendiri
-│   ├── studio/               coding agent, hanya UUID allowlist
-│   ├── api/
-│   │   ├── companion/        answer, vision, voice, orchestrate, tools/
-│   │   ├── account/ session/ progres per akun + sesi
-│   │   ├── link/ verify-link/ verify-file/  verifikasi opt-in
-│   │   ├── studio/           chat coding agent
-│   │   ├── loker/            scan + scan/status
-│   │   ├── auth/google/      mulai OAuth + callback
-│   │   └── health/           SELECT 1 ke DB
-│   ├── masuk/ daftar/        auth akun, tanpa chrome
-│   └── layout.tsx            `body.appnext`, font, token ground
-├── components/
-│   ├── ui/                   shadcn — jangan diedit kecuali perbaikan registry
-│   ├── shell/                nav + AuthNav + pembaca sesi + WorkspaceShell
-│   ├── auth/                 AuthDialog, AuthPanel, UserMenu
-│   ├── marketing/            sections landing + powder/ (vendored, Biome-exempt)
-│   ├── brand/                logo, mascot, potret agen
-│   ├── admin/                admin inventory/nav
-│   ├── companion/            percakapan, agent-run, panel bukti, link-verify, loker
-│   └── belajar/ simulasi/ community/ profil/ studio/
-├── lib/
-│   ├── contracts/            BEKU — score, evidence, answer, vision, agent-run, orchestrator, report, tool, verify
-│   ├── scoring/              engine deterministik + eval.ts + bench-cases.ts
-│   ├── orchestrator/         planner → spesialis → synthesizer + subagent runtime
-│   ├── agents/               identitas 8 agen (server-safe, dipakai semua permukaan)
-│   ├── agent/                case store metadata + TTL (bukan runtime tool)
-│   ├── companion/            turn, reply, explain, answer-client, vision-client, voice-stream
-│   ├── learning/             path, review, practice, tutor, validasi
-│   ├── content/              schema + store bundle materi
-│   ├── verify/               tautan, berkas, reputasi, forensik gambar
-│   ├── link-verify/          klien urlvet
-│   ├── studio/               akses, loop, tools coding agent
-│   ├── auth/                 database, accounts, password, google, session, server-session, maintenance
-│   ├── server/               clientKey/limitAI + pembaca body berbatas
-│   ├── simulasi/             catalog, scenario, validate
-│   ├── loker/                scanner bridge, boards, audit, store, search
-│   ├── community/            diskusi, balasan, reaksi, laporan
-│   ├── evidence/             bundle, extract, timeline, narrative
-│   ├── admin/                draft-store, export-course
-│   └── progress.ts, ledger.ts, modus.ts, scroll.ts, site.ts, utils.ts
-├── data/                     modul-01..12, kurikulum, modul-schema, patterns, scam-templates, modus.json, official-domains.json, tactics, report-contacts, community/, powder/
-└── styles/                   appnext-tokens.css, landing-tokens.css, powder-*.css
-```
-
-Di akar repo:
-
-```
-├── content/                  competition.json — bundle seed materi (divalidasi schema)
-├── migrations/               SQL bernomor 001–012, dijalankan `scripts/migrate.mjs`
-├── scripts/                  migrate/cleanup/import-sqlite/seed-*/link-standalone/wip-report
-├── deploy/                   Caddyfile, backup, db-init
-└── scanner/                  engine career-ops yang di-vendor (jangan diedit)
-```
-
-## Batas stream
-
-Tabel ini soal kepemilikan kode, bukan branch. Jangan menyentuh milik stream lain
-tanpa memberi tahu. Kalau butuh sesuatu, minta bentuk datanya, bukan filenya.
-
-| Stream | Boleh | Jangan |
-|---|---|---|
-| A | `lib/scoring/`, `lib/contracts/`, `components/companion/`, `app/(chat)/companion/`, `data/modus.json` | isi modul, runner |
-| B | `app/(chat)/belajar/`, `components/belajar/`, `data/kurikulum.ts`, `data/modul-*.ts`, `lib/progress.ts`, `app/admin/` | engine skor, navigasi |
-| C | `app/(chat)/simulasi/`, `lib/simulasi/`, `components/simulasi/` | konten modul |
-| D | `app/(chat)/komunitas/`, `components/community/`, `lib/community/`, `app/layout.tsx`, `globals.css`, `styles/` | engine skor, konten modul |
-| Loker (pasca-submisi) | `scanner/`, `lib/loker/`, `api/loker/`, `api/companion/tools/`, `components/companion/loker-*`, `migrations/002_loker.sql` | engine skor pesan, konten modul |
-
-Pekerjaan pasca-10 November (orchestrator/agen, learning adaptif, verifikasi
-tautan/berkas, Studio) tidak punya pemilik stream: perlakukan sebagai permukaan
-bersama dan sebutkan di PR. Dokumen desainnya:
-`docs/agent-orchestration.md`, `docs/companion-routing.md`,
-`docs/link-verification.md`, `docs/plans/execution-2026-11-10.md`.
-
-`StageId` mendapat entri aditif `"job-search"` untuk jejak agen; `AgentId` tidak
-berubah. Perubahan ini terasa di panel bukti bersama, jadi sebutkan di PR.
-
-`components/brand`, `components/auth`, `components/shell`, `lib/auth`,
-`lib/server`, `app/api`, dan `migrations/` adalah permukaan bersama, bukan milik
-satu stream: perubahan di situ terasa di semua permukaan, jadi sebutkan di
-commit/PR.
-
-## Kejujuran yang diuji
-
-a. Panel bukti hanya mencetak temuan engine, bukan temuan karangan. Setiap agent
-   dalam urutan panel benar-benar berjalan; label `belum aktif` sudah tidak ada,
-   dan Identity Agent memilih tidak melapor daripada mengarang.
-b. Modul yang belum ditulis berstatus "Segera", bukan stub kosong.
-c. Level simulasi yang belum jadi ditandai `Rencana`, tidak dimainkan seolah jadi.
-d. Klaim akurasi mengikuti `runEval()` pada korpus 120 kasus (60 scam / 60 sah),
-   bukan angka di proposal (§11.8). Perubahan detektor diukur ulang; angka di
-   dokumen adalah hasil ukur, bukan target.
-e. Verifikasi tautan/berkas tidak menulis balik ke `signals`. `/api/link/verify`
-   memakai `URLVET_API_URL` (mati dengan `off`); reputasi di `/api/verify-link`
-   dan `/api/verify-file` mati kecuali `VERIFY_LINK=on` / `VERIFY_FILE=on`, dan
-   verifikasi berkas hanya mengirim hash SHA-256.
-f. Skor akhir dari konsensus hanya lahir bila dua agen berbeda sepakat pada pola
-   yang sama dan masing-masing mengutip bukti; skor engine tetap terlihat, dan
-   fallback model tidak mengubah angka.
-
-## Test
-
-Test merender komponen React sungguhan. Test yang hanya memeriksa tipe tidak
-menangkap yang sebenarnya rusak saat demo: hydration, batas `"use client"`,
-props yang salah, dan markup yang hilang.
-
-```tsx
-render(<CompanionEntry />);
-await user.click(screen.getByRole("button", { name: /apk undangan/i }));
-expect(screen.getByRole("link", { name: /pelajari pola ini/i }))
-  .toHaveAttribute("href", "/belajar/10");
-```
-
-Asersi berbasis teks yang muncul berkali-kali by design memakai
-`getAllByText(...).length` — bukan `getByText`, yang gagal karena "found multiple
-elements".
-
-Test tinggal di samping sumbernya (`src/**/*.test.ts?(x)`). `jest.setup.ts`
-sudah menambal gap jsdom yang dipakai app ini: `matchMedia`, `ResizeObserver`,
-`window.print`, dan object URL. Komponen yang memakai API browser baru butuh
-stub di sana sebelum test-nya bermakna.
-
-## Aksesibilitas dan lebar
-
-Shell harus jalan di **380px**. Sebelum bilang sebuah halaman selesai, periksa
-lebar sempit: nav membungkus, tidak ada scroll horizontal, target sentuh cukup.
-Kontrol ikon-saja wajib punya nama aksesibel.
+- **Framework:** Jest 30 with `next/jest` (SWC transform, CSS stubs, `@/*` mapping). Default environment is jsdom; server/DB suites opt into node with `/** @jest-environment node */`.
+- **Location:** tests live beside source under `src/**/*.test.ts?(x)`. `scanner/tests/*.mjs` uses its own harness, not Jest.
+- **Style:** render real React components and assert user-visible behaviour. Prefer `userEvent` over `fireEvent`, `getByRole`/`getByLabelText` over test IDs, and `findBy*`/`waitFor` for async.
+- **No snapshots** and no coverage threshold are configured. `npm run test:coverage` is informational; `npm run verify` including `next build` is the real gate.
+- **Database tests:** set `TEST_DATABASE_URL` to a dedicated DB whose name ends `_test` and differs from `DATABASE_URL`; run migrations first. Without it, integration suites skip. When set, Jest forces `maxWorkers: 1` because suites reset one shared database.
+- **Mocks:** mock `fetch`, provider modules, and `server-only`; assert privacy by checking outbound bodies do not contain message/evidence/transcript fields.
+- **Time:** use fake timers deliberately and restore real timers; companion suites raise timeouts because they are CPU-heavy on loaded workers.
+- **Environment caveats:** Studio sandbox tests depend on `bwrap` and unprivileged user namespaces. A host-level namespace error is an environment failure, not a code regression; do not weaken the tests. `serial-latency.test.ts` runs only with `LUMINA_LATENCY=1`.
+- **Stale docs:** `STATUS.md` and older execution notes may still mention `/darurat` or old test counts. Treat `docs/plan.md` and current code as truth.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
