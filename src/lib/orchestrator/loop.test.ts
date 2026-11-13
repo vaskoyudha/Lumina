@@ -2,6 +2,7 @@ import type { OrchestratorRequest } from "@/lib/contracts/orchestrator";
 import type { ScoreResult } from "@/lib/contracts/score";
 import { runOrchestrator } from "@/lib/orchestrator/loop";
 import { clearSubagentSessions } from "@/lib/orchestrator/subagent-runtime";
+import { TOOL_DEFS } from "@/lib/orchestrator/tools";
 
 const baseline: ScoreResult = {
   score: 72,
@@ -357,6 +358,93 @@ describe("runOrchestrator", () => {
     expect(
       result.trace.agents.find((agent) => agent.id === "message")?.points,
     ).toHaveLength(1);
+  });
+
+  it("returns validation issues for invalid tool arguments", async () => {
+    const attempts = new Map<string, number>();
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban")) {
+          return { role: "assistant", content: "Skor resmi 72/100." };
+        }
+        const key = system.includes("Mochi") ? "message" : "qris";
+        const attempt = (attempts.get(key) ?? 0) + 1;
+        attempts.set(key, attempt);
+        if (key === "message" && attempt === 1) {
+          return {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              toolCall("call-bad-detector", "scan_detector", {
+                detector: "nope",
+              }),
+            ],
+          };
+        }
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${key}-${attempt}`)],
+        };
+      },
+    );
+
+    const result = await runOrchestrator(request, {
+      chat: chat as never,
+      score: scored,
+    });
+
+    const failure = result.events.find(
+      (event) =>
+        event.type === "tool_result" &&
+        event.tool === "scan_detector" &&
+        !event.ok,
+    );
+    expect(failure?.type).toBe("tool_result");
+    if (failure?.type === "tool_result") {
+      expect(failure.output).toContain("invalid-tool-arguments");
+      expect(failure.output).toContain("issues");
+    }
+  });
+
+  it("reuses a preflight tool result instead of running it twice", async () => {
+    const spy = jest.spyOn(TOOL_DEFS.score_message, "execute");
+    const attempts = new Map<string, number>();
+    const chat = jest.fn(
+      async (options: {
+        messages: { role: string; content: string | null }[];
+      }) => {
+        const system = systemOf(options.messages);
+        if (system.includes("koordinator tim agen")) return plannerCall();
+        if (system.includes("penyusun jawaban")) {
+          return { role: "assistant", content: "Skor resmi 72/100." };
+        }
+        const key = system.includes("Mochi") ? "message" : "qris";
+        const attempt = (attempts.get(key) ?? 0) + 1;
+        attempts.set(key, attempt);
+        if (key === "message" && attempt === 1) {
+          return {
+            role: "assistant",
+            content: null,
+            tool_calls: [toolCall("call-score", "score_message", {})],
+          };
+        }
+        return {
+          role: "assistant",
+          content: null,
+          tool_calls: [reportCall(`call-${key}-${attempt}`)],
+        };
+      },
+    );
+
+    await runOrchestrator(request, { chat: chat as never, score: scored });
+
+    expect(spy).toHaveBeenCalledTimes(3);
+    spy.mockRestore();
   });
 
   it("replaces a fabricated score in the synthesis with the deterministic score", async () => {

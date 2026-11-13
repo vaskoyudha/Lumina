@@ -231,6 +231,27 @@ function safeJson(text: string): unknown {
   }
 }
 
+function toolErrorPayload(
+  tool: string,
+  error: unknown,
+  extra: Record<string, unknown> = {},
+): string {
+  const message =
+    typeof error === "string"
+      ? error
+      : error instanceof Error
+        ? error.message
+        : "tool-failed";
+  return JSON.stringify({ ok: false, tool, error: message, ...extra });
+}
+
+function zodIssues(error: z.ZodError): { path: string; message: string }[] {
+  return error.issues.map((issue) => ({
+    path: issue.path.join("."),
+    message: issue.message,
+  }));
+}
+
 /**
  * Parse the full tool payload, not the 2.4 kB display copy: a six-signal
  * score_message result can be just over the display cap, and truncating before
@@ -684,6 +705,7 @@ async function runSpecialist(
 
   const evidence: string[] = [];
   const reportSignals: ReportSignal[] = [];
+  const toolCache = new Map<string, string>();
   let lastToolSummary = "";
   for (const call of calls) {
     const tool = TOOL_DEFS[call.name];
@@ -701,15 +723,21 @@ async function runSpecialist(
     let output = "";
     try {
       const parsed = tool.schema.safeParse(call.args);
-      if (!parsed.success) throw new Error("invalid-tool-arguments");
-      const result = await tool.execute(parsed.data, toolContext);
-      const serialized = JSON.stringify(result);
-      output = serialized.slice(0, 2400);
-      ok = true;
-      lastToolSummary =
-        absorbToolSignals(serialized, reportSignals) || lastToolSummary;
+      if (!parsed.success) {
+        output = toolErrorPayload(call.name, "invalid-tool-arguments", {
+          issues: zodIssues(parsed.error),
+        });
+      } else {
+        const result = await tool.execute(parsed.data, toolContext);
+        const serialized = JSON.stringify(result);
+        output = serialized.slice(0, 2400);
+        ok = true;
+        toolCache.set(`${call.name}:${JSON.stringify(call.args)}`, output);
+        lastToolSummary =
+          absorbToolSignals(serialized, reportSignals) || lastToolSummary;
+      }
     } catch (error) {
-      output = error instanceof Error ? error.message : "tool-failed";
+      output = toolErrorPayload(call.name, error);
     }
     emit({
       type: "tool_result",
@@ -748,7 +776,7 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
   const messages: ModelMessage[] = session?.messages.length
     ? [...session.messages, { role: "user", content: childPrompt }]
     : [
-        { role: "system", content: specialistSystemPrompt(spec) },
+        { role: "system", content: specialistSystemPrompt(spec, toolNames) },
         { role: "user", content: childPrompt },
       ];
 
@@ -782,7 +810,7 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
     };
   }
 
-  const tools = [...openAITools(spec.tools), SUBMIT_REPORT_TOOL];
+  const tools = [...openAITools(toolNames), SUBMIT_REPORT_TOOL];
   let report: SubmitReport | null = null;
   let lastError: unknown = null;
   let invalidReports = 0;
@@ -903,25 +931,31 @@ Gunakan hanya bukti tool di atas. Jangan menambah fakta baru. Panggil tool submi
     });
     let ok = false;
     let output = "";
+    const cacheKey = `${toolName}:${JSON.stringify(args)}`;
+    const cached = toolCache.get(cacheKey);
     try {
-      const parsed = tool.schema.safeParse(args);
-      if (!parsed.success) throw new Error("invalid-tool-arguments");
-      if (
-        toolName === "scan_detector" &&
-        spec.id !== "evidence" &&
-        (parsed.data as { detector?: string }).detector !== spec.id
-      ) {
-        throw new Error("detector-not-assigned");
+      if (cached) {
+        output = cached;
+        ok = true;
+      } else {
+        const parsed = tool.schema.safeParse(args);
+        if (!parsed.success) {
+          output = toolErrorPayload(toolName, "invalid-tool-arguments", {
+            issues: zodIssues(parsed.error),
+          });
+        } else {
+          const serialized = JSON.stringify(
+            await tool.execute(parsed.data, toolContext),
+          );
+          output = serialized.slice(0, 2400);
+          toolCache.set(cacheKey, output);
+          lastToolSummary =
+            absorbToolSignals(serialized, reportSignals) || lastToolSummary;
+          ok = true;
+        }
       }
-      const serialized = JSON.stringify(
-        await tool.execute(parsed.data, toolContext),
-      );
-      output = serialized.slice(0, 2400);
-      lastToolSummary =
-        absorbToolSignals(serialized, reportSignals) || lastToolSummary;
-      ok = true;
     } catch (error) {
-      output = error instanceof Error ? error.message : "tool-failed";
+      output = toolErrorPayload(toolName, error);
     }
     emit({
       type: "tool_result",
