@@ -9,8 +9,10 @@ import {
   CoverageGroup,
   CoverageStrip,
   FindingsSection,
+  SpawnedSection,
   TraceDisclosure,
 } from "@/components/companion/panel-ledger-view";
+import type { SpawnedAgent } from "@/components/companion/spawn-ledger";
 import { scoreWithTrace } from "@/lib/scoring/score";
 
 const APK_MESSAGE =
@@ -78,6 +80,7 @@ describe("FindingsSection", () => {
 describe("CoverageGroup", () => {
   it("stays closed until opened and then shows the reason", async () => {
     const user = userEvent.setup();
+    const onSelectAgent = jest.fn();
     const agent: PanelAgent = {
       agent: "link",
       outcome: "no_object",
@@ -86,7 +89,13 @@ describe("CoverageGroup", () => {
       note: "Tidak ada tautan pada pesan ini.",
     };
 
-    render(<CoverageGroup agents={[agent]} label="Tanpa objek" />);
+    render(
+      <CoverageGroup
+        agents={[agent]}
+        label="Tanpa objek"
+        onSelectAgent={onSelectAgent}
+      />,
+    );
 
     const trigger = screen.getByRole("button", { name: /tanpa objek/i });
     expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -99,6 +108,11 @@ describe("CoverageGroup", () => {
     expect(
       screen.getByText(/tidak ada tautan pada pesan ini/i),
     ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /tampilkan info link agent/i }),
+    );
+    expect(onSelectAgent).toHaveBeenCalledWith("link");
   });
 });
 
@@ -117,5 +131,81 @@ describe("TraceDisclosure", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Message Agent")).toBeInTheDocument();
     expect(screen.getAllByText(/ms/i).length).toBeGreaterThan(0);
+  });
+});
+
+describe("SpawnedSection", () => {
+  const spawned: SpawnedAgent[] = [
+    {
+      agent: "message",
+      label: "Mochi · Message Agent",
+      task: "Membaca kata yang dipakai untuk menekan.",
+      status: "selesai",
+      findings: 2,
+      ms: 14,
+    },
+    {
+      agent: "link",
+      label: "Bubu · Link Agent",
+      task: "Membongkar tautan pada pesan.",
+      status: "berjalan",
+      findings: 0,
+    },
+    {
+      agent: "identity",
+      label: "Identity Agent",
+      task: "Memeriksa identitas pengirim.",
+      status: "gagal",
+      findings: 0,
+    },
+    {
+      agent: "conversation",
+      label: "Conversation Agent",
+      task: "Membandingkan giliran.",
+      status: "dilewati",
+      findings: 0,
+    },
+  ];
+
+  it("renders one row per spawned agent with its status", () => {
+    render(<SpawnedSection agents={spawned} titleId="panel" />);
+
+    expect(screen.getByText("Sub-agen dijalankan · 4")).toBeInTheDocument();
+
+    const list = within(
+      screen.getByRole("list", { name: /sub-agen yang dijalankan/i }),
+    );
+    expect(list.getByText("2 temuan")).toBeInTheDocument();
+    expect(list.getByText("Berjalan")).toBeInTheDocument();
+    expect(list.getByText("Gagal")).toBeInTheDocument();
+    expect(list.getByText("Dilewati")).toBeInTheDocument();
+  });
+
+  it("renders nothing when no agent was spawned", () => {
+    const { container } = render(
+      <SpawnedSection agents={[]} titleId="panel" />,
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("reports the clicked agent", async () => {
+    const user = userEvent.setup();
+    const onSelectAgent = jest.fn();
+
+    render(
+      <SpawnedSection
+        agents={spawned}
+        onSelectAgent={onSelectAgent}
+        titleId="panel"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /tampilkan info sub-agen link agent/i,
+      }),
+    );
+    expect(onSelectAgent).toHaveBeenCalledWith("link");
   });
 });
