@@ -1,6 +1,17 @@
 import type { ScoreResult } from "@/lib/contracts/score";
 import { TOOL_DEFS, type ToolContext } from "@/lib/orchestrator/tools";
 
+jest.mock("@/lib/link-verify/urlvet", () => ({
+  verifyLink: jest.fn(async () => ({
+    verdict: "Safe",
+    score: 90,
+    badReasons: [],
+    goodReasons: [],
+    incomplete: false,
+    domain: "scam.example",
+  })),
+}));
+
 const result = {
   score: 84,
   risk: "tinggi",
@@ -90,6 +101,48 @@ describe("orchestrator tools", () => {
         context("link"),
       ),
     ).rejects.toThrow("domain-not-in-message");
+  });
+
+  it("reports links omitted by the display cap", async () => {
+    const links = Array.from(
+      { length: 12 },
+      (_, index) => `https://e${index}.example/x`,
+    );
+    const output = (await TOOL_DEFS.extract_links.execute(
+      {},
+      context("link", `Buka ${links.join(" ")}`),
+    )) as { count: number; total: number; truncated: boolean };
+
+    expect(output.count).toBe(10);
+    expect(output.total).toBe(12);
+    expect(output.truncated).toBe(true);
+  });
+
+  it("accepts an equivalent URL from the message", async () => {
+    const output = await TOOL_DEFS.verify_link.execute(
+      { url: "https://www.scam.example/login/" },
+      context("link", "Buka https://scam.example/login sekarang."),
+    );
+
+    expect(output).toMatchObject({ verdict: "Safe" });
+  });
+
+  it("matches a domain after stripping the www prefix", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ events: [], entities: [], status: [] }),
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const output = (await TOOL_DEFS.domain_lookup.execute(
+      { domain: "wwwtest.example" },
+      context("link", "Buka https://www.wwwtest.example/login sekarang."),
+    )) as { ok: boolean; host: string };
+
+    expect(output.ok).toBe(true);
+    expect(output.host).toBe("wwwtest.example");
+    globalThis.fetch = originalFetch;
   });
 
   it("returns RDAP registrar and age for a domain in the message", async () => {

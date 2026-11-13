@@ -193,11 +193,14 @@ export const SPECIALISTS: Record<SpecialistId, SpecialistSpec> = {
   },
 };
 
-export function specialistSystemPrompt(spec: SpecialistSpec): string {
+export function specialistSystemPrompt(
+  spec: SpecialistSpec,
+  toolNames: readonly string[] = spec.tools,
+): string {
   return buildSystemPrompt({
     preamble: `${spec.displayName} — ${spec.field}. ${spec.preamble} Tujuan agen: ${spec.purpose}`,
     tools: [
-      ...spec.tools
+      ...toolNames
         .map((name) => TOOL_DEFS[name])
         .filter((tool): tool is NonNullable<typeof tool> => Boolean(tool))
         .map((tool) => ({ name: tool.name, snippet: tool.description })),

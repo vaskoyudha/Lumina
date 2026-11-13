@@ -84,9 +84,23 @@ interface DomainLookup {
 
 const domainCache = new Map<string, { at: number; value: DomainLookup }>();
 const DOMAIN_CACHE_MS = 60 * 60 * 1000;
+const DOMAIN_CACHE_MAX = 200;
 
-function domainHost(raw: string): string | null {
-  return parseLink(raw.trim())?.host ?? null;
+function normalizeHost(host: string): string {
+  return host
+    .toLowerCase()
+    .replace(/^www\./, "")
+    .replace(/\.$/, "");
+}
+
+function urlKey(raw: string): string | null {
+  try {
+    const url = new URL(raw.trim());
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
+    return `${url.protocol}//${normalizeHost(url.hostname)}${pathname}${url.search}`.toLowerCase();
+  } catch {
+    return null;
+  }
 }
 
 function registrarOf(data: RdapResponse): string | null {
@@ -141,6 +155,10 @@ async function lookupDomain(
         : null,
       statuses: data.status ?? [],
     };
+    if (domainCache.size >= DOMAIN_CACHE_MAX) {
+      const oldest = domainCache.keys().next().value;
+      if (oldest !== undefined) domainCache.delete(oldest);
+    }
     domainCache.set(host, { at: Date.now(), value });
     return value;
   } catch (error) {
@@ -209,6 +227,9 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
     schema: DetectorArgs,
     execute: async (args, context) => {
       const { detector } = args as { detector: DetectorId };
+      if (context.agent !== "evidence" && detector !== context.agent) {
+        throw new Error("detector-not-assigned");
+      }
       const { result, trace } = context.score();
       const stage = trace.stages.find((item) => item.id === detector);
       const signals = result.signals
@@ -236,9 +257,12 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
       "Extract every URL from the message with its host and lexical risk facts. Does not fetch the page.",
     schema: NoArgs,
     execute: async (_args, context) => {
-      const links = extractLinks(context.message).slice(0, 10);
+      const all = extractLinks(context.message);
+      const links = all.slice(0, 10);
       return {
         count: links.length,
+        total: all.length,
+        truncated: all.length > links.length,
         links: links.map((raw) => {
           try {
             const url = new URL(raw);
@@ -266,7 +290,13 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
     schema: UrlArgs,
     execute: async (args, context) => {
       const { url } = args as { url: string };
-      if (!extractLinks(context.message).includes(url)) {
+      const target = urlKey(url);
+      const allowed = new Set(
+        extractLinks(context.message)
+          .map(urlKey)
+          .filter((value): value is string => Boolean(value)),
+      );
+      if (!target || !allowed.has(target)) {
         throw new Error("url-not-in-message");
       }
       const verdict = await verifyLink(url, context.signal);
@@ -281,11 +311,15 @@ export const TOOL_DEFS: Record<string, ToolDef> = {
     schema: DomainArgs,
     execute: async (args, context) => {
       const { domain } = args as { domain: string };
-      const host = domainHost(domain);
+      const parsedHost = parseLink(domain.trim())?.host;
+      const host = parsedHost ? normalizeHost(parsedHost) : null;
       if (!host) throw new Error("invalid-domain");
       const allowed = new Set(
         extractLinks(context.message)
-          .map((raw) => parseLink(raw)?.host)
+          .map((raw) => {
+            const host = parseLink(raw)?.host;
+            return host ? normalizeHost(host) : null;
+          })
           .filter((value): value is string => Boolean(value)),
       );
       if (!allowed.has(host)) throw new Error("domain-not-in-message");
