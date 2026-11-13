@@ -164,6 +164,26 @@ describe("ProcessTrace", () => {
     expect(process?.hasAttribute("open")).toBe(true);
     const thoughts = screen.getByText("Pemikiran agen").closest("details");
     expect(thoughts?.hasAttribute("open")).toBe(false);
+
+    const tools = screen.getByText(/proses tool/i).closest("details");
+    expect(tools?.hasAttribute("open")).toBe(false);
+    expect(screen.queryByText("tool:score_message")).not.toBeInTheDocument();
+    expect(screen.getByText("skill:narrative-analysis")).toBeInTheDocument();
+  });
+
+  it("names the tools that actually ran and expands their process", async () => {
+    const user = userEvent.setup();
+    render(<ProcessTrace events={events} />);
+
+    const summary = screen.getByText(/proses tool · score_message/i);
+    const tools = summary.closest("details");
+    expect(tools?.hasAttribute("open")).toBe(false);
+    expect(screen.getByText(/1 panggilan · 1 ok/i)).toBeInTheDocument();
+
+    await user.click(summary);
+    expect(tools?.hasAttribute("open")).toBe(true);
+    expect(screen.getByText('{"score":91}')).toBeInTheDocument();
+    expect(screen.getByText(/ok · 2 ms/i)).toBeInTheDocument();
   });
 
   it("keeps descriptions out of the card and reveals them from the profile", async () => {

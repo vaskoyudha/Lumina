@@ -5,6 +5,12 @@ import {
   Check,
   ChevronRight,
   CircleAlert,
+  EyeOff,
+  Gauge,
+  Globe,
+  Link2,
+  ScanSearch,
+  Tags,
   Workflow,
   Wrench,
 } from "lucide-react";
@@ -19,6 +25,7 @@ import {
   CommanderCard,
   type CommanderPhase,
 } from "@/components/companion/commander-card";
+import { StatusPulse } from "@/components/companion/status-pulse";
 import { SHIMMER_TEXT_CLASS } from "@/components/companion/thinking-row";
 import { AGENT_IDENTITIES } from "@/lib/agents/identities";
 import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
@@ -57,6 +64,104 @@ function groupAgents(events: OrchestratorEvent[]): AgentBlock[] {
     if (event.type === "agent_result") block.end = event;
   }
   return blocks;
+}
+
+/** One glyph per orchestrator tool; an unknown tool still reads as a tool. */
+const TOOL_ICONS: Record<string, typeof Wrench> = {
+  score_message: Gauge,
+  scan_detector: ScanSearch,
+  extract_links: Link2,
+  verify_link: Globe,
+  domain_lookup: Globe,
+  extract_entities: Tags,
+  scrub_secrets: EyeOff,
+};
+
+/**
+ * The tool calls of one agent as a single collapsed process, the same shape as
+ * the thinking block: default closed, expand to read what each call returned.
+ * The label is built from the calls that actually happened, never from the
+ * planner's declared tool list, so it cannot claim a call that did not run.
+ */
+function ToolProcess({
+  calls,
+  results,
+  live,
+}: {
+  calls: AgentBlock["tools"];
+  results: AgentBlock["results"];
+  live: boolean;
+}): React.ReactNode {
+  if (calls.length === 0) return null;
+
+  const names = [...new Set(calls.map((call) => call.tool))];
+  const pending = calls.some(
+    (call) => !results.some((result) => result.callId === call.callId),
+  );
+  const okCount = results.filter((result) => result.ok).length;
+
+  return (
+    <details className="group/tools mt-1.5">
+      <summary className="flex cursor-pointer select-none items-center gap-1.5 text-[10.5px] text-dim">
+        <span className="relative flex size-3 shrink-0 items-center justify-center">
+          <Wrench aria-hidden className="size-3" />
+          {live && pending ? (
+            <StatusPulse
+              className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand-strong"
+              kind="opacity"
+            />
+          ) : null}
+        </span>
+        <span className="min-w-0 truncate font-mono text-[10px]">
+          Proses tool · {names.join(", ")}
+        </span>
+        <ChevronRight
+          aria-hidden
+          className="size-3 shrink-0 transition-transform group-open/tools:rotate-90"
+        />
+        <span className="ml-auto shrink-0 text-[9.5px] tabular-nums">
+          {calls.length} panggilan{results.length > 0 ? ` · ${okCount} ok` : ""}
+        </span>
+      </summary>
+      <div className="mt-1 flex flex-col gap-1.5 border-brand-edge border-l-2 pl-2">
+        {calls.map((call) => {
+          const result = results.find((item) => item.callId === call.callId);
+          const Icon = TOOL_ICONS[call.tool] ?? Wrench;
+
+          return (
+            <div key={call.callId} className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Icon
+                  aria-hidden
+                  className="size-3 shrink-0 text-brand-strong"
+                />
+                <span className="font-mono text-[10.5px] text-txt">
+                  {call.tool}
+                </span>
+                {result ? (
+                  <span
+                    className={cn(
+                      "ml-auto text-[9.5px] tabular-nums",
+                      result.ok ? "text-dim" : "text-danger",
+                    )}
+                  >
+                    {result.ok ? "ok" : "gagal"} · {result.ms} ms
+                  </span>
+                ) : (
+                  <span className="ml-auto text-[9.5px] text-dim">
+                    berjalan
+                  </span>
+                )}
+              </div>
+              <pre className="mt-0.5 max-h-32 overflow-auto whitespace-pre-wrap break-words font-mono text-[9.5px] leading-relaxed text-dim">
+                {result?.output || JSON.stringify(call.args, null, 2)}
+              </pre>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
 }
 
 export function ProcessTrace({
@@ -209,7 +314,7 @@ export function ProcessTrace({
                       animationDelay: `${Math.min(index, 6) * 45}ms`,
                     }}
                     className={cn(
-                      "motion-safe:animate-[trace-enter_260ms_ease-out_both] rounded-[20px] border bg-panel px-3.5 py-3 shadow-panel",
+                      "motion-safe:animate-[trace-enter_260ms_ease-out_both] flex flex-col rounded-[20px] border bg-panel px-3.5 py-3 shadow-panel",
                       block.end ? "border-line" : "border-brand-edge/60",
                     )}
                   >
@@ -265,25 +370,6 @@ export function ProcessTrace({
                         {block.end ? ` · ${block.end.ms} ms` : ""}
                       </span>
                     </div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {block.start.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded border border-line px-1.5 py-0.5 font-mono text-[9.5px] text-dim"
-                        >
-                          skill:{skill}
-                        </span>
-                      ))}
-                      {block.start.tools.map((tool) => (
-                        <span
-                          key={tool}
-                          className="rounded border border-line px-1.5 py-0.5 font-mono text-[9.5px] text-dim"
-                        >
-                          tool:{tool}
-                        </span>
-                      ))}
-                    </div>
-
                     {block.thoughts.length > 0 ? (
                       <details className="group/thought mt-1.5 rounded border border-line bg-panel-2 px-2 py-1">
                         <summary className="flex cursor-pointer select-none items-center gap-1.5 text-[10.5px] text-dim">
@@ -310,38 +396,11 @@ export function ProcessTrace({
                       </details>
                     ) : null}
 
-                    {block.tools.map((call) => {
-                      const result = block.results.find(
-                        (item) => item.callId === call.callId,
-                      );
-                      return (
-                        <details
-                          key={call.callId}
-                          className="mt-1.5 rounded border border-line bg-panel-2 px-2 py-1"
-                        >
-                          <summary className="flex cursor-pointer select-none items-center gap-1.5">
-                            <Wrench aria-hidden className="size-3" />
-                            <span className="font-mono text-[10.5px]">
-                              {call.tool}
-                            </span>
-                            {result ? (
-                              <span
-                                className={cn(
-                                  "ml-auto text-[10px]",
-                                  result.ok ? "text-dim" : "text-danger",
-                                )}
-                              >
-                                {result.ok ? "ok" : "gagal"} · {result.ms} ms
-                              </span>
-                            ) : null}
-                          </summary>
-                          <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-dim">
-                            {result?.output ||
-                              JSON.stringify(call.args, null, 2)}
-                          </pre>
-                        </details>
-                      );
-                    })}
+                    <ToolProcess
+                      calls={block.tools}
+                      results={block.results}
+                      live={!block.end}
+                    />
 
                     {block.end?.summary ? (
                       <p className="mt-1.5 font-serif text-[15px] text-txt leading-[1.7]">
@@ -403,6 +462,19 @@ export function ProcessTrace({
                         <CircleAlert aria-hidden className="size-3" /> Agen
                         gagal; hasil ini tidak dipakai sebagai bukti.
                       </p>
+                    ) : null}
+
+                    {block.start.skills.length > 0 ? (
+                      <div className="mt-auto flex flex-wrap gap-1 border-edge-soft border-t pt-2">
+                        {block.start.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded border border-line px-1.5 py-0.5 font-mono text-[9.5px] text-dim"
+                          >
+                            skill:{skill}
+                          </span>
+                        ))}
+                      </div>
                     ) : null}
                   </li>
                 ))}
