@@ -12,6 +12,10 @@ import Image from "next/image";
 import * as React from "react";
 import { ActivityOrb } from "@/components/companion/activity-orb";
 import {
+  AgentInfoHint,
+  AgentInfoPopover,
+} from "@/components/companion/agent-info-popover";
+import {
   CommanderCard,
   type CommanderPhase,
 } from "@/components/companion/commander-card";
@@ -210,56 +214,56 @@ export function ProcessTrace({
                     )}
                   >
                     <div className="flex items-start gap-2">
-                      <Image
-                        src={AGENT_IDENTITIES[block.start.agent].portrait}
-                        alt=""
-                        width={32}
-                        height={32}
-                        className="size-8 shrink-0 rounded-full border border-line object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {!block.end ? (
-                            <ActivityOrb className="size-3.5" />
-                          ) : null}
-                          <span className="font-semibold text-txt">
-                            {AGENT_IDENTITIES[block.start.agent].displayName}
+                      <AgentInfoPopover
+                        agent={block.start.agent}
+                        className="flex min-w-0 flex-1 items-start gap-2"
+                      >
+                        <Image
+                          src={AGENT_IDENTITIES[block.start.agent].portrait}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="size-8 shrink-0 rounded-full border border-line object-cover transition-colors group-hover/info:border-brand-edge"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-center gap-1.5">
+                            {!block.end ? (
+                              <ActivityOrb className="size-3.5" />
+                            ) : null}
+                            <span className="font-semibold text-txt">
+                              {AGENT_IDENTITIES[block.start.agent].displayName}
+                            </span>
+                            <span
+                              data-agent-tone={block.start.agent}
+                              className="agent-role-pill"
+                            >
+                              {AGENT_IDENTITIES[block.start.agent].field}
+                            </span>
+                            <AgentInfoHint />
                           </span>
-                          <span
-                            data-agent-tone={block.start.agent}
-                            className="agent-role-pill"
-                          >
-                            {AGENT_IDENTITIES[block.start.agent].field}
+                          <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[10.5px] text-dim">
+                              {block.start.agent}
+                            </span>
+                            <span className="text-[10px] text-dim">
+                              {block.start.label}
+                            </span>
                           </span>
-                          <span
-                            className={cn(
-                              "ml-auto rounded-full px-1.5 py-0.5 text-[10px]",
-                              block.end?.status === "selesai"
-                                ? "bg-brand-soft text-brand-ink"
-                                : block.end?.status === "gagal"
-                                  ? "bg-danger/10 text-danger"
-                                  : "bg-panel-2 text-dim",
-                            )}
-                          >
-                            {block.end?.status ?? "berjalan"}
-                            {block.end ? ` · ${block.end.ms} ms` : ""}
-                          </span>
-                        </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                          <span className="text-[10.5px] text-dim">
-                            {block.start.agent}
-                          </span>
-                          <span className="text-[10px] text-dim">
-                            {block.start.label}
-                          </span>
-                        </div>
-                        <p className="mt-1 font-serif text-[13.5px] text-dim leading-[1.7]">
-                          {AGENT_IDENTITIES[block.start.agent].purpose}
-                        </p>
-                        <p className="mt-0.5 font-serif text-[13.5px] text-dim leading-[1.7]">
-                          {block.start.task}
-                        </p>
-                      </div>
+                        </span>
+                      </AgentInfoPopover>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px]",
+                          block.end?.status === "selesai"
+                            ? "bg-brand-soft text-brand-ink"
+                            : block.end?.status === "gagal"
+                              ? "bg-danger/10 text-danger"
+                              : "bg-panel-2 text-dim",
+                        )}
+                      >
+                        {block.end?.status ?? "berjalan"}
+                        {block.end ? ` · ${block.end.ms} ms` : ""}
+                      </span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {block.start.skills.map((skill) => (

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ProcessTrace } from "@/components/companion/process-trace";
 import type { OrchestratorEvent } from "@/lib/contracts/orchestrator";
 
@@ -163,6 +164,23 @@ describe("ProcessTrace", () => {
     expect(process?.hasAttribute("open")).toBe(true);
     const thoughts = screen.getByText("Pemikiran agen").closest("details");
     expect(thoughts?.hasAttribute("open")).toBe(false);
+  });
+
+  it("keeps descriptions out of the card and reveals them from the profile", async () => {
+    const user = userEvent.setup();
+    render(<ProcessTrace events={events} />);
+
+    expect(screen.queryByText(/membaca nada pesan/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Membaca narasi dan mekanisme rekayasa sosial"),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /apa yang dilakukan mochi/i }),
+    );
+
+    expect(await screen.findByText(/membaca nada pesan/i)).toBeInTheDocument();
+    expect(screen.getByText("Kata kunci")).toBeInTheDocument();
   });
 
   it("does not list agents skipped by the deadline", () => {
